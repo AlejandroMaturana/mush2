@@ -273,7 +273,10 @@ void loop() {
     if (wifiOk) {
       SensorReading reading = aht.read();
       if (reading.valid) {
-        ts.send(reading.temperature, reading.humidity);
+        EnsReading ensData = ens.read(reading.temperature, reading.humidity);
+        ts.send(reading.temperature, reading.humidity,
+          ensData.valid ? ensData.eco2 : 0,
+          ensData.valid ? ensData.tvoc : 0);
       }
     }
   }
