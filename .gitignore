@@ -13,6 +13,7 @@ build/
 Thumbs.db
 
 # IDEs & editors
+skills-lock.json
 .vscode/
 .idea/
 *.swp
