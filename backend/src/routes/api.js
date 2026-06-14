@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import express from 'express';
 import { Device, Telemetry, Actuator } from '../models/index.js';
 import { publishCommand } from '../services/mqttService.js';
@@ -10,7 +11,7 @@ router.get('/devices', async (req, res) => {
   try {
     const where = {};
     if (req.tenant && req.tenant.userId) {
-      where.$or = [
+      where[Op.or] = [
         { userId: req.tenant.userId },
         { userId: null },
       ];
@@ -18,6 +19,7 @@ router.get('/devices', async (req, res) => {
     const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']] });
     res.json({ data: devices });
   } catch (err) {
+    console.error('[DEVICES] Error:', err);
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -125,8 +127,8 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
     if (sensorType) where.sensorType = sensorType.toUpperCase();
     if (from || to) {
       where.timestamp = {};
-      if (from) where.timestamp.$gte = new Date(from);
-      if (to) where.timestamp.$lte = new Date(to);
+      if (from) where.timestamp[Op.gte] = new Date(from);
+      if (to) where.timestamp[Op.lte] = new Date(to);
     }
     const data = await Telemetry.findAll({
       where,
@@ -187,6 +189,29 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
     res.json(actuator);
   } catch (err) {
     console.error('[ACTUATOR] Error:', err.message);
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.delete('/devices/:id', checkDeviceAccess, async (req, res) => {
+  try {
+    const device = req.device;
+    await Actuator.destroy({ where: { deviceId: device.id } });
+    await Telemetry.destroy({ where: { deviceId: device.id } });
+    await device.destroy();
+
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'DEVICE_DELETE',
+        resource: 'device',
+        resourceId: device.id,
+        details: { deviceId: device.deviceId },
+      });
+    }
+
+    res.json({ message: 'Dispositivo eliminado' });
+  } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
