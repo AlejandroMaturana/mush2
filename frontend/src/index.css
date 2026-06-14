@@ -102,6 +102,11 @@ body {
 .actuator-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .actuator-btn.on { background: var(--green); color: #fff; }
 .actuator-btn.off { background: var(--red); color: #fff; }
+.actuator-error {
+  font-size: 12px; color: var(--red); margin-top: 4px;
+  padding: 6px 10px; background: rgba(225, 112, 85, 0.1);
+  border-radius: 6px; border: 1px solid rgba(225, 112, 85, 0.25);
+}
 
 .empty-state {
   text-align: center; padding: 48px; color: var(--text2);
