@@ -42,6 +42,22 @@ function DeviceDetail() {
           : a
       ))
     }
+    if (type === 'state' && device && data.deviceId === device.deviceId) {
+      if (data.actuators) {
+        setActuators(prev => {
+          const updated = [...prev];
+          data.actuators.forEach(act => {
+            const idx = updated.findIndex(a => a.channel === act.channel);
+            if (idx !== -1) {
+              updated[idx] = { ...updated[idx], state: act.state, mode: data.mode || updated[idx].mode };
+            } else {
+              updated.push({ channel: act.channel, state: act.state, type: 'SSR', mode: data.mode || 'LOCAL' });
+            }
+          });
+          return updated;
+        });
+      }
+    }
     if (type === 'telemetry' && device && data.deviceId === device.deviceId) {
       if (data.sensors) {
         setTelemetry(prev => ({
@@ -105,6 +121,11 @@ function DeviceDetail() {
                 key={ch}
                 deviceId={id}
                 actuator={act}
+                onCommandSent={(channel, newState) => {
+                  setActuators(prev => prev.map(a =>
+                    a.channel === channel ? { ...a, state: newState } : a
+                  ))
+                }}
               />
             )
           })}

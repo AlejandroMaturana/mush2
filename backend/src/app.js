@@ -51,19 +51,34 @@ app.get('/events', (req, res) => {
   res.write('data: {"type":"connected"}\n\n');
 
   const onAck = (data) => {
-    res.write(`event: ack\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: ack
+data: ${JSON.stringify(data)}
+
+`);
   };
   const onState = (data) => {
-    res.write(`event: state\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: state
+data: ${JSON.stringify(data)}
+
+`);
   };
   const onTelemetry = (data) => {
-    res.write(`event: telemetry\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: telemetry
+data: ${JSON.stringify(data)}
+
+`);
   };
   const onAlarm = (data) => {
-    res.write(`event: alarm\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: alarm
+data: ${JSON.stringify(data)}
+
+`);
   };
   const onControlEval = (data) => {
-    res.write(`event: control_eval\ndata: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: control_eval
+data: ${JSON.stringify(data)}
+
+`);
   };
 
   events.on('ack', onAck);
@@ -87,3 +102,4 @@ app.get('/events', (req, res) => {
 });
 
 export default app;
+

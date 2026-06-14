@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Router } from 'express';
 import { Device, Telemetry, Event, User, CultivationCycle, AuditLog } from '../models/index.js';
 import sequelize from '../config/database.js';
@@ -18,7 +19,7 @@ router.get('/metrics', async (req, res) => {
 
     const now = new Date();
     const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const telemetry24h = await Telemetry.count({ where: { createdAt: { $gte: last24h } } });
+    const telemetry24h = await Telemetry.count({ where: { createdAt: { [Op.gte]: last24h } } });
 
     res.json({
       timestamp: now.toISOString(),

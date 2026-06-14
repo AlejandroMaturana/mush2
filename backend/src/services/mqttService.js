@@ -1,14 +1,44 @@
+/**
+ * MQTT Service — Mush2 Backend
+ * 
+ * Gestiona la conexión, suscripción y procesamiento de mensajes MQTT desde dispositivos IoT.
+ * 
+ * Características:
+ * - Broker primario + fallback con reconexión exponencial
+ * - Parseo de tópicos MQTT con validación
+ * - Persistencia automática de telemetría, estado y eventos en PostgreSQL
+ * - Deduplicación de alarmas (max 1 alarma por tipo/dispositivo cada 60s)
+ * - Emit de eventos para consumo por otros servicios
+ * 
+ * @module services/mqttService
+ * @see {@link docs/protocol/protocol-v1.md}
+ * @see {@link docs/contracts/mqtt-contract.md}
+ */
+
 import mqtt from 'mqtt';
 import { EventEmitter } from 'events';
 import { env } from '../config/env.js';
 import { Device, Telemetry, Sensor, Actuator } from '../models/index.js';
 
+/** EventEmitter para comunicación intra-backend (telemetría, alarmas, estado) */
 export const events = new EventEmitter();
+
+/** Cliente MQTT activo (null si desconectado) */
 let client = null;
+
+/** Estado de conexión MQTT */
 let connected = false;
+
+/** Delay de reconexión actual (backoff exponencial) */
 let backoffDelay = 5000;
+
+/** Mínimo delay de reconexión: 5 segundos */
 const BACKOFF_MIN = 5000;
+
+/** Máximo delay de reconexión: 3 minutos */
 const BACKOFF_MAX = 180000;
+
+/** Deduplicación de alarmas: { "deviceId:reason": timestamp } */
 let alarmLastEmit = {};
 
 const TOPICS = [
@@ -238,7 +268,14 @@ export function publishCommand(deviceId, command) {
     ts: Math.floor(Date.now() / 1000),
     ...command,
   });
-  client.publish(topic, payload, { qos: 2 });
+  // QoS 2: exactly-once delivery — requerido por protocol-v1 para comandos de actuador
+  client.publish(topic, payload, { qos: 2 }, (err) => {
+    if (err) {
+      console.error(`[MQTT] Error al publicar en ${topic}:`, err.message);
+    } else {
+      console.log(`[MQTT] Comando publicado → ${topic} | ch=${command.channel} cmd=${command.command}`);
+    }
+  });
   return true;
 }
 

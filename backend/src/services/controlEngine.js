@@ -1,12 +1,54 @@
+/**
+ * Control Engine — Mush2 Backend
+ * 
+ * Motor de control ambiental que:
+ * 1. Evalúa ciclos de cultivo activos cada 60 segundos
+ * 2. Compara telemetría actual contra umbrales de receta
+ * 3. Genera alertas por desviaciones (TEMP_HIGH, HUM_LOW, etc)
+ * 4. Transiciona fases automáticamente cuando se cumple duración
+ * 5. Emite eventos para dashboard en tiempo real
+ * 
+ * Máquina de estados del ciclo:
+ * INCUBATION → FRUITING → MAINTENANCE → COMPLETED
+ * 
+ * @module services/controlEngine
+ * @see {@link ../models/CultivationCycle}
+ * @see {@link ../models/Recipe}
+ * @see {@link ../services/mqttService}
+ */
+
 import { Op } from 'sequelize';
 import { Device, Telemetry, Recipe, CultivationCycle, CycleState } from '../models/index.js';
 import { events } from './mqttService.js';
 
+/** Secuencia de fases de cultivo */
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
+
+/** Intervalo de evaluación: 60 segundos */
 const EVAL_INTERVAL = 60000;
 
+/** Handle del setInterval para cancelación */
 let intervalHandle = null;
 
+/**
+ * Obtiene umbrales ambientales para una fase del ciclo.
+ * 
+ * Valores permitidos varían según fase:
+ * - INCUBATION: Controla solo colonización del sustrato
+ * - FRUITING: Controla desarrollo de cuerpos fructíferos
+ * - MAINTENANCE: Monitoreo con rango amplio
+ * - COMPLETED: No aplica
+ * 
+ * @param {Object} recipe - Objeto Recipe de DB
+ * @param {string} phase - Fase actual (INCUBATION, FRUITING, MAINTENANCE)
+ * 
+ * @returns {Object|null} Thresholds { tempMin, tempMax, humMin, humMax, co2Max, durationDays }
+ * @returns {null} Si phase es COMPLETED u otra no válida
+ * 
+ * @example
+ * getPhaseThresholds(recipe, 'FRUITING')
+ * // { tempMin: 15, tempMax: 20, humMin: 85, humMax: 95, co2Max: 2000, durationDays: 14 }
+ */
 function getPhaseThresholds(recipe, phase) {
   switch (phase) {
     case 'INCUBATION':
@@ -168,3 +210,4 @@ export function stopControlEngine() {
   }
   console.log('[CONTROL] Engine stopped');
 }
+

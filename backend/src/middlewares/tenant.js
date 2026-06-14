@@ -33,6 +33,11 @@ export async function checkDeviceAccess(req, res, next) {
     return next();
   }
 
+  // Dispositivo tiene dueño pero el request no está autenticado
+  if (!req.user) {
+    return res.status(401).json({ error: 'Autenticación requerida para acceder a este dispositivo' });
+  }
+
   const UserChamberAccess = (await import('../models/UserChamberAccess.js')).default;
   const access = await UserChamberAccess.findOne({
     where: { userId: req.user.id, deviceId },
