@@ -93,7 +93,7 @@ Cada controlador físico aparece como un dispositivo en el sistema.
 ### Control manual
 1. Abre el detalle del dispositivo
 2. Usa los botones ON/OFF en cada actuador
-3. El comando se envía vía MQTT con QoS 2
+3. El comando se envía vía MQTT con QoS 1
 4. El firmware confirma con un ACK
 5. Al enviar un comando manual, el actuador pasa a modo REMOTE
 

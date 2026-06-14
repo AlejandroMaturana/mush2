@@ -57,9 +57,9 @@ bool MQTTHandler::connectToBroker(int index) {
     String cmdTopic = "mush2/cmd/" + deviceId + "/actuator";
     String configTopic = "mush2/cmd/" + deviceId + "/config";
     String otaTopic = "mush2/cmd/" + deviceId + "/ota";
-    client.subscribe(cmdTopic.c_str(), 2);
-    client.subscribe(configTopic.c_str(), 2);
-    client.subscribe(otaTopic.c_str(), 2);
+    client.subscribe(cmdTopic.c_str(), 1);
+    client.subscribe(configTopic.c_str(), 1);
+    client.subscribe(otaTopic.c_str(), 1);
 
     publishBoot();
     publishOnline(true);

@@ -40,11 +40,11 @@
 |---|---|---|---|
 | Telemetría sensores | **QoS 1** | QoS 1 | Tolerante a duplicados, intolerante a pérdida |
 | Estado actuadores | **QoS 1** (retain) | QoS 1 | Último valor conocido siempre disponible |
-| Comandos actuador | **QoS 2** | QoS 2 | Ejecución exactamente una vez |
-| Comandos configuración | **QoS 2** | QoS 2 | Cambios de configuración son críticos |
+| Comandos actuador | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 en ESP8266 de forma confiable |
+| Comandos configuración | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 en ESP8266 de forma confiable |
 | Evento boot | **QoS 1** | QoS 1 | Notificación de arranque |
 | ACK | **QoS 1** | QoS 1 | Confirmación de comando |
-| Alarmas | **QoS 2** | QoS 2 | No perder alertas críticas |
+| Alarmas | **QoS 1** | QoS 1 | Tolerante a pérdida ocasional |
 | LWT | **QoS 1** (retain) | QoS 1 | Última voluntad |
 
 ### 3.2 Reglas de QoS
@@ -96,16 +96,16 @@ mush2/telemetry/+/sensors    → QoS 1 (telemetría de todos los dispositivos)
 mush2/telemetry/+/state      → QoS 1 (estado de todos los dispositivos)
 mush2/event/+/boot           → QoS 1 (boot de cualquier dispositivo)
 mush2/event/+/ack            → QoS 1 (ACK de cualquier dispositivo)
-mush2/event/+/alarm          → QoS 2 (alarmas de cualquier dispositivo)
+mush2/event/+/alarm          → QoS 1 (alarmas de cualquier dispositivo)
 mush2/state/+/online         → QoS 1 (cambios de estado online)
 ```
 
 ### 6.2 Firmware
 
 ```
-mush2/cmd/{deviceId}/actuator   → QoS 2 (comandos para este dispositivo)
-mush2/cmd/{deviceId}/config     → QoS 2 (cambios de configuración)
-mush2/cmd/{deviceId}/ota        → QoS 2 (comandos OTA)
+mush2/cmd/{deviceId}/actuator   → QoS 1 (comandos para este dispositivo)
+mush2/cmd/{deviceId}/config     → QoS 1 (cambios de configuración)
+mush2/cmd/{deviceId}/ota        → QoS 1 (comandos OTA)
 ```
 
 El firmware NO debe suscribirse a `#` ni a tópicos de otros dispositivos.

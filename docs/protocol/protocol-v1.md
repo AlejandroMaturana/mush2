@@ -32,9 +32,9 @@ mush2/{tipo}/{deviceId}/{accion}
 
 | Tópico | QoS | Retain |
 |---|---|---|
-| `mush2/cmd/{deviceId}/actuator` | 2 | No |
-| `mush2/cmd/{deviceId}/config` | 2 | No |
-| `mush2/cmd/{deviceId}/ota` | 2 | No |
+| `mush2/cmd/{deviceId}/actuator` | 1 | No |
+| `mush2/cmd/{deviceId}/config` | 1 | No |
+| `mush2/cmd/{deviceId}/ota` | 1 | No |
 
 ### 2.3 Eventos (Firmware → Backend)
 
@@ -255,7 +255,7 @@ Cada 60s:
   Firmware → mush2/telemetry/{id}/state → {actuators, mode}
 
 Usuario enciende actuador:
-  Frontend → REST → Backend → mush2/cmd/{id}/actuator (QoS 2)
+  Frontend → REST → Backend → mush2/cmd/{id}/actuator (QoS 1)
   Firmware → mush2/event/{id}/ack → OK
   Backend → SSE → Frontend
 

@@ -268,8 +268,8 @@ export function publishCommand(deviceId, command) {
     ts: Math.floor(Date.now() / 1000),
     ...command,
   });
-  // QoS 2: exactly-once delivery — requerido por protocol-v1 para comandos de actuador
-  client.publish(topic, payload, { qos: 2 }, (err) => {
+  // QoS 1: at-least-once delivery — PubSubClient no maneja QoS 2 de forma confiable en ESP8266
+  client.publish(topic, payload, { qos: 1 }, (err) => {
     if (err) {
       console.error(`[MQTT] Error al publicar en ${topic}:`, err.message);
     } else {

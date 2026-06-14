@@ -13,7 +13,7 @@
 
 ### Control de Actuadores
 - [x] Controlar 3 canales SSR (ON/OFF) en pines D5, D7, D6
-- [x] Recibir comandos MQTT QoS 2 en `mush2/cmd/{id}/actuator`
+- [x] Recibir comandos MQTT QoS 1 en `mush2/cmd/{id}/actuator`
 - [x] Publicar ACK de confirmación en `mush2/event/{id}/ack`
 - [x] Histéresis para evitar oscilaciones (LOCAL/REMOTE/OFF)
 - [x] Temporizadores de seguridad (mín 3s ON)
