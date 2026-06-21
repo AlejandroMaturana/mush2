@@ -215,14 +215,15 @@ void loop() {
         sm.setState(systemState == "NORMAL" ? ST_NORMAL : ST_DEGRADED);
       }
 
-      uint8_t hystOutputs[3] = {0, 0, 0};
+      uint8_t hystOutputs[4] = {0, 0, 0, 0};
       hyst.evaluate(temp, hum, ensReading.eco2, hystOutputs);
 
       CtrlMode ctrlMode = hyst.getMode();
       if (ctrlMode == CTRL_LOCAL) {
-        ssr.setChannel(1, hystOutputs[0]);
-        ssr.setChannel(2, hystOutputs[1]);
-        ssr.setChannel(3, hystOutputs[2]);
+        ssr.setChannel(1, hystOutputs[1]);  // CH1 — Ventilación
+        ssr.setChannel(2, hystOutputs[0]);  // CH2 — Calefacción
+        ssr.setChannel(3, hystOutputs[2]);  // CH3 — Humidificación
+        ssr.setChannel(4, hystOutputs[3]);  // CH4 — Humidificación
       }
 
       if (mqtt.isConnected()) {
@@ -295,14 +296,15 @@ void loop() {
       modeStr.c_str());
 
     if (mqtt.isConnected()) {
-      uint8_t ssrStates[3];
+      uint8_t ssrStates[4];
       ssr.getStateArray(ssrStates);
       String payload = "{\"protocol\":\"1.0.0\",\"deviceId\":\"" + String(DEVICE_ID)
         + "\",\"ts\":" + String(now / 1000)
         + ",\"actuators\":["
         + "{\"channel\":1,\"state\":\"" + String(ssrStates[0] ? "ON" : "OFF") + "\"},"
         + "{\"channel\":2,\"state\":\"" + String(ssrStates[1] ? "ON" : "OFF") + "\"},"
-        + "{\"channel\":3,\"state\":\"" + String(ssrStates[2] ? "ON" : "OFF") + "\"}"
+        + "{\"channel\":3,\"state\":\"" + String(ssrStates[2] ? "ON" : "OFF") + "\"},"
+        + "{\"channel\":4,\"state\":\"" + String(ssrStates[3] ? "ON" : "OFF") + "\"}"
         + "],\"mode\":\"" + modeStr + "\"}";
       mqtt.publishState(payload.c_str());
     }

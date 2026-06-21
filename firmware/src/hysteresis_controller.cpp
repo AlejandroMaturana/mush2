@@ -85,12 +85,18 @@ void HysteresisController::evaluate(float temperature, float humidity, uint16_t 
     ssrOutputs[0] = 0;
     ssrOutputs[1] = 0;
     ssrOutputs[2] = 0;
+    ssrOutputs[3] = 0;
     return;
   }
 
-  ssrOutputs[0] = shouldHeat(temperature) ? 1 : 0;
-  ssrOutputs[1] = shouldVentilate(temperature, co2) ? 1 : 0;
-  ssrOutputs[2] = shouldHumidify(humidity) ? 1 : 0;
+  uint8_t heat = shouldHeat(temperature) ? 1 : 0;
+  uint8_t vent = shouldVentilate(temperature, co2) ? 1 : 0;
+  uint8_t humid = shouldHumidify(humidity) ? 1 : 0;
+
+  ssrOutputs[0] = heat;     // → CH2 Calefacción
+  ssrOutputs[1] = vent;     // → CH1 Ventilación
+  ssrOutputs[2] = humid;    // → CH3 Humidificación
+  ssrOutputs[3] = humid;    // → CH4 Humidificación
 
   if (temperature > sp.tempMax + 3.0) {
     snprintf(alarmReason, sizeof(alarmReason), "HIGH_TEMP:%.1f", temperature);
