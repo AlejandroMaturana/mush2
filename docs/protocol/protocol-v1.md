@@ -91,7 +91,8 @@ mush2/{tipo}/{deviceId}/{accion}
   "actuators": [
     { "channel": 1, "state": "ON" },
     { "channel": 2, "state": "OFF" },
-    { "channel": 3, "state": "ON" }
+    { "channel": 3, "state": "ON" },
+    { "channel": 4, "state": "OFF" }
   ],
   "mode": "LOCAL"
 }
@@ -226,7 +227,7 @@ Razones posibles: `HIGH_TEMP`, `LOW_TEMP`, `HIGH_HUM`, `LOW_HUM`, `HIGH_CO2`.
 | Código | Significado |
 |---|---|
 | `OK` | Comando ejecutado |
-| `INVALID_CHANNEL` | Canal fuera de rango (1-3) |
+| `INVALID_CHANNEL` | Canal fuera de rango (1-4) |
 | `INVALID_STATE` | Estado no válido |
 | `BUSY` | Mínimo tiempo ON no cumplido |
 | `INVALID_PAYLOAD` | JSON mal formado |

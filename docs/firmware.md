@@ -13,7 +13,7 @@
 | MQTT | `mqtt_handler.h/.cpp` | PubSubClient con 2 brokers, exponential backoff (5s→180s), LWT |
 | Sensores AHT21 | `aht_sensor.h/.cpp` | I2C 0x38, temp/humedad, reset + reinit automático ante fallos |
 | Sensores ENS160 | `ens160_sensor.h/.cpp` | I2C 0x53, eCO₂/TVOC/AQI, calibración con T/H del AHT21 |
-| SSR | `ssr_controller.h/.cpp` | 3 canales (D5, D7, D6), temporizadores minOn/maxOn, activeHigh |
+| SSR | `ssr_controller.h/.cpp` | 4 canales (D5, D7, D6, D0), temporizadores minOn/maxOn, activeHigh |
 | Histéresis | `hysteresis_controller.h/.cpp` | Reglas locales T/H/CO2, modos LOCAL/REMOTE/OFF |
 | State Machine | `state_machine.h/.cpp` | BOOT→INIT→WIFI→NORMAL→DEGRADED→ERROR→RECOVERY→SAFE |
 | OTA | `ota_handler.h/.cpp` | ArduinoOTA + HTTP Update via MQTT |
@@ -25,9 +25,10 @@
 |---|---|---|
 | D1 | GPIO5 | I2C SCL |
 | D2 | GPIO4 | I2C SDA |
-| D5 | GPIO14 | SSR1 — Calefacción |
-| D7 | GPIO13 | SSR2 — Ventilación |
+| D5 | GPIO14 | SSR1 — Ventilación |
+| D7 | GPIO13 | SSR2 — Calefacción |
 | D6 | GPIO12 | SSR3 — Humidificación |
+| D0 | GPIO16 | SSR4 — Humidificación |
 
 ## Máquina de Estados
 

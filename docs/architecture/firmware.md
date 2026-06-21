@@ -7,7 +7,7 @@
 | MCU | ESP8266 (ESP-12F / WeMos D1 Mini) | — |
 | Temp/Humedad | AHT21 (antes DHT11) | I2C (0x38) |
 | CO2/VOC | ENS160 | I2C (0x53) |
-| Relés SSR | SSR 3 canales (active-high configurable) | GPIO (D2, D4, D6) |
+| Relés SSR | SSR 4 canales (active-high configurable) | GPIO (D5, D7, D6, D0) |
 
 ## Stack
 
@@ -64,8 +64,8 @@ firmware/
           │              │              │           │
     ┌─────▼──────┐ ┌────▼──────┐ ┌─────▼─────┐ ┌──▼──────────┐
     │ dht_sensor  │ │ens160_sens│ │ssr_control │ │ mqtt_handler│
-    │ AHT21 I2C   │ │ ENS160 I2C│ │3 canales   │ │PubSubClient │
-    │ 0x38        │ │ 0x53      │ │GPIO D2/D4/D6│ │2 brokers    │
+    │ AHT21 I2C   │ │ ENS160 I2C│ │4 canales   │ │PubSubClient │
+    │ 0x38        │ │ 0x53      │ │GPIO D5/D7/D6/D0│2 brokers    │
     └─────────────┘ └───────────┘ └────────────┘ └──────┬──────┘
                                                          │
                                               ┌──────────▼──────┐
@@ -80,9 +80,10 @@ firmware/
 |---|---|---|
 | D1 (GPIO5) | SCL | AHT21 + ENS160 SCL |
 | D2 (GPIO4) | SDA | AHT21 + ENS160 SDA |
-| D3 (GPIO0) | SSR1 | Relé canal 1 |
-| D4 (GPIO2) | SSR2 | Relé canal 2 |
-| D6 (GPIO12) | SSR3 | Relé canal 3 |
+| D5 (GPIO14) | SSR1 | Relé canal 1 — Ventilación |
+| D7 (GPIO13) | SSR2 | Relé canal 2 — Calefacción |
+| D6 (GPIO12) | SSR3 | Relé canal 3 — Humidificación |
+| D0 (GPIO16) | SSR4 | Relé canal 4 — Humidificación |
 | 3.3V | VCC | Sensores |
 | GND | GND | Común |
 
@@ -168,7 +169,7 @@ void loop() {
   "humidity": 85.2,
   "co2": 420,
   "voc": 15,
-  "ssrState": [0, 0, 1],
+  "ssrState": [0, 0, 1, 0],
   "wifiRssi": -65,
   "state": "NORMAL"
 }
@@ -205,9 +206,10 @@ Generado automáticamente por `generate_config.py` desde `.env`:
 
 // SSR
 #define SSR_ACTIVE_HIGH 1
-#define SSR1_PIN D2
-#define SSR2_PIN D4
-#define SSR3_PIN D6
+#define SSR1_PIN D5  // CH1 — Ventilación
+#define SSR2_PIN D7  // CH2 — Calefacción (evita LED_BUILTIN en D4)
+#define SSR3_PIN D6  // CH3 — Humidificación
+#define SSR4_PIN D0  // CH4 — Humidificación
 
 // Intervalos (ms)
 #define SENSOR_INTERVAL 10000

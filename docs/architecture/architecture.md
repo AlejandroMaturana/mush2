@@ -80,7 +80,7 @@ Firmware (Reglas locales)
 ### Firmware (ESP8266)
 - **Lenguaje**: C++11 (PlatformIO / Arduino Core)
 - **Sensores**: AHT21 (I2C), ENS160 (I2C)
-- **Actuadores**: SSR 3 canales (active-high configurable)
+- **Actuadores**: SSR 4 canales (active-high configurable)
 - **Conectividad**: WiFi (2 redes failover), MQTT (2 brokers failover)
 - **Watchdog**: Hardware (8s) + Software (30s) con contador de rebotes EEPROM
 - **Configuración**: `config.h` generado desde `.env`
