@@ -9,6 +9,7 @@ const CycleState = sequelize.define('CycleState', {
   humidity: { type: DataTypes.DECIMAL(5, 2) },
   co2: { type: DataTypes.INTEGER },
   voc: { type: DataTypes.INTEGER },
+  vpd: { type: DataTypes.DECIMAL(5, 3) },
   actuatorStates: { type: DataTypes.JSONB },
   snapshotDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
