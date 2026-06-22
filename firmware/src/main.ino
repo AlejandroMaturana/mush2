@@ -31,24 +31,34 @@ unsigned long bootTime = 0;
 bool ensAvailable = false;
 
 String systemState = "NORMAL";
-  unsigned long lastAlarmSent = 0;
-  unsigned long lastWifiRetry = 0;
-  unsigned int wifiRetryDelay = 5000;
-  unsigned long lastOtaCheck = 0;
+unsigned long lastAlarmSent = 0;
+unsigned long lastWifiRetry = 0;
+unsigned int wifiRetryDelay = 5000;
+unsigned long lastOtaCheck = 0;
 
-  void onOTA(const char* cmdId, const char* action, const char* url) {
-    Serial.printf("[OTA] cmdId=%s action=%s url=%s\n", cmdId, action, url ? url : "");
-    if (strcmp(action, "activate") == 0) {
-      ota.startArduinoOTA();
-      mqtt.publishAck(cmdId, "OTA_ACTIVATED", "\"ota\":true");
-    } else if (strcmp(action, "update") == 0 && url) {
-      if (ota.startHTTPUpdate(url)) {
-        mqtt.publishAck(cmdId, "OTA_UPDATE_OK", "\"ota\":true");
-      } else {
-        mqtt.publishAck(cmdId, "OTA_UPDATE_FAIL", "\"ota\":false");
-      }
+unsigned long lightCycleStart = 0;
+bool lightPhaseOn = false;
+
+unsigned int sensorFailCount = 0;
+unsigned long lastSensorValid = 0;
+float fallbackTemp = 0;
+float fallbackHum = 0;
+bool fallbackActive = false;
+unsigned long fallbackStart = 0;
+
+void onOTA(const char* cmdId, const char* action, const char* url) {
+  Serial.printf("[OTA] cmdId=%s action=%s url=%s\n", cmdId, action, url ? url : "");
+  if (strcmp(action, "activate") == 0) {
+    ota.startArduinoOTA();
+    mqtt.publishAck(cmdId, "OTA_ACTIVATED", "\"ota\":true");
+  } else if (strcmp(action, "update") == 0 && url) {
+    if (ota.startHTTPUpdate(url)) {
+      mqtt.publishAck(cmdId, "OTA_UPDATE_OK", "\"ota\":true");
+    } else {
+      mqtt.publishAck(cmdId, "OTA_UPDATE_FAIL", "\"ota\":false");
     }
   }
+}
 
 void onCommand(const char* cmdId, int channel, const char* command) {
   Serial.printf("[CMD] cmdId=%s channel=%d command=%s\n", cmdId, channel, command);
@@ -139,6 +149,8 @@ void setup() {
   }
 
   bootTime = millis();
+  lightCycleStart = bootTime;
+  lightPhaseOn = true;
   sm.setState(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED);
   digitalWrite(LED_BUILTIN, HIGH);
   Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
@@ -188,6 +200,19 @@ void loop() {
   unsigned long now = millis();
   unsigned long uptime = (now - bootTime) / 1000;
 
+  unsigned long lightElapsed = now - lightCycleStart;
+  if (lightPhaseOn && lightElapsed >= LIGHT_CYCLE_MS) {
+    lightPhaseOn = false;
+    lightCycleStart = now;
+    hyst.setLightState(false);
+    Serial.println("[LIGHT] Fotoperiodo OFF");
+  } else if (!lightPhaseOn && lightElapsed >= DARK_CYCLE_MS) {
+    lightPhaseOn = true;
+    lightCycleStart = now;
+    hyst.setLightState(true);
+    Serial.println("[LIGHT] Fotoperiodo ON");
+  }
+
   if (now - lastSensorRead >= SENSOR_INTERVAL) {
     lastSensorRead = now;
 
@@ -195,10 +220,67 @@ void loop() {
     float temp = reading.temperature;
     float hum = reading.humidity;
 
+    if (!reading.valid) {
+      sensorFailCount++;
+      Serial.printf("[SENSOR] Lectura inválida #%u\n", sensorFailCount);
+
+      if (sensorFailCount >= 3) {
+        Serial.println("[FAILSAFE] 3 fallos consecutivos AHT21 — modo seguro");
+        ssr.setAll(0);
+        systemState = "SAFE_SENSOR";
+        if (mqtt.isConnected()) {
+          mqtt.publishAlarm("SENSOR_FAIL_AHT21");
+        }
+        if (fallbackActive && (now - fallbackStart > 300000)) {
+          fallbackActive = false;
+        }
+        if (!fallbackActive && lastSensorValid > 0) {
+          fallbackActive = true;
+          fallbackStart = now;
+          fallbackTemp = temp;
+          fallbackHum = hum;
+        }
+        sensorFailCount = 3;
+      }
+
+      if (fallbackActive) {
+        temp = fallbackTemp;
+        hum = fallbackHum;
+        reading.valid = true;
+      }
+    } else {
+      if (sensorFailCount > 0) {
+        sensorFailCount = 0;
+        Serial.println("[SENSOR] Sensor recuperado");
+      }
+      lastSensorValid = now;
+
+      if (fallbackActive) {
+        fallbackActive = false;
+      }
+    }
+
     EnsReading ensReading = {0, 0, 0, false};
     if (reading.valid && ensAvailable) {
       ensReading = ens.read(temp, hum);
+
+      if (!ensReading.valid) {
+        if (mqtt.isConnected() && (now - lastAlarmSent > 120000)) {
+          mqtt.publishAlarm("ENS160_FAIL");
+          lastAlarmSent = now;
+        }
+      }
+
+      if (ensReading.valid && ensReading.eco2 > 0 && ensReading.eco2 < 400) {
+        ensReading.eco2 = 800;
+        if (mqtt.isConnected() && (now - lastAlarmSent > 120000)) {
+          mqtt.publishAlarm("CO2_ANOMALY");
+          lastAlarmSent = now;
+        }
+      }
     }
+
+    hyst.setOverheat(temp);
 
     if (reading.valid) {
       Serial.printf("[SENSOR] T: %.1f°C | HR: %.1f%%", temp, hum);
@@ -209,21 +291,39 @@ void loop() {
         Serial.println();
       }
 
-      systemState = (reading.valid && (!ensAvailable || ensReading.valid))
-        ? "NORMAL" : "DEGRADED";
-      if (sm.getState() == ST_NORMAL || sm.getState() == ST_DEGRADED) {
-        sm.setState(systemState == "NORMAL" ? ST_NORMAL : ST_DEGRADED);
-      }
-
       uint8_t hystOutputs[4] = {0, 0, 0, 0};
       hyst.evaluate(temp, hum, ensReading.eco2, hystOutputs);
 
       CtrlMode ctrlMode = hyst.getMode();
-      if (ctrlMode == CTRL_LOCAL) {
+      if (ctrlMode == CTRL_LOCAL || hyst.getOverheatState() == OH_ACTIVE) {
         ssr.setChannel(1, hystOutputs[1]);  // CH1 — Ventilación
-        ssr.setChannel(2, hystOutputs[0]);  // CH2 — Calefacción
+        ssr.setChannel(2, hystOutputs[0]);  // CH2 — Manta Térmica
         ssr.setChannel(3, hystOutputs[2]);  // CH3 — Humidificación
-        ssr.setChannel(4, hystOutputs[3]);  // CH4 — Humidificación
+        ssr.setChannel(4, hystOutputs[3]);  // CH4 — Iluminación
+      }
+
+      if (hyst.getOverheatState() == OH_ACTIVE) {
+        systemState = "OVERHEAT";
+        if (mqtt.isConnected() && (now - lastAlarmSent > 30000)) {
+          mqtt.publishAlarm(hyst.getAlarmReason());
+          lastAlarmSent = now;
+        }
+      } else if (hyst.getOverheatState() == OH_RECOVERY) {
+        systemState = "NORMAL";
+        if (mqtt.isConnected()) {
+          mqtt.publishAlarm(hyst.getAlarmReason());
+        }
+      } else {
+        systemState = (reading.valid && (!ensAvailable || ensReading.valid))
+          ? "NORMAL" : "DEGRADED";
+      }
+
+      if (sm.getState() == ST_NORMAL || sm.getState() == ST_DEGRADED) {
+        if (systemState == "OVERHEAT" || systemState == "SAFE_SENSOR") {
+          if (sm.getState() != ST_ERROR) sm.setState(ST_ERROR);
+        } else {
+          sm.setState(systemState == "NORMAL" ? ST_NORMAL : ST_DEGRADED);
+        }
       }
 
       if (mqtt.isConnected()) {
@@ -248,8 +348,8 @@ void loop() {
           + ",\"fwVersion\":\"0.7.0\"}}";
         mqtt.publishTelemetry(payload.c_str());
       }
-    } else {
-      Serial.println("[SENSOR] Lectura inválida");
+    } else if (!fallbackActive) {
+      Serial.println("[SENSOR] Lectura inválida — sin fallback disponible");
       systemState = "DEGRADED";
       if (sm.getState() == ST_NORMAL) sm.setState(ST_DEGRADED);
     }
@@ -287,13 +387,14 @@ void loop() {
     String modeStr = (hyst.getMode() == CTRL_LOCAL) ? "LOCAL"
       : (hyst.getMode() == CTRL_REMOTE) ? "REMOTE" : "OFF";
 
-    Serial.printf("[STATS] Uptime: %lus | State: %s | WiFi: %s | MQTT: %s | RSSI: %d | Mode: %s\n",
+    Serial.printf("[STATS] Uptime: %lus | State: %s | WiFi: %s | MQTT: %s | RSSI: %d | Mode: %s | Light: %s\n",
       uptime,
       sm.getStateName(),
       wifiOk ? "OK" : "NO",
       mqtt.isConnected() ? "OK" : "NO",
       wifi.getRSSI(),
-      modeStr.c_str());
+      modeStr.c_str(),
+      lightPhaseOn ? "ON" : "OFF");
 
     if (mqtt.isConnected()) {
       uint8_t ssrStates[4];

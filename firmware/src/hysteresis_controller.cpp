@@ -1,7 +1,9 @@
 #include "hysteresis_controller.h"
+#include "config.h"
 
 HysteresisController::HysteresisController()
-  : mode(CTRL_LOCAL), heatingOn(false), ventilationOn(false), humidOn(false) {
+  : mode(CTRL_LOCAL), heatingOn(false), ventilationOn(false), humidOn(false), lightOn(false),
+    ohState(OH_NONE), postVentStart(0), postVentActive(false) {
   alarmReason[0] = '\0';
 }
 
@@ -11,6 +13,10 @@ void HysteresisController::init(Setpoints defaultSetpoints) {
   heatingOn = false;
   ventilationOn = false;
   humidOn = false;
+  lightOn = false;
+  ohState = OH_NONE;
+  postVentActive = false;
+  postVentStart = 0;
 }
 
 void HysteresisController::setSetpoints(Setpoints newSp) {
@@ -29,7 +35,26 @@ CtrlMode HysteresisController::getMode() {
   return mode;
 }
 
-bool HysteresisController::shouldHeat(float temp) {
+void HysteresisController::setOverheat(float temp) {
+  if (temp >= TEMP_CRITICAL) {
+    if (ohState != OH_ACTIVE) {
+      ohState = OH_ACTIVE;
+      snprintf(alarmReason, sizeof(alarmReason), "OVERHEAT:%.1f>%.0f", temp, TEMP_CRITICAL);
+    }
+  } else if (temp < TEMP_RECOVERY && ohState == OH_ACTIVE) {
+    ohState = OH_RECOVERY;
+  }
+}
+
+OverheatState HysteresisController::getOverheatState() {
+  return ohState;
+}
+
+bool HysteresisController::shouldHeat(float temp, bool ventOn) {
+  if (ventOn) {
+    heatingOn = false;
+    return false;
+  }
   if (heatingOn) {
     if (temp >= sp.tempMax) {
       heatingOn = false;
@@ -61,42 +86,63 @@ bool HysteresisController::shouldVentilate(float temp, uint16_t co2) {
     }
   }
 
+  if (ventilationOn && !needsVent) {
+    postVentActive = true;
+    postVentStart = millis();
+  }
+
   ventilationOn = needsVent;
   return ventilationOn;
 }
 
-bool HysteresisController::shouldHumidify(float hum) {
+bool HysteresisController::shouldHumidify(float hum, float temp, bool ventOn) {
+  if (ventOn || temp >= 27.5) {
+    humidOn = false;
+    return false;
+  }
+
   if (humidOn) {
-    if (hum >= sp.humMax) {
+    if (hum >= sp.humMax || temp >= 28.0) {
       humidOn = false;
     }
   } else {
-    if (hum <= sp.humMin - HYSTERESIS_BAND_HUM) {
+    if (hum <= sp.humMin - HYSTERESIS_BAND_HUM && temp < 27.5) {
       humidOn = true;
     }
   }
   return humidOn;
 }
 
-void HysteresisController::evaluate(float temperature, float humidity, uint16_t co2, uint8_t* ssrOutputs) {
-  alarmReason[0] = '\0';
+bool HysteresisController::isPostVentActive() {
+  if (!postVentActive) return false;
+  unsigned long now = millis();
+  unsigned long elapsed = now - postVentStart;
 
-  if (mode != CTRL_LOCAL) {
-    ssrOutputs[0] = 0;
-    ssrOutputs[1] = 0;
-    ssrOutputs[2] = 0;
-    ssrOutputs[3] = 0;
-    return;
+  if (elapsed >= POST_VENT_DELAY && elapsed < POST_VENT_DELAY + POST_VENT_DURATION) {
+    return true;
   }
 
-  uint8_t heat = shouldHeat(temperature) ? 1 : 0;
-  uint8_t vent = shouldVentilate(temperature, co2) ? 1 : 0;
-  uint8_t humid = shouldHumidify(humidity) ? 1 : 0;
+  if (elapsed >= POST_VENT_DELAY + POST_VENT_DURATION) {
+    postVentActive = false;
+  }
+  return false;
+}
 
-  ssrOutputs[0] = heat;     // → CH2 Calefacción
-  ssrOutputs[1] = vent;     // → CH1 Ventilación
-  ssrOutputs[2] = humid;    // → CH3 Humidificación
-  ssrOutputs[3] = humid;    // → CH4 Humidificación
+void HysteresisController::resetPostVent() {
+  postVentActive = false;
+  postVentStart = 0;
+}
+
+void HysteresisController::setLightState(bool on) {
+  lightOn = on;
+}
+
+bool HysteresisController::getLightState() {
+  return lightOn;
+}
+
+void HysteresisController::checkAlarms(float temperature, float humidity, uint16_t co2) {
+  if (ohState == OH_ACTIVE) return;
 
   if (temperature > sp.tempMax + 3.0) {
     snprintf(alarmReason, sizeof(alarmReason), "HIGH_TEMP:%.1f", temperature);
@@ -109,6 +155,49 @@ void HysteresisController::evaluate(float temperature, float humidity, uint16_t 
   } else if (co2 > 0 && co2 > sp.co2Max + 500) {
     snprintf(alarmReason, sizeof(alarmReason), "HIGH_CO2:%u", co2);
   }
+}
+
+void HysteresisController::evaluate(float temperature, float humidity, uint16_t co2, uint8_t* ssrOutputs) {
+  alarmReason[0] = '\0';
+
+  if (ohState == OH_ACTIVE) {
+    ssrOutputs[0] = 0;
+    ssrOutputs[1] = 1;
+    ssrOutputs[2] = 0;
+    ssrOutputs[3] = 0;
+    return;
+  }
+
+  if (ohState == OH_RECOVERY) {
+    ohState = OH_NONE;
+    snprintf(alarmReason, sizeof(alarmReason), "OVERHEAT_CLEAR:%.1f", temperature);
+    ventilationOn = false;
+  }
+
+  if (mode != CTRL_LOCAL) {
+    ssrOutputs[0] = 0;
+    ssrOutputs[1] = 0;
+    ssrOutputs[2] = 0;
+    ssrOutputs[3] = lightOn ? 1 : 0;
+    return;
+  }
+
+  uint8_t vent = shouldVentilate(temperature, co2) ? 1 : 0;
+
+  uint8_t heat = shouldHeat(temperature, vent == 1) ? 1 : 0;
+
+  uint8_t humid = shouldHumidify(humidity, temperature, vent == 1) ? 1 : 0;
+
+  if (!vent && isPostVentActive()) {
+    humid = 1;
+  }
+
+  ssrOutputs[0] = heat;     // → CH2 Manta Térmica
+  ssrOutputs[1] = vent;     // → CH1 Ventilación
+  ssrOutputs[2] = humid;    // → CH3 Humidificación
+  ssrOutputs[3] = lightOn ? 1 : 0;  // → CH4 Iluminación
+
+  checkAlarms(temperature, humidity, co2);
 }
 
 const char* HysteresisController::getAlarmReason() {
