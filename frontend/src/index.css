@@ -267,6 +267,37 @@ section h3 { font-size: 16px; margin-bottom: 16px; color: var(--text2); }
 }
 .login-card .form-group { text-align: left; }
 .login-card .submit-btn { width: 100%; }
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 44px;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.password-toggle-btn:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+.password-toggle-btn:focus {
+  outline: none;
+  color: var(--accent);
+}
 
 /* User badge */
 .app-header {
