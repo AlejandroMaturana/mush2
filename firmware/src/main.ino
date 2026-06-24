@@ -11,10 +11,12 @@
 #include "ssr_controller.h"
 #include "hysteresis_controller.h"
 #include "thingspeak_client.h"
+#include "device_manager.h"
 #include "config.h"
 
 WiFiManager wifi;
 StateMachine sm;
+DeviceManager deviceManager;
 MQTTHandler mqtt;
 OTAHandler ota;
 AHTSensor aht;
@@ -124,6 +126,8 @@ void setup() {
     sm.setError("WIFI_FAIL");
   }
 
+  deviceManager.init();
+
   if (sm.getState() != ST_ERROR) {
     if (!aht.init()) {
       Serial.println("[ERROR] AHT21 no disponible");
@@ -140,11 +144,11 @@ void setup() {
     Serial.println("[HYST] Controlador de histéresis iniciado");
 
     if (wifi.isConnected()) {
-      mqtt.init(DEVICE_ID);
+      mqtt.init(deviceManager.getDeviceId().c_str());
       mqtt.setCommandCallback(onCommand);
       mqtt.setConfigCallback(onConfig);
       mqtt.setOTACallback(onOTA);
-      ota.init(DEVICE_ID);
+      ota.init(deviceManager.getDeviceId().c_str());
     }
   }
 
@@ -184,7 +188,7 @@ void loop() {
       lastWifiRetry = now;
       if (wifi.connect()) {
         sm.setState(ST_NORMAL);
-        mqtt.init(DEVICE_ID);
+        mqtt.init(deviceManager.getDeviceId().c_str());
         mqtt.setCommandCallback(onCommand);
         mqtt.setConfigCallback(onConfig);
         mqtt.publishOnline(true);
@@ -338,14 +342,14 @@ void loop() {
         String modeStr = (ctrlMode == CTRL_LOCAL) ? "LOCAL"
           : (ctrlMode == CTRL_REMOTE) ? "REMOTE" : "OFF";
 
-        String payload = "{\"protocol\":\"1.0.0\",\"deviceId\":\"" + String(DEVICE_ID)
+        String payload = "{\"protocol\":\"1.0.0\",\"deviceId\":\"" + deviceManager.getDeviceId()
           + "\",\"ts\":" + String(now / 1000)
           + ",\"sensors\":" + sensors
           + ",\"status\":{\"state\":\"" + sm.getStateName()
           + "\",\"mode\":\"" + modeStr
           + "\",\"uptime\":" + String(uptime)
           + ",\"wifiRssi\":" + String(wifi.getRSSI())
-          + ",\"fwVersion\":\"0.7.0\"}}";
+          + ",\"fwVersion\":\"0.8.0\"}}";
         mqtt.publishTelemetry(payload.c_str());
       }
     } else if (!fallbackActive) {
@@ -399,7 +403,7 @@ void loop() {
     if (mqtt.isConnected()) {
       uint8_t ssrStates[4];
       ssr.getStateArray(ssrStates);
-      String payload = "{\"protocol\":\"1.0.0\",\"deviceId\":\"" + String(DEVICE_ID)
+      String payload = "{\"protocol\":\"1.0.0\",\"deviceId\":\"" + deviceManager.getDeviceId()
         + "\",\"ts\":" + String(now / 1000)
         + ",\"actuators\":["
         + "{\"channel\":1,\"state\":\"" + String(ssrStates[0] ? "ON" : "OFF") + "\"},"

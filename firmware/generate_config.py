@@ -25,9 +25,6 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define MQTT_BROKER_FALLBACK "{MQTT_BROKER_FALLBACK}"
 #define MQTT_PORT_FALLBACK {MQTT_PORT_FALLBACK}
 
-// Device
-#define DEVICE_ID "{DEVICE_ID}"
-
 // Intervals (ms)
 #define SENSOR_INTERVAL 10000
 #define TS_INTERVAL 15000
@@ -98,7 +95,6 @@ def main():
         MQTT_PORT=env.get('MQTT_PORT', '1883'),
         MQTT_BROKER_FALLBACK=env.get('MQTT_BROKER_FALLBACK', 'broker.hivemq.com'),
         MQTT_PORT_FALLBACK=env.get('MQTT_PORT_FALLBACK', '1883'),
-        DEVICE_ID=env.get('DEVICE_ID', 'esp8266_001'),
     )
 
     config_dir = os.path.join(os.path.dirname(__file__), 'src')

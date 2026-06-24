@@ -15,7 +15,6 @@
 #define MQTT_BROKER_FALLBACK "broker.hivemq.com"
 #define MQTT_PORT_FALLBACK 1883
 
-#define DEVICE_ID "esp8266_001"
 
 #define SENSOR_INTERVAL 10000
 #define TS_INTERVAL 20000
