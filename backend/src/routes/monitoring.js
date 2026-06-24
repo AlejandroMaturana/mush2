@@ -24,7 +24,7 @@ router.get('/metrics', async (req, res) => {
     res.json({
       timestamp: now.toISOString(),
       uptime: process.uptime(),
-      version: '0.7.0',
+      version: '0.8.0',
       mqtt: { connected: isMQTTConnected() },
       system: {
         memory: process.memoryUsage(),

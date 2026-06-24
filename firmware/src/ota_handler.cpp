@@ -53,7 +53,7 @@ bool OTAHandler::startHTTPUpdate(const char* firmwareUrl) {
   Serial.printf("[OTA] Descargando firmware: %s\n", firmwareUrl);
 
   WiFiClient client;
-  t_httpUpdate_return ret = ESPhttpUpdate.update(client, firmwareUrl, "0.7.0");
+  t_httpUpdate_return ret = ESPhttpUpdate.update(client, firmwareUrl, "0.8.0");
 
   switch (ret) {
     case HTTP_UPDATE_FAILED:
@@ -81,5 +81,5 @@ bool OTAHandler::isUpdating() {
 }
 
 const char* OTAHandler::getVersion() {
-  return "0.7.0";
+  return "0.8.0";
 }

@@ -81,7 +81,7 @@ Usar **test.mosquitto.org** como broker MQTT primario y **broker.hivemq.com** co
     "mode": "LOCAL",
     "uptime": 3600,
     "wifiRssi": -45,
-    "fwVersion": "0.7.0"
+    "fwVersion": "0.8.0"
   }
 }
 

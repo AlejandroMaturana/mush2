@@ -1,7 +1,7 @@
 # Mush2 — Manual de Usuario
 
 > Sistema de control de ambientes para cultivo de hongos adaptógenos.
-> Versión: 0.7.0 | Protocolo MQTT: 1.0.0
+> Versión: 0.8.0 | Protocolo MQTT: 1.0.0
 
 ---
 
@@ -192,4 +192,4 @@ Un ciclo ejecuta una receta de principio a fin.
 
 ---
 
-*Documentación actualizada el 2026-06-13 para Mush2 v0.7.0*
+*Documentación actualizada el 2026-06-24 para Mush2 v0.8.0*

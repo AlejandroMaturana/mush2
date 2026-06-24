@@ -60,7 +60,7 @@ El firmware publica eventos que sirven como logs remotos:
 El backend usa `console.log`/`console.error` con prefijos de módulo:
 ```
 [MQTT] Connected to mqtt://test.mosquitto.org:1883
-[MQTT] Device boot: esp8266_001 v0.7.0
+[MQTT] Device boot: esp8266_001 v0.8.0
 [TS] Synced esp8266_001 from ThingSpeak (entry 12345)
 [HTTP] GET /api/devices → 200 (45ms)
 ```

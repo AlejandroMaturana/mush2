@@ -1,5 +1,29 @@
 # Changelog — Mush2
 
+## [0.8.0] — 2026-06-24 — Fase 8 (Multi-Cámara)
+
+### Firmware
+- `DeviceManager`: deviceId dinámico derivado de MAC address, persistido en EEPROM al primer boot
+- Eliminado `DEVICE_ID` hardcoded de `config.h` — ahora cada nodo tiene identidad única
+- Todos los mensajes MQTT usan el deviceId real (MAC) en tópicos y payloads
+
+### Backend
+- Auto-registro universal de nodos: todos los handlers MQTT (`handleOnline`, `handleAck`, `handleDeviceState`) ahora crean el dispositivo si no existe via `findOrCreate`
+
+### Frontend
+- Dashboard multi-cámara con selector de dispositivo activo
+- Fila de promedios agregados (T°/HR) cuando hay 2+ cámaras
+- SSE filtrado por dispositivo seleccionado
+- `chamberName` visible en targetas de dispositivo
+
+### Docs
+- `docs/roadmap.md` extendido a 18 fases (F15-F18: Gemelo Digital, Marketplace, App Móvil, Certificación)
+- `docs/roadmap/milestone.md` actualizado con M8-M10 planificados
+- `docs/roadmap/otras-consideraciones.md` reestructurado como backlog técnico
+- `docs/roadmap/consideraciones.md` y `roadmap-v2.md` archivados (contenido integrado)
+
+---
+
 ## [0.7.0] — 2026-06-12 — Fase 7 (Producción)
 
 ### Firmware

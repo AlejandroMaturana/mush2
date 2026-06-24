@@ -194,3 +194,21 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 - Docs: `docs/user/manual.md` — manual de usuario completo en español
 
 ---
+
+## 2026-06-24 — Fase 8 completada — Mush2 v0.8.0
+
+**Logro**: Cada nodo ESP8266 tiene identidad única derivada de su MAC address; el backend reconoce y auto-registra cualquier dispositivo que se conecte; el frontend soporta visualización multi-cámara con selector y promedios agregados.
+
+**Verificación final**:
+1. DeviceManager genera deviceId desde MAC, lo persiste en EEPROM, lo reusa en boots siguientes
+2. Todos los handlers MQTT en backend crean Device si no existe (findOrCreate)
+3. Dashboard frontend filtra por deviceId vía selector y muestra promedios entre cámaras
+4. Backend tests (2 suites) pasan; frontend build exitoso
+
+**Artefactos generados**:
+- Firmware: `device_manager.h/cpp` (clase DeviceManager)
+- Backend: auto-registro en `mqttService.js` (handleOnline, handleAck, handleDeviceState)
+- Frontend: `Dashboard.jsx` — selector multi-cámara, promedios agregados, grid de dispositivos
+- Docs: `docs/roadmap/milestone.md`, `otras-consideraciones.md`, roadmap.md extendido a 18 fases
+
+---

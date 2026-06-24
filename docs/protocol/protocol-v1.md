@@ -2,7 +2,7 @@
 
 > Versión del protocolo: **1.0.0**
 > Estado: **Estable**
-> Aplica a: Firmware v0.7.0+, Backend v0.7.0+
+> Aplica a: Firmware v0.8.0+, Backend v0.8.0+
 
 ---
 
@@ -73,7 +73,7 @@ mush2/{tipo}/{deviceId}/{accion}
     "mode": "LOCAL",
     "uptime": 12345,
     "wifiRssi": -65,
-    "fwVersion": "0.7.0"
+    "fwVersion": "0.8.0"
   }
 }
 ```
@@ -190,7 +190,7 @@ O para actualización HTTP:
   "ts": 1718201000,
   "event": "BOOT",
   "bootCount": 0,
-  "fwVersion": "0.7.0"
+  "fwVersion": "0.8.0"
 }
 ```
 
