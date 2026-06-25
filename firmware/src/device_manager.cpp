@@ -2,6 +2,8 @@
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
 
+const uint16_t DeviceManager::MAGIC;
+
 DeviceManager::DeviceManager() : firstBoot(false) {
 }
 
