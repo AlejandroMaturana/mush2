@@ -1,0 +1,1020 @@
+PS D:\GitHub\QA\mush2\firmware-esp32> pio device monitor
+--- Terminal on COM5 | 115200 8-N-1
+--- Available filters and text transformations: debug, default, direct, esp32_exception_decoder, hexlify, log2file, nocontrol, printable, send_on_enter, time
+--- More details at https://bit.ly/pio-monitor-filters
+--- Quit: Ctrl+C | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[WARN[STATE] NORMAL → DEGRADED
+[OTA] Firmware v0.8.0
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: DEGRADED | WiFi: NO | HTTP: NO | RSSI: -50 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.6°C | HR: 53.9% | eCO₂: 486 ppm | TVOC: 65 ppb | AQI: 2
+[STATE] DEGRADED → NORMAL
+[WiFi] Conectado! IP: 192.168.1.24
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[SENSOR] T: 19.7°C | HR: 53.9% | eCO₂: 516 ppm | TVOC: 81 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89121) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89121) task_wdt:  - Sensors (CPU 1)
+E (89121) task_wdt: Tasks currently running:
+E (89121) task_wdt: CPU 0: IDLE0
+E (89121) task_wdt: CPU 1: Sensors
+E (89121) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #48
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[WARN] WiFi perdido — DEGRADED
+[OTA] Firmware v0.8.0
+[STATE] NORMAL → DEGRADED
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: DEGRADED | WiFi: NO | HTTP: NO | RSSI: -49 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.7°C | HR: 53.7% | eCO₂: 509 ppm | TVOC: 77 ppb | AQI: 2
+[STATE] DEGRADED → NORMAL
+[WiFi] Conectado! IP: 192.168.1.24
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[SENSOR] T: 19.7°C | HR: 53.7% | eCO₂: 510 ppm | TVOC: 77 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89123) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89123) task_wdt:  - Sensors (CPU 1)
+E (89123) task_wdt: Tasks currently running:
+E (89123) task_wdt: CPU 0: IDLE0
+E (89123) task_wdt: CPU 1: Sensors
+E (89123) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #49
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[WARN] WiFi perdi
+[OTA] Firmware v0.8.0
+[STATE] NORMAL → DEGRADED
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: DEGRADED | WiFi: NO | HTTP: NO | RSSI: -50 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.7°C | HR: 53.7% | eCO₂: 511 ppm | TVOC: 78 ppb | AQI: 2
+[STATE] DEGRADED → NORMAL
+[WiFi] Conectado! IP: 192.168.1.24
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[SENSOR] T: 19.7°C | HR: 53.7% | eCO₂: 542 ppm | TVOC: 96 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89125) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89125) task_wdt:  - Sensors (CPU 1)
+E (89125) task_wdt: Tasks currently running:
+E (89125) task_wdt: CPU 0: IDLE0
+E (89125) task_wdt: CPU 1: Sensors
+E (89125) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #50
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: NORMAL | WiFi: OK | HTTP: NO | RSSI: -49 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.7°C | HR: 53.8% | eCO₂: 501 ppm | TVOC: 73 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.7°C | HR: 53.6% | eCO₂: 524 ppm | TVOC: 85 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89131) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89131) task_wdt:  - Sensors (CPU 1)
+E (89131) task_wdt: Tasks currently running:
+E (89131) task_wdt: CPU 0: IDLE0
+E (89131) task_wdt: CPU 1: Sensors
+E (89131) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #51
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: NORMAL | WiFi: OK | HTTP: NO | RSSI: -56 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.6°C | HR: 53.5% | eCO₂: 534 ppm | TVOC: 91 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.7°C | HR: 53.3% | eCO₂: 526 ppm | TVOC: 86 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89121) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89121) task_wdt:  - Sensors (CPU 1)
+E (89121) task_wdt: Tasks currently running:
+E (89121) task_wdt: CPU 0: IDLE0
+E (89121) task_wdt: CPU 1: Sensors
+E (89121) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #1
+[STATE] BOOT → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[SENSOR] T: 19.7°C | HR: 53.2% | eCO₂: 526 ppm | TVOC: 86 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[SENSOR] T: 19.7°C | HR: 53.1% | eCO₂: 546 ppm | TVOC: 98 ppb | AQI: 2
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+E (22806) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (22806) task_wdt:  - Sensors (CPU 1)
+E (22806) task_wdt: Tasks currently running:
+E (22806) task_wdt: CPU 0: IDLE0
+E (22806) task_wdt: CPU 1: Sensors
+E (22806) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #2
+[STATE] BOOT → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[SENSOR] T: 19.6°C | HR: 53.1% | eCO₂: 544 ppm | TVOC: 97 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.7°C | HR: 53.2% | eCO₂: 550 ppm | TVOC: 101 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+E (22804) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (22804) task_wdt:  - Sensors (CPU 1)
+E (22804) task_wdt: Tasks currently running:
+E (22804) task_wdt: CPU 0: IDLE0
+E (22804) task_wdt: CPU 1: Sensors
+E (22804) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #3
+[STATE] BOOT → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[WARN] WiFi perdido — DEGRADED
+[STATE] NORMAL → DEGRADED
+[OTA] Firmware v0.8.0
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[SENSOR] T: 19.7°C | HR: 52.9% | eCO₂: 524 ppm | TVOC: 85 ppb | AQI: 2
+[STATE] DEGRADED → NORMAL
+[WiFi] Conectado! IP: 192.168.1.24
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[SENSOR] T: 19.7°C | HR: 53.3% | eCO₂: 527 ppm | TVOC: 87 ppb | AQI: 2
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":" Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+E (22804) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (22804) task_wdt:  - Sensors (CPU 1)
+E (22804) task_wdt: Tasks currently running:
+E (22804) task_wdt: CPU 0: IDLE0
+E (22804) task_wdt: CPU 1: Sensors
+E (22804) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #4
+[STATE] BOOT → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[SENSOR] T: 19.7°C | HR: 53.0% | eCO₂: 528 ppm | TVOC: 88 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[SENSOR] T: 19.7°C | HR: 53.3% | eCO₂: 549 ppm | TVOC: 100 ppb | AQI: 2
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+E (22804) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (22804) task_wdt:  - Sensors (CPU 1)
+E (22804) task_wdt: Tasks currently running:
+E (22804) task_wdt: CPU 0: IDLE0
+E (22804) task_wdt: CPU 1: Sensors
+E (22804) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #5
+[STATE] BOOT → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[SENSOR] T: 19.7°C | HR: 53.3% | eCO₂: 507 ppm | TVOC: 76 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[SENSOR] T: 19.8°C | HR: 53.4% | eCO₂: 536 ppm | TVOC: 92 ppb | AQI: 2
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+E (22810) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (22810) task_wdt:  - Sensors (CPU 1)
+E (22810) task_wdt: Tasks currently running:
+E (22810) task_wdt: CPU 0: IDLE0
+E (22810) task_wdt: CPU 1: Sensors
+E (22810) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #6
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: NORMAL | WiFi: OK | HTTP: NO | RSSI: -49 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.8°C | HR: 53.1% | eCO₂: 536 ppm | TVOC: 92 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.9°C | HR: 53.0% | eCO₂: 508 ppm | TVOC: 76 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+E (89125) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89125) task_wdt:  - Sensors (CPU 1)
+E (89125) task_wdt: Tasks currently running:
+E (89125) task_wdt: CPU 0: IDLE0
+E (89125) task_wdt: CPU 1: Sensors
+E (89125) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #7
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[WARN] WiFi perdido — DEGRADED
+[OTA] Firmware v0.8.0
+[STATE] NORMAL → DEGRADED
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: DEGRADED | WiFi: NO | HTTP: NO | RSSI: -47 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.8°C | HR: 52.9% | eCO₂: 535 ppm | TVOC: 91 ppb | AQI: 2
+[STATE] DEGRADED → NORMAL
+[WiFi] Conectado! IP: 192.168.1.24
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[SENSOR] T: 19.8°C | HR: 52.9% | eCO₂: 530 ppm | TVOC: 89 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89133) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89133) task_wdt:  - Sensors (CPU 1)
+E (89133) task_wdt: Tasks currently running:
+E (89133) task_wdt: CPU 0: IDLE0
+E (89133) task_wdt: CPU 1: Sensors
+E (89133) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #8
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[WiFi] Conectado! IP: 192.168.1.24
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[STATS] Uptime: 0s | State: NORMAL | WiFi: OK | HTTP: NO | RSSI: -46 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.8°C | HR: 53.1% | eCO₂: 546 ppm | TVOC: 98 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.8°C | HR: 53.4% | eCO₂: 587 ppm | TVOC: 123 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89105) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89105) task_wdt:  - Sensors (CPU 1)
+E (89105) task_wdt: Tasks currently running:
+E (89105) task_wdt: CPU 0: IDLE0
+E (89105) task_wdt: CPU 1: Sensors
+E (89105) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #9
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...
+
+[STATE] SAFE → INIT
+[STATE] INIT → WIFI
+[WiFi] Conectando a fh_8d5bf8...
+[DEVICE] ID desde NVS: mush2_A0F262E55CBC
+[AHT] Sensor inicializado
+[ENS160] Inicializado OK
+[HYST] Controlador de histéresis iniciado
+[OTA] ArduinoOTA listo
+[STATE] WIFI → DEGRADED
+[STATE] DEGRADED → NORMAL
+[OTA] Firmware v0.8.0
+[SYS] 5 tareas FreeRTOS creadas en Core 1 (control) y Core 0 (red)
+[WiFi] Conectado! IP: 192.168.1.24
+[STATS] Uptime: 0s | State: NORMAL | WiFi: OK | HTTP: NO | RSSI: -51 | Mode: LOCAL | Light: ON | SSR: 0000
+[SENSOR] T: 19.8°C | HR: 53.5% | eCO₂: 535 ppm | TVOC: 91 ppb | AQI: 2
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[SENSOR] T: 19.8°C | HR: 53.4% | eCO₂: 509 ppm | TVOC: 77 ppb | AQI: 2
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+[POLL] Respuesta recibida (220 bytes)
+[POLL] Raw (220 bytes): {"deviceId":"mush2_A0F262E55CBC","actuators":[{"channel":1,"state":"OFF","mode":"REMOTE"},{"channel":3,"state":"ON","mode":"REMOTE"},{"channel":4,"state":"ON","mode":"REMOTE"},{"channel":2,"state":"ON","mode":"REMOTE"}]}
+[POLL] Ch1:OFF/RM Ch2:ON/RM Ch3:ON/RM Ch4:ON/RM
+[POLL] TCP conectado a 192.168.1.6:3797
+E (89123) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+E (89123) task_wdt:  - Sensors (CPU 1)
+E (89123) task_wdt: Tasks currently running:
+E (89123) task_wdt: CPU 0: IDLE0
+E (89123) task_wdt: CPU 1: Sensors
+E (89123) task_wdt: Aborting.
+
+abort() was called at PC 0x42017c78 on core 0
+
+
+Backtrace: 0x40377dce:0x3fc95bc0 0x4037cd99:0x3fc95be0 0x40382d9d:0x3fc95c00 0x42017c78:0x3fc95c80 0x40379481:0x3fc95ca0 0x4208bddf:0x3fcf4680 0x42017a05:0x3fcf46a0 0x4037e340:0x3fcf46c0
+
+
+
+
+ELF file SHA256: 8eb9472e230257e9
+
+Rebooting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40377a04
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x4bc
+load:0x403c9700,len:0xbd8
+load:0x403cc700,len:0x2a0c
+entry 0x403c98d0
+
+[Mush2-ESP32S3] Iniciando...
+[STATE] Boot #10
+[STATE] BOOT → INIT
+[STATE] INIT → SAFE
+[SAFE] Modo seguro — 5+ reinicios consecutivos. Esperando 60s...

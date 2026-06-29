@@ -24,14 +24,8 @@ skills-lock.json
 *.swp
 *.swo
 
-# Build systems
-firmware/config.h
-firmware/.pio/
-firmware/.clang_complete
-firmware/.gdbinit
-firmware/.pioenvs/
-firmware/.piolib/
-f
+# Build systems (ESP32-S3)
+firmware-esp32/.pio/
 
 # Python
 __pycache__/
