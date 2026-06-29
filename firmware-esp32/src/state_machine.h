@@ -12,6 +12,7 @@ enum DeviceState {
   ST_ERROR,
   ST_RECOVERY,
   ST_SAFE,
+  ST_OTA_UPDATING,
 };
 
 class StateMachine {

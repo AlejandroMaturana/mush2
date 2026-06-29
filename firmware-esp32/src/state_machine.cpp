@@ -37,6 +37,7 @@ const char* StateMachine::getStateName(DeviceState s) {
     case ST_ERROR: return "ERROR";
     case ST_RECOVERY: return "RECOVERY";
     case ST_SAFE: return "SAFE";
+    case ST_OTA_UPDATING: return "OTA_UPDATING";
     default: return "UNKNOWN";
   }
 }
