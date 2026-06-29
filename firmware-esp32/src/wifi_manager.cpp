@@ -30,6 +30,13 @@ bool WiFiManager::connect() {
 bool WiFiManager::tryConnect(int netIndex) {
   if (netIndex < 0 || netIndex > 1) return false;
 
+  if (strcmp(networks[netIndex].ssid, "your_ssid_1") == 0 ||
+      strcmp(networks[netIndex].ssid, "your_ssid_2") == 0) {
+    Serial.printf("[WiFi] SSID placeholder '%s' — configure WIFI_SSID en config.h\n",
+      networks[netIndex].ssid);
+    return false;
+  }
+
   connecting = true;
   connectStartTime = millis();
   Serial.printf("[WiFi] Conectando a %s...\n", networks[netIndex].ssid);
