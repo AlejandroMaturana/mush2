@@ -13,7 +13,7 @@
 **Cambios respecto a mushprodview v1**:
 - Frontend separado con React (Vite) en lugar de Handlebars
 - Backend Node.js/Express con API REST desacoplada
-- Mismo protocolo MQTT v1 (hereda de mushprodview) pero con documentación formal
+- Protocolo HTTP polling (hereda de mushprodview) pero con documentación formal
 - Mismos sensores objetivo: AHT21 (temp/humedad), ENS160 (CO2/VOC)
 - Base de datos PostgreSQL, misma capa ORM con Sequelize 6
 
@@ -24,8 +24,7 @@
 - `docs/architecture/backend.md` — Arquitectura backend
 - `docs/architecture/frontend.md` — Arquitectura frontend
 - `docs/architecture/firmware.md` — Arquitectura firmware
-- `docs/protocol/protocol-v1.md` — Protocolo MQTT v1
-- `docs/contracts/mqtt-contract.md` — Contrato MQTT
+- `docs/contracts/api-contract.md` — Contrato API REST
 - `docs/contracts/api-contract.md` — Contrato API REST
 - `docs/requirements.md` — Requerimientos
 - `docs/deployment.md` — Estrategia de despliegue
@@ -38,18 +37,18 @@
 
 | Capa | Tecnología | Versión |
 |---|---|---|
-| Firmware | C++ (PlatformIO / ESP8266) | v0.1.0 |
+| Firmware | C++ (PlatformIO / ESP32-S3) | v0.1.0 |
 | Backend | Node.js + Express 5 + Sequelize 6 | v0.1.0 |
 | Frontend | React 18 + Vite + Chart.js | v0.1.0 |
 | Base de datos | PostgreSQL 16 | — |
-| Broker MQTT | Mosquitto / HiveMQ | — |
+| Comunicación | HTTP Polling (REST API) | — |
 | Telemetría | ThingSpeak (API REST) | — |
 
 ---
 
 ## 2026-06-12 — ADR-001: ThingSpeak como respaldo de telemetría
 
-Se documenta la decisión de usar ThingSpeak como canal secundario de telemetría. El canal primario es MQTT → Backend → PostgreSQL. ThingSpeak actúa como buffer de datos cuando el backend no está disponible y como fuente para diagnósticos rápidos.
+Se documenta la decisión de usar ThingSpeak como canal secundario de telemetría. El canal primario es HTTP polling → Backend → PostgreSQL. ThingSpeak actúa como buffer de datos cuando el backend no está disponible y como fuente para diagnósticos rápidos.
 
 ---
 
@@ -58,20 +57,20 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 **Logro**: Cadena de telemetría completa funcionando extremo a extremo.
 
 **Verificación**:
-1. Backend Node.js/Express arranca, conecta PostgreSQL y broker MQTT.
-2. Firmware ESP8266 compila (RAM 36.8%, Flash 28.5%).
+1. Backend Node.js/Express arranca, conecta PostgreSQL y backend HTTP.
+2. Firmware ESP32-S3 compila (RAM 36.8%, Flash 28.5%).
 3. Frontend React/Vite build exitoso.
-4. Prueba de integración: MQTT publish simulado → Backend recibe → DB persiste → API responde.
+4. Prueba de integración: HTTP POST simulado → Backend recibe → DB persiste → API responde.
 
 **Artefactos generados**:
-- Backend: 4 modelos, 4 endpoints, servicio MQTT con failover
+- Backend: 4 modelos, 4 endpoints, servicio HTTP polling con failover
 - Frontend: Dashboard con MetricCards, polling 10s, proxy API
-- Firmware: wifi_manager (2 redes), aht_sensor (I2C 0x38), mqtt_handler (2 brokers), thingspeak_client (HTTP)
+- Firmware: wifi_manager (2 redes), aht_sensor (I2C 0x38), http_handler (HTTP polling), thingspeak_client (HTTP)
 - `generate_config.py`: genera `config.h` desde `.env`
 
 **Dependencias eliminadas por innecesarias**: DHT sensor library, Adafruit Unified Sensor (AHT21 usa I2C directo por Wire)
 
-**Grabado en protocolo**: El payload real del firmware y los tópicos MQTT coinciden con `docs/protocol/protocol-v1.md`.
+**Grabado en protocolo**: El payload real del firmware y los endpoints HTTP coinciden con `docs/contracts/api-contract.md`.
 
 ---
 
@@ -81,13 +80,13 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 
 **Verificación**:
 1. Firmware compila con `ssr_controller` (RAM 37.7%, Flash 29.4%)
-2. Backend publica comandos MQTT QoS 2 y procesa ACK
+2. Backend publica comandos HTTP y procesa ACK
 3. SSE endpoint responde con `text/event-stream` + `{"type":"connected"}`
 4. API PATCH actuator retorna 404 correcto para dispositivos inexistentes
 5. Frontend build exitoso (215KB JS + 4KB CSS)
 
 **Artefactos generados**:
-- Firmware: `ssr_controller` (3 canales SSR, minOn/maxOn), comando MQTT (QoS 2), ACK, estado retain
+- Firmware: `ssr_controller` (3 canales SSR, minOn/maxOn), comando HTTP, ACK, estado periódico
 - Backend: modelo `Actuator`, PATCH endpoint, `publishCommand()`, SSE `/events`, manejo ACK
 - Frontend: `DeviceDetail` page, `ActuatorControl`, `useSSE` hook, routing
 
@@ -95,7 +94,7 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 - Path de `.env` corregido en `backend/src/config/env.js` (de `../../.env` a `../../../.env`)
 - `platformio.ini`: añadida dependencia `arduinojson@^7.0`
 
-**Grabado en protocolo**: Comandos (`mush2/cmd/{id}/actuator`) y ACK (`mush2/event/{id}/ack`) siguen especificación de `protocol-v1.md`.
+**Grabado en protocolo**: Comandos HTTP (`POST /api/v1/devices/{id}/actuator`) y ACK siguen especificación de `api-contract.md`.
 
 ---
 
@@ -143,15 +142,15 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 
 **Verificación**:
 1. Firmware compila con state machine + WDT (RAM 38.9%, Flash 30.2%)
-2. MQTT exponential backoff firmware (5s—180s) + backend (5s—180s)
+2. HTTP exponential backoff firmware (5s—180s) + backend (5s—180s)
 3. Backend JWT auth login/refresh/logout + RBAC jerárquico
 4. Rate limiting (100 req/15min) + Helmet CSP
 5. Seed admin user (SUPER_ADMIN)
 6. Frontend ErrorBoundary + Skeleton + responsive build exitoso
-7. Backend startup OK con MQTT conectado
+7. Backend startup OK con HTTP endpoint reachable
 
 **Artefactos generados**:
-- Firmware: `state_machine` (WDT, EEPROM, SAFE mode), MQTT backoff + LWT
+- Firmware: `state_machine` (WDT, EEPROM, SAFE mode), HTTP backoff + keep-alive
 - Backend: `User/AuditLog` models, auth routes, RBAC middleware, encryption/audit services, tests
 - Frontend: `ErrorBoundary`, `Skeleton`, `AuthContext`, responsive CSS
 
@@ -177,7 +176,7 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 
 ## 2026-06-12 — Fase 7 completada — Mush2 v0.7.0
 
-**Logro**: Mush2 alcanza madurez productiva con OTA, CI/CD, monitoreo y documentación completa. Todas las fases planificadas (0–7) están completadas.
+**Logro**: Mush2 alcanza madurez productiva con OTA, CI/CD, monitoreo y documentación completa.
 
 **Verificación final**:
 1. Firmware OTA compila (RAM 40.4%, Flash 34.4%)
@@ -188,7 +187,7 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 6. DB backup script funcional
 
 **Artefactos generados**:
-- Firmware: `ota_handler` (ArduinoOTA + HTTP Update), suscripción `mush2/cmd/{id}/ota`
+- Firmware: `ota_handler` (ArduinoOTA + HTTP Update), endpoint `POST /api/v1/devices/{id}/ota`
 - Backend: `monitoring.js` routes, `backup-db.js` script
 - CI/CD: `.github/workflows/ci.yml`
 - Docs: `docs/user/manual.md` — manual de usuario completo en español
@@ -197,17 +196,17 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 
 ## 2026-06-24 — Fase 8 completada — Mush2 v0.8.0
 
-**Logro**: Cada nodo ESP8266 tiene identidad única derivada de su MAC address; el backend reconoce y auto-registra cualquier dispositivo que se conecte; el frontend soporta visualización multi-cámara con selector y promedios agregados.
+**Logro**: Cada nodo ESP32-S3 tiene identidad única derivada de su MAC address; el backend reconoce y auto-registra cualquier dispositivo que se conecte; el frontend soporta visualización multi-cámara con selector y promedios agregados.
 
 **Verificación final**:
 1. DeviceManager genera deviceId desde MAC, lo persiste en EEPROM, lo reusa en boots siguientes
-2. Todos los handlers MQTT en backend crean Device si no existe (findOrCreate)
+2. Todos los handlers HTTP en backend crean Device si no existe (findOrCreate)
 3. Dashboard frontend filtra por deviceId vía selector y muestra promedios entre cámaras
 4. Backend tests (2 suites) pasan; frontend build exitoso
 
 **Artefactos generados**:
 - Firmware: `device_manager.h/cpp` (clase DeviceManager)
-- Backend: auto-registro en `mqttService.js` (handleOnline, handleAck, handleDeviceState)
+- Backend: auto-registro en `httpService.js` (handleOnline, handleAck, handleDeviceState)
 - Frontend: `Dashboard.jsx` — selector multi-cámara, promedios agregados, grid de dispositivos
 - Docs: `docs/roadmap/milestone.md`, `otras-consideraciones.md`, roadmap.md extendido a 18 fases
 

@@ -1,14 +1,74 @@
 # Changelog — Mush2
 
+## [0.9.0] — 2026-06-28 — Arquitectura FreeRTOS + Estrategia de Seguridad
+
+### ADRs
+- `ADR-012-FreeRTOS.md`: Arquitectura formal de tareas FreeRTOS, sincronización con colas (cmdQueue, sensorDataQueue), sistema de watchdog jerárquico unificado (TWDT + SWDT + Health Check) y roadmap de refactorización en 4 fases.
+- `ADR-013-Seguridad-Estrategia.md`: Estrategia de seguridad por capas con 8 dominios (secretos, transporte, autenticación de dispositivos, hardening firmware, backend, frontend, auditoría, supply chain). Roadmap en 5 fases.
+
+### Firmware (ESP32-S3)
+- v0.9.0 consolidada (ya actualizada en commits anteriores)
+- 6 tareas FreeRTOS documentadas formalmente con prioridades, stacks y delays
+- Watchdog documentado como sistema de 3 niveles
+
+### Backend
+- Version bump: 0.8.0 → 0.9.0
+
+### Frontend
+- Version bump: 0.8.0 → 0.9.0
+
+### Documentación (docs/)
+- **README.md**: Actualizado a v0.9.0 con referencias a ADR-012, ADR-013, stack FreeRTOS, arquitectura de seguridad
+- **docs/architecture/architecture.md**: Diagrama actualizado con FreeRTOS, SSR 4 canales, watchdog jerárquico; sección de seguridad actualizada por ADR-013
+- **docs/architecture/backend.md**: Versión 0.9.0, servicios actualizados (mqttBridge, webSocketServer), modelo ApiKey
+- **docs/architecture/firmware.md**: Reescrito completo: 6 tareas FreeRTOS, pinout real de config.h, watchdog jerárquico, sincronización con colas, ciclo principal FreeRTOS
+- **docs/architecture/frontend.md**: Version bump, flujo auth con httpOnly cookie (ADR-013)
+- **docs/roadmap.md**: Fase 0 actualizada con ADR-001 a ADR-013; fase 14 actualizada; v0.9.0 como versión actual
+- **docs/roadmap/milestone.md**: Referencias a ADRs actualizadas, v0.9.0
+- **docs/roadmap/otras-consideraciones.md**: Items vinculados a fases correctas del roadmap
+- **docs/requirements.md**: Requisitos actualizados con FreeRTOS, watchdog jerárquico, NVS, Secure Boot
+- **docs/database.md**: Modelo ApiKey integrado en relaciones, PostgreSQL 16
+- **docs/deployment.md**: Notas de seguridad (NVS, generate_config.py), HTTPS
+- **docs/operations.md**: Version bump, security maintenance actualizado
+- **docs/scalability.md**: Version bump
+- **docs/firmware.md**: Actualizado con FreeRTOS, tareas, watchdog jerárquico, pinout correcto
+
+---
+
+## [0.8.1] — 2026-06-27 — Fix Stack Overflow + LAN Connectivity
+
+### Firmware (ESP32-S3)
+- **Bug fix crítico**: Stack canary overflow (`Guru Meditation: Stack canary watchpoint triggered`) 
+  causado por `WiFiClientSecure` (mbedTLS) al intentar TLS. El TLS handshake 
+  requería ~80 KB de stack; la tarea HTTP tenía insuficientes 48 KB (12288 words).
+- `config.h`: `STACK_HTTP` aumentado de 12288 → 20480 words (~80 KB) como medida defensiva.
+- `config.h`: Nuevo flag `HTTP_DISABLE_TLS` para compilación sin TLS (LAN local).
+- `config.h`: Backend apuntado a IP LAN del PC (`192.168.1.6:3797`).
+- `http_handler.h`: Cliente HTTP polling con compilación condicional para TLS.
+- `http_handler.cpp`: Eliminado reintento automático PLAIN→TLS que causaba el reboot loop.
+  La lógica de fallback ahora rota solo entre endpoints.
+  `BACKOFF_MAX` reducido de 180s → 60s (LAN no necesita backoff largo).
+- `http_handler.cpp`: Pre-resolución DNS inteligente: si `API_HOST` es una IP literal, 
+  no llama a resolución DNS (ahorra ~12s de bloqueo por boot).
+
+### Infraestructura
+- Eliminada dependencia de Mosquitto/HiveMQ; la comunicación ahora es HTTP directo al backend.
+
+### Backend
+- `.env`: `API_HOST` configurado como `localhost`.
+- `.env`: `DEVICE_ID` configurado como `mush2_A0F262E55CBC` (MAC del ESP32-S3).
+
+---
+
 ## [0.8.0] — 2026-06-24 — Fase 8 (Multi-Cámara)
 
 ### Firmware
 - `DeviceManager`: deviceId dinámico derivado de MAC address, persistido en EEPROM al primer boot
 - Eliminado `DEVICE_ID` hardcoded de `config.h` — ahora cada nodo tiene identidad única
-- Todos los mensajes MQTT usan el deviceId real (MAC) en tópicos y payloads
+- Todos los mensajes HTTP usan el deviceId real (MAC) en payloads
 
 ### Backend
-- Auto-registro universal de nodos: todos los handlers MQTT (`handleOnline`, `handleAck`, `handleDeviceState`) ahora crean el dispositivo si no existe via `findOrCreate`
+- Auto-registro universal de nodos: todos los handlers HTTP (`handleOnline`, `handleAck`, `handleDeviceState`) ahora crean el dispositivo si no existe via `findOrCreate`
 
 ### Frontend
 - Dashboard multi-cámara con selector de dispositivo activo
@@ -28,12 +88,12 @@
 
 ### Firmware
 - OTA: ArduinoOTA para actualización local + HTTP Update remoto
-- Suscripción `mush2/cmd/{id}/ota` con acciones `activate` (modo OTA) y `update` (HTTP update)
+- Endpoint HTTP `POST /api/v1/devices/{id}/ota` con acciones `activate` (modo OTA) y `update` (HTTP update)
 - Versionado del firmware expuesto vía `getVersion()`
 
 ### Backend
 - `/api/v1/monitoring/metrics` endpoint con estadísticas del sistema
-- `/api/v1/health/db` y `/health/mqtt` health checks específicos
+- `/api/v1/health/db` y `/health/backend` health checks específicos
 - Script `src/scripts/backup-db.js` para backup programado de PostgreSQL
 - Dependencia: `pg_dump` para backups
 
@@ -73,8 +133,8 @@
 - Máquina de estados: BOOT → INIT → WIFI → NORMAL → DEGRADED → ERROR → RECOVERY → SAFE
 - Watchdog hardware 8s + software 30s con feed en cada loop
 - EEPROM: contador de reinicios, modo SAFE tras 5 reinicios consecutivos
-- MQTT: exponential backoff (5s – 180s) + LWT online/offline retain
-- Fallback automático a modo LOCAL sin conexión WiFi/MQTT
+- HTTP: exponential backoff (5s – 180s) + keep-alive
+- Fallback automático a modo LOCAL sin conexión WiFi/HTTP
 
 ### Backend
 - Autenticación JWT: login/refresh/logout + token rotation
@@ -83,7 +143,7 @@
 - Helmet CSP + CORS hardening
 - Cifrado AES-256-GCM para claves ThingSpeak
 - Audit logging de operaciones sensibles
-- MQTT: exponential backoff + alarm dedup backend-side
+- HTTP: exponential backoff + alarm dedup backend-side
 - Pruebas unitarias: Jest + Supertest configurados
 - Seed: usuario admin (SUPER_ADMIN) creado automáticamente
 
@@ -98,9 +158,9 @@
 ### Firmware
 - `hysteresis_controller`: reglas locales con histéresis (temp, hum, CO2)
 - SSR1 = calefacción (temp), SSR2 = ventilación (temp+CO2), SSR3 = humidificación (hum)
-- Modos LOCAL (reglas), REMOTE (comandos MQTT), OFF
-- Suscripción `mush2/cmd/{id}/config` para setpoints remotos
-- Alarmas automáticas en `mush2/event/{id}/alarm` (HIGH_TEMP, LOW_TEMP, HIGH_HUM, etc.)
+- Modos LOCAL (reglas), REMOTE (comandos HTTP), OFF
+- Endpoint HTTP `POST /api/v1/devices/{id}/config` para setpoints remotos
+- Alarmas automáticas reportadas vía HTTP polling (HIGH_TEMP, LOW_TEMP, HIGH_HUM, etc.)
 - Setpoints por defecto en config.h (DEFAULT_TEMP_MIN/MAX, etc.)
 
 ### Backend
@@ -119,7 +179,7 @@
 ### Firmware
 - `ens160_sensor`: driver ENS160 (I2C 0x53), AQI/eCO₂/TVOC
 - Calibración del ENS160 con temperatura/humedad del AHT21
-- CO₂ y VOC incluidos en telemetría MQTT
+- CO₂ y VOC incluidos en telemetría HTTP
 - Modo DEGRADED si ENS160 no responde (operación solo con AHT21)
 - `Wire.begin()` movido a `main.ino` (I2C compartido entre ambos sensores)
 - Dependencia añadida: DFRobot_ENS160
@@ -140,15 +200,15 @@
 
 ### Firmware
 - `ssr_controller`: 3 canales SSR, minOn/maxOn timers, safety limits
-- Suscripción MQTT `mush2/cmd/{id}/actuator` (QoS 2) con parseo JSON
-- ACK automático en `mush2/event/{id}/ack`
-- Estado periódico de actuadores en `mush2/telemetry/{id}/state` (retain)
+- Endpoint HTTP `POST /api/v1/devices/{id}/actuator` con parseo JSON
+- ACK automático en respuesta HTTP
+- Estado periódico de actuadores en payload de telemetría
 - Dependencia añadida: ArduinoJson 7
 
 ### Backend
 - Modelo `Actuator` (deviceId, channel, state, mode, lastCommand, lastAck)
 - `GET /api/v1/devices/:id/actuators`
-- `PATCH /api/v1/devices/:id/actuators/:channel` → publica comando MQTT
+- `PATCH /api/v1/devices/:id/actuators/:channel` → envía comando HTTP
 - Manejo de ACK: actualiza DB, emite SSE
 - SSE endpoint `GET /events` (eventos ack, state, telemetry)
 - Fix: path de `.env` corregido
@@ -165,7 +225,7 @@
 ### Backend
 - Setup Express 5 + Sequelize 6 + PostgreSQL
 - Modelos: Device, Sensor, Telemetry, Event
-- Servicio MQTT con failover entre 2 brokers
+- Cliente HTTP polling con failover entre 2 endpoints
 - API REST: listar dispositivos, telemetría, health check
 - Persistencia automática de telemetría entrante
 
@@ -176,9 +236,9 @@
 - Proxy API Vite → Backend
 
 ### Firmware
-- Setup PlatformIO (WeMos D1 Mini, ESP8266)
+- Setup PlatformIO (ESP32-S3)
 - WiFi manager: 2 redes con failover
 - Driver AHT21 (I2C 0x38) — temperatura y humedad
-- MQTT handler: publicación telemetría, boot event, online status
+- HTTP handler: publicación telemetría, boot event, online status
 - ThingSpeak client: envío HTTP de respaldo
 - `generate_config.py`: genera `config.h` desde `.env`

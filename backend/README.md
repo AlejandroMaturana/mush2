@@ -10,7 +10,7 @@ Sistema API REST para gestión de cultivos de hongos adaptógenos. Orquesta disp
 | **Framework** | Express 5 | Routing, middleware, HTTP |
 | **ORM** | Sequelize 6 | PostgreSQL abstraction layer |
 | **Database** | PostgreSQL 16 | Persistencia principal |
-| **Mensajería** | MQTT.js 5 | Comunicación pub/sub con firmware |
+| **Comunicación** | HTTP (axios) | Comunicación HTTP con firmware |
 | **Auth** | jsonwebtoken (JWT) | Autenticación stateless |
 | **Seguridad** | bcryptjs, helmet, express-validator | Criptografía, headers, validación |
 | **Testing** | Jest + Supertest | Tests unitarios e integración |
@@ -21,7 +21,7 @@ Sistema API REST para gestión de cultivos de hongos adaptógenos. Orquesta disp
 
 - Node.js 20.x o superior
 - PostgreSQL 16.x
-- MQTT Broker (Mosquitto o HiveMQ)
+- Backend API HTTP (puerto 3797)
 - pnpm (gestor de paquetes)
 
 ### Instalación
@@ -35,7 +35,7 @@ pnpm install
 cp .env.example .env.local
 # Editar .env.local con credenciales locales:
 # - DB_HOST, DB_USER, DB_PASSWORD
-# - MQTT_BROKER
+# - API_HOST
 # - JWT_SECRET (cambiar en producción)
 
 # 3. Sincronizar base de datos
@@ -51,7 +51,7 @@ pnpm run dev            # nodemon con hot reload (puerto 3797)
 ```
 src/
 ├── app.js                    # Configuración Express (middleware, rutas)
-├── server.js                 # Entry point (init DB, MQTT, services)
+├── server.js                 # Entry point (init DB, HTTP, services)
 ├── config/
 │   ├── env.js               # Gestión de variables de entorno
 │   └── database.js          # Configuración Sequelize
@@ -71,7 +71,7 @@ src/
 │   ├── admin.js             # Endpoints administrativos
 │   └── monitoring.js        # Health checks, estado
 ├── services/                 # Lógica de negocio
-│   ├── mqttService.js       # Conexión MQTT, parseo de mensajes
+│   ├── httpService.js       # Cliente HTTP polling, parseo de respuestas
 │   ├── controlEngine.js     # Motor de control ambiental
 │   ├── auditService.js      # Logging de acciones
 │   ├── encryptionService.js # AES-256 para secretos
@@ -125,12 +125,12 @@ GET    /api/v1/admin/audit-logs   # Audit trail
 ### Flujo de Datos
 
 ```
-Firmware (ESP8266)
+Firmware (ESP32-S3)
     ↓
-    │ MQTT Publish
+    │ HTTP Polling (POST /api/v1/telemetry)
     ↓
 Backend (Node.js)
-    ├→ mqttService.js (parsea tópicos)
+    ├→ httpService.js (procesa payloads)
     ├→ Models (persiste en PostgreSQL)
     ├→ Events (emite a controlEngine)
     ├→ controlEngine.js (compara con umbrales)
@@ -142,7 +142,7 @@ Backend (Node.js)
 **Entidades principales:**
 
 - **User** — Usuarios del sistema con roles (ADMIN, USER)
-- **Device** — Dispositivos IoT (ESP8266) en el terreno
+- **Device** — Dispositivos IoT (ESP32-S3) en el terreno
 - **Sensor** — Tipos de sensor por dispositivo (temp, humidity, CO2)
 - **Telemetry** — Lecturas históricas (timestamp series)
 - **Recipe** — Receta de cultivo con thresholds por fase
@@ -257,7 +257,7 @@ pnpm test src/__tests__/api.test.js
 
 - Mínimo 60% cobertura en nuevos archivos
 - Tests de error cases (validación, permisos)
-- Mocking de MQTT, DB cuando es apropiado
+- Mocking de HTTP, DB cuando es apropiado
 
 **Ejemplo:**
 
@@ -291,8 +291,8 @@ describe('RBAC Middleware', () => {
 curl http://localhost:3797/health
 # { "status": "ok", "uptime": 3600 }
 
-curl http://localhost:3797/monitoring/health/mqtt
-# { "status": "ok", "mqtt": "connected" }
+curl http://localhost:3797/monitoring/health/backend
+# { "status": "ok", "http": "reachable" }
 ```
 
 ### Logs
@@ -301,7 +301,7 @@ Todos los logs tienen prefijo `[COMPONENT_NAME]`:
 
 ```
 [DB] Conexión establecida
-[MQTT] Conectado a broker primario
+[HTTP] Conexión con backend establecida
 [CONTROL] Cycle 1 avanzó a fase FRUITING
 [AUTH] Login exitoso para usuario admin
 [ERROR] Telemetria inválida: temperatura fuera de rango
@@ -340,34 +340,34 @@ pnpm run build              # Build (si aplica)
 pnpm run start              # Iniciar servidor
 ```
 
-## 🔗 Integración MQTT
+## 🔗 Integración HTTP
 
-Formato de tópicos: `mush2/[type]/[deviceId]/[action]`
+Endpoints de comunicación con firmware:
 
-**Suscripciones (backend escucha):**
-
-```
-mush2/telemetry/+/sensors   → Lectura de sensores
-mush2/telemetry/+/state     → Estado de actuadores
-mush2/event/+/boot          → Device boot
-mush2/event/+/ack           → Confirmación de comando
-mush2/event/+/alarm         → Alarma del dispositivo
-mush2/state/+/online        → Status online/offline
-```
-
-**Publicaciones (backend envía):**
+**POST (firmware → backend)**
 
 ```
-mush2/cmd/[deviceId]/actuator   → Comando de control
+POST /api/v1/telemetry/sensors   → Lectura de sensores
+POST /api/v1/telemetry/state     → Estado de actuadores
+POST /api/v1/events/boot         → Device boot
+POST /api/v1/events/ack          → Confirmación de comando
+POST /api/v1/events/alarm        → Alarma del dispositivo
+POST /api/v1/state/online        → Status online/offline
 ```
 
-Detalles: [`docs/protocol/protocol-v1.md`](../../docs/protocol/protocol-v1.md)
+**GET (firmware → backend polling)**
+
+```
+GET /api/v1/devices/[deviceId]/commands   → Comandos pendientes
+```
+
+Detalles: [`docs/contracts/api-contract.md`](../../docs/contracts/api-contract.md)
 
 ## 📖 Documentación Relacionada
 
 - [`docs/architecture/backend.md`](../../docs/architecture/backend.md) — Arquitectura detallada
 - [`docs/contracts/api-contract.md`](../../docs/contracts/api-contract.md) — Especificación de endpoints
-- [`docs/contracts/mqtt-contract.md`](../../docs/contracts/mqtt-contract.md) — Protocolo MQTT
+- [`docs/contracts/api-contract.md`](../../docs/contracts/api-contract.md) — Protocolo HTTP
 - [`docs/governance/coding-standards.md`](../../docs/governance/coding-standards.md) — Estándares de código
 - [`docs/deployment.md`](../../docs/deployment.md) — Deployment a producción
 
@@ -386,12 +386,12 @@ Verifica:
 - Variables en `.env.local`: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`
 - Pool de conexiones no saturado: `SELECT count(*) FROM pg_stat_activity;`
 
-### "MQTT connection timeout"
+### "HTTP connection timeout"
 
 Verifica:
-- Broker está accessible: `mosquitto_sub -h mqtt.broker.com -t "test"`
-- Firewall permite puerto MQTT (1883 / 8883 TLS)
-- Credenciales MQTT en `.env.local`
+- Backend está accesible: `curl http://localhost:3797/health`
+- Firewall permite puerto HTTP (3797)
+- `API_HOST` configurado correctamente en `.env.local`
 
 ### "Token invalid"
 
@@ -406,7 +406,7 @@ Para ambientes de producción:
 - [ ] Usar `NODE_ENV=production`
 - [ ] Configurar base de datos PostgreSQL dedicada
 - [ ] Certificados SSL/TLS para HTTPS
-- [ ] Broker MQTT con TLS (puerto 8883)
+- [ ] Comunicación vía HTTPS (TLS)
 - [ ] Logging centralizado (ELK, Datadog, CloudWatch)
 - [ ] Monitoreo de salud (healthchecks cada 30s)
 - [ ] Backups automáticos de DB (diarios)

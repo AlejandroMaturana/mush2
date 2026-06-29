@@ -117,7 +117,7 @@ import { getDevices, sendActuatorCommand } from './api/devices.js';
 const devices = await getDevices();
 
 // Enviar comando
-await sendActuatorCommand('ESP8266_001', {
+await sendActuatorCommand('mush2_s3_001', {
   channel: 1,
   state: true,
   duration: 3600
