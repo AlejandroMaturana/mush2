@@ -425,7 +425,7 @@ void taskOTA(void* pvParameters) {
       if (sm.getState() != ST_NORMAL) {
         Serial.printf("[OTA] Rechazado: estado %s\n", sm.getStateName());
         mqtt.publish("ota/rejected", "{\"causa\":\"estado_no_normal\"}");
-        continue;
+        goto ota_skip;
       }
 
       OtaCandidate cand = otaselector.select(
@@ -437,7 +437,7 @@ void taskOTA(void* pvParameters) {
       if (!cand.valid) {
         Serial.println("[OTA] Rechazado por el decisor");
         mqtt.publish("ota/rejected", "{\"causa\":\"decisor_rechaza\"}");
-        continue;
+        goto ota_skip;
       }
 
       String currentVer = nvsGetFwVer();
@@ -446,7 +446,7 @@ void taskOTA(void* pvParameters) {
         Serial.printf("[OTA] Rechazado: version %s <= actual %s\n",
           cand.version.c_str(), currentVer.c_str());
         mqtt.publish("ota/rejected", "{\"causa\":\"version_no_mayor\"}");
-        continue;
+        goto ota_skip;
       }
 
       Serial.println("[OTA] Autorizado — iniciando shutdown...");
@@ -474,6 +474,7 @@ void taskOTA(void* pvParameters) {
       }
     }
 
+ota_skip:
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_OTA));
   }
 }
