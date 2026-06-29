@@ -19,6 +19,7 @@
 #include "hysteresis_controller.h"
 #include "thingspeak_client.h"
 #include "device_manager.h"
+#include "mqtt_client.h"
 
 // Global instances
 WiFiManager wifi;
@@ -35,6 +36,7 @@ EnsSensor ens;
 SSRController ssr;
 HysteresisController hyst;
 ThingSpeakClient ts;
+MQTTClient mqtt;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);
 
 // Shared state (accessed across cores, declared volatile)
@@ -67,6 +69,7 @@ TaskHandle_t taskWiFiHandle = NULL;
 TaskHandle_t taskPollerHandle = NULL;
 TaskHandle_t taskOTAHandle = NULL;
 TaskHandle_t taskTelemetryHandle = NULL;
+TaskHandle_t taskMQTTHandle = NULL;
 
 // Forward declarations
 void setLEDColor(uint8_t r, uint8_t g, uint8_t b);
@@ -349,10 +352,38 @@ void taskPoller(void* pvParameters) {
   }
 }
 
-// Shared OTA command state (set by serial or future MQTT)
+// Shared OTA command state (set by serial or MQTT)
 volatile bool otaCommandPending = false;
 char otaCommandUrl[256] = "";
 char otaCommandVersion[32] = "";
+
+// ============================================================
+//  MQTT Task
+// ============================================================
+
+void otaMqttCallback(const char* url, const char* version) {
+  strncpy(otaCommandUrl, url, sizeof(otaCommandUrl) - 1);
+  strncpy(otaCommandVersion, version, sizeof(otaCommandVersion) - 1);
+  otaCommandPending = true;
+  Serial.printf("[OTA] Comando recibido via MQTT: %s (v%s)\n", otaCommandUrl, otaCommandVersion);
+}
+
+void taskMQTT(void* pvParameters) {
+  esp_err_t wdtErr = esp_task_wdt_add(NULL);
+  if (wdtErr != ESP_OK) Serial.printf("[MQTT] WDT add: %s (0x%x)\n",
+    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
+  TickType_t lastWake = xTaskGetTickCount();
+
+  while (true) {
+    esp_task_wdt_reset();
+
+    if (wifi.isConnected()) {
+      mqtt.loop();
+    }
+
+    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_MQTT));
+  }
+}
 
 void taskOTA(void* pvParameters) {
   esp_err_t wdtErr = esp_task_wdt_add(NULL);
@@ -392,6 +423,7 @@ void taskOTA(void* pvParameters) {
 
       if (sm.getState() != ST_NORMAL) {
         Serial.printf("[OTA] Rechazado: estado %s\n", sm.getStateName());
+        mqtt.publish("ota/rejected", "{\"causa\":\"estado_no_normal\"}");
         continue;
       }
 
@@ -403,6 +435,7 @@ void taskOTA(void* pvParameters) {
 
       if (!cand.valid) {
         Serial.println("[OTA] Rechazado por el decisor");
+        mqtt.publish("ota/rejected", "{\"causa\":\"decisor_rechaza\"}");
         continue;
       }
 
@@ -411,10 +444,17 @@ void taskOTA(void* pvParameters) {
       if (cmp <= 0) {
         Serial.printf("[OTA] Rechazado: version %s <= actual %s\n",
           cand.version.c_str(), currentVer.c_str());
+        mqtt.publish("ota/rejected", "{\"causa\":\"version_no_mayor\"}");
         continue;
       }
 
       Serial.println("[OTA] Autorizado — iniciando shutdown...");
+
+      char statusPayload[128];
+      snprintf(statusPayload, sizeof(statusPayload),
+        "{\"estado\":\"OTA_STARTING\",\"version\":\"%s\"}", cand.version.c_str());
+      mqtt.publish("ota/status", statusPayload);
+
       otaShutdown.begin();
       sm.fsmTransition(ST_OTA_UPDATING, "ota starting");
 
@@ -425,6 +465,9 @@ void taskOTA(void* pvParameters) {
         ESP.restart();
       } else {
         Serial.println("[OTA] Fallo en ejecutor — restaurando");
+        snprintf(statusPayload, sizeof(statusPayload),
+          "{\"estado\":\"OTA_FAILED\",\"error\":\"download_failed\"}");
+        mqtt.publish("ota/status", statusPayload, true);
         sm.fsmTransition(ST_NORMAL, "ota failed");
       }
     }
@@ -583,6 +626,10 @@ void setup() {
   otaConfirmacion = OTAConfirmation();
   nvsInit();
 
+  // MQTT
+  mqtt.init(deviceManager.getDeviceId().c_str());
+  mqtt.setOtaCallback(otaMqttCallback);
+
   bootTime = millis();
   lightCycleStart = bootTime;
   sharedLightOn = true;
@@ -592,7 +639,12 @@ void setup() {
   // Post-boot OTA: confirm firmware if pending verification
   if (otaConfirmacion.selfTest()) {
     otaConfirmacion.confirm();
-    Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", nvsGetFwVer().c_str());
+    String ver = nvsGetFwVer();
+    Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
+    char successPayload[128];
+    snprintf(successPayload, sizeof(successPayload),
+      "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
+    mqtt.publish("ota/status", successPayload, true);
   }
 
   // Create FreeRTOS tasks
@@ -617,12 +669,16 @@ void setup() {
     &taskOTAHandle, CORE_NETWORK);
 
   xTaskCreatePinnedToCore(
+    taskMQTT, "MQTT", STACK_MQTT, NULL, PRIORITY_MQTT,
+    &taskMQTTHandle, CORE_NETWORK);
+
+  xTaskCreatePinnedToCore(
     taskTelemetry, "Telemetry", STACK_TELEMETRY, NULL, PRIORITY_TELEMETRY,
     &taskTelemetryHandle, CORE_NETWORK);
 
   Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
   Serial.printf("[SYS] %d tareas FreeRTOS creadas en Core %d (control) y Core %d (red)\n",
-    5, CORE_CONTROL, CORE_NETWORK);
+    6, CORE_CONTROL, CORE_NETWORK);
 
   setLEDColor(0, 0, 0);
 }
