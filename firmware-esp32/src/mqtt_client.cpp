@@ -50,7 +50,7 @@ void MQTTClient::_connect() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   char clientId[40];
-  snprintf(clientId, sizeof(clientId), "mush2_%s", _deviceId);
+  snprintf(clientId, sizeof(clientId), "%s", _deviceId);
 
   Serial.printf("[MQTT] Conectando a %s:%d como %s...\n", MQTT_BROKER, MQTT_PORT, clientId);
 
