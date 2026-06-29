@@ -22,7 +22,9 @@
 #endif
 
 // ---- ThingSpeak ----
+#ifndef TS_HOST
 #define TS_HOST "api.thingspeak.com"
+#endif
 #define TS_PORT 80
 #ifndef TS_API_KEY
 #define TS_API_KEY "your_ts_api_key"
@@ -32,11 +34,15 @@
 #ifndef MQTT_BROKER
 #define MQTT_BROKER "test.mosquitto.org"
 #endif
+#ifndef MQTT_PORT
 #define MQTT_PORT 1883
+#endif
 #ifndef MQTT_BROKER_FALLBACK
 #define MQTT_BROKER_FALLBACK "broker.hivemq.com"
 #endif
+#ifndef MQTT_PORT_FALLBACK
 #define MQTT_PORT_FALLBACK 1883
+#endif
 
 // ---- Device ----
 #ifndef DEVICE_ID
@@ -47,7 +53,9 @@
 #ifndef BACKEND_HOST
 #define BACKEND_HOST "192.168.1.100"
 #endif
+#ifndef BACKEND_PORT
 #define BACKEND_PORT 3000
+#endif
 
 // ---- I2C (Sensores ENS160 + AHT21) ----
 #define I2C_SDA GPIO_NUM_4
@@ -78,7 +86,7 @@
 #define STACK_MQTT      4096
 #define STACK_OTA       8192
 #define STACK_TELEMETRY 4096
-#define STACK_POLLER    4096
+#define STACK_POLLER    8192
 
 // ---- FreeRTOS: Task Priorities ----
 #define PRIORITY_SENSORS    3
@@ -92,10 +100,10 @@
 #define DELAY_SENSORS   5000
 #define DELAY_SSR       250
 #define DELAY_WIFI      1000
-#define DELAY_MQTT      50
+#define DELAY_MQTT      500
 #define DELAY_OTA       100
 #define DELAY_TELEMETRY 5000
-#define DELAY_POLLER    100
+#define DELAY_POLLER    500
 
 // ---- Intervals (ms) ----
 #define SENSOR_INTERVAL 10000
