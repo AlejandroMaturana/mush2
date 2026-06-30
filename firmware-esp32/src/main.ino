@@ -273,8 +273,6 @@ void taskSSR(void* pvParameters) {
       setLEDColor(255, 0, 0);
     } else if (!sharedSensorsValid) {
       setLEDColor(255, 255, 0);
-    } else if (httpPoller.isConnected()) {
-      setLEDColor(0, 255, 255);
     } else {
       setLEDColor(0, 255, 0);
     }
