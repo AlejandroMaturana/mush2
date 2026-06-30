@@ -4,7 +4,7 @@
 **Estado**: Aceptado
 
 ## Contexto
-El sistema de control ambiental requiere actuar sobre cargas de corriente alterna (ventiladores, resistencias calefactoras, humidificadores) en respuesta a las lecturas de los sensores. Se necesita un módulo de conmutación que aísle galvánicamente la lógica de 3.3V del ESP8266 de la línea de 220V AC, que soporte al menos 2A por canal, y que pueda ser controlado directamente desde los GPIOs.
+El sistema de control ambiental requiere actuar sobre cargas de corriente alterna (ventiladores, resistencias calefactoras, humidificadores) en respuesta a las lecturas de los sensores. Se necesita un módulo de conmutación que aísle galvánicamente la lógica de 3.3V del ESP32-S3 de la línea de 220V AC, que soporte al menos 2A por canal, y que pueda ser controlado directamente desde los GPIOs.
 
 ## Decisión
 Usar un **módulo SSR de 4 canales** con activación por nivel alto (high-level trigger) a 3.3V, controlando:
@@ -17,7 +17,7 @@ Usar un **módulo SSR de 4 canales** con activación por nivel alto (high-level 
 1. **Aislamiento galvánico por optoacoplador**: Cada canal separa físicamente la lógica de control de la línea de potencia.
 2. **Conmutación silenciosa**: SSRs con detección de cruce por cero eliminan ruido electromagnético.
 3. **Ausencia de partes móviles**: Vida útil prácticamente ilimitada para cargas resistivas.
-4. **Activación por nivel alto (high-level trigger)**: Compatible directamente con los GPIOs del ESP8266 a 3.3V.
+4. **Activación por nivel alto (high-level trigger)**: Compatible directamente con los GPIOs del ESP32-S3 a 3.3V.
 5. **Cuatro canales para redundancia**: Cubren ventilación, calefacción y doble humidificación para ambientes que requieren mayor capacidad de generación de vapor.
 
 ## Consecuencias
@@ -36,7 +36,7 @@ Usar un **módulo SSR de 4 canales** con activación por nivel alto (high-level 
 ## Detalle técnico
 
 ### Mapeo de pines
-| Canal | Pin ESP8266 | GPIO   | Actuador        |
+| Canal | Pin ESP32-S3 | GPIO   | Actuador        |
 |-------|-------------|--------|-----------------|
 | 1     | D5          | GPIO14 | Ventilación     |
 | 2     | D7          | GPIO13 | Calefacción     |
@@ -58,7 +58,7 @@ El firmware implementa `SSRController` con las siguientes características:
 - Control de 4 canales independientes
 - Lógica activa en alto (`SSR_ACTIVE_HIGH=1`)
 - Temporizadores de seguridad (`minOnTime`, `maxOnTime`)
-- Respuesta a comandos MQTT (ON/OFF por canal)
+- Respuesta a comandos HTTP (ON/OFF por canal)
 - Publicación de estado de actuadores
 
 ### Control por histéresis
@@ -72,4 +72,4 @@ El `HysteresisController` evalúa las lecturas de sensores y activa/desactiva lo
 ## Referencias
 - Implementación: `firmware/src/ssr_controller.cpp`, `firmware/src/hysteresis_controller.cpp`
 - Configuración: `firmware/src/config.h`
-- Ver también: ADR-001 (placa ESP8266)
+- Ver también: ADR-001 (placa ESP32-S3)

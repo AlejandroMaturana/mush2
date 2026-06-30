@@ -4,7 +4,7 @@
 **Estado**: Aceptado
 
 ## Contexto
-El sistema requiere medición de cuatro variables ambientales: temperatura, humedad relativa, CO₂ equivalente (eCO₂) y compuestos orgánicos volátiles totales (TVOC). Se necesita un módulo sensor compatible con ESP8266, de bajo consumo, comunicación I²C, y que minimice la complejidad de integración.
+El sistema requiere medición de cuatro variables ambientales: temperatura, humedad relativa, CO₂ equivalente (eCO₂) y compuestos orgánicos volátiles totales (TVOC). Se necesita un módulo sensor compatible con ESP32-S3, de bajo consumo, comunicación I²C, y que minimice la complejidad de integración.
 
 ## Decisión
 Usar el módulo combinado que integra el sensor de temperatura y humedad **AHT21** junto con el sensor de calidad del aire **ENS160** en una misma placa.
@@ -61,4 +61,4 @@ struct EnsReading {
 
 ## Referencias
 - Implementación: `firmware/src/aht_sensor.cpp`, `firmware/src/ens160_sensor.cpp`
-- Ver también: ADR-001 (placa ESP8266)
+- Ver también: ADR-001 (placa ESP32-S3)

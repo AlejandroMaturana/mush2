@@ -4,7 +4,7 @@
 **Estado**: Aceptado
 
 ## Contexto
-El sistema requiere una base de datos para almacenar telemetría ambiental histórica (temperatura, humedad, eCO₂, TVOC), registrar eventos de dispositivos, gestionar usuarios, recetas de cultivo, ciclos y configuraciones. El backend está desarrollado en Node.js y se comunica con el firmware vía MQTT.
+El sistema requiere una base de datos para almacenar telemetría ambiental histórica (temperatura, humedad, eCO₂, TVOC), registrar eventos de dispositivos, gestionar usuarios, recetas de cultivo, ciclos y configuraciones. El backend está desarrollado en Node.js y se comunica con el firmware vía HTTP polling.
 
 ## Decisión
 Usar **PostgreSQL** como motor de base de datos relacional y **Sequelize v6** como ORM para la capa de acceso a datos desde el backend Node.js.
@@ -44,7 +44,7 @@ El sistema usa un modelo normalizado con las siguientes tablas principales:
 
 | Tabla | Propósito |
 |-------|-----------|
-| `devices` | Dispositivos/nodos ESP8266 |
+| `devices` | Dispositivos/nodos ESP32-S3 |
 | `sensors` | Sensores por dispositivo (TEMPERATURE, HUMIDITY, CO2, VOC) |
 | `telemetry` | Lecturas de sensores (una fila por lectura por sensor) |
 | `actuators` | Estado de actuadores por dispositivo |
@@ -90,4 +90,4 @@ El sistema usa un modelo normalizado con las siguientes tablas principales:
 ## Referencias
 - Implementación: `backend/src/models/`, `backend/src/config/database.js`
 - Sincronización: `backend/src/sync-db.js`
-- Ver también: ADR-004 (ThingSpeak), ADR-006 (MQTT)
+- Ver también: ADR-004 (ThingSpeak), ADR-008 (protocolo HTTP)

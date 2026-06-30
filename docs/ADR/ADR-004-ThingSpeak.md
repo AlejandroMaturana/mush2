@@ -4,28 +4,27 @@
 **Estado**: Aceptado
 
 ## Contexto
-El sistema necesita un canal de telemetría de respaldo para cuando el broker MQTT no está disponible. El canal principal es MQTT → Backend → PostgreSQL. Se requiere un segundo canal independiente que bufferé datos durante caídas del broker MQTT.
+El sistema necesita un canal de telemetría de respaldo. El canal principal es HTTP polling → Backend → PostgreSQL. Se requiere un segundo canal independiente que bufferé datos durante caídas del canal principal.
 
 ## Decisión
 Usar ThingSpeak como canal secundario. El firmware envía un HTTP GET a ThingSpeak API en cada ciclo de telemetría (cada 20 segundos). El backend puede sincronizar datos históricos desde ThingSpeak cuando el dispositivo se recupera.
 
 ## Motivos
-1. **Independencia**: ThingSpeak no depende del broker MQTT ni del backend.
-2. **Simplicidad**: HTTP GET, sin librerías adicionales en el ESP8266.
+1. **Independencia**: ThingSpeak no depende del backend HTTP.
+2. **Simplicidad**: HTTP GET, sin librerías adicionales en el ESP32-S3.
 3. **Gratuito**: Plan gratuito suficiente para prototipado (~8200 mensajes/día).
 4. **Buffer de respaldo**: Retiene datos aunque el backend esté caído.
 
 ## Consecuencias
-- El firmware envía datos duplicados (MQTT + HTTP). Es intencional.
+- El firmware envía datos duplicados (HTTP telemetry + ThingSpeak). Es intencional.
 - Se necesita almacenar la API key de ThingSpeak en el firmware (`TS_API_KEY` en `config.h`).
 - Límite de ThingSpeak: 15s entre updates (configuramos a 20s para estar dentro).
-- ThingSpeak es un punto externo; si cae, no afecta al flujo principal MQTT.
+- ThingSpeak es un punto externo; si cae, no afecta al flujo principal HTTP.
 - El backend implementa sincronización desde ThingSpeak mediante `thingSpeakSync.js`.
 
 ## Alternativas descartadas
-- **InfluxDB + Telegraf**: Sobrecarga para el ESP8266.
-- **Buffer local en firmware**: El ESP8266 no tiene RAM suficiente para buffer prolongado.
-- **Segundo broker MQTT**: Ya tenemos failover de broker, pero ThingSpeak es un canal diferente.
+- **InfluxDB + Telegraf**: Sobrecarga para el ESP32-S3.
+- **Segundo canal HTTP**: Ya tenemos failover HTTP, pero ThingSpeak es un canal diferente.
 
 ## Detalle técnico
 

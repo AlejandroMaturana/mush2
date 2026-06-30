@@ -23,7 +23,7 @@ Se requiere que el backend traduzca las evaluaciones en comandos concretos a los
 Backend (controlEngine.js)
     │
     ├── Cada 60s: Evalúa telemetría vs umbrales de receta
-    ├── Genera comandos MQTT → firmware (REMOTE)
+    ├── Genera comandos HTTP → firmware (REMOTE)
     └── Fase por defecto: REMOTE (backend lidera)
     
 Firmware (hysteresis_controller.cpp)
@@ -94,14 +94,14 @@ Ante un cambio de fase en el ciclo:
 - El firmware mantiene capacidad de operación local (fallback)
 
 ### Negativas
-- Dependencia de MQTT para sincronización de setpoints (si MQTT falla, firmware usa últimos valores)
+- Dependencia de HTTP para sincronización de setpoints (si HTTP falla, firmware usa últimos valores de la cola persistente en DB)
 - El VPD requiere ambos sensores (T + HR) funcionando correctamente
 - La transición de fase agresiva puede estresar el cultivo si los sensores fallan
 
 ## Implementación
 
-- `backend/src/services/controlEngine.js`: Extiende `evaluateCycle()` para publicar comandos MQTT a actuadores usando histéresis con deadband y jerarquía
-- `backend/src/services/mqttService.js`: Reutiliza `publishCommand()` existente
+- `backend/src/services/controlEngine.js`: Extiende `evaluateCycle()` para encolar comandos HTTP a actuadores usando histéresis con deadband y jerarquía
+- `backend/src/services/commandQueue.js`: Gestiona la cola de comandos persistente en PostgreSQL
 - `firmware/src/main.ino`: Manejo de comandos REMOTE y actualización de setpoints vía `onConfig()`
 - `firmware/src/config.h`: CH4 reasignado a iluminación; setpoints por defecto para Reishi
 
