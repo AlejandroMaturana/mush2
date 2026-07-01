@@ -105,7 +105,9 @@ void HTTPPoller::runConnect() {
     }
   }
 
+#if POLL_DEBUG
   Serial.printf("[POLL] TCP conectado a %s:%u\n", host.c_str(), port);
+#endif
   vTaskDelay(pdMS_TO_TICKS(50));
   pollState = POLL_SEND;
 }
@@ -125,7 +127,9 @@ void HTTPPoller::runSend() {
   }
 
   client.flush();
+#if POLL_DEBUG
   Serial.printf("[POLL] Enviados %d bytes\n", sent);
+#endif
 
   httpResponse = "";
   bodyStarted = false;
@@ -149,7 +153,9 @@ void HTTPPoller::runWait() {
 
   // Leer datos disponibles incluso si el servidor ya cerró la conexión
   if (avail > 0) {
+#if POLL_DEBUG
     Serial.printf("[POLL] Datos disponibles: %d bytes (connected=%d)\n", avail, conn ? 1 : 0);
+#endif
     pollState = POLL_READ;
     pollDeadline = millis() + 3000;
     return;
@@ -158,7 +164,9 @@ void HTTPPoller::runWait() {
   if (!conn) {
     if (client.available()) {
       avail = client.available();
+#if POLL_DEBUG
       Serial.printf("[POLL] Datos post-close: %d bytes\n", avail);
+#endif
       pollState = POLL_READ;
       pollDeadline = millis() + 3000;
       return;
@@ -204,7 +212,9 @@ void HTTPPoller::runRead() {
   if (!client.connected() && !client.available()) {
     if (bodyStarted && httpResponse.length() > 0) {
       client.stop();
+#if POLL_DEBUG
       Serial.printf("[POLL] Respuesta recibida (%u bytes)\n", httpResponse.length());
+#endif
       pollState = POLL_PARSE;
     } else {
       Serial.println("[POLL] Desconectado sin body");
@@ -247,7 +257,9 @@ void HTTPPoller::runParse() {
       long chunkSize = strtol(chunkSizeStr.c_str(), NULL, 16);
       if (chunkSize > 0 && (unsigned long)chunkSize <= body.length() - hdrEnd) {
         body = body.substring(hdrEnd, hdrEnd + chunkSize);
+#if POLL_DEBUG
         Serial.printf("[POLL] De-chunked: %d bytes\n", chunkSize);
+#endif
       }
     }
   }
@@ -260,7 +272,7 @@ void HTTPPoller::runParse() {
     return;
   }
 
-  Serial.printf("[POLL] Body (%u bytes): %s\n", body.length(), body.c_str());
+  Serial.printf("[POLL] Body (%u bytes)\n", body.length());
 
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, body);
@@ -300,9 +312,11 @@ void HTTPPoller::applyActuators(JsonArray actuators) {
     desired[idx].state = (strcmp(act["state"] | "OFF", "ON") == 0) ? 1 : 0;
     desired[idx].mode = (strcmp(act["mode"] | "LOCAL", "REMOTE") == 0) ? 1 : 0;
   }
+#if POLL_DEBUG
   Serial.printf("[POLL] Ch1:%s/%s Ch2:%s/%s Ch3:%s/%s Ch4:%s/%s\n",
     desired[0].state ? "ON" : "OFF", desired[0].mode ? "RM" : "LC",
     desired[1].state ? "ON" : "OFF", desired[1].mode ? "RM" : "LC",
     desired[2].state ? "ON" : "OFF", desired[2].mode ? "RM" : "LC",
     desired[3].state ? "ON" : "OFF", desired[3].mode ? "RM" : "LC");
+#endif
 }

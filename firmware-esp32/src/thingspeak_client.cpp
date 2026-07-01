@@ -28,7 +28,7 @@ bool ThingSpeakClient::sendRequest(const String& url) {
   bool ok = (code == 200);
 
   if (ok) {
-    Serial.printf("[TS] Enviado OK, respuesta: %s\n", http.getString().c_str());
+    Serial.printf("[TS] OK #%s\n", http.getString().c_str());
   } else {
     Serial.printf("[TS] Error HTTP %d\n", code);
   }
