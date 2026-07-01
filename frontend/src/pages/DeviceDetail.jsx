@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getDevice, getLatestTelemetry, getActuators } from '../api/client.js'
+import { getDevice, getActuators } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
 import MetricCard from '../components/dashboard/MetricCard.jsx'
 import ActuatorControl from '../components/device/ActuatorControl.jsx'
@@ -14,25 +14,27 @@ function DeviceDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  async function loadData() {
-    try {
-      const [dev, tel, acts] = await Promise.all([
-        getDevice(id),
-        getLatestTelemetry(id),
-        getActuators(id),
-      ])
-      setDevice(dev)
-      setTelemetry(tel)
-      setActuators(acts)
-      setError(null)
-    } catch (err) {
-      setError(err.message || 'Error de conexión')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let cancelled = false
+    async function loadData() {
+      try {
+        const [dev, acts] = await Promise.all([
+          getDevice(id),
+          getActuators(id),
+        ])
+        if (cancelled) return
+        setDevice(dev)
+        setActuators(acts)
+        setError(null)
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Error de conexión')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-  }
-
-  useEffect(() => { loadData() }, [id])
+    loadData()
+    return () => { cancelled = true }
+  }, [id])
 
   useSSE(useCallback((type, data) => {
     if (type === 'ack') {

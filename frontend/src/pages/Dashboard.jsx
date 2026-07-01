@@ -14,21 +14,24 @@ function Dashboard() {
   const [aggregate, setAggregate] = useState(null)
 
   useEffect(() => {
-    let interval
+    let cancelled = false
     async function fetchData() {
       try {
         const devs = await getDevices()
+        if (cancelled) return
         setDevices(devs)
 
         if (devs.length > 0) {
           const targetId = selectedId || devs[0].id
-          if (!selectedId) setSelectedId(targetId)
-          const tel = await getLatestTelemetry(targetId)
+          if (!selectedId && !cancelled) setSelectedId(targetId)
+
+          const [tel, allTel] = await Promise.all([
+            getLatestTelemetry(targetId),
+            Promise.all(devs.map(d => getLatestTelemetry(d.id).catch(() => null))),
+          ])
+          if (cancelled) return
           setTelemetry(tel)
 
-          const allTel = await Promise.all(
-            devs.map(d => getLatestTelemetry(d.id).catch(() => null))
-          )
           const valid = allTel.filter(t => t && (t.temperature != null || t.humidity != null))
           if (valid.length > 1) {
             const avg = { devices: valid.length }
@@ -47,14 +50,13 @@ function Dashboard() {
         }
         setError(null)
       } catch (err) {
-        setError(err.message || 'Error de conexión')
+        if (!cancelled) setError(err.message || 'Error de conexión')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     fetchData()
-    interval = setInterval(fetchData, 10000)
-    return () => clearInterval(interval)
+    return () => { cancelled = true }
   }, [selectedId])
 
   useSSE(useCallback((type, data) => {

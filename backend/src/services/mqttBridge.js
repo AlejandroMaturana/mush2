@@ -3,27 +3,46 @@ import { Device, Telemetry, Actuator } from '../models/index.js';
 import { events } from './eventBus.js';
 import { sendActuatorUpdate } from './webSocketServer.js';
 
-const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://test.mosquitto.org:1883';
 const TOPIC_PREFIX = 'mush2';
 
-let client = null;
+// Broker configuration
+const BROKERS = [
+  {
+    url: process.env.MQTT_BROKER || 'mqtt://test.mosquitto.org:1883',
+    label: 'Mosquitto (primary)',
+  },
+];
+
+if (process.env.MQTT_BROKER_FALLBACK) {
+  BROKERS.push({
+    url: process.env.MQTT_BROKER_FALLBACK,
+    label: 'HiveMQ (fallback)',
+  });
+}
+
+let primaryClient = null;
+let fallbackClient = null;
+let activeLabel = null;
 const connectedDevices = new Set();
 
-export function startMqttBridge() {
-  client = mqtt.connect(MQTT_BROKER, {
-    clientId: `mush2_backend_${Date.now()}`,
+function createClient(broker, isFallback) {
+  const clientId = `mush2_backend_${isFallback ? 'fb_' : ''}${Date.now()}`;
+  const c = mqtt.connect(broker.url, {
+    clientId,
     clean: true,
-    reconnectPeriod: 5000,
+    reconnectPeriod: 8000,
+    connectTimeout: 10000,
   });
 
-  client.on('connect', () => {
-    console.log(`[MQTT] Conectado a ${MQTT_BROKER}`);
-    client.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
-    client.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
-    client.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
+  c.on('connect', () => {
+    console.log(`[MQTT] Conectado a ${broker.label} (${broker.url})`);
+    if (!activeLabel) activeLabel = broker.label;
+    c.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
+    c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
+    c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
   });
 
-  client.on('message', (topic, payload) => {
+  c.on('message', (topic, payload) => {
     const parts = topic.split('/');
     if (parts.length < 3) return;
     const deviceId = parts[1];
@@ -44,20 +63,32 @@ export function startMqttBridge() {
     }
   });
 
-  client.on('error', (err) => {
-    console.error(`[MQTT] Error: ${err.message}`);
+  c.on('error', (err) => {
+    console.error(`[MQTT] Error en ${broker.label}: ${err.message}`);
   });
 
-  client.on('close', () => {
-    console.log('[MQTT] Desconectado');
+  c.on('close', () => {
+    console.log(`[MQTT] ${broker.label} — desconectado`);
+    if (isFallback) {
+      fallbackClient = null;
+    }
   });
+
+  return c;
+}
+
+export function startMqttBridge() {
+  // Always try the primary broker
+  primaryClient = createClient(BROKERS[0], false);
+
+  // If a fallback is configured, also connect it
+  if (BROKERS.length > 1) {
+    fallbackClient = createClient(BROKERS[1], true);
+  }
 
   events.on('control_eval', (data) => {
-    if (!client || !client.connected) return;
     if (!data.deviceId) return;
-
-    const topic = `${TOPIC_PREFIX}/${data.deviceId}/actuators`;
-    client.publish(topic, JSON.stringify({
+    const payload = JSON.stringify({
       type: 'actuator_state',
       deviceId: data.deviceId,
       timestamp: Date.now(),
@@ -66,18 +97,27 @@ export function startMqttBridge() {
         state: c.command,
         mode: 'REMOTE',
       })),
-    }), { qos: 1, retain: false });
+    });
+    const opts = { qos: 1, retain: false };
+
+    const topic = `${TOPIC_PREFIX}/${data.deviceId}/actuators`;
+
+    // Publish to primary; if disconnected, try fallback
+    if (primaryClient && primaryClient.connected) {
+      primaryClient.publish(topic, payload, opts);
+    } else if (fallbackClient && fallbackClient.connected) {
+      fallbackClient.publish(topic, payload, opts);
+    }
   });
 
-  console.log(`[MQTT] Bridge iniciado hacia ${MQTT_BROKER}`);
-  return client;
+  const brokerList = BROKERS.map(b => b.label).join(', ');
+  console.log(`[MQTT] Bridge iniciado — brokers: ${brokerList}`);
+  return primaryClient;
 }
 
 export function publishActuatorCommand(deviceId, commands) {
-  if (!client || !client.connected) return false;
-
   const topic = `${TOPIC_PREFIX}/${deviceId}/actuators`;
-  client.publish(topic, JSON.stringify({
+  const payload = JSON.stringify({
     type: 'actuator_state',
     deviceId,
     timestamp: Date.now(),
@@ -86,16 +126,41 @@ export function publishActuatorCommand(deviceId, commands) {
       state: c.state,
       mode: c.mode || 'REMOTE',
     })),
-  }), { qos: 1, retain: false });
+  });
+  const opts = { qos: 1, retain: false };
 
-  return true;
+  let published = false;
+  if (primaryClient && primaryClient.connected) {
+    primaryClient.publish(topic, payload, opts);
+    published = true;
+  }
+  if (fallbackClient && fallbackClient.connected) {
+    fallbackClient.publish(topic, payload, opts);
+    published = true;
+  }
+  return published;
+}
+
+export function getMqttStatus() {
+  return {
+    brokers: BROKERS.map(b => b.label),
+    primaryConnected: primaryClient ? primaryClient.connected : false,
+    fallbackConnected: fallbackClient ? fallbackClient.connected : false,
+    active: activeLabel,
+    connectedDevices: connectedDevices.size,
+  };
 }
 
 export function stopMqttBridge() {
-  if (client) {
-    client.end(true);
-    client = null;
+  if (primaryClient) {
+    primaryClient.end(true);
+    primaryClient = null;
   }
+  if (fallbackClient) {
+    fallbackClient.end(true);
+    fallbackClient = null;
+  }
+  activeLabel = null;
 }
 
 async function handleTelemetry(deviceId, data) {
@@ -110,7 +175,7 @@ async function handleTelemetry(deviceId, data) {
       { type: 'TEMPERATURE', value: data.temp, unit: '°C' },
       { type: 'HUMIDITY', value: data.hum, unit: '%' },
       { type: 'CO2', value: data.co2, unit: 'ppm' },
-      { type: 'TVOC', value: data.tvoc, unit: 'ppb' },
+      { type: 'VOC', value: data.tvoc, unit: 'ppb' },
     ];
 
     for (const s of sensors) {
