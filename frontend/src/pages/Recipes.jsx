@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getRecipes, createRecipe } from '../api/client.js'
+import RecipesEmptyState from '../components/ui/RecipesEmptyState.jsx'
 
 function PhaseSegments({ incubationDays, fruitingDays }) {
   const total = (incubationDays || 0) + (fruitingDays || 0)
@@ -112,23 +113,7 @@ function Recipes() {
       )}
 
       {recipes.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <span className="material-symbols-outlined text-96px text-on-surface-variant opacity-20 mb-6">potted_plant</span>
-            <h2 className="text-headline-md text-primary mb-4">PROTOCOL REGISTRY EMPTY</h2>
-            <p className="text-body-md text-on-surface-variant mb-8">
-              The system has no stored growth recipes. Define a new bio-protocol to automate Chamber environmental parameters and nutrient delivery.
-            </p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-primary text-on-primary font-label-caps text-label-caps px-8 py-3 rounded-lg inline-flex items-center gap-2 hover:brightness-110 transition-all active:scale-95"
-              style={{ border: 'none', cursor: 'pointer', boxShadow: '0 0 12px rgba(74,222,128,0.2)' }}
-            >
-              <span className="material-symbols-outlined text-18px">add</span>
-              CREATE RECIPE
-            </button>
-          </div>
-        </div>
+        <RecipesEmptyState onCreate={() => setShowForm(true)} />
       ) : (
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
           <div className="lg:col-span-8 flex flex-col overflow-hidden">
