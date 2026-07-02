@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getDevices, getLatestTelemetry } from '../api/client.js'
 
 function Home() {
+  const navigate = useNavigate()
   const [stats, setStats] = useState({ sporeDensity: 84.2, nodeConn: 0.998, totalNodes: 12482, syncRate: 99.9, totalDevices: 0 })
 
   useEffect(() => {
@@ -216,7 +218,7 @@ function Home() {
       <button
         className="fixed bottom-10 right-10 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-50 cursor-pointer"
         style={{ border: 'none', boxShadow: '0 0 20px rgba(74,222,128,0.4)' }}
-        onClick={() => window.location.href = '/dashboard'}
+        onClick={() => navigate('/dashboard')}
       >
         <span className="material-symbols-outlined text-2xl">dashboard</span>
       </button>
