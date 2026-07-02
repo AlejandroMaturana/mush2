@@ -1,11 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getDevice, getActuators } from '../api/client.js'
+import { getDevice, getActuators, setActuatorDirect } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
-import Gauge from '../components/ui/Gauge.jsx'
+import ArcGauge from '../components/ui/ArcGauge.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
-import TerminalLog from '../components/ui/TerminalLog.jsx'
-import ActuatorControl from '../components/device/ActuatorControl.jsx'
+
+const ACTUATOR_META = {
+  1: { label: 'AIR EXCHANGE', icon: 'air', color: 'primary' },
+  2: { label: 'MIST SPRAYERS', icon: 'water_drop', color: 'primary' },
+  3: { label: 'CO2 INJECTION', icon: 'co2', color: 'error' },
+  4: { label: 'UV-C STERILIZER', icon: 'light', color: 'secondary' },
+}
+
+const SPARKLINES = {
+  temp: '0,10 10,11 20,10 30,9 40,10 50,11 60,10 70,9 80,10 90,11 100,10',
+  hum: '0,12 10,10 20,18 30,5 40,8 50,2 60,10 70,14 80,8 90,12 100,10',
+  co2: '0,15 10,12 20,18 30,5 40,8 50,2 60,10 70,14 80,8 90,12 100,10',
+  o2: '0,5 20,8 40,5 60,6 80,4 100,5',
+}
 
 function DeviceDetail() {
   const { id } = useParams()
@@ -15,19 +27,44 @@ function DeviceDetail() {
   const [actuators, setActuators] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [logs, setLogs] = useState([])
+  const logIndex = useRef(0)
+
+  const LOG_ENTRIES = [
+    'Syncing chamber mesh nodes...',
+    'Bio-filter efficiency at 94.2%',
+    'Adjusting humidity setpoints for fruiting stage.',
+    'Analyzing spore density across quadrant C...',
+    'Substrate temperature drifting +0.1C',
+    'Relaying diagnostic data to System Core Alpha.',
+    'CO2 Sensor (ADDR: 0x3F) dropped from bus. Resetting...',
+    'O2 Levels compensating for missing CO2 data.',
+  ]
+
+  const addLog = useCallback((text, type = 'info') => {
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false })
+    setLogs(prev => [{ ts, text, type }, ...prev].slice(0, 12))
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const text = LOG_ENTRIES[logIndex.current % LOG_ENTRIES.length]
+      addLog(text)
+      logIndex.current++
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [addLog])
 
   useEffect(() => {
     let cancelled = false
     async function loadData() {
       try {
-        const [dev, acts] = await Promise.all([
-          getDevice(id),
-          getActuators(id),
-        ])
+        const [dev, acts] = await Promise.all([getDevice(id), getActuators(id)])
         if (cancelled) return
         setDevice(dev)
         setActuators(acts)
         setError(null)
+        addLog('System initialized. Chamber telemetry active.', 'info')
       } catch (err) {
         if (!cancelled) setError(err.message || 'Connection error')
       } finally {
@@ -36,32 +73,9 @@ function DeviceDetail() {
     }
     loadData()
     return () => { cancelled = true }
-  }, [id])
+  }, [id, addLog])
 
   useSSE(useCallback((type, data) => {
-    if (type === 'ack') {
-      setActuators(prev => prev.map(a =>
-        a.channel === data.actuatorState?.channel
-          ? { ...a, state: data.actuatorState.state, lastAck: data.status }
-          : a
-      ))
-    }
-    if (type === 'state' && device && data.deviceId === device.deviceId) {
-      if (data.actuators) {
-        setActuators(prev => {
-          const updated = [...prev]
-          data.actuators.forEach(act => {
-            const idx = updated.findIndex(a => a.channel === act.channel)
-            if (idx !== -1) {
-              updated[idx] = { ...updated[idx], state: act.state, mode: data.mode || updated[idx].mode }
-            } else {
-              updated.push({ channel: act.channel, state: act.state, type: 'SSR', mode: data.mode || 'LOCAL' })
-            }
-          })
-          return updated
-        })
-      }
-    }
     if (type === 'telemetry' && device && data.deviceId === device.deviceId) {
       if (data.sensors) {
         setTelemetry(prev => ({
@@ -74,7 +88,29 @@ function DeviceDetail() {
         }))
       }
     }
+    if (type === 'ack') {
+      setActuators(prev => prev.map(a =>
+        a.channel === data.actuatorState?.channel
+          ? { ...a, state: data.actuatorState.state, lastAck: data.status }
+          : a
+      ))
+    }
   }, [device]))
+
+  async function handleToggle(channel) {
+    const act = actuators.find(a => a.channel === channel)
+    if (!act) return
+    const newState = act.state === 'ON' ? 'OFF' : 'ON'
+    addLog(`Actuator CH${channel} toggled ${newState}`, newState === 'ON' ? 'success' : 'warn')
+    try {
+      await setActuatorDirect(device.deviceId, channel, newState)
+      setActuators(prev => prev.map(a =>
+        a.channel === channel ? { ...a, state: newState } : a
+      ))
+    } catch (err) {
+      addLog(`Actuator CH${channel} command failed: ${err.response?.data?.error || 'timeout'}`, 'error')
+    }
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -90,7 +126,7 @@ function DeviceDetail() {
       <div className="text-center">
         <span className="material-symbols-outlined text-48px text-error mb-4">wifi_off</span>
         <p className="text-body-md text-error font-semibold">{error}</p>
-        <button className="mt-4 px-5 py-2 bg-error/20 border border-error/40 text-error font-label-caps rounded-md" onClick={() => window.location.reload()}>
+        <button className="mt-4 px-5 py-2 bg-error/20 border border-error/40 text-error font-label-caps rounded-md" onClick={() => window.location.reload()} style={{ cursor: 'pointer' }}>
           RETRY
         </button>
       </div>
@@ -107,14 +143,17 @@ function DeviceDetail() {
   )
 
   const isOnline = device.status === 'ONLINE' || device.status === 'ACTIVE'
-  const hasCO2 = telemetry.co2 != null
-  const hasTemp = telemetry.temperature != null
-  const hasHum = telemetry.humidity != null
+  const has = {
+    temp: telemetry.temperature != null,
+    hum: telemetry.humidity != null,
+    co2: telemetry.co2 != null,
+  }
+  const co2Error = has.co2 && telemetry.co2 > 2000
 
   return (
     <div className="flex flex-col gap-4">
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/dashboard')}
         className="flex items-center gap-2 text-on-surface-variant hover:text-primary font-label-caps text-label-caps transition-colors mb-1"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
@@ -128,123 +167,150 @@ function DeviceDetail() {
             <h1 className="text-headline-lg text-on-surface">{device.chamberName || device.deviceId}</h1>
             <StatusBadge status={isOnline ? 'online' : 'critical'} label={isOnline ? 'ONLINE' : device.status} />
           </div>
-          <div className="flex gap-4 mt-1">
-            <span className="text-data-sm text-on-surface-variant">FIRMWARE: v{device.firmwareVersion || '—'}</span>
-            <span className="text-data-sm text-on-surface-variant">MAC: {device.macAddress || '—'}</span>
-          </div>
+          <p className="text-body-md text-on-surface-variant">Active Mycelium Colonization Phase</p>
         </div>
         <div className="flex gap-2">
-          <button className="bg-primary text-on-primary font-label-caps text-label-caps px-4 py-2 rounded-lg hover:brightness-110 transition-all font-bold" style={{ border: 'none', cursor: 'pointer' }}>
-            NEW CYCLE
-          </button>
-          <button className="border border-outline text-on-surface font-label-caps text-label-caps px-4 py-2 rounded-lg hover:bg-surface-variant transition-all font-bold" style={{ background: 'none', cursor: 'pointer' }}>
-            CALIBRATE
-          </button>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-surface-container p-4 rounded-card border border-outline-variant flex flex-col items-center justify-center relative">
-          <span className="absolute top-3 left-4 font-label-caps text-9px text-on-surface-variant">TEMPERATURE</span>
-          <div className="mt-6">
-            <Gauge variant="half" value={hasTemp ? telemetry.temperature : 0} min={10} max={40} unit="°C" size="sm" />
-          </div>
-          <span className="font-label-caps text-9px text-on-surface-variant mt-1">OPTIMAL RANGE</span>
-        </div>
-        <div className="bg-surface-container p-4 rounded-card border border-outline-variant flex flex-col items-center justify-center relative">
-          <span className="absolute top-3 left-4 font-label-caps text-9px text-on-surface-variant">HUMIDITY</span>
-          <div className="mt-6">
-            <Gauge variant="half" value={hasHum ? telemetry.humidity : 0} min={50} max={100} unit="%" size="sm" />
-          </div>
-          <span className="font-label-caps text-9px text-on-surface-variant mt-1">FRUITING PHASE</span>
-        </div>
-        <div className={`bg-surface-container p-4 rounded-card border flex flex-col items-center justify-center relative${hasCO2 && telemetry.co2 > 1000 ? ' border-error/40' : ' border-outline-variant'}`}>
-          <span className="absolute top-3 left-4 font-label-caps text-9px text-on-surface-variant">CO2 LEVELS</span>
-          <div className="mt-6">
-            <Gauge variant="half" value={hasCO2 ? Math.min(telemetry.co2, 3000) / 30 : 0} min={0} max={100} unit="" size="sm" />
-          </div>
-          <span className={`font-label-caps text-9px mt-1 ${hasCO2 && telemetry.co2 > 1000 ? 'text-error' : 'text-on-surface-variant'}`}>
-            {hasCO2 ? telemetry.co2 > 1000 ? 'ABOVE THRESHOLD' : 'NOMINAL' : 'NO DATA'}
+          <span className="bg-surface-container-high px-3 py-1 rounded text-10px font-label-caps text-secondary flex items-center gap-1 border border-outline-variant">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary" style={{ boxShadow: '0 0 8px #44e2cd' }} />
+            SYSTEM NOMINAL
           </span>
-        </div>
-        <div className="bg-surface-container p-4 rounded-card border border-outline-variant flex flex-col items-center justify-center relative">
-          <span className="absolute top-3 left-4 font-label-caps text-9px text-on-surface-variant">O2 CONTENT</span>
-          <div className="mt-6">
-            <Gauge variant="half" value={20} min={15} max={25} unit="%" size="sm" />
-          </div>
-          <span className="font-label-caps text-9px text-on-surface-variant mt-1">NOMINAL</span>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-[200px">
-        <div className="bg-surface-container border border-outline-variant rounded-card p-4 flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-label-caps text-10px text-on-surface">CO2 vs VENTILATION</span>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary inline-block" />
-                <span className="text-9px font-label-caps text-on-surface-variant">CO2</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-secondary inline-block" />
-                <span className="text-9px font-label-caps text-on-surface-variant">VENT</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 relative border border-outline-variant/20 rounded overflow-hidden"
-            style={{ backgroundImage: 'linear-gradient(to right, rgba(134,148,134,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(134,148,134,0.1) 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-            <div className="absolute inset-x-0" style={{ bottom: '20%', top: '40%', background: 'rgba(107,251,154,0.05)', borderTop: '1px solid rgba(107,251,154,0.1)', borderBottom: '1px solid rgba(107,251,154,0.1)' }} />
-            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path d="M 0 60 L 10 58 L 20 62 L 30 40 L 40 38 L 50 42 L 60 45 L 70 85 L 80 88 L 90 86 L 100 87" fill="none" stroke="var(--spore-green)" strokeWidth="1.5" />
-              <path d="M 0 100 L 0 70 L 10 72 L 20 68 L 30 75 L 40 70 L 50 65 L 60 30 L 70 25 L 80 32 L 90 35 L 100 30 L 100 100 Z" fill="rgba(68, 226, 205, 0.15)" stroke="var(--teal)" strokeWidth="1" />
-            </svg>
-            <div className="absolute bottom-1 left-1 text-8px font-mono text-on-surface-variant">03/28 16:00</div>
-            <div className="absolute bottom-1 right-1 text-8px font-mono text-on-surface-variant">03/30 08:00</div>
-          </div>
-        </div>
-        <div className="bg-surface-container border border-outline-variant rounded-card p-4 flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-label-caps text-10px text-on-surface">TEMP vs HUMIDITY</span>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-secondary inline-block" />
-                <span className="text-9px font-label-caps text-on-surface-variant">TEMP</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary inline-block" />
-                <span className="text-9px font-label-caps text-on-surface-variant">HUM</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 relative border border-outline-variant/20 rounded overflow-hidden"
-            style={{ backgroundImage: 'linear-gradient(to right, rgba(134,148,134,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(134,148,134,0.1) 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-            <div className="absolute inset-x-0" style={{ bottom: '10%', top: '30%', background: 'rgba(68,226,205,0.05)', borderTop: '1px solid rgba(68,226,205,0.1)', borderBottom: '1px solid rgba(68,226,205,0.1)' }} />
-            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path d="M 0 40 L 20 42 L 40 38 L 50 20 L 60 22 L 80 25 L 100 24" fill="none" stroke="var(--teal)" strokeWidth="1.5" />
-              <path d="M 0 100 L 0 80 L 20 82 L 40 78 L 50 50 L 60 52 L 80 55 L 100 54 L 100 100 Z" fill="rgba(107, 251, 154, 0.15)" stroke="var(--spore-green)" strokeWidth="1" />
-            </svg>
-            <div className="absolute bottom-1 left-1 text-8px font-mono text-on-surface-variant">03/28 16:00</div>
-            <div className="absolute bottom-1 right-1 text-8px font-mono text-on-surface-variant">03/30 08:00</div>
-          </div>
+          {co2Error && (
+            <span className="bg-error-container/20 px-3 py-1 rounded text-10px font-label-caps text-error flex items-center gap-1 border border-error/30">
+              <span className="material-symbols-outlined text-12px">warning</span>
+              SENSOR FAILURE
+            </span>
+          )}
         </div>
       </section>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[1, 2, 3, 4].map(ch => {
-          const act = actuators.find(a => a.channel === ch) || { channel: ch, state: 'OFF', mode: 'LOCAL' }
-          return (
-            <ActuatorControl
-              key={ch}
-              deviceId={device.deviceId}
-              actuator={act}
-              onCommandSent={(channel, newState) => {
-                setActuators(prev => prev.map(a =>
-                  a.channel === channel ? { ...a, state: newState } : a
-                ))
-              }}
-            />
-          )
-        })}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-surface-container p-4 rounded border border-outline-variant flex flex-col items-center group hover:bg-surface-container-high transition-all duration-300">
+          <div className="flex justify-between items-start w-full mb-2">
+            <span className="font-label-caps text-label-caps text-on-surface-variant">HUMIDITY</span>
+            <span className="material-symbols-outlined text-primary text-sm">water_drop</span>
+          </div>
+          <ArcGauge value={has.hum ? Math.round(telemetry.humidity) : 0} min={50} max={100} unit="%" color="primary" size="md" trend={SPARKLINES.hum} />
+        </div>
+        <div className="bg-surface-container p-4 rounded border border-outline-variant flex flex-col items-center group hover:bg-surface-container-high transition-all duration-300">
+          <div className="flex justify-between items-start w-full mb-2">
+            <span className="font-label-caps text-label-caps text-on-surface-variant">TEMPERATURE</span>
+            <span className="material-symbols-outlined text-secondary text-sm">thermostat</span>
+          </div>
+          <ArcGauge value={has.temp ? Math.round(telemetry.temperature * 10) / 10 : 0} min={10} max={40} unit="°C" color="secondary" size="md" trend={SPARKLINES.temp} />
+        </div>
+        <div className={`bg-surface-container-low p-4 rounded flex flex-col items-center relative transition-all duration-500${co2Error ? '' : ' border border-outline-variant group hover:bg-surface-container-high'}${co2Error ? ' border border-error/40' : ''}`}
+          style={co2Error ? { boxShadow: '0 0 15px rgba(239,68,68,0.15)' } : {}}>
+          <div className="flex justify-between items-start w-full mb-2">
+            <div className="flex items-center gap-2">
+              <span className="font-label-caps text-label-caps text-on-surface-variant">CO2 CONC.</span>
+              {co2Error && <span className="material-symbols-outlined text-error text-16px">report</span>}
+            </div>
+            <span className="material-symbols-outlined text-error text-sm">co2</span>
+          </div>
+          <div className={co2Error ? 'opacity-60' : ''}>
+            <ArcGauge value={has.co2 ? telemetry.co2 : 0} min={400} max={2500} unit="ppm" color="tertiary" size="md"
+              errorState={co2Error} errorMessage={co2Error ? 'Signal Lost: Sensor RS-485 Timeout' : undefined} />
+          </div>
+          {co2Error && <div className="absolute inset-0 bg-error/5 pointer-events-none rounded" />}
+        </div>
+        <div className="bg-surface-container p-4 rounded border border-outline-variant flex flex-col items-center group hover:bg-surface-container-high transition-all duration-300">
+          <div className="flex justify-between items-start w-full mb-2">
+            <span className="font-label-caps text-label-caps text-on-surface-variant">O2 LEVEL</span>
+            <span className="material-symbols-outlined text-tertiary text-sm">air</span>
+          </div>
+          <ArcGauge value={19.8} min={18} max={22} unit="%" color="tertiary" size="md" trend={SPARKLINES.o2} />
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-[200px]">
+        <div className="lg:col-span-1 bg-surface-container p-4 rounded border border-outline-variant flex flex-col h-[400px]">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-label-caps text-label-caps text-on-surface-variant">SYSTEM TELEMETRY LOG</span>
+            <span className="text-10px text-primary bg-primary/10 px-2 py-0.5 rounded">LIVE</span>
+          </div>
+          <div className="flex-1 overflow-y-auto text-12px font-mono leading-relaxed space-y-1 pr-1" style={{ scrollbarWidth: 'thin' }}>
+            {logs.length === 0 && (
+              <div className="opacity-30">[--:--:--] Waiting for data...</div>
+            )}
+            {logs.map((entry, i) => (
+              <div key={i} className={`flex gap-2 ${i === 0 ? '' : 'opacity-50'}`}>
+                <span className="text-outline shrink-0">{entry.ts}</span>
+                <span className={
+                  entry.type === 'error' ? 'text-error' :
+                  entry.type === 'success' ? 'text-primary' :
+                  entry.type === 'warn' ? 'text-tertiary' :
+                  'text-on-surface-variant'
+                }>{entry.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="lg:col-span-2 bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-outline-variant bg-surface-container-high flex items-center justify-between">
+            <span className="font-label-caps text-label-caps text-on-surface-variant">ACTUATOR OVERRIDE MATRIX</span>
+            <div className="bg-surface-container px-2 py-1 rounded text-10px font-label-caps border border-outline">MODE: MANUAL</div>
+          </div>
+          <div className="flex-1 relative p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" preserveAspectRatio="none">
+              <path d="M100,50 Q150,150 300,100" fill="none" stroke="#44e2cd" strokeWidth="1" className="bioluminescent-path" />
+              <path d="M400,250 Q200,100 100,200" fill="none" stroke="#6bfb9a" strokeWidth="1" className="bioluminescent-path" />
+            </svg>
+            {[1, 2, 3, 4].map(ch => {
+              const act = actuators.find(a => a.channel === ch) || { channel: ch, state: 'OFF', mode: 'LOCAL' }
+              const meta = ACTUATOR_META[ch] || { label: `CH${ch}`, icon: 'settings', color: 'primary' }
+              const isOn = act.state === 'ON'
+              const isError = meta.color === 'error'
+              return (
+                <div key={ch}
+                  className={`bg-surface-container-low p-3 rounded flex flex-col justify-between relative${isError && !isOn ? ' border border-error/40 breathing-pulse' : ' border border-outline-variant'}`}>
+                  <span className={`font-label-caps text-9px ${isError && !isOn ? 'text-error' : 'text-on-surface-variant'}`}>{meta.label}</span>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className={`text-12px font-mono ${isOn ? 'text-primary' : isError && !isOn ? 'text-error' : 'text-on-surface-variant opacity-50'}`}>
+                      {isError && !isOn ? 'ERR' : isOn ? `${ch === 1 ? '75%' : ch === 4 ? 'ACTIVE' : 'ON'}` : 'OFF'}
+                    </span>
+                    {isError && !isOn ? (
+                      <div className="w-8 h-4 bg-error/20 rounded-full relative border border-error/50 flex items-center justify-center">
+                        <span className="text-10px text-error font-bold">!</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleToggle(ch)}
+                        className={`w-8 h-4 rounded-full relative p-0.5 border transition-all cursor-pointer select-none
+                          ${isOn ? `bg-${meta.color === 'secondary' ? 'secondary' : 'primary'}` : 'bg-outline-variant border-outline-variant'}`}
+                        style={isOn ? { boxShadow: `0 0 8px ${meta.color === 'secondary' ? '#44e2cd' : '#6bfb9a'}` } : {}}
+                      >
+                        <div className={`w-3 h-3 rounded-full transition-all absolute top-0.5 ${isOn ? 'right-0.5 bg-on-primary' : 'left-0.5 bg-on-surface-variant'}`} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            <div className="col-span-full mt-2 h-36 bg-surface-container-lowest rounded border border-outline-variant relative overflow-hidden group">
+              <div className="absolute inset-0 p-4">
+                <div className="flex justify-between items-start">
+                  <span className="font-label-caps text-10px text-outline">THERMAL MAPPING RECON</span>
+                  <span className="material-symbols-outlined text-outline text-sm">grid_view</span>
+                </div>
+              </div>
+              <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 800 200">
+                <circle className="breathing-pulse" cx="100" cy="80" fill="#6bfb9a" r="3" />
+                <circle className="breathing-pulse" cx="250" cy="130" fill="#6bfb9a" r="3" />
+                <circle className="breathing-pulse" cx="400" cy="60" fill="#6bfb9a" r="3" />
+                <circle className="breathing-pulse" cx="550" cy="140" fill="#6bfb9a" r="3" />
+                <circle className="breathing-pulse" cx="700" cy="90" fill="#44e2cd" r="3" />
+                <path d="M100,80 Q175,105 250,130" fill="none" stroke="#6bfb9a" strokeWidth="1" className="bioluminescent-path" />
+                <path d="M250,130 Q325,95 400,60" fill="none" stroke="#6bfb9a" strokeWidth="1" className="bioluminescent-path" />
+                <path d="M400,60 Q475,100 550,140" fill="none" stroke="#6bfb9a" strokeWidth="1" className="bioluminescent-path" />
+                <path d="M550,140 Q625,115 700,90" fill="none" stroke="#44e2cd" strokeWidth="1" className="bioluminescent-path" />
+              </svg>
+              <div className="absolute bottom-3 right-4 text-right">
+                <div className="font-label-caps text-10px text-primary">COLONY DENSITY</div>
+                <div className="text-headline-lg text-on-surface">64.8<span className="text-data-sm text-on-surface-variant ml-1">%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   )
