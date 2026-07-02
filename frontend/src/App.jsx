@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import DeviceDetail from './pages/DeviceDetail.jsx'
 import Recipes from './pages/Recipes.jsx'
@@ -20,7 +21,8 @@ function App() {
       ) : (
         <AppShell user={user} onLogout={logout}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/devices/:id" element={<DeviceDetail />} />
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/cycles" element={<Cycles />} />
