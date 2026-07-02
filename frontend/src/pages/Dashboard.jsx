@@ -6,6 +6,7 @@ import Gauge from '../components/ui/Gauge.jsx'
 import SegmentedBar from '../components/ui/SegmentedBar.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import MetricCard from '../components/ui/MetricCard.jsx'
+import DevicesEmptyState from '../components/ui/DevicesEmptyState.jsx'
 
 function aggregateTelemetry(telemetryMap) {
   const valid = Object.values(telemetryMap).filter(t => t && (t.temperature != null || t.humidity != null))
@@ -250,11 +251,7 @@ function Dashboard() {
       )}
 
       {devices.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="material-symbols-outlined text-64px text-on-surface-variant opacity-30 mb-4">sensors_off</span>
-          <h2 className="text-headline-md text-on-surface mb-2">No devices registered</h2>
-          <p className="text-body-md text-on-surface-variant max-w-md">Waiting for a Mush2 controller to connect...</p>
-        </div>
+        <DevicesEmptyState onConnect={() => window.location.reload()} />
       )}
     </div>
   )
