@@ -13,8 +13,8 @@ function DevicesEmptyState({ onConnect }) {
       </div>
       <button
         onClick={onConnect}
-        className="bg-primary text-on-primary font-label-caps text-label-caps px-8 py-3 rounded-lg hover:brightness-110 transition-all font-bold"
-        style={{ border: 'none', cursor: 'pointer', boxShadow: '0 0 12px rgba(74,222,128,0.2)' }}
+        className="btn btn-primary"
+        style={{ padding: '12px 32px', boxShadow: '0 0 12px rgba(74,222,128,0.2)' }}
       >
         CONNECT DEVICE
       </button>

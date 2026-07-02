@@ -12,8 +12,8 @@ function RecipesEmptyState({ onCreate }) {
         </p>
         <button
           onClick={onCreate}
-          className="bg-primary text-on-primary font-label-caps text-label-caps px-8 py-3 rounded-lg inline-flex items-center gap-2 hover:brightness-110 transition-all active:scale-95"
-          style={{ border: 'none', cursor: 'pointer', boxShadow: '0 0 12px rgba(74,222,128,0.2)' }}
+          className="btn btn-primary"
+          style={{ padding: '12px 32px', boxShadow: '0 0 12px rgba(74,222,128,0.2)' }}
         >
           <span className="material-symbols-outlined text-18px">add</span>
           CREATE RECIPE

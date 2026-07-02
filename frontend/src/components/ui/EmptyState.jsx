@@ -6,9 +6,8 @@ function EmptyState({ icon = 'inbox', title, message, action }) {
       {message && <p className="text-body-md text-on-surface-variant max-w-md">{message}</p>}
       {action && (
         <button
-          className="mt-4 px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps rounded-md hover:brightness-110 transition-all"
+          className="btn btn-primary mt-4"
           onClick={action.onClick}
-          style={{ border: 'none', cursor: 'pointer' }}
         >
           {action.label}
         </button>

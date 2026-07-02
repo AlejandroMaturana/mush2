@@ -5,9 +5,8 @@ function ErrorState({ message, onRetry }) {
       <p className="text-body-md text-error font-semibold">{message || 'CONNECTION_LOST'}</p>
       {onRetry && (
         <button
-          className="mt-4 px-6 py-2 bg-error/20 border border-error/40 text-error font-label-caps text-label-caps rounded-md hover:bg-error/30 transition-all"
+          className="btn btn-danger mt-4"
           onClick={onRetry}
-          style={{ cursor: 'pointer' }}
         >
           RETRY_UPLINK
         </button>
