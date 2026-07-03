@@ -53,6 +53,13 @@ export async function getLatestTelemetry(deviceId) {
   return data
 }
 
+export async function getTelemetryHistory(deviceId, { sensorType, limit = 30 } = {}) {
+  const params = { limit }
+  if (sensorType) params.sensorType = sensorType
+  const { data } = await client.get(`/devices/${deviceId}/telemetry`, { params })
+  return data.data
+}
+
 export async function getActuators(deviceId) {
   const { data } = await client.get(`/devices/${deviceId}/actuators`)
   return data.data
