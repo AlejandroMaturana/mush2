@@ -67,7 +67,7 @@ function DeviceDetail() {
 
   const addLog = useCallback((text, type = 'info') => {
     const ts = new Date().toLocaleTimeString('en-GB', { hour12: false })
-    setLogs(prev => [{ ts, text, type }, ...prev].slice(0, 20))
+    setLogs(prev => [{ ts, text, type }, ...prev].slice(0, 10))
   }, [])
 
   async function loadData() {
