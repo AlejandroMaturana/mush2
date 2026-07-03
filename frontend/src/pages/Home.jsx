@@ -37,7 +37,7 @@ function Home() {
             Real-time orchestration platform for bio-synthetic fungal networks. Monitor, control, and optimize cultivation environments with precision.
           </p>
           <div className="flex gap-4">
-            <button className="btn btn-primary px-8 py-4 text-label-caps" style={{ boxShadow: '0 0 12px rgba(74,222,128,0.1)' }}>
+            <button className="btn btn-primary px-8 py-4 text-label-caps" style={{ boxShadow: '0 0 12px var(--spore-glow)' }}>
               DEPLOY PROTOCOL
             </button>
             <button className="px-8 py-4 border border-secondary text-secondary font-label-caps text-label-caps rounded hover:bg-secondary/10 transition-all" style={{ background: 'none', cursor: 'pointer' }}>

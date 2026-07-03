@@ -187,7 +187,7 @@ function Settings() {
             <button onClick={logout} className="btn btn-danger">
               LOG OUT
             </button>
-            <button className="btn btn-primary" style={{ boxShadow: '0 0 15px rgba(107,251,154,0.3)' }}>
+            <button className="btn btn-primary" style={{ boxShadow: '0 0 15px var(--spore-glow)' }}>
               COMMIT TO CORE
             </button>
           </div>

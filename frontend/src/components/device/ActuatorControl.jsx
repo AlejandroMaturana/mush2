@@ -45,7 +45,7 @@ function ActuatorControl({ deviceId, actuator, meta, cmdState, onToggle, disable
 
   return (
     <div className={`bg-surface-container-low p-3 rounded flex flex-col gap-2 border transition-all duration-300 ${isError ? 'border-error/40' : isOn ? 'border-primary/30' : 'border-outline-variant'}`}
-      style={isOn ? { boxShadow: '0 0 8px rgba(107, 251, 154, 0.1)' } : {}}>
+      style={isOn ? { boxShadow: '0 0 8px var(--spore-glow)' } : {}}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`material-symbols-outlined text-sm shrink-0 ${isError ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant'}`}>
