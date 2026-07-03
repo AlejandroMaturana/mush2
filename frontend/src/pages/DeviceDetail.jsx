@@ -337,12 +337,12 @@ function DeviceDetail() {
             <span className="text-9px text-on-surface-variant" style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>SYSTEM LOG</span>
             <span className="text-8px text-primary bg-primary/10" style={{ padding: '2px 6px', borderRadius: '4px' }}>LIVE</span>
           </div>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '8px', fontSize: '11px', fontFamily: 'var(--font-mono)', lineHeight: '1.7' }}>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '4px 8px', fontSize: '10px', fontFamily: 'var(--font-mono)', lineHeight: '1.25' }}>
             {logs.length === 0 && (
-              <div className="opacity-30" style={{ padding: '8px' }}>[--:--:--] Waiting for data...</div>
+              <div className="opacity-30" style={{ padding: '4px' }}>[--:--:--] Waiting for data...</div>
             )}
             {logs.map((entry, i) => (
-              <div className="flex gap-2" style={{ padding: '2px 0', opacity: i === 0 ? 1 : 0.6 }}>
+              <div className="flex gap-2" style={{ padding: '1px 0', opacity: i === 0 ? 1 : 0.6 }}>
                 <span className="text-outline shrink-0">{entry.ts}</span>
                 <span className={
                   entry.type === 'error' ? 'text-error' :
