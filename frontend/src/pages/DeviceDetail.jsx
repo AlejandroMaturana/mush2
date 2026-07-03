@@ -511,8 +511,6 @@ function DeviceDetail() {
               title="Temperature & Humidity — 6h"
               datasets={chart1Data}
               bands={chart1Bands}
-              y1Domain={[18, 36]}
-              y2Domain={[50, 100]}
               labels={chartLabels}
             />
           </div>
@@ -521,8 +519,6 @@ function DeviceDetail() {
               title="eCO₂ & TVOC — 6h"
               datasets={chart2Data}
               bands={chart2Bands}
-              y1Domain={[200, 3000]}
-              y2Domain={[0, 950]}
               labels={chartLabels}
             />
           </div>
