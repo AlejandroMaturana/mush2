@@ -102,21 +102,21 @@ const CHART_OPTS = {
       bodyFont: { family: 'JetBrains Mono, monospace', size: 9 },
     },
   },
-  scales: {
+    scales: {
     x: {
-      grid: { color: 'rgba(255,255,255,0.03)', drawTicks: false },
-      ticks: { color: '#2e4036', font: { family: 'JetBrains Mono, monospace', size: 7 }, maxTicksLimit: 6 },
+      grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
+      ticks: { color: '#bccabb', font: { family: 'JetBrains Mono, monospace', size: 9 }, maxTicksLimit: 6 },
       border: { color: 'transparent' },
     },
     y1: {
-      grid: { color: 'rgba(255,255,255,0.03)', drawTicks: false },
-      ticks: { color: '#2e4036', font: { family: 'JetBrains Mono, monospace', size: 7 }, maxTicksLimit: 5 },
+      grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
+      ticks: { color: '#bccabb', font: { family: 'JetBrains Mono, monospace', size: 9 }, maxTicksLimit: 5 },
       border: { color: 'transparent' },
       position: 'left',
     },
     y2: {
       grid: { drawOnChartArea: false, drawTicks: false },
-      ticks: { color: '#2e4036', font: { family: 'JetBrains Mono, monospace', size: 7 }, maxTicksLimit: 5 },
+      ticks: { color: '#bccabb', font: { family: 'JetBrains Mono, monospace', size: 9 }, maxTicksLimit: 5 },
       border: { color: 'transparent' },
       position: 'right',
     },
