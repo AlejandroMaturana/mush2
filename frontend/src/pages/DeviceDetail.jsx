@@ -5,6 +5,7 @@ import { useSSE } from '../api/useSSE.js'
 import ArcGauge from '../components/ui/ArcGauge.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import LoadingState from '../components/ui/LoadingState.jsx'
+import ActuatorControl from '../components/device/ActuatorControl.jsx'
 
 const ACTUATOR_META = {
   1: { label: 'AIR EXCHANGE', icon: 'air', color: 'primary' },
@@ -29,6 +30,7 @@ function DeviceDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [logs, setLogs] = useState([])
+  const [pendingChannels, setPendingChannels] = useState(new Set())
   const logIndex = useRef(0)
 
   const LOG_ENTRIES = [
@@ -98,13 +100,26 @@ function DeviceDetail() {
           ? { ...a, state: data.actuatorState.state, lastAck: data.status }
           : a
       ))
+      setPendingChannels(prev => {
+        const next = new Set(prev)
+        next.delete(data.actuatorState?.channel)
+        return next
+      })
     }
   }, [device]))
+
+  function getCmdState(act) {
+    if (pendingChannels.has(act.channel)) return 'PENDING'
+    if (act.lastAck === 'ACKED') return 'ACKED'
+    if (act.lastAck === 'TIMEOUT') return 'TIMEOUT'
+    return null
+  }
 
   async function handleToggle(channel) {
     const act = actuators.find(a => a.channel === channel)
     if (!act) return
     const newState = act.state === 'ON' ? 'OFF' : 'ON'
+    setPendingChannels(prev => new Set([...prev, channel]))
     addLog(`Actuator CH${channel} toggled ${newState}`, newState === 'ON' ? 'success' : 'warn')
     try {
       await setActuatorDirect(device.deviceId, channel, newState)
@@ -112,6 +127,11 @@ function DeviceDetail() {
         a.channel === channel ? { ...a, state: newState } : a
       ))
     } catch (err) {
+      setPendingChannels(prev => {
+        const next = new Set(prev)
+        next.delete(channel)
+        return next
+      })
       addLog(`Actuator CH${channel} command failed: ${err.response?.data?.error || 'timeout'}`, 'error')
     }
   }
@@ -243,43 +263,21 @@ function DeviceDetail() {
             <span className="font-label-caps text-label-caps text-on-surface-variant">ACTUATOR OVERRIDE MATRIX</span>
             <div className="bg-surface-container px-2 py-1 rounded text-10px font-label-caps border border-outline">MODE: MANUAL</div>
           </div>
-          <div className="flex-1 relative p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" preserveAspectRatio="none">
-              <path d="M100,50 Q150,150 300,100" fill="none" stroke="#44e2cd" strokeWidth="1" className="bioluminescent-path" />
-              <path d="M400,250 Q200,100 100,200" fill="none" stroke="#6bfb9a" strokeWidth="1" className="bioluminescent-path" />
-            </svg>
+          <div className="flex-1 p-4 grid grid-cols-2 md:grid-cols-4 gap-3 auto-rows-min">
             {[1, 2, 3, 4].map(ch => {
               const act = actuators.find(a => a.channel === ch) || { channel: ch, state: 'OFF', mode: 'LOCAL' }
-              const meta = ACTUATOR_META[ch] || { label: `CH${ch}`, icon: 'settings', color: 'primary' }
-              const isOn = act.state === 'ON'
-              const isError = meta.color === 'error'
               return (
-                <div key={ch}
-                  className={`bg-surface-container-low p-3 rounded flex flex-col justify-between relative${isError && !isOn ? ' border border-error/40 breathing-pulse' : ' border border-outline-variant'}`}>
-                  <span className={`font-label-caps text-9px ${isError && !isOn ? 'text-error' : 'text-on-surface-variant'}`}>{meta.label}</span>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className={`text-12px font-mono ${isOn ? 'text-primary' : isError && !isOn ? 'text-error' : 'text-on-surface-variant opacity-50'}`}>
-                      {isError && !isOn ? 'ERR' : isOn ? `${ch === 1 ? '75%' : ch === 4 ? 'ACTIVE' : 'ON'}` : 'OFF'}
-                    </span>
-                    {isError && !isOn ? (
-                      <div className="w-8 h-4 bg-error/20 rounded-full relative border border-error/50 flex items-center justify-center">
-                        <span className="text-10px text-error font-bold">!</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleToggle(ch)}
-                        className={`w-8 h-4 rounded-full relative p-0.5 border transition-all cursor-pointer select-none
-                          ${isOn ? `bg-${meta.color === 'secondary' ? 'secondary' : 'primary'}` : 'bg-outline-variant border-outline-variant'}`}
-                        style={isOn ? { boxShadow: `0 0 8px ${meta.color === 'secondary' ? '#44e2cd' : '#6bfb9a'}` } : {}}
-                      >
-                        <div className={`w-3 h-3 rounded-full transition-all absolute top-0.5 ${isOn ? 'right-0.5 bg-on-primary' : 'left-0.5 bg-on-surface-variant'}`} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <ActuatorControl
+                  key={ch}
+                  deviceId={device.deviceId}
+                  actuator={act}
+                  meta={ACTUATOR_META[ch]}
+                  cmdState={getCmdState(act)}
+                  onToggle={handleToggle}
+                />
               )
             })}
-            <div className="col-span-full mt-2 h-36 bg-surface-container-lowest rounded border border-outline-variant relative overflow-hidden group">
+            <div className="col-span-full h-28 bg-surface-container-lowest rounded border border-outline-variant relative overflow-hidden group">
               <div className="absolute inset-0 p-4">
                 <div className="flex justify-between items-start">
                   <span className="font-label-caps text-10px text-outline">THERMAL MAPPING RECON</span>
