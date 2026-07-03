@@ -387,7 +387,7 @@ function DeviceDetail() {
         </div>
       </section>
 
-      <div className="bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col" style={{ minHeight: '600px' }}>
+      <div className="bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col" style={{ minHeight: '200px' }}>
         <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-high flex items-center justify-between">
           <span className="font-label-caps text-10px text-on-surface-variant tracking-wider">ACTUATOR OVERRIDE MATRIX</span>
           <div className="flex items-center gap-3">
