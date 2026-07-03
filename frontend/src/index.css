@@ -20,6 +20,7 @@
   --surface-container-highest: #313633;
   --surface-variant: #313633;
   --surface-bright: #353a38;
+  --surface-container-lowest: #0a0f0d;
   --outline-variant: #3d4a3e;
   --outline: #869486;
 
@@ -654,10 +655,10 @@ section h3 { font-size: 16px; margin-bottom: 16px; color: var(--text2); }
 
 /* === Breathing Node (Login background) === */
 .breathing-node {
-  animation: breathe 6s infinite ease-in-out;
+  animation: breathe-node 6s infinite ease-in-out;
   background: radial-gradient(circle, rgba(107, 251, 154, 0.2) 0%, rgba(68, 226, 205, 0.05) 50%, transparent 70%);
 }
-@keyframes breathe {
+@keyframes breathe-node {
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50% { opacity: 0.6; transform: scale(1.2); }
 }
@@ -1102,8 +1103,8 @@ section h3 { font-size: 16px; margin-bottom: 16px; color: var(--text2); }
   50% { opacity: 0.4; transform: scale(1.2); }
 }
 @keyframes breathe {
-  0%, 100% { transform: scale(1); box-shadow: var(--glow-primary); }
-  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+  0%, 100% { opacity: 0.3; transform: scale(1); box-shadow: var(--glow-primary); }
+  50% { opacity: 0.6; transform: scale(1.08); box-shadow: 0 0 24px rgba(74, 222, 128, 0.3); }
 }
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(107, 251, 154, 0.5)); }

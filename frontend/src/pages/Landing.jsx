@@ -1,5 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import AuthModal from '../components/auth/AuthModal.jsx'
+
+const ACCENT_MAP = {
+  primary: { border: '2px solid var(--spore-green)', bg: 'rgba(107,251,154,0.1)', color: 'var(--spore-green)', label: '' },
+  secondary: { border: '2px solid var(--teal)', bg: 'rgba(68,226,205,0.1)', color: 'var(--teal)', label: '' },
+  tertiary: { border: '2px solid var(--amber)', bg: 'rgba(255,182,87,0.1)', color: 'var(--amber)', label: '' },
+}
 
 const FEATURES = [
   {
@@ -7,30 +13,21 @@ const FEATURES = [
     label: 'MONITOREO EN VIVO',
     title: 'Telemetría en Tiempo Real',
     desc: 'Sensores de temperatura, humedad, CO₂ y flujo de aire. Visualiza métricas con gráficos dinámicos y alertas inteligentes.',
-    color: 'primary',
-    borderClass: 'border-t-primary',
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
+    accent: 'primary',
   },
   {
     icon: 'potted_plant',
     label: 'RECETAS',
     title: 'Perfiles de Cultivo',
     desc: 'Diseña secuencias ambientales para cada especie. Fase de incubación, fructificación y cosecha con control preciso.',
-    color: 'secondary',
-    borderClass: 'border-t-secondary',
-    iconBg: 'bg-secondary/10',
-    iconColor: 'text-secondary',
+    accent: 'secondary',
   },
   {
     icon: 'devices',
     label: 'ACTUADORES',
     title: 'Control Remoto',
-    desc: 'Ventiladores, humidificadores, iluminación y más. Automatización programada o control manual desde cualquier lugar.',
-    color: 'tertiary',
-    borderClass: 'border-t-tertiary',
-    iconBg: 'bg-tertiary/10',
-    iconColor: 'text-tertiary',
+    desc: 'Ventiladores, humidificadores, iluminación y más. Control remoto con automatización programada o manual.',
+    accent: 'tertiary',
   },
 ]
 
@@ -50,7 +47,8 @@ const PARTICLES = Array.from({ length: 30 }, (_, i) => ({
   id: i,
   left: `${Math.random() * 100}%`,
   top: `${Math.random() * 100}%`,
-  size: Math.random() * 3 + 1,
+  size: Math.random() * 2.5 + 0.8,
+  opacity: 0.25 + Math.random() * 0.4,
   delay: Math.random() * 5,
   duration: Math.random() * 4 + 3,
 }))
@@ -67,7 +65,6 @@ function Particle({ style }) {
 function Landing() {
   const [showAuth, setShowAuth] = useState(false)
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
-  const heroRef = useRef(null)
 
   useEffect(() => {
     function onMove(e) {
@@ -159,10 +156,9 @@ function Landing() {
             top: p.top,
             width: `${p.size}px`,
             height: `${p.size}px`,
-            opacity: 0.3 + Math.random() * 0.4,
+            opacity: p.opacity,
             animationDelay: `${p.delay}s`,
             animationDuration: `${p.duration}s`,
-            transform: `translate(${bgOffsetX * 0.2}px, ${bgOffsetY * 0.2}px)`,
           }}
         />
       ))}
@@ -171,6 +167,7 @@ function Landing() {
       <svg
         className="fixed inset-0 z-0 pointer-events-none"
         style={{ width: '100%', height: '100%', opacity: 0.12 }}
+        viewBox="0 0 100 100"
         preserveAspectRatio="xMidYMid meet"
       >
         {NETWORK_NODES.map((node, i) => (
@@ -178,49 +175,48 @@ function Landing() {
             key={i}
             cx={node.cx}
             cy={node.cy}
-            r="3"
+            r="0.4"
             fill="#6bfb9a"
             className="breathing-pulse"
             style={{ animationDelay: `${node.delay}s` }}
           />
         ))}
         <path
-          d="M15%,30% Q30%,25% 45%,20% T75%,35%"
+          d="M15,30 Q30,25 45,20 T75,35"
           fill="none"
           stroke="#6bfb9a"
-          strokeWidth="0.8"
+          strokeWidth="0.12"
           className="bioluminescent-path"
-          style={{ animationDelay: '0s' }}
         />
         <path
-          d="M45%,20% Q52%,40% 60%,55% T85%,65%"
+          d="M45,20 Q52,40 60,55 T85,65"
           fill="none"
           stroke="#44e2cd"
-          strokeWidth="0.6"
+          strokeWidth="0.1"
           className="bioluminescent-path"
           style={{ animationDelay: '1s' }}
         />
         <path
-          d="M30%,60% Q42%,50% 55%,75% T80%,50%"
+          d="M30,60 Q42,50 55,75 T80,50"
           fill="none"
           stroke="#6bfb9a"
-          strokeWidth="0.7"
+          strokeWidth="0.1"
           className="bioluminescent-path"
           style={{ animationDelay: '2s' }}
         />
         <path
-          d="M15%,30% Q22%,55% 30%,60% T55%,75%"
+          d="M15,30 Q22,55 30,60 T55,75"
           fill="none"
           stroke="#44e2cd"
-          strokeWidth="0.5"
+          strokeWidth="0.08"
           className="bioluminescent-path"
           style={{ animationDelay: '3s' }}
         />
         <path
-          d="M75%,35% Q80%,42% 85%,65%"
+          d="M75,35 Q80,42 85,65"
           fill="none"
           stroke="#ffb657"
-          strokeWidth="0.5"
+          strokeWidth="0.08"
           className="bioluminescent-path"
           style={{ animationDelay: '4s' }}
         />
@@ -252,7 +248,7 @@ function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative z-10" style={{ minHeight: 'calc(100vh - 64px)' }}>
+      <section className="relative z-10" style={{ minHeight: 'calc(100vh - 64px)' }}>
         <div className="max-w-6xl mx-auto px-6 pt-16 pb-24 flex flex-col lg:flex-row lg:items-center lg:gap-16" style={{ minHeight: 'calc(100vh - 64px)' }}>
           <div className="flex-1 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-highest border border-primary/20 rounded-full mb-8">
@@ -290,7 +286,8 @@ function Landing() {
               </button>
               <button
                 onClick={() => setShowAuth(true)}
-                className="px-8 py-4 border border-secondary/40 text-secondary font-label-caps text-label-caps rounded-lg hover:bg-secondary/8 transition-all flex items-center gap-2 cursor-pointer"
+                className="px-8 py-4 border border-secondary/40 text-secondary font-label-caps text-label-caps rounded-lg transition-all flex items-center gap-2 cursor-pointer"
+                style={{ background: 'transparent' }}
                 style={{ background: 'transparent' }}
               >
                 <span className="material-symbols-outlined text-sm">sensors</span>
@@ -330,7 +327,7 @@ function Landing() {
               className="glass-card rounded-xl p-5 relative overflow-hidden group"
               style={{ border: '1px solid rgba(107,251,154,0.15)' }}
             >
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all duration-700" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-2xl transition-all duration-700" style={{ background: 'rgba(107,251,154,0.05)' }} />
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-3">
                   <span className="font-label-caps text-label-caps text-on-surface-variant">TEMPERATURA</span>
@@ -353,7 +350,7 @@ function Landing() {
               className="glass-card rounded-xl p-5 relative overflow-hidden group"
               style={{ border: '1px solid rgba(68,226,205,0.15)' }}
             >
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-secondary/5 rounded-full blur-2xl group-hover:bg-secondary/10 transition-all duration-700" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-2xl transition-all duration-700" style={{ background: 'rgba(68,226,205,0.05)' }} />
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-3">
                   <span className="font-label-caps text-label-caps text-on-surface-variant">HUMEDAD</span>
@@ -383,7 +380,7 @@ function Landing() {
               className="glass-card rounded-xl p-5 relative overflow-hidden group"
               style={{ border: '1px solid rgba(255,182,87,0.15)' }}
             >
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-tertiary/5 rounded-full blur-2xl group-hover:bg-tertiary/10 transition-all duration-700" />
+              <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-2xl transition-all duration-700" style={{ background: 'rgba(255,182,87,0.05)' }} />
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-3">
                   <span className="font-label-caps text-label-caps text-on-surface-variant">CO₂</span>
@@ -433,28 +430,31 @@ function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {FEATURES.map((f, i) => (
-              <div
-                key={i}
-                className={`glass-card rounded-xl p-6 border-t-2 ${f.borderClass} group hover:translate-y-[-4px] transition-all duration-300`}
-                style={{ animationDelay: `${i * 0.15}s` }}
-              >
-                <div className="flex items-start justify-between mb-5">
-                  <div className={`w-12 h-12 ${f.iconBg} flex items-center justify-center rounded-xl`}>
-                    <span className={`material-symbols-outlined ${f.iconColor} text-2xl`}>{f.icon}</span>
+            {FEATURES.map((f, i) => {
+              const a = ACCENT_MAP[f.accent]
+              return (
+                <div
+                  key={i}
+                  className="glass-card rounded-xl p-6 group hover:translate-y-[-4px] transition-all duration-300"
+                  style={{ borderTop: a.border }}
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-12 h-12 flex items-center justify-center rounded-xl" style={{ background: a.bg }}>
+                      <span className="material-symbols-outlined text-2xl" style={{ color: a.color }}>{f.icon}</span>
+                    </div>
+                    <span className="font-label-caps text-label-caps opacity-60 group-hover:opacity-100 transition-opacity" style={{ color: a.color }}>
+                      {f.label}
+                    </span>
                   </div>
-                  <span className={`font-label-caps text-label-caps ${f.iconColor} opacity-60 group-hover:opacity-100 transition-opacity`}>
-                    {f.label}
-                  </span>
+                  <h3 className="text-headline-md text-white mb-2">{f.title}</h3>
+                  <p className="text-body-md text-on-surface-variant flex-1">{f.desc}</p>
+                  <div className="mt-5 flex items-center gap-2 text-data-sm text-primary">
+                    <span className="font-label-caps text-label-caps">EXPLORAR</span>
+                    <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </div>
                 </div>
-                <h3 className="text-headline-md text-white mb-2">{f.title}</h3>
-                <p className="text-body-md text-on-surface-variant flex-1">{f.desc}</p>
-                <div className="mt-5 flex items-center gap-2 text-data-sm" style={{ color: `var(--spore-green)` }}>
-                  <span className="font-label-caps text-label-caps">EXPLORAR</span>
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
@@ -464,14 +464,13 @@ function Landing() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '100%', label: 'OPEN SOURCE', sub: 'Licencia MIT', color: 'text-primary' },
-              { value: '24/7', label: 'MONITOREO', sub: 'Tiempo real', color: 'text-secondary' },
-              { value: 'ESP32', label: 'FIRMWARE', sub: 'Arquitectura dual', color: 'text-tertiary' },
-              { value: 'REST', label: 'API', sub: '+ WebSockets + MQTT', color: 'text-primary' },
+              { value: '100%', label: 'OPEN SOURCE', sub: 'Licencia MIT', color: 'var(--spore-green)' },
+              { value: '24/7', label: 'MONITOREO', sub: 'Tiempo real', color: 'var(--teal)' },
+              { value: 'ESP32', label: 'FIRMWARE', sub: 'Arquitectura dual', color: 'var(--amber)' },
+              { value: 'REST', label: 'API', sub: '+ WebSockets + MQTT', color: 'var(--spore-green)' },
             ].map((stat, i) => (
               <div key={i} className="text-center group">
-                <div className={`text-5xl md:text-6xl font-mono font-semibold ${stat.color} mb-2 transition-all duration-300 group-hover:scale-105`}
-                  style={{ textShadow: `0 0 30px rgba(107,251,154,0.08)` }}>
+                <div className="font-mono font-semibold mb-2 transition-all duration-300 group-hover:scale-110" style={{ fontSize: 'clamp(32px, 5vw, 64px)', color: stat.color }}>
                   {stat.value}
                 </div>
                 <div className="font-label-caps text-label-caps text-on-surface-variant">{stat.label}</div>
@@ -487,8 +486,8 @@ function Landing() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="glass-card rounded-2xl overflow-hidden relative group"
             style={{ border: '1px solid rgba(107,251,154,0.12)' }}>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700" />
+            <div className="absolute inset-0 transition-opacity duration-700 opacity-0 group-hover:opacity-100" style={{ background: 'linear-gradient(90deg, rgba(107,251,154,0.05), transparent, rgba(68,226,205,0.05))' }} />
+            <div className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-3xl transition-all duration-700" style={{ background: 'rgba(107,251,154,0.05)' }} />
             <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1">
                 <span className="font-label-caps text-label-caps text-primary bg-primary/10 px-3 py-1.5 border border-primary/20 rounded-full inline-block mb-4">
@@ -512,15 +511,16 @@ function Landing() {
               </div>
               <div className="flex-shrink-0 flex items-center gap-5">
                 {[
-                  { icon: 'code', color: 'text-primary', bg: 'bg-primary/10' },
-                  { icon: 'groups', color: 'text-secondary', bg: 'bg-secondary/10' },
-                  { icon: 'iot', color: 'text-tertiary', bg: 'bg-tertiary/10' },
+                  { icon: 'code', color: 'var(--spore-green)', bg: 'rgba(107,251,154,0.1)' },
+                  { icon: 'groups', color: 'var(--teal)', bg: 'rgba(68,226,205,0.1)' },
+                  { icon: 'iot', color: 'var(--amber)', bg: 'rgba(255,182,87,0.1)' },
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className={`w-16 h-16 ${item.bg} rounded-2xl flex items-center justify-center border border-outline-variant/30 group/icon hover:scale-110 transition-all duration-300`}
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center border border-outline-variant/30 hover:scale-110 transition-all duration-300"
+                    style={{ background: item.bg }}
                   >
-                    <span className={`material-symbols-outlined ${item.color} text-3xl`}>{item.icon}</span>
+                    <span className="material-symbols-outlined text-3xl" style={{ color: item.color }}>{item.icon}</span>
                   </div>
                 ))}
               </div>
