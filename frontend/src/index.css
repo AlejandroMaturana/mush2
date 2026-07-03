@@ -612,7 +612,7 @@ section h3 { font-size: 16px; margin-bottom: 16px; color: var(--text2); }
 /* === Segment Bar === */
 .segment-bar { display: flex; gap: 2px; width: 100%; }
 .segment { height: 6px; flex: 1; border-radius: 1px; }
-.segmented-bar-segment { height: 12px; width: 4px; border-radius: 1px; background: #1c211e; }
+.segmented-bar-segment { height: 12px; width: 4px; border-radius: 1px; background: var(--surface-container); }
 .segmented-bar-segment.active { background: currentColor; }
 
 /* === Bioluminescent Lines === */
@@ -875,11 +875,11 @@ section h3 { font-size: 16px; margin-bottom: 16px; color: var(--text2); }
 
 /* === Status Glow === */
 .status-glow-running {
-  --glow-color: #6bfb9a;
+  --glow-color: var(--spore-green);
   animation: pulse-glow-anim 2s infinite ease-in-out;
 }
 .status-glow-paused {
-  --glow-color: #ffb657;
+  --glow-color: var(--amber);
   animation: pulse-glow-anim 3s infinite ease-in-out;
 }
 @keyframes pulse-glow-anim {
