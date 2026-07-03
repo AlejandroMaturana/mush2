@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getDevice, getActuators, setActuatorDirect } from '../api/client.js'
+import { getDevice, getActuators, setActuatorDirect, getLatestTelemetry, getTelemetryHistory } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
 import DomeGauge from '../components/ui/DomeGauge.jsx'
 import DeviceHistoryChart from '../components/ui/DeviceHistoryChart.jsx'
@@ -21,6 +21,24 @@ const SENSOR_CFG = {
   hum: { label: 'Humidity', unit: '%RH', min: 50, max: 100, optMin: 70, optMax: 90, decimals: 1, chartColor: '#38bdf8' },
   eco2: { label: 'eCO₂', unit: 'ppm', min: 400, max: 5000, optMin: 800, optMax: 2000, decimals: 0, chartColor: '#a78bfa' },
   tvoc: { label: 'TVOC', unit: 'ppb', min: 0, max: 2000, optMin: 0, optMax: 500, decimals: 0, chartColor: '#fb7185' },
+}
+
+function reshapeHistory(rows) {
+  const byTime = {}
+  for (const r of rows) {
+    const t = r.timestamp ? new Date(r.timestamp) : new Date()
+    const key = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`
+    if (!byTime[key]) byTime[key] = {}
+    byTime[key][r.sensorType] = parseFloat(r.value)
+  }
+  const sorted = Object.entries(byTime).sort(([a], [b]) => a.localeCompare(b))
+  return sorted.map(([t, v]) => ({
+    t,
+    temp: v.TEMPERATURE ?? null,
+    hum: v.HUMIDITY ?? null,
+    eco2: v.CO2 ?? null,
+    tvoc: v.VOC ?? null,
+  }))
 }
 
 function DeviceDetail() {
@@ -60,6 +78,11 @@ function DeviceDetail() {
       setActuators(acts)
       setError(null)
       addLog('System initialized. Chamber telemetry active.', 'success')
+
+      const latest = await getLatestTelemetry(id)
+      if (!cancelledRef.current && latest?.temperature != null) {
+        applyTelemetry(latest, true)
+      }
     } catch (err) {
       if (!cancelledRef.current) setError(err.message || 'Connection error')
     } finally {
@@ -67,27 +90,51 @@ function DeviceDetail() {
     }
   }
 
-  useEffect(() => {
-    cancelledRef.current = false
-    loadData()
-    return () => { cancelledRef.current = true }
-  }, [id, addLog])
+  async function fetchHistory() {
+    try {
+      const rows = await getTelemetryHistory(id, { limit: 30 })
+      if (cancelledRef.current || !rows?.length) return
+      const reshaped = reshapeHistory(rows)
+      if (!reshaped.length) return
+      chartHistory.current = reshaped
+      setChartLabels(reshaped.map(d => d.t))
+      setChartTemp(reshaped.map(d => d.temp ?? 0))
+      setChartHum(reshaped.map(d => d.hum ?? 0))
+      setChartEco2(reshaped.map(d => d.eco2 ?? 0))
+      setChartTvoc(reshaped.map(d => d.tvoc ?? 0))
+    } catch {}
+  }
 
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setClockStr(new Date().toLocaleTimeString('en-GB', { hour12: false }))
-    }, 1000)
-    return () => clearInterval(iv)
-  }, [])
-
-  useEffect(() => {
-    gaugePrev.current = {
-      temp: telemetry.temperature,
-      hum: telemetry.humidity,
-      eco2: telemetry.co2,
-      tvoc: telemetry.voc,
+  function applyTelemetry(sensors, initial = false) {
+    if (!sensors) return
+    const prev = prevTelemetry.current
+    if (sensors.temperature != null && prev.temperature != null && Math.abs(sensors.temperature - prev.temperature) > 0.2) {
+      addLog(`Temperature ${sensors.temperature > prev.temperature ? '▲' : '▼'} ${sensors.temperature.toFixed(1)}°C`, 'info')
     }
-  }, [telemetry.temperature, telemetry.humidity, telemetry.co2, telemetry.voc])
+    if (sensors.humidity != null && prev.humidity != null && Math.abs(sensors.humidity - prev.humidity) > 1) {
+      addLog(`Humidity ${sensors.humidity > prev.humidity ? '▲' : '▼'} ${sensors.humidity.toFixed(0)}%`, 'info')
+    }
+    if (sensors.co2 != null && prev.co2 != null && Math.abs(sensors.co2 - prev.co2) > 50) {
+      const warnLevel = sensors.co2 > 2000 ? 'error' : sensors.co2 > 1500 ? 'warn' : 'info'
+      addLog(`CO₂ ${sensors.co2 > prev.co2 ? '▲' : '▼'} ${sensors.co2} ppm`, warnLevel)
+    }
+    if (!initial) {
+      prevTelemetry.current = {
+        temperature: sensors.temperature ?? prev.temperature,
+        humidity: sensors.humidity ?? prev.humidity,
+        co2: sensors.co2 ?? prev.co2,
+      }
+    }
+    setTelemetry(prev => ({
+      ...prev,
+      temperature: sensors.temperature ?? prev.temperature,
+      humidity: sensors.humidity ?? prev.humidity,
+      co2: sensors.co2 ?? prev.co2,
+      voc: sensors.voc ?? prev.voc,
+      ts: new Date().toISOString(),
+    }))
+    if (!initial) pushHistory(sensors)
+  }
 
   function pushHistory(sensors) {
     const now = new Date()
@@ -119,35 +166,46 @@ function DeviceDetail() {
     }
   }
 
+  useEffect(() => {
+    cancelledRef.current = false
+    loadData()
+    fetchHistory()
+    return () => { cancelledRef.current = true }
+  }, [id, addLog])
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setClockStr(new Date().toLocaleTimeString('en-GB', { hour12: false }))
+    }, 1000)
+    return () => clearInterval(iv)
+  }, [])
+
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      if (cancelledRef.current) return
+      try {
+        const latest = await getLatestTelemetry(id)
+        if (!cancelledRef.current && latest?.temperature != null) {
+          applyTelemetry(latest)
+        }
+      } catch {}
+    }, 5000)
+    return () => clearInterval(iv)
+  }, [id])
+
+  useEffect(() => {
+    gaugePrev.current = {
+      temp: telemetry.temperature,
+      hum: telemetry.humidity,
+      eco2: telemetry.co2,
+      tvoc: telemetry.voc,
+    }
+  }, [telemetry.temperature, telemetry.humidity, telemetry.co2, telemetry.voc])
+
   useSSE(useCallback((type, data) => {
     if (type === 'telemetry' && device && data.deviceId === device.deviceId) {
       if (data.sensors) {
-        const prev = prevTelemetry.current
-        const s = data.sensors
-        if (s.temperature != null && prev.temperature != null && Math.abs(s.temperature - prev.temperature) > 0.2) {
-          addLog(`Temperature ${s.temperature > prev.temperature ? '▲' : '▼'} ${s.temperature.toFixed(1)}°C`, 'info')
-        }
-        if (s.humidity != null && prev.humidity != null && Math.abs(s.humidity - prev.humidity) > 1) {
-          addLog(`Humidity ${s.humidity > prev.humidity ? '▲' : '▼'} ${s.humidity.toFixed(0)}%`, 'info')
-        }
-        if (s.co2 != null && prev.co2 != null && Math.abs(s.co2 - prev.co2) > 50) {
-          const warnLevel = s.co2 > 2000 ? 'error' : s.co2 > 1500 ? 'warn' : 'info'
-          addLog(`CO₂ ${s.co2 > prev.co2 ? '▲' : '▼'} ${s.co2} ppm`, warnLevel)
-        }
-        prevTelemetry.current = {
-          temperature: s.temperature,
-          humidity: s.humidity,
-          co2: s.co2,
-        }
-        setTelemetry(prev => ({
-          ...prev,
-          temperature: s.temperature,
-          humidity: s.humidity,
-          co2: s.co2,
-          voc: s.voc,
-          ts: new Date().toISOString(),
-        }))
-        pushHistory(s)
+        applyTelemetry(data.sensors)
       }
     }
     if (type === 'ack') {
@@ -315,8 +373,9 @@ function DeviceDetail() {
         </div>
         <div className="flex gap-2 items-center">
           {health != null && (
-            <span className="text-10px font-label-caps" style={{
+            <span style={{
               fontFamily: 'var(--font-mono)',
+              fontSize: '10px',
               color: health >= 75 ? '#22c55e' : health >= 50 ? '#f59e0b' : '#ef4444',
             }}>
               HEALTH {health}%
@@ -328,7 +387,7 @@ function DeviceDetail() {
         </div>
       </section>
 
-      <section className="flex border-b border-outline-variant" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <section className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <DomeGauge value={has.temp ? telemetry.temperature : SENSOR_CFG.temp.min} prevValue={gaugePrev.current.temp} min={SENSOR_CFG.temp.min} max={SENSOR_CFG.temp.max} optMin={SENSOR_CFG.temp.optMin} optMax={SENSOR_CFG.temp.optMax} unit={SENSOR_CFG.temp.unit} label={SENSOR_CFG.temp.label} decimals={SENSOR_CFG.temp.decimals} history={sparkHistory.current.temp} noData={!has.temp} />
         <DomeGauge value={has.hum ? telemetry.humidity : SENSOR_CFG.hum.min} prevValue={gaugePrev.current.hum} min={SENSOR_CFG.hum.min} max={SENSOR_CFG.hum.max} optMin={SENSOR_CFG.hum.optMin} optMax={SENSOR_CFG.hum.optMax} unit={SENSOR_CFG.hum.unit} label={SENSOR_CFG.hum.label} decimals={SENSOR_CFG.hum.decimals} history={sparkHistory.current.hum} noData={!has.hum} />
         <DomeGauge value={has.eco2 ? telemetry.co2 : SENSOR_CFG.eco2.min} prevValue={gaugePrev.current.eco2} min={SENSOR_CFG.eco2.min} max={SENSOR_CFG.eco2.max} optMin={SENSOR_CFG.eco2.optMin} optMax={SENSOR_CFG.eco2.optMax} unit={SENSOR_CFG.eco2.unit} label={SENSOR_CFG.eco2.label} decimals={SENSOR_CFG.eco2.decimals} history={sparkHistory.current.eco2} noData={!has.eco2} />
@@ -341,9 +400,9 @@ function DeviceDetail() {
         <StatusPill sk="eco2" label="eCO₂" />
         <StatusPill sk="tvoc" label="TVOC" />
         {co2Error && (
-          <span className="text-8px font-label-caps text-error" style={{
-            background: 'rgba(239,68,68,0.08)', color: '#ef4444',
-            padding: '2px 8px', borderRadius: '3px',
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: '7px', color: '#ef4444',
+            background: 'rgba(239,68,68,0.08)', padding: '2px 8px', borderRadius: '3px',
           }}>
             ⚠ CO₂ OVER LIMIT
           </span>
