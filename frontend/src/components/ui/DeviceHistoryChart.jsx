@@ -25,20 +25,67 @@ function refBands(bands) {
   }
 }
 
-function DeviceHistoryChart({ title, datasets, bands, y1Domain, y2Domain, labels }) {
+function computeRanges(datasets, margin, bands) {
+  const byAxis = {}
+  for (const ds of datasets) {
+    const aid = ds.yAxisID || 'y'
+    if (!byAxis[aid]) byAxis[aid] = { values: [] }
+    for (const v of ds.data || []) {
+      if (v != null && !Number.isNaN(v) && isFinite(v)) {
+        byAxis[aid].values.push(v)
+      }
+    }
+  }
+  if (bands) {
+    for (const b of bands) {
+      if (!byAxis[b.ax]) byAxis[b.ax] = { values: [] }
+      byAxis[b.ax].values.push(b.min, b.max)
+    }
+  }
+  const ranges = {}
+  for (const [aid, { values }] of Object.entries(byAxis)) {
+    if (values.length === 0) {
+      ranges[aid] = { min: 0, max: 100 }
+      continue
+    }
+    let rawMin = Math.min(...values)
+    let rawMax = Math.max(...values)
+    let span = rawMax - rawMin
+    if (span === 0) span = rawMax === 0 ? 100 : rawMax * 0.5
+    ranges[aid] = {
+      min: Math.floor(rawMin - span * margin),
+      max: Math.ceil(rawMax + span * margin),
+    }
+  }
+  return ranges
+}
+
+function applyRanges(chart, ranges) {
+  if (!chart) return
+  for (const [aid, { min, max }] of Object.entries(ranges)) {
+    const sc = chart.options.scales[aid]
+    if (sc) {
+      sc.min = min
+      sc.max = max
+    }
+  }
+}
+
+function DeviceHistoryChart({ title, datasets, bands, labels, margin = 0.10 }) {
   const canvasRef = useRef(null)
   const chartRef = useRef(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
-
     if (chartRef.current) {
       chartRef.current.data.labels = labels
       chartRef.current.data.datasets = datasets
+      const ranges = computeRanges(datasets, margin, bands)
+      applyRanges(chartRef.current, ranges)
       chartRef.current.update('none')
       return
     }
-
+    const ranges = computeRanges(datasets, margin, bands)
     chartRef.current = new Chart(canvasRef.current, {
       type: 'line',
       data: { labels, datasets },
@@ -71,16 +118,16 @@ function DeviceHistoryChart({ title, datasets, bands, y1Domain, y2Domain, labels
             ticks: { color: '#2e4036', font: { family: 'JetBrains Mono, monospace', size: 7 }, maxTicksLimit: 5 },
             border: { color: 'transparent' },
             position: 'left',
-            min: y1Domain[0],
-            max: y1Domain[1],
+            min: ranges.y1?.min ?? 0,
+            max: ranges.y1?.max ?? 100,
           },
           y2: {
             grid: { drawOnChartArea: false, drawTicks: false },
             ticks: { color: '#2e4036', font: { family: 'JetBrains Mono, monospace', size: 7 }, maxTicksLimit: 5 },
             border: { color: 'transparent' },
             position: 'right',
-            min: y2Domain[0],
-            max: y2Domain[1],
+            min: ranges.y2?.min ?? 0,
+            max: ranges.y2?.max ?? 100,
           },
         },
       },
@@ -98,8 +145,10 @@ function DeviceHistoryChart({ title, datasets, bands, y1Domain, y2Domain, labels
     if (!chartRef.current) return
     chartRef.current.data.labels = labels
     chartRef.current.data.datasets = datasets
+    const ranges = computeRanges(datasets, margin, bands)
+    applyRanges(chartRef.current, ranges)
     chartRef.current.update('none')
-  }, [labels, datasets])
+  }, [labels, datasets, bands, margin])
 
   return (
     <div style={{ flex: 1, minWidth: 0, padding: '10px 6px 6px' }}>
