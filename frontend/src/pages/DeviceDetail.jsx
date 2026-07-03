@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getDevice, getActuators, setActuatorDirect } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
-import ArcGauge from '../components/ui/ArcGauge.jsx'
+import DomeGauge from '../components/ui/DomeGauge.jsx'
+import DeviceHistoryChart from '../components/ui/DeviceHistoryChart.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import LoadingState from '../components/ui/LoadingState.jsx'
 import ErrorState from '../components/ui/ErrorState.jsx'
@@ -15,11 +16,11 @@ const ACTUATOR_META = {
   4: { label: 'UV-C STERILIZER', icon: 'light', color: 'secondary' },
 }
 
-const SPARKLINES = {
-  temp: '0,10 10,11 20,10 30,9 40,10 50,11 60,10 70,9 80,10 90,11 100,10',
-  hum: '0,12 10,10 20,18 30,5 40,8 50,2 60,10 70,14 80,8 90,12 100,10',
-  co2: '0,15 10,12 20,18 30,5 40,8 50,2 60,10 70,14 80,8 90,12 100,10',
-  o2: '0,5 20,8 40,5 60,6 80,4 100,5',
+const SENSOR_CFG = {
+  temp: { label: 'Temperature', unit: '°C', min: 18, max: 35, optMin: 22, optMax: 28, decimals: 1, chartColor: '#f59e0b' },
+  hum: { label: 'Humidity', unit: '%RH', min: 50, max: 100, optMin: 70, optMax: 90, decimals: 1, chartColor: '#38bdf8' },
+  eco2: { label: 'eCO₂', unit: 'ppm', min: 400, max: 5000, optMin: 800, optMax: 2000, decimals: 0, chartColor: '#a78bfa' },
+  tvoc: { label: 'TVOC', unit: 'ppb', min: 0, max: 2000, optMin: 0, optMax: 500, decimals: 0, chartColor: '#fb7185' },
 }
 
 function DeviceDetail() {
@@ -33,14 +34,23 @@ function DeviceDetail() {
   const [logs, setLogs] = useState([])
   const [cmdHistory, setCmdHistory] = useState([])
   const [pendingChannels, setPendingChannels] = useState(new Set())
+  const [chartLabels, setChartLabels] = useState([])
+  const [chartTemp, setChartTemp] = useState([])
+  const [chartHum, setChartHum] = useState([])
+  const [chartEco2, setChartEco2] = useState([])
+  const [chartTvoc, setChartTvoc] = useState([])
+
+  const [clockStr, setClockStr] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }))
   const prevTelemetry = useRef({})
+  const gaugePrev = useRef({})
+  const sparkHistory = useRef({ temp: [], hum: [], eco2: [], tvoc: [] })
+  const chartHistory = useRef([])
+  const cancelledRef = useRef(false)
 
   const addLog = useCallback((text, type = 'info') => {
     const ts = new Date().toLocaleTimeString('en-GB', { hour12: false })
     setLogs(prev => [{ ts, text, type }, ...prev].slice(0, 20))
   }, [])
-
-  const cancelledRef = useRef(false)
 
   async function loadData() {
     try {
@@ -62,6 +72,52 @@ function DeviceDetail() {
     loadData()
     return () => { cancelledRef.current = true }
   }, [id, addLog])
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setClockStr(new Date().toLocaleTimeString('en-GB', { hour12: false }))
+    }, 1000)
+    return () => clearInterval(iv)
+  }, [])
+
+  useEffect(() => {
+    gaugePrev.current = {
+      temp: telemetry.temperature,
+      hum: telemetry.humidity,
+      eco2: telemetry.co2,
+      tvoc: telemetry.voc,
+    }
+  }, [telemetry.temperature, telemetry.humidity, telemetry.co2, telemetry.voc])
+
+  function pushHistory(sensors) {
+    const now = new Date()
+    const t = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    const prev = chartHistory.current[chartHistory.current.length - 1] || {}
+    const entry = {
+      t,
+      temp: sensors.temperature ?? prev.temp ?? 0,
+      hum: sensors.humidity ?? prev.hum ?? 0,
+      eco2: sensors.co2 ?? prev.eco2 ?? 0,
+      tvoc: sensors.voc ?? prev.tvoc ?? 0,
+    }
+    const ch = [...chartHistory.current.slice(-29), entry]
+    chartHistory.current = ch
+    setChartLabels(ch.map(d => d.t))
+    setChartTemp(ch.map(d => d.temp))
+    setChartHum(ch.map(d => d.hum))
+    setChartEco2(ch.map(d => d.eco2))
+    setChartTvoc(ch.map(d => d.tvoc))
+
+    for (const sk of ['temp', 'hum', 'eco2', 'tvoc']) {
+      const skey = sk === 'eco2' ? 'co2' : sk === 'tvoc' ? 'voc' : sk
+      const v = sensors[skey]
+      if (v != null) {
+        const sh = sparkHistory.current[sk]
+        sh.push(v)
+        if (sh.length > 12) sh.shift()
+      }
+    }
+  }
 
   useSSE(useCallback((type, data) => {
     if (type === 'telemetry' && device && data.deviceId === device.deviceId) {
@@ -91,6 +147,7 @@ function DeviceDetail() {
           voc: s.voc,
           ts: new Date().toISOString(),
         }))
+        pushHistory(s)
       }
     }
     if (type === 'ack') {
@@ -176,10 +233,62 @@ function DeviceDetail() {
   const has = {
     temp: telemetry.temperature != null,
     hum: telemetry.humidity != null,
-    co2: telemetry.co2 != null,
+    eco2: telemetry.co2 != null,
+    tvoc: telemetry.voc != null,
   }
-  const hasTelemetry = has.temp || has.hum || has.co2
-  const co2Error = has.co2 && telemetry.co2 > 2000
+  const co2Error = has.eco2 && telemetry.co2 > 2000
+
+  function computeHealth() {
+    const checks = [
+      has.temp && telemetry.temperature >= 22 && telemetry.temperature <= 28,
+      has.hum && telemetry.humidity >= 70 && telemetry.humidity <= 90,
+      has.eco2 && telemetry.co2 >= 800 && telemetry.co2 <= 2000,
+      has.tvoc && telemetry.voc >= 0 && telemetry.voc <= 500,
+    ].filter(Boolean)
+    if (checks.length === 0) return null
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+  }
+
+  function sensorStatus(sk) {
+    const s = SENSOR_CFG[sk]
+    const v = telemetry[sk === 'eco2' ? 'co2' : sk === 'tvoc' ? 'voc' : sk]
+    if (v == null) return null
+    const ok = v >= s.optMin && v <= s.optMax
+    const crit = !ok && (v > s.optMax * 1.15 || v < s.optMin * 0.85)
+    return { ok, crit }
+  }
+
+  const health = computeHealth()
+  const chart1Data = [
+    { label: 'Temp', data: chartTemp, yAxisID: 'y1', borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.4 },
+    { label: 'Hum', data: chartHum, yAxisID: 'y2', borderColor: '#38bdf8', borderWidth: 1.5, borderDash: [4, 2], tension: 0.4 },
+  ]
+  const chart1Bands = [
+    { ax: 'y1', min: 22, max: 28, fill: 'rgba(245,158,11,0.06)', stroke: 'rgba(245,158,11,0.22)' },
+    { ax: 'y2', min: 70, max: 90, fill: 'rgba(56,189,248,0.06)', stroke: 'rgba(56,189,248,0.22)' },
+  ]
+  const chart2Data = [
+    { label: 'eCO2', data: chartEco2, yAxisID: 'y1', borderColor: '#a78bfa', borderWidth: 1.5, tension: 0.4 },
+    { label: 'TVOC', data: chartTvoc, yAxisID: 'y2', borderColor: '#fb7185', borderWidth: 1.5, borderDash: [4, 2], tension: 0.4 },
+  ]
+  const chart2Bands = [
+    { ax: 'y1', min: 800, max: 2000, fill: 'rgba(167,139,250,0.06)', stroke: 'rgba(167,139,250,0.22)' },
+    { ax: 'y2', min: 0, max: 500, fill: 'rgba(251,113,133,0.06)', stroke: 'rgba(251,113,133,0.22)' },
+  ]
+
+  const StatusPill = ({ sk, label }) => {
+    const st = sensorStatus(sk)
+    if (!st) return null
+    const col = st.ok ? '#22c55e' : st.crit ? '#ef4444' : '#f59e0b'
+    const txt = st.ok ? 'OK' : st.crit ? 'CRIT' : 'WARN'
+    const bg = st.ok ? 'rgba(34,197,94,0.08)' : st.crit ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)'
+    return (
+      <span style={{ fontSize: '7px', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '3px', display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '0.04em', background: bg, color: col }}>
+        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: col, display: 'inline-block' }} />
+        {label} {txt}
+      </span>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -195,68 +304,98 @@ function DeviceDetail() {
       <section className="flex flex-wrap justify-between items-end gap-4">
         <div>
           <div className="flex items-center gap-3">
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isOnline ? '#22c55e' : '#ef4444', display: 'inline-block' }} />
             <h1 className="text-headline-lg text-on-surface">{device.chamberName || device.deviceId}</h1>
             <StatusBadge status={isOnline ? 'online' : 'critical'} label={isOnline ? 'ONLINE' : device.status} />
           </div>
-          <p className="text-body-md text-on-surface-variant">Active Mycelium Colonization Phase</p>
+          <p className="text-body-md text-on-surface-variant">
+            Active Mycelium Colonization Phase
+            <span style={{ fontSize: '8px', color: '#2e4036', fontFamily: 'var(--font-mono)' }}> · Phase: Fruiting</span>
+          </p>
         </div>
-        <div className="flex gap-2">
-          <span className="bg-surface-container-high px-3 py-1 rounded text-10px font-label-caps text-secondary flex items-center gap-1 border border-outline-variant">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary" style={{ boxShadow: '0 0 8px var(--teal)' }} />
-            SYSTEM NOMINAL
+        <div className="flex gap-2 items-center">
+          {health != null && (
+            <span className="text-10px font-label-caps" style={{
+              fontFamily: 'var(--font-mono)',
+              color: health >= 75 ? '#22c55e' : health >= 50 ? '#f59e0b' : '#ef4444',
+            }}>
+              HEALTH {health}%
+            </span>
+          )}
+          <span style={{ fontSize: '9px', color: '#4a6652', fontFamily: 'var(--font-mono)' }}>
+            {clockStr}
           </span>
-          {co2Error && (
-            <span className="bg-error-container/20 px-3 py-1 rounded text-10px font-label-caps text-error flex items-center gap-1 border border-error/30">
-              <span className="material-symbols-outlined text-12px">warning</span>
-              SENSOR FAILURE
-            </span>
-          )}
-          {!hasTelemetry && (
-            <span className="bg-surface-container-high px-3 py-1 rounded text-10px font-label-caps text-amber flex items-center gap-1 border border-amber/30">
-              <span className="material-symbols-outlined text-12px animate-pulse">graphic_eq</span>
-              AWAITING DATA
-            </span>
-          )}
         </div>
       </section>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div className="bg-surface-container p-2 rounded border border-outline-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-16px">water_drop</span>
-          <div className="flex flex-col min-w-0">
-            <span className="text-8px font-label-caps text-on-surface-variant">HUMIDITY</span>
-            <span className="text-headline-md text-on-surface">{has.hum ? `${Math.round(telemetry.humidity)}%` : '--%'}</span>
-          </div>
-        </div>
-        <div className="bg-surface-container p-2 rounded border border-outline-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-secondary text-16px">thermostat</span>
-          <div className="flex flex-col min-w-0">
-            <span className="text-8px font-label-caps text-on-surface-variant">TEMPERATURE</span>
-            <span className="text-headline-md text-on-surface">{has.temp ? `${Math.round(telemetry.temperature * 10) / 10}°C` : '--°C'}</span>
-          </div>
-        </div>
-        <div className={`bg-surface-container-low p-2 rounded flex items-center gap-2 relative${co2Error ? ' border border-error/40' : ' border border-outline-variant'}`}
-          style={co2Error ? { boxShadow: '0 0 10px var(--glow-error)' } : {}}>
-          <span className="material-symbols-outlined text-error text-16px">co2</span>
-          <div className="flex flex-col min-w-0">
-            <span className="text-8px font-label-caps text-on-surface-variant">CO₂</span>
-            <span className={`text-headline-md ${co2Error ? 'text-error' : 'text-on-surface'}`}>
-              {has.co2 ? `${telemetry.co2}` : '--'}<span className="text-data-sm text-on-surface-variant ml-1">ppm</span>
-            </span>
-          </div>
-          {co2Error && <span className="material-symbols-outlined text-error text-14px absolute top-1 right-1">report</span>}
-        </div>
-        <div className="bg-surface-container p-2 rounded border border-outline-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-tertiary text-16px">air</span>
-          <div className="flex flex-col min-w-0">
-            <span className="text-8px font-label-caps text-on-surface-variant">O₂</span>
-            <span className="text-headline-md text-on-surface">19.8<span className="text-data-sm text-on-surface-variant ml-1">%</span></span>
-          </div>
-        </div>
+      <section className="flex border-b border-outline-variant" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <DomeGauge value={has.temp ? telemetry.temperature : SENSOR_CFG.temp.min} prevValue={gaugePrev.current.temp} min={SENSOR_CFG.temp.min} max={SENSOR_CFG.temp.max} optMin={SENSOR_CFG.temp.optMin} optMax={SENSOR_CFG.temp.optMax} unit={SENSOR_CFG.temp.unit} label={SENSOR_CFG.temp.label} decimals={SENSOR_CFG.temp.decimals} history={sparkHistory.current.temp} noData={!has.temp} />
+        <DomeGauge value={has.hum ? telemetry.humidity : SENSOR_CFG.hum.min} prevValue={gaugePrev.current.hum} min={SENSOR_CFG.hum.min} max={SENSOR_CFG.hum.max} optMin={SENSOR_CFG.hum.optMin} optMax={SENSOR_CFG.hum.optMax} unit={SENSOR_CFG.hum.unit} label={SENSOR_CFG.hum.label} decimals={SENSOR_CFG.hum.decimals} history={sparkHistory.current.hum} noData={!has.hum} />
+        <DomeGauge value={has.eco2 ? telemetry.co2 : SENSOR_CFG.eco2.min} prevValue={gaugePrev.current.eco2} min={SENSOR_CFG.eco2.min} max={SENSOR_CFG.eco2.max} optMin={SENSOR_CFG.eco2.optMin} optMax={SENSOR_CFG.eco2.optMax} unit={SENSOR_CFG.eco2.unit} label={SENSOR_CFG.eco2.label} decimals={SENSOR_CFG.eco2.decimals} history={sparkHistory.current.eco2} noData={!has.eco2} />
+        <DomeGauge value={has.tvoc ? telemetry.voc : SENSOR_CFG.tvoc.min} prevValue={gaugePrev.current.tvoc} min={SENSOR_CFG.tvoc.min} max={SENSOR_CFG.tvoc.max} optMin={SENSOR_CFG.tvoc.optMin} optMax={SENSOR_CFG.tvoc.optMax} unit={SENSOR_CFG.tvoc.unit} label={SENSOR_CFG.tvoc.label} decimals={SENSOR_CFG.tvoc.decimals} history={sparkHistory.current.tvoc} noData={!has.tvoc} />
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-1 bg-surface-container rounded border border-outline-variant flex flex-col h-[360px]">
+      <section style={{ display: 'flex', gap: '5px', padding: '4px 0', flexWrap: 'wrap' }}>
+        <StatusPill sk="temp" label="Temp" />
+        <StatusPill sk="hum" label="Hum" />
+        <StatusPill sk="eco2" label="eCO₂" />
+        <StatusPill sk="tvoc" label="TVOC" />
+        {co2Error && (
+          <span className="text-8px font-label-caps text-error" style={{
+            background: 'rgba(239,68,68,0.08)', color: '#ef4444',
+            padding: '2px 8px', borderRadius: '3px',
+          }}>
+            ⚠ CO₂ OVER LIMIT
+          </span>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
+        <div className="flex">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <DeviceHistoryChart
+              title="Temperature & Humidity — 6h"
+              datasets={chart1Data}
+              bands={chart1Bands}
+              y1Domain={[18, 36]}
+              y2Domain={[50, 100]}
+              labels={chartLabels}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <DeviceHistoryChart
+              title="eCO₂ & TVOC — 6h"
+              datasets={chart2Data}
+              bands={chart2Bands}
+              y1Domain={[200, 3000]}
+              y2Domain={[0, 950]}
+              labels={chartLabels}
+            />
+          </div>
+        </div>
+        {chartLabels.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '4px' }}>
+            {[
+              { id: 't', c: '#f59e0b', lbl: `Temp ${has.temp ? telemetry.temperature.toFixed(1) : '--'} °C` },
+              { id: 'h', c: '#38bdf8', lbl: `Hum ${has.hum ? telemetry.humidity.toFixed(1) : '--'} %RH` },
+              { id: 'e', c: '#a78bfa', lbl: `eCO₂ ${has.eco2 ? Math.round(telemetry.co2) : '--'} ppm` },
+              { id: 'v', c: '#fb7185', lbl: `TVOC ${has.tvoc ? Math.round(telemetry.voc) : '--'} ppb` },
+            ].map(item => (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '7px', color: '#4a6652', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ width: '14px', height: '2px', borderRadius: '1px', background: item.c, display: 'inline-block' }} />
+                <span>{item.lbl}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '7px', color: '#4a6652', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ width: '14px', height: '6px', borderRadius: '1px', border: '1px dashed rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.07)', display: 'inline-block' }} />
+              <span>optimal</span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="bg-surface-container rounded border border-outline-variant flex flex-col h-[300px]">
           <div className="flex items-center justify-between px-3 py-2 border-b border-outline-variant">
             <span className="font-label-caps text-9px text-on-surface-variant">SYSTEM LOG</span>
             <span className="text-8px text-primary bg-primary/10 px-1.5 py-0.5 rounded">LIVE</span>
@@ -279,7 +418,7 @@ function DeviceDetail() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col">
+        <div className="bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col">
           <div className="px-3 py-2 border-b border-outline-variant bg-surface-container-high flex items-center justify-between">
             <span className="font-label-caps text-9px text-on-surface-variant">ACTUATOR OVERRIDE MATRIX</span>
             <div className="flex items-center gap-2">
@@ -305,7 +444,7 @@ function DeviceDetail() {
               })}
             </div>
             {cmdHistory.length > 0 && (
-              <div className="border-t border-outline-variant pt-2">
+              <div className="border-t border-outline-variant pt-2 mb-2">
                 <span className="font-label-caps text-8px text-on-surface-variant block mb-1">COMMAND HISTORY</span>
                 <div className="flex flex-wrap gap-1.5">
                   {cmdHistory.map((h, i) => {
@@ -323,7 +462,7 @@ function DeviceDetail() {
                 </div>
               </div>
             )}
-            <div className="border-t border-outline-variant mt-2 pt-2 flex items-center justify-between">
+            <div className="border-t border-outline-variant pt-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary" style={{ boxShadow: '0 0 6px var(--teal)' }} />
                 <span className="text-8px font-label-caps text-on-surface-variant">SUBSYSTEM NOMINAL</span>
