@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getDevice, getActuators, setActuatorDirect, getLatestTelemetry, getTelemetryHistory } from '../api/client.js'
+import { getDevice, getActuators, setActuatorDirect, getLatestTelemetry } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
 import DomeGauge from '../components/ui/DomeGauge.jsx'
-import DeviceHistoryChart from '../components/ui/DeviceHistoryChart.jsx'
+import ChartPanel from '../components/ui/ChartPanel.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import LoadingState from '../components/ui/LoadingState.jsx'
 import ErrorState from '../components/ui/ErrorState.jsx'
@@ -23,24 +23,6 @@ const SENSOR_CFG = {
   tvoc: { label: 'TVOC', unit: 'ppb', min: 0, max: 2000, optMin: 0, optMax: 500, decimals: 0, chartColor: '#fb7185' },
 }
 
-function reshapeHistory(rows) {
-  const byTime = {}
-  for (const r of rows) {
-    const t = r.timestamp ? new Date(r.timestamp) : new Date()
-    const key = `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`
-    if (!byTime[key]) byTime[key] = {}
-    byTime[key][r.sensorType] = parseFloat(r.value)
-  }
-  const sorted = Object.entries(byTime).sort(([a], [b]) => a.localeCompare(b))
-  return sorted.map(([t, v]) => ({
-    t,
-    temp: v.TEMPERATURE ?? null,
-    hum: v.HUMIDITY ?? null,
-    eco2: v.CO2 ?? null,
-    tvoc: v.VOC ?? null,
-  }))
-}
-
 function DeviceDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -52,17 +34,11 @@ function DeviceDetail() {
   const [logs, setLogs] = useState([])
   const [cmdHistory, setCmdHistory] = useState([])
   const [pendingChannels, setPendingChannels] = useState(new Set())
-  const [chartLabels, setChartLabels] = useState([])
-  const [chartTemp, setChartTemp] = useState([])
-  const [chartHum, setChartHum] = useState([])
-  const [chartEco2, setChartEco2] = useState([])
-  const [chartTvoc, setChartTvoc] = useState([])
 
   const [clockStr, setClockStr] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }))
   const prevTelemetry = useRef({})
   const gaugePrev = useRef({})
   const sparkHistory = useRef({ temp: [], hum: [], eco2: [], tvoc: [] })
-  const chartHistory = useRef([])
   const cancelledRef = useRef(false)
 
   const addLog = useCallback((text, type = 'info') => {
@@ -88,21 +64,6 @@ function DeviceDetail() {
     } finally {
       if (!cancelledRef.current) setLoading(false)
     }
-  }
-
-  async function fetchHistory() {
-    try {
-      const rows = await getTelemetryHistory(id, { limit: 30 })
-      if (cancelledRef.current || !rows?.length) return
-      const reshaped = reshapeHistory(rows)
-      if (!reshaped.length) return
-      chartHistory.current = reshaped
-      setChartLabels(reshaped.map(d => d.t))
-      setChartTemp(reshaped.map(d => d.temp ?? 0))
-      setChartHum(reshaped.map(d => d.hum ?? 0))
-      setChartEco2(reshaped.map(d => d.eco2 ?? 0))
-      setChartTvoc(reshaped.map(d => d.tvoc ?? 0))
-    } catch {}
   }
 
   function applyTelemetry(sensors, initial = false) {
@@ -137,24 +98,6 @@ function DeviceDetail() {
   }
 
   function pushHistory(sensors) {
-    const now = new Date()
-    const t = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    const prev = chartHistory.current[chartHistory.current.length - 1] || {}
-    const entry = {
-      t,
-      temp: sensors.temperature ?? prev.temp ?? 0,
-      hum: sensors.humidity ?? prev.hum ?? 0,
-      eco2: sensors.co2 ?? prev.eco2 ?? 0,
-      tvoc: sensors.voc ?? prev.tvoc ?? 0,
-    }
-    const ch = [...chartHistory.current.slice(-29), entry]
-    chartHistory.current = ch
-    setChartLabels(ch.map(d => d.t))
-    setChartTemp(ch.map(d => d.temp))
-    setChartHum(ch.map(d => d.hum))
-    setChartEco2(ch.map(d => d.eco2))
-    setChartTvoc(ch.map(d => d.tvoc))
-
     for (const sk of ['temp', 'hum', 'eco2', 'tvoc']) {
       const skey = sk === 'eco2' ? 'co2' : sk === 'tvoc' ? 'voc' : sk
       const v = sensors[skey]
@@ -169,7 +112,6 @@ function DeviceDetail() {
   useEffect(() => {
     cancelledRef.current = false
     loadData()
-    fetchHistory()
     return () => { cancelledRef.current = true }
   }, [id, addLog])
 
@@ -317,23 +259,6 @@ function DeviceDetail() {
   }
 
   const health = computeHealth()
-  const chart1Data = [
-    { label: 'Temp', data: chartTemp, yAxisID: 'y1', borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.4 },
-    { label: 'Hum', data: chartHum, yAxisID: 'y2', borderColor: '#38bdf8', borderWidth: 1.5, borderDash: [4, 2], tension: 0.4 },
-  ]
-  const chart1Bands = [
-    { ax: 'y1', min: 22, max: 28, fill: 'rgba(245,158,11,0.06)', stroke: 'rgba(245,158,11,0.22)' },
-    { ax: 'y2', min: 70, max: 90, fill: 'rgba(56,189,248,0.06)', stroke: 'rgba(56,189,248,0.22)' },
-  ]
-  const chart2Data = [
-    { label: 'eCO2', data: chartEco2, yAxisID: 'y1', borderColor: '#a78bfa', borderWidth: 1.5, tension: 0.4 },
-    { label: 'TVOC', data: chartTvoc, yAxisID: 'y2', borderColor: '#fb7185', borderWidth: 1.5, borderDash: [4, 2], tension: 0.4 },
-  ]
-  const chart2Bands = [
-    { ax: 'y1', min: 800, max: 2000, fill: 'rgba(167,139,250,0.06)', stroke: 'rgba(167,139,250,0.22)' },
-    { ax: 'y2', min: 0, max: 500, fill: 'rgba(251,113,133,0.06)', stroke: 'rgba(251,113,133,0.22)' },
-  ]
-
   const StatusPill = ({ sk, label }) => {
     const st = sensorStatus(sk)
     if (!st) return null
@@ -503,46 +428,7 @@ function DeviceDetail() {
         </div>
       </div>
 
-      <section className="flex flex-col gap-1">
-        <div className="font-label-caps text-9px text-on-surface-variant tracking-wider px-0.5">HISTORY CHARTS</div>
-        <div className="flex">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <DeviceHistoryChart
-              title="Temperature & Humidity — 6h"
-              datasets={chart1Data}
-              bands={chart1Bands}
-              labels={chartLabels}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <DeviceHistoryChart
-              title="eCO₂ & TVOC — 6h"
-              datasets={chart2Data}
-              bands={chart2Bands}
-              labels={chartLabels}
-            />
-          </div>
-        </div>
-        {chartLabels.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '4px' }}>
-            {[
-              { id: 't', c: '#f59e0b', lbl: `Temp ${has.temp ? telemetry.temperature.toFixed(1) : '--'} °C` },
-              { id: 'h', c: '#38bdf8', lbl: `Hum ${has.hum ? telemetry.humidity.toFixed(1) : '--'} %RH` },
-              { id: 'e', c: '#a78bfa', lbl: `eCO₂ ${has.eco2 ? Math.round(telemetry.co2) : '--'} ppm` },
-              { id: 'v', c: '#fb7185', lbl: `TVOC ${has.tvoc ? Math.round(telemetry.voc) : '--'} ppb` },
-            ].map(item => (
-              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '7px', color: '#4a6652', fontFamily: 'var(--font-mono)' }}>
-                <span style={{ width: '14px', height: '2px', borderRadius: '1px', background: item.c, display: 'inline-block' }} />
-                <span>{item.lbl}</span>
-              </div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '7px', color: '#4a6652', fontFamily: 'var(--font-mono)' }}>
-              <span style={{ width: '14px', height: '6px', borderRadius: '1px', border: '1px dashed rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.07)', display: 'inline-block' }} />
-              <span>optimal</span>
-            </div>
-          </div>
-        )}
-      </section>
+      <ChartPanel deviceId={id} telemetry={telemetry} has={has} />
     </div>
   )
 }
