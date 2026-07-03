@@ -357,74 +357,54 @@ function DeviceDetail() {
         </div>
       </section>
 
-      <div className="bg-surface-container rounded border border-outline-variant overflow-hidden flex flex-col">
-        <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-high flex items-center justify-between">
-          <span className="font-label-caps text-10px text-on-surface-variant tracking-wider">ACTUATOR OVERRIDE MATRIX</span>
+      <div className="bg-surface-container-low border border-outline-variant rounded overflow-hidden flex flex-col">
+        <div className="bg-surface-variant/30 px-3 py-2 border-b border-outline-variant flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-sm">grid_view</span>
+            <span className="font-label-caps text-[9px] text-on-surface tracking-wider">ACTUATOR OVERRIDE MATRIX</span>
+          </div>
           <div className="flex items-center gap-3">
-            <span className="text-7px font-label-caps text-on-surface-variant opacity-40">{clockStr}</span>
-            <span className={`text-8px font-label-caps px-2 py-1 rounded border ${actuators.some(a => a.mode === 'REMOTE') ? 'text-primary border-primary/30 bg-primary/10' : 'text-on-surface-variant border-outline-variant'}`}>
+            <span className="font-mono text-[8px] text-on-surface-variant opacity-50">{clockStr}</span>
+            <span className={`text-[7px] font-label-caps px-2 py-0.5 rounded border ${actuators.some(a => a.mode === 'REMOTE') ? 'text-primary border-primary/20 bg-primary/10' : 'text-on-surface-variant border-outline-variant'}`}>
               MODE: {actuators.some(a => a.mode === 'REMOTE') ? 'REMOTE' : 'MANUAL'}
             </span>
           </div>
         </div>
-        <div className="flex-1 p-4 flex flex-col gap-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
-            {[1, 2, 3, 4].map(ch => {
-              const act = actuators.find(a => a.channel === ch) || { channel: ch, state: 'OFF', mode: 'LOCAL' }
-              return (
-                <ActuatorControl
-                  key={ch}
-                  deviceId={device.deviceId}
-                  actuator={act}
-                  meta={ACTUATOR_META[ch]}
-                  cmdState={getCmdState(act)}
-                  onToggle={handleToggle}
-                />
-              )
-            })}
-          </div>
-          <div className="flex items-stretch gap-3">
-            {cmdHistory.length > 0 && (
-              <div className="border border-outline-variant rounded p-3 flex-1">
-                <span className="font-label-caps text-8px text-on-surface-variant block mb-2 tracking-wider">COMMAND HISTORY</span>
-                <div className="flex flex-wrap gap-1.5 max-h-[72px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-                  {cmdHistory.map((h, i) => {
-                    const statusColors = {
-                      PENDING: 'text-amber border-amber/30 bg-amber/10',
-                      SENT: 'text-primary border-primary/30 bg-primary/10',
-                      FAILED: 'text-error border-error/30 bg-error/10',
-                    }
-                    return (
-                      <div key={i} className={`text-8px font-label-caps px-2 py-1 rounded border flex items-center gap-1.5 ${statusColors[h.status] || ''}`}>
-                        <span className="opacity-50">{h.ts}</span>
-                        <span>{h.label}</span>
-                        <span className="opacity-70">→</span>
-                        <span className={h.cmd === 'ON' ? 'text-primary' : ''}>{h.cmd}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-            <div className="border border-outline-variant rounded p-3 flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-0.5">
-                  {actuators.map((a, i) => (
-                    <span key={i}
-                      className="w-2 h-2 rounded-full border border-surface-container"
-                      style={{
-                        background: a.state === 'ON' ? '#22c55e' : a.lastAck === 'TIMEOUT' ? '#ef4444' : '#2e4036',
-                        boxShadow: a.state === 'ON' ? '0 0 6px rgba(34,197,94,0.5)' : 'none',
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <span className="text-8px font-label-caps text-on-surface-variant">
-                {actuators.filter(a => a.lastAck === 'ACKED').length}/{actuators.length} ACKED
-              </span>
+        <div className="grid divide-x divide-outline-variant/20 h-32" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {[1, 2, 3, 4].map(ch => {
+            const act = actuators.find(a => a.channel === ch) || { channel: ch, state: 'OFF', mode: 'LOCAL' }
+            return (
+              <ActuatorControl
+                key={ch}
+                actuator={act}
+                meta={ACTUATOR_META[ch]}
+                cmdState={getCmdState(act)}
+                onToggle={handleToggle}
+              />
+            )
+          })}
+        </div>
+        <div className="bg-surface-container-lowest px-3 py-1.5 border-t border-outline-variant flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" style={{ boxShadow: '0 0 4px var(--primary, #6bfb9a)' }} />
+              <span className="font-mono text-[8px] text-on-surface-variant">{actuators.filter(a => a.lastAck === 'ACKED').length}/{actuators.length} ACKED</span>
             </div>
+            <span className="w-px h-3 bg-outline-variant/40" />
+            <span className="font-mono text-[8px] text-on-surface-variant">
+              LATEST_LOG: {logs[0] ? `[${logs[0].ts}] ${logs[0].text}` : '--:--:-- waiting...'}
+            </span>
           </div>
+          {cmdHistory.length > 0 && (
+            <div className="flex items-center gap-1">
+              {cmdHistory.slice(0, 3).map((h, i) => {
+                const col = h.status === 'FAILED' ? 'var(--error)' : h.status === 'PENDING' ? 'var(--amber)' : 'var(--primary)'
+                return (
+                  <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: col, boxShadow: `0 0 3px ${col}` }} />
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
