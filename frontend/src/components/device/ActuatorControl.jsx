@@ -1,79 +1,63 @@
-import ToggleSwitch from '../ui/ToggleSwitch.jsx'
-
 const DEFAULT_META = {
-  1: { label: 'VENTILATION', icon: 'air', color: 'secondary' },
-  2: { label: 'HEATER', icon: 'thermostat', color: 'primary' },
-  3: { label: 'MIST', icon: 'humidity_high', color: 'primary' },
-  4: { label: 'LIGHTS', icon: 'wb_sunny', color: 'secondary' },
+  1: { label: 'AIR EXCHANGE', icon: 'air', sublabel: 'FAN_SPEED' },
+  2: { label: 'MIST SPRAYERS', icon: 'humidity_high', sublabel: 'RESERVOIR' },
+  3: { label: 'CO2 INJECTION', icon: 'co2', sublabel: 'FLOW_RATE' },
+  4: { label: 'UV-C STERILIZER', icon: 'light', sublabel: 'INTENSITY' },
 }
 
-function IntensityBar({ level = 0, total = 5, color = 'var(--spore-green)' }) {
+function Toggle({ checked, onChange, disabled }) {
   return (
-    <div className="flex gap-[2px] flex-1">
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i}
-          className="flex-1 h-1 rounded-sm transition-all duration-300"
-          style={{ background: i < level ? color : 'var(--surface-variant)' }} />
-      ))}
+    <div
+      className={`rounded-full relative shrink-0 cursor-pointer select-none transition-all duration-200 ${checked ? 'bg-primary' : 'bg-surface-variant'}`}
+      style={{
+        width: '22px',
+        height: '12px',
+        border: checked ? 'none' : '1px solid var(--outline-variant)',
+        boxShadow: checked ? '0 0 5px rgba(107,251,154,0.25)' : 'none',
+        opacity: disabled ? 0.5 : 1,
+      }}
+      onClick={() => { if (!disabled) onChange() }}
+    >
+      <div
+        className={`rounded-full absolute top-[1.5px] transition-all duration-200 ${checked ? 'bg-on-primary' : 'bg-outline'}`}
+        style={{ width: '7px', height: '7px', right: checked ? '2.5px' : 'auto', left: checked ? 'auto' : '2.5px' }}
+      />
     </div>
   )
 }
 
-function CmdStateBadge({ state }) {
-  if (!state) return null
-  const colors = {
-    PENDING: 'text-amber border-amber/30 bg-amber/10',
-    ACKED: 'text-primary border-primary/30 bg-primary/10',
-    TIMEOUT: 'text-error border-error/30 bg-error/10',
-  }
-  return (
-    <span className={`text-8px font-label-caps px-1.5 py-0.5 rounded border ${colors[state] || ''}`}>
-      {state}
-    </span>
-  )
-}
-
-function ActuatorControl({ deviceId, actuator, meta, cmdState, onToggle, disabled }) {
-  const resolvedMeta = meta || DEFAULT_META[actuator.channel] || { label: `CH${actuator.channel}`, icon: 'settings', color: 'primary' }
+function ActuatorControl({ actuator, meta, cmdState, onToggle, disabled }) {
+  const rm = meta || DEFAULT_META[actuator.channel] || { label: `CH${actuator.channel}`, icon: 'settings', sublabel: 'STATE' }
   const isOn = actuator.state === 'ON'
   const isError = actuator.state === 'ERROR' || actuator.state === 'TIMEOUT'
-  const intensityLevel = isOn ? 5 : isError ? 1 : 2
+  const isPending = cmdState === 'PENDING'
 
   function handleToggle() {
     if (onToggle && !disabled) onToggle(actuator.channel)
   }
 
   return (
-    <div className={`bg-surface-container-low p-3 rounded flex flex-col gap-2 border transition-all duration-300 ${isError ? 'border-error/40' : isOn ? 'border-primary/30' : 'border-outline-variant'}`}
-      style={isOn ? { boxShadow: '0 0 8px var(--spore-glow)' } : {}}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`material-symbols-outlined text-sm shrink-0 ${isError ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant'}`}>
-            {resolvedMeta.icon}
-          </span>
-          <span className={`font-label-caps text-9px truncate ${isError ? 'text-error' : 'text-on-surface-variant'}`}>
-            {resolvedMeta.label}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <CmdStateBadge state={cmdState} />
-          <ToggleSwitch
-            checked={isOn}
-            onChange={handleToggle}
-            disabled={disabled || cmdState === 'PENDING' || isError}
-          />
-        </div>
+    <div className="grid grid-cols-[1fr_auto] grid-rows-[1fr_auto] gap-0 h-full p-3 hover:bg-surface-variant/10 transition-colors">
+      <div className="flex items-center gap-1.5 min-w-0 self-center">
+        <span className={`material-symbols-outlined shrink-0 ${isError ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant'}`} style={{ fontSize: '14px' }}>{rm.icon}</span>
+        <span className="font-label-caps text-[7px] text-on-surface truncate tracking-wider">{rm.label}</span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className={`text-10px font-mono shrink-0 ${isError ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant opacity-50'}`}>
+      <div className="flex flex-col items-end gap-0.5 self-start">
+        <Toggle checked={isOn} onChange={handleToggle} disabled={disabled || isPending || isError} />
+        <span className={`font-mono text-[6px] ${isPending ? 'text-amber' : cmdState === 'TIMEOUT' ? 'text-error' : isOn ? 'text-primary/70' : 'text-on-surface-variant/40'}`}>
+          {isPending ? 'PEND' : cmdState === 'TIMEOUT' ? 'T/O' : isOn ? 'ON' : 'STBY'}
+        </span>
+      </div>
+      <div className="flex items-baseline gap-1.5 self-end">
+        <span className={`font-mono text-sm font-bold leading-none ${isError ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant'}`}>
           {isError ? 'ERR' : isOn ? 'ON' : 'OFF'}
         </span>
-        <IntensityBar level={intensityLevel} color={isError ? 'var(--error-red)' : 'var(--spore-green)'} />
-        {actuator.mode && actuator.mode !== 'LOCAL' && (
-          <span className="text-8px font-label-caps text-on-surface-variant shrink-0 border border-outline-variant/30 px-1 py-0.5 rounded">
-            {actuator.mode}
-          </span>
-        )}
+        <span className="text-[6px] font-label-caps text-on-surface-variant/60 tracking-wider">{rm.sublabel}</span>
+      </div>
+      <div className="self-end justify-self-end">
+        <span className={`text-[6px] font-label-caps ${actuator.mode === 'REMOTE' ? 'text-primary/70' : 'text-on-surface-variant/40'}`}>
+          {actuator.mode || 'LOCAL'}
+        </span>
       </div>
     </div>
   )
