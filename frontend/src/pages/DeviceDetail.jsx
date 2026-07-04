@@ -197,6 +197,11 @@ function DeviceDetail() {
       setActuators(prev => prev.map(a =>
         a.channel === channel ? { ...a, state: newState } : a
       ))
+      setPendingChannels(prev => {
+        const next = new Set(prev)
+        next.delete(channel)
+        return next
+      })
       setCmdHistory(prev => prev.map(h =>
         h.channel === channel && h.status === 'PENDING'
           ? { ...h, status: 'SENT' }
