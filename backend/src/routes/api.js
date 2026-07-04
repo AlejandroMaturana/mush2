@@ -123,8 +123,52 @@ router.get('/devices/:id/telemetry/latest', checkDeviceAccess, async (req, res) 
 
 router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
   try {
-    const { sensorType, from, to, limit = 100 } = req.query;
-    const where = { deviceId: req.params.id };
+    const { sensorType, from, to, limit = 8000, resolution } = req.query;
+    const deviceId = req.params.id;
+    const limitNum = parseInt(limit, 10);
+
+    if (resolution && parseInt(resolution) > 0) {
+      const resMin = parseInt(resolution);
+      let bucketExpr;
+      if (resMin < 60) {
+        bucketExpr = `date_trunc('hour', t."timestamp") + INTERVAL '1 minute' * FLOOR(EXTRACT(MINUTE FROM t."timestamp") / ${resMin}) * ${resMin}`;
+      } else if (resMin === 60) {
+        bucketExpr = `date_trunc('hour', t."timestamp")`;
+      } else {
+        bucketExpr = `date_trunc('day', t."timestamp")`;
+      }
+
+      const params = [deviceId];
+      if (from) params.push(new Date(from));
+      if (to) params.push(new Date(to));
+      const rangeClause = from ? ` AND t."timestamp" >= $2` : '';
+      const rangeClause2 = to ? ` AND t."timestamp" <= $${from ? 3 : 2}` : '';
+
+      const [rows] = await Telemetry.sequelize.query(`
+        SELECT ${bucketExpr} AS bucket,
+               t."sensorType",
+               ROUND(AVG(t.value)::numeric, 2) AS value,
+               MAX(t.unit) AS unit
+        FROM telemetry t
+        WHERE t."deviceId" = $1${rangeClause}${rangeClause2}
+        GROUP BY bucket, t."sensorType", t."unit"
+        ORDER BY bucket DESC, t."sensorType" ASC
+        LIMIT ${limitNum}
+      `, { bind: params });
+
+      const data = rows.reverse().map(r => ({
+        id: `${r.sensorType}_${r.bucket}`,
+        deviceId,
+        sensorType: r.sensorType,
+        value: parseFloat(r.value),
+        unit: r.unit,
+        timestamp: r.bucket,
+      }));
+
+      return res.json({ data });
+    }
+
+    const where = { deviceId };
     if (sensorType) where.sensorType = sensorType.toUpperCase();
     if (from || to) {
       where.timestamp = {};
@@ -134,7 +178,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
     const data = await Telemetry.findAll({
       where,
       order: [['timestamp', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: limitNum,
     });
     res.json({ data });
   } catch (err) {

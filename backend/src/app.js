@@ -27,11 +27,14 @@ app.use(express.urlencoded({ extended: true }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes, intente más tarde' },
-  skip: (req) => req.method === 'GET' && req.originalUrl.startsWith('/api/v1/actuators'),
+  skip: (req) => req.method === 'GET' && (
+    req.originalUrl.startsWith('/api/v1/actuators') ||
+    req.originalUrl.startsWith('/api/v1/devices')
+  ),
 });
 app.use('/api/', limiter);
 

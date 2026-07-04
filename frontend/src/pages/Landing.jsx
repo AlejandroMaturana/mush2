@@ -498,7 +498,7 @@ function Landing() {
                 </h2>
                 <p className="text-body-md text-on-surface-variant mb-6 max-w-lg">
                   Mush2 es un proyecto de código abierto. Desde el firmware ESP32 hasta la plataforma web,
-                  todo está disponible para que contribuyas, lo adaptes y lo hagas tuyo.
+                  todo está disponible para que contribuyas, lo adaptes y seas parte.
                 </p>
                 <button
                   onClick={() => setShowAuth(true)}

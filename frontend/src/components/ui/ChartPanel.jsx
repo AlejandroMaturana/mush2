@@ -5,11 +5,12 @@ import { getTelemetryHistory } from '../../api/client.js'
 Chart.register(...registerables)
 
 const TIME_RANGES = [
-  { label: '1H', value: '1h', limit: 500,  hours: 1,  resolution: 0   },
-  { label: '6H', value: '6h', limit: 200,  hours: 6,  resolution: 5   },
-  { label: '1D', value: '1d', limit: 500,  hours: 24, resolution: 15  },
-  { label: '3D', value: '3d', limit: 500,  hours: 72, resolution: 60  },
-  { label: '7D', value: '7d', limit: 2000, hours: 168,resolution: 60  },
+  { label: '15m', value: '15m', limit: 15,  hours: 0.25,  resolution: 0 },
+  { label: '1H', value: '1h', limit: 500,  hours: 1,  resolution: 0 },
+  { label: '6H', value: '6h', limit: 200,  hours: 6,  resolution: 5 },
+  { label: '1D', value: '1d', limit: 500,  hours: 24, resolution: 15 },
+  { label: '3D', value: '3d', limit: 500,  hours: 72, resolution: 60 },
+  { label: '7D', value: '7d', limit: 2000, hours: 168,resolution: 60 },
 ]
 
 function computeRanges(datasets, margin, bands) {

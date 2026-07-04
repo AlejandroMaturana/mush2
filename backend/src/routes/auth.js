@@ -8,6 +8,45 @@ import { logAudit } from '../services/auditService.js';
 
 const router = Router();
 
+router.post('/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Usuario, email y contraseña requeridos' });
+    }
+
+    const existing = await User.findOne({ where: { username } });
+    if (existing) {
+      return res.status(409).json({ error: 'El usuario ya existe' });
+    }
+
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(409).json({ error: 'El email ya está registrado' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await User.create({ username, email, passwordHash });
+
+    await logAudit({
+      userId: user.id, action: 'REGISTER', resource: 'auth',
+      details: { username }, ip: req.ip, userAgent: req.headers['user-agent'],
+    });
+
+    const tokenPayload = { id: user.id, username: user.username, role: user.role };
+    const accessToken = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '1h' });
+    const refreshToken = jwt.sign(tokenPayload, env.JWT_SECRET + '_refresh', { expiresIn: '7d' });
+
+    res.status(201).json({
+      token: { accessToken, refreshToken, expiresIn: 3600 },
+      user: { id: user.id, username: user.username, role: user.role, email: user.email },
+    });
+  } catch (err) {
+    console.error('[AUTH] Register error:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;

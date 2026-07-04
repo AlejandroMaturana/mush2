@@ -40,6 +40,7 @@ function createClient(broker, isFallback) {
     c.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
+    c.subscribe(`${TOPIC_PREFIX}/+/ack`, { qos: 1 });
   });
 
   c.on('message', (topic, payload) => {
@@ -55,8 +56,23 @@ function createClient(broker, isFallback) {
       } else if (type === 'status') {
         connectedDevices.add(deviceId);
         events.emit('state', { deviceId, ...data });
+        if (data.actuatorState || data.channel) {
+          events.emit('ack', {
+            deviceId,
+            actuatorState: data.actuatorState || { channel: data.channel, state: data.state },
+            status: data.status || 'ACKED',
+            timestamp: Date.now(),
+          });
+        }
       } else if (type === 'alarm') {
         events.emit('alarm', { deviceId, ...data });
+      } else if (type === 'ack') {
+        events.emit('ack', {
+          deviceId,
+          actuatorState: data.actuatorState || { channel: data.channel, state: data.state },
+          status: data.status || 'ACKED',
+          timestamp: Date.now(),
+        });
       }
     } catch (err) {
       console.error(`[MQTT] Error parsing from ${topic}:`, err.message);
@@ -190,6 +206,16 @@ async function handleTelemetry(deviceId, data) {
     }
 
     await device.update({ lastSeen: ts, status: 'ONLINE' });
+
+    events.emit('telemetry', {
+      deviceId,
+      sensors: {
+        temperature: data.temp,
+        humidity: data.hum,
+        co2: data.co2,
+        voc: data.tvoc,
+      },
+    });
   } catch (err) {
     console.error(`[MQTT] Error handling telemetry from ${deviceId}:`, err.message);
   }
