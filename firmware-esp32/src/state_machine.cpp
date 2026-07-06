@@ -5,17 +5,18 @@
 #define WATCHDOG_SW_TIMEOUT 30000
 #define MAX_REBOOTS_BEFORE_SAFE 5
 
-static const bool TRANSITION_MATRIX[9][9] = {
-  // to:  BOOT  INIT  WIFI  NORM  DEGR  ERR   RECV  SAFE  OTA_U
-  /*BOOT*/ {0,    1,    0,    0,    0,    0,    0,    0,    0},
-  /*INIT*/ {0,    0,    1,    0,    0,    0,    0,    1,    0},
-  /*WIFI*/ {0,    0,    0,    1,    1,    0,    0,    0,    0},
-  /*NORM*/ {0,    0,    0,    0,    1,    1,    0,    0,    1},
-  /*DEGR*/ {0,    0,    0,    1,    0,    1,    0,    0,    1},
-  /*ERR*/  {0,    0,    0,    1,    1,    0,    1,    0,    0},
-  /*RECV*/ {0,    0,    0,    1,    1,    0,    0,    0,    0},
-  /*SAFE*/ {0,    1,    0,    0,    0,    0,    0,    0,    0},
-  /*OTA_U*/{0,    0,    0,    0,    0,    1,    0,    0,    0},
+static const bool TRANSITION_MATRIX[10][10] = {
+  // to:  BOOT  INIT  WIFI  NORM  DEGR  ERR   RECV  SAFE  OTA_U PROV
+  /*BOOT*/ {0,    1,    0,    0,    0,    0,    0,    0,    0,    0},
+  /*INIT*/ {0,    0,    1,    0,    0,    0,    0,    1,    0,    1},
+  /*WIFI*/ {0,    0,    0,    1,    1,    0,    0,    0,    0,    0},
+  /*NORM*/ {0,    0,    0,    0,    1,    1,    0,    0,    1,    0},
+  /*DEGR*/ {0,    0,    0,    1,    0,    1,    0,    0,    1,    0},
+  /*ERR*/  {0,    0,    0,    1,    1,    0,    1,    0,    0,    0},
+  /*RECV*/ {0,    0,    0,    1,    1,    0,    0,    0,    0,    0},
+  /*SAFE*/ {0,    1,    0,    0,    0,    0,    0,    0,    0,    0},
+  /*OTA_U*/{0,    0,    0,    0,    0,    1,    0,    0,    0,    0},
+  /*PROV*/ {0,    0,    0,    0,    0,    0,    0,    0,    0,    0},
 };
 
 StateMachine::StateMachine()
@@ -74,6 +75,7 @@ const char* StateMachine::getStateName(DeviceState s) {
     case ST_RECOVERY: return "RECOVERY";
     case ST_SAFE: return "SAFE";
     case ST_OTA_UPDATING: return "OTA_UPDATING";
+    case ST_PROVISIONING: return "PROVISIONING";
     default: return "UNKNOWN";
   }
 }

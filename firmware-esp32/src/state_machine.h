@@ -13,6 +13,7 @@ enum DeviceState {
   ST_RECOVERY,
   ST_SAFE,
   ST_OTA_UPDATING,
+  ST_PROVISIONING,
 };
 
 class StateMachine {
@@ -44,7 +45,7 @@ private:
 
   const char* prefsNamespace = "mush2";
 
-  static const int _STATE_COUNT = 9;
+  static const int _STATE_COUNT = 10;
   bool _isTransitionValid(DeviceState from, DeviceState to);
 };
 
