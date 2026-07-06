@@ -5,6 +5,7 @@ import DeviceDetail from './pages/DeviceDetail.jsx'
 import Recipes from './pages/Recipes.jsx'
 import Cycles from './pages/Cycles.jsx'
 import Settings from './pages/Settings.jsx'
+import Provisioning from './pages/Provisioning.jsx'
 import Landing from './pages/Landing.jsx'
 import { useAuth } from './api/AuthContext.jsx'
 import AppShell from './components/layout/AppShell.jsx'
@@ -27,6 +28,7 @@ function App() {
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/cycles" element={<Cycles />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/provisioning" element={<Provisioning />} />
           </Routes>
         </AppShell>
       )}

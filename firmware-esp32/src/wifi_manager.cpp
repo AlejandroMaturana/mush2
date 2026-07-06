@@ -14,11 +14,23 @@ WiFiManager::WiFiManager() {
   connectStartTime = 0;
   connected = false;
   connecting = false;
+  _hasProvisioned = false;
 }
 
 void WiFiManager::init() {
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(false);
+}
+
+void WiFiManager::setProvisionedCredentials(const String& ssid, const String& password) {
+  networks[0].ssid = ssid;
+  networks[0].password = password;
+  _hasProvisioned = true;
+  Serial.printf("[WiFi] Credenciales provisionadas cargadas: %s\n", ssid.c_str());
+}
+
+bool WiFiManager::hasProvisionedCredentials() {
+  return _hasProvisioned;
 }
 
 bool WiFiManager::connect() {
@@ -28,19 +40,22 @@ bool WiFiManager::connect() {
 }
 
 bool WiFiManager::tryConnect(int netIndex) {
-  if (netIndex < 0 || netIndex > 1) return false;
+  if (netIndex < 0 || netIndex >= MAX_NETWORKS) return false;
 
-  if (strcmp(networks[netIndex].ssid, "your_ssid_1") == 0 ||
-      strcmp(networks[netIndex].ssid, "your_ssid_2") == 0) {
-    Serial.printf("[WiFi] SSID placeholder '%s' — configure WIFI_SSID en config.h\n",
-      networks[netIndex].ssid);
-    return false;
+  if (networks[netIndex].ssid.length() == 0 ||
+      networks[netIndex].ssid == "your_ssid_1" ||
+      networks[netIndex].ssid == "your_ssid_2") {
+    if (!_hasProvisioned) {
+      Serial.printf("[WiFi] SSID '%s' inválido — sin credenciales disponibles\n",
+        networks[netIndex].ssid.c_str());
+      return false;
+    }
   }
 
   connecting = true;
   connectStartTime = millis();
-  Serial.printf("[WiFi] Conectando a %s...\n", networks[netIndex].ssid);
-  WiFi.begin(networks[netIndex].ssid, networks[netIndex].password);
+  Serial.printf("[WiFi] Conectando a %s...\n", networks[netIndex].ssid.c_str());
+  WiFi.begin(networks[netIndex].ssid.c_str(), networks[netIndex].password.c_str());
 
   return true;
 }
@@ -59,7 +74,7 @@ void WiFiManager::checkConnection() {
     if (millis() - connectStartTime >= CONNECT_TIMEOUT) {
       connecting = false;
       connected = false;
-      Serial.printf("[WiFi] Timeout conectando a %s\n", networks[currentNetwork].ssid);
+      Serial.printf("[WiFi] Timeout conectando a %s\n", networks[currentNetwork].ssid.c_str());
     }
     return;
   }
@@ -80,7 +95,7 @@ void WiFiManager::loop() {
   if (now - lastAttempt < 5000) return;
   lastAttempt = now;
 
-  currentNetwork = (currentNetwork + 1) % 2;
+  currentNetwork = (currentNetwork + 1) % MAX_NETWORKS;
   tryConnect(currentNetwork);
 }
 

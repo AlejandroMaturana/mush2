@@ -132,6 +132,14 @@
 #define DEFAULT_HUM_MAX 85.0
 #define DEFAULT_CO2_MAX 1200
 
+// ---- BLE Provisioning ----
+#ifndef BLE_PROV_TIMEOUT_MS
+#define BLE_PROV_TIMEOUT_MS 300000
+#endif
+#ifndef BLE_DEVICE_NAME_PREFIX
+#define BLE_DEVICE_NAME_PREFIX "Mush2"
+#endif
+
 // ---- Debug ----
 #ifndef POLL_DEBUG
 #define POLL_DEBUG 0

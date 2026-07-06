@@ -1,5 +1,34 @@
 # Changelog — Mush2
 
+## 2026-07-04
+
+### Frontend — v1.0.2
+
+## Frontend - Migración a CSS Puro + Design System
+
+- **Refactorización completa**: Se migró a un sistema de diseño basado en **CSS Variables** + utilidades propias, desarrollando un estilo bioluminiscente del prototipo.
+- **Nuevo**: Sistema de Design Tokens en `:root` (`--spore-green`, `--teal`, `--surface-container`, `--on-surface`, etc.).
+- **Nuevo**: Componentes de layout: `AppShell`, `Sidebar`, `TopBar`, `StatusFooter` y `BottomNav` (responsive).
+- **Nuevo**: Componentes UI: `DomeGauge`, `ChartPanel`, `MetricCard`, `StatusBadge`, `TerminalLog`, `ToggleSwitch`, `EmptyState`, `ErrorState`, `OfflineBanner`, `LoadingState`.
+- **Nuevo**: `AuthModal` y `Landing` page con parallax, breathing nodes, red de micelio SVG y partículas animadas.
+- **Nuevo**: `DeviceDetail` completamente rediseñado con gauges tipo domo, gráficos de historial, System Log en vivo y Actuator Matrix.
+- **Mejora**: Unificación de botones (`.btn-primary`, `.btn-danger`, `.btn-ghost`, etc.) y formularios.
+- **Mejora**: Animaciones y efectos (pulse-glow, breathe, slideUp, glassmorphism) consistentes con el prototipo.
+- **Limpieza**: Eliminación de clases Tailwind inexistentes, estilos inline redundantes y configuración de Tailwind.
+- **Optimización**: Mejor balance de altura entre secciones (gauges vs System Log) y responsividad móvil.
+
+**Resultado**: Frontend ahora es más ligero, mantenible y fiel al diseño original del prototipo sin dependencias innecesarias.
+
+### Firmware (ESP32-S3) — v0.9.3
+
+- test of operativity - Sucessfull
+
+## 2026-07-04
+
+### Firmware (ESP32-S3) — v0.9.2
+
+- Update stable actuator version
+
 ## [0.9.1] — 2026-06-29 — OTA v3 + HTTP Poller fixes
 
 ### ADRs

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getDevices, getLatestTelemetry } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
 import LoadingState from '../components/ui/LoadingState.jsx'
@@ -86,6 +86,7 @@ function ChamberCard({ device, telemetry }) {
 }
 
 function Dashboard() {
+  const navigate = useNavigate()
   const [devices, setDevices] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [telemetry, setTelemetry] = useState({})
@@ -215,7 +216,7 @@ function Dashboard() {
 
       {devices.length > 0 && (
         <section>
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
             <h2 className="text-headline-md text-on-surface">Chambers</h2>
             <select
               className="bg-surface-container border border-outline-variant rounded-md text-body-md text-on-surface px-3 py-1.5 cursor-pointer focus:outline-none focus:border-primary"
@@ -226,6 +227,13 @@ function Dashboard() {
                 <option key={d.id} value={d.id}>{d.chamberName || d.deviceId}</option>
               ))}
             </select>
+            <button
+              onClick={() => navigate('/provisioning')}
+              className="btn btn-primary ml-auto"
+            >
+              <span className="material-symbols-outlined text-18px">add</span>
+              ADD DEVICE
+            </button>
           </div>
 
           {telemetry && Object.keys(telemetry).length > 0 && (
