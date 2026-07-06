@@ -19,10 +19,10 @@ Este documento sirve como guía interactiva para desarrolladores (humanos y agen
  │    │
  │    ├── ¿La decisión ya está tomada y alineada con el equipo?
  │    │    ├── Sí ──► Acción: Crear un Architecture Decision Record (ADR) en docs/ADR/.
- │    │    └── No  ──► Acción: Crear un Request for Comments (RFC) en docs/rfc/.
+ │    │    └── No  ──► Acción: Crear un Request for Comments (RFC) en docs/RFC/.
  │    │
  │    └── ¿Es un subsistema complejo que requiere diseño detallado antes de implementar?
- │         └── Sí ──► Acción: Crear un Engineering Design Document (EDD) en docs/edd/.
+ │         └── Sí ──► Acción: Crear un Engineering Design Document (EDD) en docs/EDD/.
 ```
 
 ---
