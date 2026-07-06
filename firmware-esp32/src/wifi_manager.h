@@ -3,9 +3,11 @@
 
 #include <Arduino.h>
 
+#define MAX_NETWORKS 2
+
 struct WiFiCredential {
-  const char* ssid;
-  const char* password;
+  String ssid;
+  String password;
 };
 
 class WiFiManager {
@@ -17,14 +19,17 @@ public:
   bool isConnected();
   int8_t getRSSI();
   String getMacAddress();
+  void setProvisionedCredentials(const String& ssid, const String& password);
+  bool hasProvisionedCredentials();
 
 private:
-  WiFiCredential networks[2];
+  WiFiCredential networks[MAX_NETWORKS];
   int currentNetwork;
   unsigned long lastAttempt;
   unsigned long connectStartTime;
   bool connected;
   bool connecting;
+  bool _hasProvisioned;
 
   bool tryConnect(int netIndex);
   void checkConnection();
