@@ -1,5 +1,94 @@
 # Changelog — Mush2
 
+## 2026-07-06
+
+### Frontend — v1.0.2
+
+- **Nuevo**: Botón **ADD DEVICE** en el header del Dashboard
+- **Mejora**: `DevicesEmptyState` ahora redirige al flujo de provisioning con botón principal destacado
+- **Limpieza**: Eliminado enlace directo a provisioning del Sidebar (mejor UX centralizada)
+- **Nuevo**: Ruta `/provisioning` agregada al `BrowserRouter`
+- **Nuevo**: Wizard completo de aprovisionamiento BLE (4 pasos):
+  - Escanear dispositivos
+  - Configurar credenciales WiFi
+  - Enviar datos vía Web Bluetooth
+  - Estado final (Listo / Error)
+- Manejo completo de estados, conexión BLE, envío de credenciales y feedback visual en tiempo real
+- Integración fluida con el flujo de provisioning del firmware
+
+**Resultado**: Flujo de onboarding de nuevos dispositivos mucho más intuitivo y centrado en el usuario.
+
+## 2026-07-06
+
+### Backend — v0.8.1
+
+- **Nuevo endpoint**: `POST /api/v1/devices/register`
+- Endpoint **público** (sin autenticación JWT) diseñado para que el firmware se autoregistre automáticamente tras completar el provisioning BLE.
+- Permite el registro del dispositivo con:
+  - MAC Address
+  - `deviceId`
+  - Información de hardware (modelo, versión de firmware, etc.)
+  - Datos adicionales de aprovisionamiento
+
+**Propósito**: Soporte completo al flujo de aprovisionamiento BLE → registro automático en backend sin intervención manual.
+
+## 2026-07-06
+
+### Firmware (ESP32-S3) — v0.10.0
+
+- **Nuevo**: `BLEProvisioning` — Servidor GATT completo con 5 characteristics (`device_info`, `wifi_ssid`, `wifi_pass`, `prov_cmd`, `prov_status`)
+- **Nuevo**: Persistencia en NVS (`namespace: mush2_prov`)
+- **Nuevo**: Callbacks para `provision`, `reset` y `factory_reset`
+- **Configuración**:
+  - Agregados flags: `CONFIG_BT_ENABLED=1`, `CONFIG_BT_BLE_ENABLED=1`, `CONFIG_BT_NIMBLE_ENABLED=1`
+  - Soporte BLE habilitado en ambos entornos (dev + producción)
+- **State Machine**:
+  - Nuevo estado `ST_PROVISIONING` (índice 9)
+  - Matriz de transiciones expandida a 10×10
+  - Soporte completo para modo provisioning
+- **Configuración**:
+  - Nuevos defines: `BLE_PROV_TIMEOUT_MS` y `BLE_DEVICE_NAME_PREFIX` con valores por defecto
+- **Mejoras**:
+  - `setProvisionedCredentials()` para cargar credenciales desde NVS
+  - Soporte mejorado para `String` en lugar de `const char*`
+  - Integración fluida con el flujo completo de BLE provisioning
+- **Lógica de Arranque**:
+  - En `setup()`: Si no hay credenciales → entra en **modo provisioning** (BLE + tarea idle)
+  - Si hay credenciales → modo normal (WiFi + MQTT + sensores)
+  - Integración completa del flujo BLE
+
+**Resultado**: El dispositivo ahora puede ser aprovisionado de forma inalámbrica vía BLE sin necesidad de cables ni configuración previa por USB/Serial.
+
+## 2026-07-05
+
+### Documentación y Gobernanza — Audit & Restructure
+
+- **Reestructuración de Directorios**: Se implementó la taxonomía definida en `ADR-015`.
+- **Nuevo**: `docs/README.md` — Índice navegable maestro del proyecto para colaboradores y agentes de IA.
+- **Nuevo**: Carpeta `docs/edd/` (Engineering Design Documents) con template y diseño de:
+  - `EDD-001-sistema-control-ambiental.md` (Sistema completo)
+  - `EDD-002-motor-reglas-recetas.md` (Motor de reglas)
+  - `EDD-003-ota-v3-canary-deployment.md` (OTA v3 4-capas)
+  - `EDD-004-estrategia-multitenant.md` (Aislamiento de datos y escalabilidad)
+- **Nuevo**: Carpeta `docs/rfc/` (Request for Comments) con template y propuestas iniciales en DRAFT:
+  - `RFC-0001-template.md` (Plantilla de propuesta)
+  - `RFC-0002-https-tls-firmware.md` (Migración HTTPS/TLS en firmware)
+  - `RFC-0003-mqtt-v2-upgrade.md` (Broker propio + TLS + autenticación ACL)
+  - `RFC-0004-multi-device-dashboard.md` (Dashboard multi-dispositivo simultáneo)
+  - `RFC-0005-notificaciones-push.md` (Alertas Telegram/Email)
+- **Nuevo**: `docs/ADR/ADR-015-docs-restructure.md` — Registro de decisión arquitectónica de esta reestructuración.
+- **Consolidación**: Unificación de roadmaps (`roadmap.md`, `roadmap-frontend.md`, `roadmap-consolidacion.md`, `roadmap-ota.md`) en un único `docs/roadmap/roadmap.md` autoritativo. Archivos antiguos movidos a `docs/roadmap/archive/`.
+- **Mantenimiento**:
+  - Eliminado `docs/firmware.md` (duplicado obsoleto).
+  - Actualizado `docs/architecture/firmware.md` para reflejar el estado actual del firmware (ESP32-S3 + FreeRTOS + HTTP Polling).
+  - Movido `docs/database.md` → `docs/architecture/database.md`.
+  - Movido `docs/ui-standards.md` → `docs/design/ui-standards.md`.
+  - Movido `docs/deployment.md` → `docs/operations/deployment.md`.
+  - Movido `docs/operations.md` → `docs/operations/runbook.md`.
+  - Eliminada carpeta obsoleta `docs/context/` y `docs/issues/` (luego de migración visual y de OTA).
+  - Expandido `docs/governance/decision-tree.md` con lineamientos de gobernanza, protocolo y control.
+  - Creado `docs/diagrams/exports/README.md` con instrucciones de exportación de archivos `.drawio`.
+
 ## 2026-07-04
 
 ### Frontend — v1.0.2
@@ -32,9 +121,11 @@
 ## [0.9.1] — 2026-06-29 — OTA v3 + HTTP Poller fixes
 
 ### ADRs
+
 - `ADR-014-OTA-v3.md`: Estado **Propuesto → Implementado**. Sección de implementación agregada con archivos creados, flujo completo, MQTT integrado, fixes aplicados y comprobación en hardware.
 
 ### Firmware (ESP32-S3) — OTA v3
+
 - **Nuevo**: `ota_nvs.{h,cpp}` — Inicialización NVS con esquema v1, key `fw_version`
 - **Nuevo**: `ota_decisor.{h,cpp}` — `OTASelector` con validación URL, SemVer, RSSI
 - **Nuevo**: `ota_shutdown.{h,cpp}` — `OTAShutdown` para apagado seguro SSR/sensores/comms
@@ -49,6 +140,7 @@
 - `nvsSetFwVer(cand.version)` post-ejecución exitosa
 
 ### Firmware (ESP32-S3) — HTTP Poller fixes
+
 - **Bug fix**: Stack overflow silencioso mataba el poller HTTP → `STACK_POLLER 4096→8192`
 - **Bug fix**: `client.connect()` sin timeout bloqueaba hasta ~20s → `client.connect(host,port,5000)`
 - **Bug fix**: `client.printf()` sin flush no enviaba datos al wire → `client.flush()` post-printf
@@ -59,6 +151,7 @@
 - `BACKEND_PORT` corregido de 3000→3797 para coincidir con backend Express
 
 ### Documentación
+
 - `README.md`: Referencia a ADR-014 agregada
 - `docs/ADR/ADR-014-OTA-v3.md`: Implementación completa documentada (archivos, flujo, fixes, comprobación)
 - `docs/issues/ota-v3/`: Estados de fases actualizados a completado
@@ -67,21 +160,26 @@
 ## [0.9.0] — 2026-06-28 — Arquitectura FreeRTOS + Estrategia de Seguridad
 
 ### ADRs
+
 - `ADR-012-FreeRTOS.md`: Arquitectura formal de tareas FreeRTOS, sincronización con colas (cmdQueue, sensorDataQueue), sistema de watchdog jerárquico unificado (TWDT + SWDT + Health Check) y roadmap de refactorización en 4 fases.
 - `ADR-013-Seguridad-Estrategia.md`: Estrategia de seguridad por capas con 8 dominios (secretos, transporte, autenticación de dispositivos, hardening firmware, backend, frontend, auditoría, supply chain). Roadmap en 5 fases.
 
 ### Firmware (ESP32-S3)
+
 - v0.9.0 consolidada (ya actualizada en commits anteriores)
 - 6 tareas FreeRTOS documentadas formalmente con prioridades, stacks y delays
 - Watchdog documentado como sistema de 3 niveles
 
 ### Backend
+
 - Version bump: 0.8.0 → 0.9.0
 
 ### Frontend
+
 - Version bump: 0.8.0 → 0.9.0
 
 ### Documentación (docs/)
+
 - **README.md**: Actualizado a v0.9.0 con referencias a ADR-012, ADR-013, stack FreeRTOS, arquitectura de seguridad
 - **docs/architecture/architecture.md**: Diagrama actualizado con FreeRTOS, SSR 4 canales, watchdog jerárquico; sección de seguridad actualizada por ADR-013
 - **docs/architecture/backend.md**: Versión 0.9.0, servicios actualizados (mqttBridge, webSocketServer), modelo ApiKey
@@ -102,8 +200,9 @@
 ## [0.8.1] — 2026-06-27 — Fix Stack Overflow + LAN Connectivity
 
 ### Firmware (ESP32-S3)
-- **Bug fix crítico**: Stack canary overflow (`Guru Meditation: Stack canary watchpoint triggered`) 
-  causado por `WiFiClientSecure` (mbedTLS) al intentar TLS. El TLS handshake 
+
+- **Bug fix crítico**: Stack canary overflow (`Guru Meditation: Stack canary watchpoint triggered`)
+  causado por `WiFiClientSecure` (mbedTLS) al intentar TLS. El TLS handshake
   requería ~80 KB de stack; la tarea HTTP tenía insuficientes 48 KB (12288 words).
 - `config.h`: `STACK_HTTP` aumentado de 12288 → 20480 words (~80 KB) como medida defensiva.
 - `config.h`: Nuevo flag `HTTP_DISABLE_TLS` para compilación sin TLS (LAN local).
@@ -112,13 +211,15 @@
 - `http_handler.cpp`: Eliminado reintento automático PLAIN→TLS que causaba el reboot loop.
   La lógica de fallback ahora rota solo entre endpoints.
   `BACKOFF_MAX` reducido de 180s → 60s (LAN no necesita backoff largo).
-- `http_handler.cpp`: Pre-resolución DNS inteligente: si `API_HOST` es una IP literal, 
+- `http_handler.cpp`: Pre-resolución DNS inteligente: si `API_HOST` es una IP literal,
   no llama a resolución DNS (ahorra ~12s de bloqueo por boot).
 
 ### Infraestructura
+
 - Eliminada dependencia de Mosquitto/HiveMQ; la comunicación ahora es HTTP directo al backend.
 
 ### Backend
+
 - `.env`: `API_HOST` configurado como `localhost`.
 - `.env`: `DEVICE_ID` configurado como `mush2_A0F262E55CBC` (MAC del ESP32-S3).
 
@@ -127,20 +228,24 @@
 ## [0.8.0] — 2026-06-24 — Fase 8 (Multi-Cámara)
 
 ### Firmware
+
 - `DeviceManager`: deviceId dinámico derivado de MAC address, persistido en EEPROM al primer boot
 - Eliminado `DEVICE_ID` hardcoded de `config.h` — ahora cada nodo tiene identidad única
 - Todos los mensajes HTTP usan el deviceId real (MAC) en payloads
 
 ### Backend
+
 - Auto-registro universal de nodos: todos los handlers HTTP (`handleOnline`, `handleAck`, `handleDeviceState`) ahora crean el dispositivo si no existe via `findOrCreate`
 
 ### Frontend
+
 - Dashboard multi-cámara con selector de dispositivo activo
 - Fila de promedios agregados (T°/HR) cuando hay 2+ cámaras
 - SSE filtrado por dispositivo seleccionado
 - `chamberName` visible en targetas de dispositivo
 
 ### Docs
+
 - `docs/roadmap.md` extendido a 18 fases (F15-F18: Gemelo Digital, Marketplace, App Móvil, Certificación)
 - `docs/roadmap/milestone.md` actualizado con M8-M10 planificados
 - `docs/roadmap/otras-consideraciones.md` reestructurado como backlog técnico
@@ -151,29 +256,34 @@
 ## [0.7.0] — 2026-06-12 — Fase 7 (Producción)
 
 ### Firmware
+
 - OTA: ArduinoOTA para actualización local + HTTP Update remoto
 - Endpoint HTTP `POST /api/v1/devices/{id}/ota` con acciones `activate` (modo OTA) y `update` (HTTP update)
 - Versionado del firmware expuesto vía `getVersion()`
 
 ### Backend
+
 - `/api/v1/monitoring/metrics` endpoint con estadísticas del sistema
 - `/api/v1/health/db` y `/health/backend` health checks específicos
 - Script `src/scripts/backup-db.js` para backup programado de PostgreSQL
 - Dependencia: `pg_dump` para backups
 
 ### CI/CD (GitHub Actions)
+
 - Workflow `ci.yml` con 3 jobs paralelos: firmware build, backend test, frontend build
 - Backend test con servicio PostgreSQL 18
 - Frontend build con Node 24 + pnpm
 - Trigger en push/PR a main y develop, y en releases
 
 ### Documentación
+
 - Manual de usuario completo en `docs/user/manual.md` (español)
 - Cubre: arquitectura, conexión inicial, dashboard, dispositivos, recetas, ciclos, planes, troubleshooting
 
 ## [0.6.0] — 2026-06-12 — Fase 6 (Multi-tenencia)
 
 ### Backend
+
 - Modelos: Subscription, UserChamberAccess, ApiKey
 - Planes FREE (1 device), BASIC (5), PREMIUM (50) con límites por recurso
 - Tenant middleware: filtra queries por userId automáticamente
@@ -185,6 +295,7 @@
 - Admin endpoints: listar usuarios, cambiar rol, toggle active, audit logs
 
 ### Frontend
+
 - Página de login (JWT)
 - Página Settings con información del plan y upgrade
 - Interceptor axios: autorización automática + refresh token
@@ -194,6 +305,7 @@
 ## [0.5.0] — 2026-06-12 — Fase 5 (Hardening)
 
 ### Firmware
+
 - Máquina de estados: BOOT → INIT → WIFI → NORMAL → DEGRADED → ERROR → RECOVERY → SAFE
 - Watchdog hardware 8s + software 30s con feed en cada loop
 - EEPROM: contador de reinicios, modo SAFE tras 5 reinicios consecutivos
@@ -201,6 +313,7 @@
 - Fallback automático a modo LOCAL sin conexión WiFi/HTTP
 
 ### Backend
+
 - Autenticación JWT: login/refresh/logout + token rotation
 - RBAC: SUPER_ADMIN, ADMIN, OPERATOR, VIEWER con jerarquía de roles
 - Rate limiting: 100 req/15min en `/api/*`
@@ -212,6 +325,7 @@
 - Seed: usuario admin (SUPER_ADMIN) creado automáticamente
 
 ### Frontend
+
 - ErrorBoundary global con recarga
 - Skeleton loading para métricas/tarjetas/tablas
 - AuthContext para manejo de tokens JWT
@@ -220,6 +334,7 @@
 ## [0.4.0] — 2026-06-12 — Fase 4
 
 ### Firmware
+
 - `hysteresis_controller`: reglas locales con histéresis (temp, hum, CO2)
 - SSR1 = calefacción (temp), SSR2 = ventilación (temp+CO2), SSR3 = humidificación (hum)
 - Modos LOCAL (reglas), REMOTE (comandos HTTP), OFF
@@ -228,6 +343,7 @@
 - Setpoints por defecto en config.h (DEFAULT_TEMP_MIN/MAX, etc.)
 
 ### Backend
+
 - `controlEngine.js`: evaluación periódica cada 60s de ciclos activos
 - Comparación telemetría vs setpoints de receta por fase
 - Transición automática INCUBATION → FRUITING → MAINTENANCE → COMPLETED
@@ -235,12 +351,14 @@
 - Emisión de eventos `control_eval` vía SSE
 
 ### Frontend
+
 - Página `Ciclos` con tarjetas por ciclo (fase, especie, receta, fechas)
 - Panel de alertas en Dashboard
 
 ## [0.3.0] — 2026-06-12 — Fase 3
 
 ### Firmware
+
 - `ens160_sensor`: driver ENS160 (I2C 0x53), AQI/eCO₂/TVOC
 - Calibración del ENS160 con temperatura/humedad del AHT21
 - CO₂ y VOC incluidos en telemetría HTTP
@@ -249,6 +367,7 @@
 - Dependencia añadida: DFRobot_ENS160
 
 ### Backend
+
 - Modelos: `Recipe`, `CultivationCycle`, `CycleState`
 - CRUD recetas: GET/POST/PUT `/api/v1/recipes`
 - CRUD ciclos: GET/POST/PATCH `/api/v1/cycles`
@@ -257,12 +376,14 @@
 - Fix: import paths en seed.js
 
 ### Frontend
+
 - Página `Recipes` con tabla de recetas y formulario de creación
 - Navegación con NavLink (Dashboard / Recetas)
 
 ## [0.2.0] — 2026-06-12 — Fase 2
 
 ### Firmware
+
 - `ssr_controller`: 3 canales SSR, minOn/maxOn timers, safety limits
 - Endpoint HTTP `POST /api/v1/devices/{id}/actuator` con parseo JSON
 - ACK automático en respuesta HTTP
@@ -270,6 +391,7 @@
 - Dependencia añadida: ArduinoJson 7
 
 ### Backend
+
 - Modelo `Actuator` (deviceId, channel, state, mode, lastCommand, lastAck)
 - `GET /api/v1/devices/:id/actuators`
 - `PATCH /api/v1/devices/:id/actuators/:channel` → envía comando HTTP
@@ -278,6 +400,7 @@
 - Fix: path de `.env` corregido
 
 ### Frontend
+
 - Página `DeviceDetail` con métricas en tiempo real + controles de actuador
 - Componente `ActuatorControl` (toggle ON/OFF por canal SSR)
 - Hook `useSSE` para eventos en tiempo real vía EventSource
@@ -287,6 +410,7 @@
 ## [0.1.0] — 2026-06-12 — Fase 1
 
 ### Backend
+
 - Setup Express 5 + Sequelize 6 + PostgreSQL
 - Modelos: Device, Sensor, Telemetry, Event
 - Cliente HTTP polling con failover entre 2 endpoints
@@ -294,12 +418,14 @@
 - Persistencia automática de telemetría entrante
 
 ### Frontend
+
 - Setup Vite + React 18 + React Router
 - Dashboard con MetricCards (temp, hum, CO2, VOC)
 - Polling automático cada 10s
 - Proxy API Vite → Backend
 
 ### Firmware
+
 - Setup PlatformIO (ESP32-S3)
 - WiFi manager: 2 redes con failover
 - Driver AHT21 (I2C 0x38) — temperatura y humedad
