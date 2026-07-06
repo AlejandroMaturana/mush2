@@ -20,6 +20,7 @@
 #include "thingspeak_client.h"
 #include "device_manager.h"
 #include "mqtt_client.h"
+#include "ble_provisioning.h"
 
 // Global instances
 WiFiManager wifi;
@@ -37,6 +38,7 @@ SSRController ssr;
 HysteresisController hyst;
 ThingSpeakClient ts;
 MQTTClient mqtt;
+BLEProvisioning bleProv;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);
 
 // Shared state (accessed across cores, declared volatile)
@@ -74,6 +76,7 @@ TaskHandle_t taskMQTTHandle = NULL;
 // Forward declarations
 void setLEDColor(uint8_t r, uint8_t g, uint8_t b);
 void processPhotoperiod();
+void taskProvisioningIdle(void* pvParameters);
 
 // ============================================================
 //  FreeRTOS Tasks — Core 1 (Control)
@@ -287,6 +290,33 @@ void taskSSR(void* pvParameters) {
 
     esp_task_wdt_reset();
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_SSR));
+  }
+}
+
+// ============================================================
+//  BLE Provisioning Idle Task
+// ============================================================
+
+void taskProvisioningIdle(void* pvParameters) {
+  esp_err_t wdtErr = esp_task_wdt_add(NULL);
+  if (wdtErr != ESP_OK) Serial.printf("[PROV] WDT add: %s\n",
+    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR");
+  TickType_t lastWake = xTaskGetTickCount();
+  bool ledOn = true;
+  unsigned long lastLedToggle = 0;
+
+  while (true) {
+    esp_task_wdt_reset();
+    bleProv.loop();
+
+    unsigned long now = millis();
+    if (now - lastLedToggle >= 750) {
+      lastLedToggle = now;
+      ledOn = !ledOn;
+      setLEDColor(0, 0, ledOn ? 255 : 0);
+    }
+
+    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(100));
   }
 }
 
@@ -634,17 +664,33 @@ void setup() {
     sm.fsmTransition(ST_INIT, "safe mode recovery");
   }
 
-  // I2C bus
-  Wire.begin(I2C_SDA, I2C_SCL);
-  Wire.setClock(I2C_FREQ);
-
-  sm.fsmTransition(ST_WIFI, "setup");
-  wifi.init();
-  wifi.connect(); // async — no bloquea
-
   deviceManager.init();
+  nvsInit();
 
-  if (sm.getState() != ST_ERROR) {
+  // Inicializar componentes OTA v3
+  otaselector = OTASelector();
+  otaShutdown = OTAShutdown();
+  otaExecutor = OTAExecutor();
+  otaConfirmacion = OTAConfirmation();
+
+  // Inicializar BLE provisioning
+  bleProv.init(deviceManager.getDeviceId().c_str(), FIRMWARE_VERSION);
+
+  if (bleProv.isProvisioned()) {
+    // === MODO NORMAL: credenciales disponibles ===
+    Serial.println("[BOOT] Credenciales encontradas — modo operativo");
+
+    String provSsid, provPass;
+    bleProv.getStoredCredentials(provSsid, provPass);
+    wifi.setProvisionedCredentials(provSsid, provPass);
+
+    Wire.begin(I2C_SDA, I2C_SCL);
+    Wire.setClock(I2C_FREQ);
+
+    sm.fsmTransition(ST_WIFI, "setup");
+    wifi.init();
+    wifi.connect();
+
     if (!aht.init()) {
       Serial.println("[ERROR] AHT21 no disponible");
     }
@@ -662,71 +708,49 @@ void setup() {
 
     httpPoller.init(deviceManager.getDeviceId().c_str(), BACKEND_HOST, BACKEND_PORT);
     ota.init(deviceManager.getDeviceId().c_str());
+
+    mqtt.init(deviceManager.getDeviceId().c_str());
+    mqtt.setOtaCallback(otaMqttCallback);
+    mqtt.setActuatorCallback(mqttActuatorCallback);
+
+    bootTime = millis();
+    lightCycleStart = bootTime;
+    sharedLightOn = true;
+
+    sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
+
+    if (otaConfirmacion.selfTest()) {
+      otaConfirmacion.confirm();
+      String ver = nvsGetFwVer();
+      Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
+      char successPayload[128];
+      snprintf(successPayload, sizeof(successPayload),
+        "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
+      mqtt.publish("ota/status", successPayload, true);
+    }
+
+    xTaskCreatePinnedToCore(taskSensors, "Sensors", STACK_SENSORS, NULL, PRIORITY_SENSORS, &taskSensorsHandle, CORE_CONTROL);
+    xTaskCreatePinnedToCore(taskSSR, "SSR", STACK_SSR, NULL, PRIORITY_SSR, &taskSSRHandle, CORE_CONTROL);
+    xTaskCreatePinnedToCore(taskWiFi, "WiFi", STACK_WIFI, NULL, PRIORITY_WIFI, &taskWiFiHandle, CORE_NETWORK);
+    xTaskCreatePinnedToCore(taskPoller, "Poller", STACK_POLLER, NULL, PRIORITY_MQTT, &taskPollerHandle, CORE_NETWORK);
+    xTaskCreatePinnedToCore(taskOTA, "OTA", STACK_OTA, NULL, PRIORITY_OTA, &taskOTAHandle, CORE_NETWORK);
+    xTaskCreatePinnedToCore(taskMQTT, "MQTT", STACK_MQTT, NULL, PRIORITY_MQTT, &taskMQTTHandle, CORE_NETWORK);
+    xTaskCreatePinnedToCore(taskTelemetry, "Telemetry", STACK_TELEMETRY, NULL, PRIORITY_TELEMETRY, &taskTelemetryHandle, CORE_NETWORK);
+
+    Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
+    Serial.printf("[SYS] %d tareas FreeRTOS creadas\n", 7);
+    setLEDColor(0, 0, 0);
+
+  } else {
+    // === MODO PROVISIONING: sin credenciales ===
+    Serial.println("[BOOT] Sin credenciales — modo provisioning BLE");
+    sm.fsmTransition(ST_PROVISIONING, "no credentials");
+    bleProv.start();
+
+    xTaskCreatePinnedToCore(taskProvisioningIdle, "ProvIdle", 2048, NULL, 1, NULL, CORE_NETWORK);
+
+    Serial.println("[BLE] Modo provisioning — esperando configuración");
   }
-
-  // Inicializar componentes OTA v3
-  otaselector = OTASelector();
-  otaShutdown = OTAShutdown();
-  otaExecutor = OTAExecutor();
-  otaConfirmacion = OTAConfirmation();
-  nvsInit();
-
-  // MQTT
-  mqtt.init(deviceManager.getDeviceId().c_str());
-  mqtt.setOtaCallback(otaMqttCallback);
-  mqtt.setActuatorCallback(mqttActuatorCallback);
-
-  bootTime = millis();
-  lightCycleStart = bootTime;
-  sharedLightOn = true;
-
-  sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
-
-  // Post-boot OTA: confirm firmware if pending verification
-  if (otaConfirmacion.selfTest()) {
-    otaConfirmacion.confirm();
-    String ver = nvsGetFwVer();
-    Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
-    char successPayload[128];
-    snprintf(successPayload, sizeof(successPayload),
-      "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
-    mqtt.publish("ota/status", successPayload, true);
-  }
-
-  // Create FreeRTOS tasks
-  xTaskCreatePinnedToCore(
-    taskSensors, "Sensors", STACK_SENSORS, NULL, PRIORITY_SENSORS,
-    &taskSensorsHandle, CORE_CONTROL);
-
-  xTaskCreatePinnedToCore(
-    taskSSR, "SSR", STACK_SSR, NULL, PRIORITY_SSR,
-    &taskSSRHandle, CORE_CONTROL);
-
-  xTaskCreatePinnedToCore(
-    taskWiFi, "WiFi", STACK_WIFI, NULL, PRIORITY_WIFI,
-    &taskWiFiHandle, CORE_NETWORK);
-
-  xTaskCreatePinnedToCore(
-    taskPoller, "Poller", STACK_POLLER, NULL, PRIORITY_MQTT,
-    &taskPollerHandle, CORE_NETWORK);
-
-  xTaskCreatePinnedToCore(
-    taskOTA, "OTA", STACK_OTA, NULL, PRIORITY_OTA,
-    &taskOTAHandle, CORE_NETWORK);
-
-  xTaskCreatePinnedToCore(
-    taskMQTT, "MQTT", STACK_MQTT, NULL, PRIORITY_MQTT,
-    &taskMQTTHandle, CORE_NETWORK);
-
-  xTaskCreatePinnedToCore(
-    taskTelemetry, "Telemetry", STACK_TELEMETRY, NULL, PRIORITY_TELEMETRY,
-    &taskTelemetryHandle, CORE_NETWORK);
-
-  Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
-  Serial.printf("[SYS] %d tareas FreeRTOS creadas en Core %d (control) y Core %d (red)\n",
-    6, CORE_CONTROL, CORE_NETWORK);
-
-  setLEDColor(0, 0, 0);
 }
 
 void loop() {
