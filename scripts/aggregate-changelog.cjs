@@ -65,6 +65,12 @@ function extractLatestEntry(changelogPath) {
   } catch { return null; }
 }
 
+function syncVersionFile(dir, version) {
+  const versionPath = path.join(PROJECT_ROOT, dir, 'VERSION');
+  fs.writeFileSync(versionPath, version + '\n', 'utf8');
+  console.log(`  ${dir}/VERSION → ${version}`);
+}
+
 function main() {
   // Find per-package CHANGELOG.md files
   const entries = [];
@@ -81,6 +87,14 @@ function main() {
     const version = pkg.version;
 
     entries.push({ label, version, content: entry.content });
+  }
+
+  // Sync VERSION files from package.json versions (even if no changelog was found)
+  for (const dir of PACKAGE_DIRS) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, dir, 'package.json'), 'utf8'));
+      syncVersionFile(dir, pkg.version);
+    } catch {}
   }
 
   if (entries.length === 0) {
