@@ -59,6 +59,41 @@ router.post('/devices', async (req, res) => {
   }
 });
 
+router.post('/devices/register', async (req, res) => {
+  try {
+    const { deviceId, macAddress, firmwareVersion } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ error: 'deviceId requerido' });
+    }
+
+    const [device, created] = await Device.findOrCreate({
+      where: { deviceId },
+      defaults: {
+        deviceId,
+        macAddress: macAddress || deviceId,
+        firmwareVersion: firmwareVersion || '0.0.0',
+        status: 'ONLINE',
+        lastSeen: new Date(),
+      },
+    });
+
+    if (!created) {
+      await device.update({
+        macAddress: macAddress || device.macAddress,
+        firmwareVersion: firmwareVersion || device.firmwareVersion,
+        status: 'ONLINE',
+        lastSeen: new Date(),
+      });
+    }
+
+    console.log(`[REGISTER] Dispositivo ${created ? 'registrado' : 'actualizado'}: ${deviceId}`);
+    res.status(created ? 201 : 200).json({ data: device });
+  } catch (err) {
+    console.error('[REGISTER] Error:', err.message);
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
 router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = await Device.findByPk(req.params.id, {
