@@ -1,42 +1,10 @@
+import ToggleSwitch from '../ui/ToggleSwitch.jsx'
+
 const DEFAULT_META = {
   1: { label: 'AIR EXCHANGE', icon: 'air', sublabel: 'FAN_SPEED' },
   2: { label: 'MIST SPRAYERS', icon: 'humidity_high', sublabel: 'RESERVOIR' },
   3: { label: 'CO2 INJECTION', icon: 'co2', sublabel: 'FLOW_RATE' },
   4: { label: 'UV-C STERILIZER', icon: 'light', sublabel: 'INTENSITY' },
-}
-
-function Toggle({ checked, onChange, disabled }) {
-  return (
-    <div
-      className={`relative ${checked ? 'bg-primary' : 'bg-surface-variant'}`}
-      style={{
-        width: '32px',
-        height: '18px',
-        borderRadius: '9999px',
-        border: checked ? 'none' : '1px solid var(--outline-variant)',
-        boxShadow: checked ? '0 0 5px rgba(107,251,154,0.25)' : 'none',
-        opacity: disabled ? 0.5 : 1,
-        flexShrink: 0,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        userSelect: 'none',
-        transition: 'all 0.2s',
-      }}
-      onClick={() => { if (!disabled) onChange() }}
-    >
-      <div
-        className={`absolute ${checked ? 'bg-on-primary' : 'bg-outline'}`}
-        style={{
-          width: '12px',
-          height: '12px',
-          borderRadius: '9999px',
-          top: '2px',
-          right: checked ? '3px' : 'auto',
-          left: checked ? 'auto' : '3px',
-          transition: 'all 0.2s',
-        }}
-      />
-    </div>
-  )
 }
 
 function ActuatorControl({ actuator, meta, cmdState, onToggle, disabled }) {
@@ -61,7 +29,7 @@ function ActuatorControl({ actuator, meta, cmdState, onToggle, disabled }) {
         <span className="text-on-surface" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rm.label}</span>
       </div>
       <div className="flex flex-col items-end" style={{ gap: '4px', alignSelf: 'start' }}>
-        <Toggle checked={isOn} onChange={handleToggle} disabled={disabled || isPending || isError} />
+        <ToggleSwitch checked={isOn} onChange={handleToggle} disabled={disabled || isPending || isError} />
         <span className={`font-mono ${isPending ? 'text-amber' : cmdState === 'TIMEOUT' ? 'text-error' : isOn ? 'text-primary' : 'text-on-surface-variant'}`} style={{ fontSize: '8px', opacity: isOn && !isPending ? 0.7 : undefined }}>
           {isPending ? 'PEND' : cmdState === 'TIMEOUT' ? 'T/O' : isOn ? 'ON' : 'STBY'}
         </span>
