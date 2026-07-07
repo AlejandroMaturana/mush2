@@ -5,6 +5,9 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import { events } from './services/eventBus.js';
 import router from './routes/index.js';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 const app = express();
 
@@ -104,6 +107,25 @@ data: ${JSON.stringify(data)}
     clearInterval(keepAlive);
   });
 });
+
+// --- Production: serve frontend SPA build ---
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const frontendDistPath = resolve(__dirname, '../../frontend/dist');
+
+if (existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+
+  app.get('*', (req, res) => {
+    if (
+      !req.path.startsWith('/api/') &&
+      !req.path.startsWith('/events') &&
+      !req.path.startsWith('/ws') &&
+      !req.path.startsWith('/health')
+    ) {
+      res.sendFile(resolve(frontendDistPath, 'index.html'));
+    }
+  });
+}
 
 export default app;
 
