@@ -65,7 +65,7 @@ function DomeGauge({ value, prevValue, min, max, optMin, optMax, unit, label, de
   const optMaxPct = ((optMax - min) / (max - min) * 100).toFixed(2)
   const optBounds = optMinPct < optMaxPct
     ? [{ offset: 0, color: GAUGE_COLORS.blue }, { offset: +optMinPct, color: GAUGE_COLORS.green }, { offset: +optMaxPct, color: GAUGE_COLORS.green }, { offset: 100, color: GAUGE_COLORS.red }]
-    : [{ offset: 0, color: GREEN }, { offset: 0, color: GREEN }]
+    : [{ offset: 0, color: GAUGE_COLORS.green }, { offset: 0, color: GAUGE_COLORS.green }]
 
   const delta = !noData && prevValue !== undefined ? value - prevValue : 0
   const dAbs = Math.abs(delta)
