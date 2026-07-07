@@ -68,16 +68,17 @@ Documentos de **diseño de alto nivel** para subsistemas complejos. Se crean _an
 | [`EDD-004`](EDD/EDD-004-estrategia-multitenant.md) | Estrategia multi-tenant y escalabilidad |
 | [`EDD-005`](EDD/EDD-005-BLE-provisioning.md) | BLE Provisioning — configuración inicial por Bluetooth |
 
-### 💬 Propuestas (RFC) (`docs/rfc/`)
+### 💬 Propuestas (RFC) (`docs/RFC/`)
 **Request for Comments** — propuestas formales para cambios significativos antes de decidir.
 
 | Documento | Estado | Contenido |
 |---|---|---|
-| [`RFC-0001-template.md`](rfc/RFC-0001-template.md) | TEMPLATE | Plantilla base para nuevas RFCs |
-| [`RFC-0002-https-tls-firmware.md`](rfc/RFC-0002-https-tls-firmware.md) | DRAFT | HTTPS/TLS en firmware (WiFiClientSecure) |
-| [`RFC-0003-mqtt-v2-upgrade.md`](rfc/RFC-0003-mqtt-v2-upgrade.md) | DRAFT | Migración protocolo MQTT a v2 |
-| [`RFC-0004-multi-device-dashboard.md`](rfc/RFC-0004-multi-device-dashboard.md) | DRAFT | Dashboard multi-dispositivo simultáneo |
-| [`RFC-0005-notificaciones-push.md`](rfc/RFC-0005-notificaciones-push.md) | DRAFT | Sistema de notificaciones push |
+| [`RFC-template.md`](RFC/RFC-template.md) | TEMPLATE | Plantilla base para nuevas RFCs |
+| [`RFC-0001-https-tls-firmware.md`](RFC/RFC-0001-https-tls-firmware.md) | DRAFT | HTTPS/TLS en firmware (WiFiClientSecure) |
+| [`RFC-0002-mqtt-v2-upgrade.md`](RFC/RFC-0002-mqtt-v2-upgrade.md) | DRAFT | Migración protocolo MQTT a v2 |
+| [`RFC-0003-multi-device-dashboard.md`](RFC/RFC-0003-multi-device-dashboard.md) | DRAFT | Dashboard multi-dispositivo simultáneo |
+| [`RFC-0004-notificaciones-push.md`](RFC/RFC-0004-notificaciones-push.md) | DRAFT | Sistema de notificaciones push |
+| [`RFC-0005-BLE-Provisioning-&-Device-Bootstrap.md`](RFC/RFC-0005-BLE-Provisioning-&-Device-Bootstrap.md) | ACCEPTED | BLE Provisioning & Device Bootstrap |
 
 ### 🎨 Diseño (`docs/design/`)
 Lineamientos visuales, design tokens y decisiones de UX.
@@ -150,7 +151,7 @@ Documentación para operadores y cultivadores.
 | `contracts/` | ✅ Completo | 2026-06-30 |
 | `protocol/` | ✅ Completo | 2026-06-30 |
 | `ADR/` | ✅ 14 ADRs (001–014) | 2026-07-05 |
-| `edd/` | 🟡 En construcción | 2026-07-05 |
+| `EDD/` | 🟡 En construcción | 2026-07-05 |
 | `rfc/` | 🟡 Borradores | 2026-07-05 |
 | `design/` | ✅ Completo | 2026-07-05 |
 | `governance/` | ✅ Completo | 2026-06-30 |
