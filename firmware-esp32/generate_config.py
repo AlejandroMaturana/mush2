@@ -37,12 +37,12 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define LED_RGB_COUNT 1
 #define LED_RGB_BRIGHTNESS 24
 
-// SSR 4CH active-LOW
+// SSR 4CH (runtime-configurable via NVS)
 #define SSR_CH1_PIN GPIO_NUM_11
 #define SSR_CH2_PIN GPIO_NUM_12
 #define SSR_CH3_PIN GPIO_NUM_13
 #define SSR_CH4_PIN GPIO_NUM_14
-#define SSR_ACTIVE_LOW 1
+#define SSR_ACTIVE_LOW {SSR_ACTIVE_LOW}
 
 // FreeRTOS pinning
 #define CORE_CONTROL   1
@@ -137,6 +137,7 @@ def main():
         BACKEND_HOST=env.get('BACKEND_HOST', 'localhost'),
         BACKEND_PORT=env.get('BACKEND_PORT', '3797'),
         POLL_INTERVAL=env.get('POLL_INTERVAL', '3000'),
+        SSR_ACTIVE_LOW=env.get('SSR_ACTIVE_LOW', '1'),
     )
 
     config_dir = os.path.join(os.path.dirname(__file__), 'src')
