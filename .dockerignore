@@ -1,0 +1,14 @@
+node_modules
+.git
+.agents
+.env
+.env.local
+*.log
+dist
+.pio
+__pycache__
+.gitignore
+README.md
+CHANGELOG.md
+.vscode
+.idea

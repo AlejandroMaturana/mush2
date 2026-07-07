@@ -2,6 +2,22 @@
 
 ## 2026-07-08
 
+### Backend — v0.9.1 → Deploy & Infra — Preparación para Render + Supabase
+
+- **backend/src/app.js**:
+  - Ahora sirve los archivos estáticos del `frontend/dist/`
+  - Añadido catch-all route para SPA (rutas no-API)
+- **backend/src/server.js**:
+  - `sequelize.sync()` ahora también se ejecuta en producción (solo crea tablas, sin `alter`)
+- **Dockerfile**: Multi-stage build optimizado (frontend build + backend prod, imagen ~200MB)
+- **render.yaml**: Configuración lista para despliegue vía Blueprint
+- **.dockerignore**: Excluye archivos innecesarios del contexto de build
+- **docs/operations/deployment.md**: Guía completa actualizada con pasos para Supabase + Render
+
+**Resultado**: El proyecto está completamente preparado para desplegarse en Render con Supabase como base de datos. Backend sirve frontend + API en un solo servicio, eliminando problemas de CORS y facilitando WebSocket/SSE.
+
+## 2026-07-08
+
 ### Frontend — v1.1.3 → Preparación React Router v7
 
 - **Actualización**: Añadido prop `future` a `<BrowserRouter>` en `App.jsx`
