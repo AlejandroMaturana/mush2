@@ -22,6 +22,7 @@ router.get('/', async (req, res) => {
     const actuators = await Actuator.findAll({ where: { deviceId: device.id } });
     res.json({
       deviceId,
+      ssrActiveLow: device.ssrActiveLow,
       actuators: actuators.map(a => ({
         channel: a.channel,
         state: a.state,
