@@ -67,12 +67,14 @@
 #define LED_RGB_COUNT 1
 #define LED_RGB_BRIGHTNESS 24
 
-// ---- SSR 4 Canales (active-LOW) ----
+// ---- SSR 4 Canales (active-LOW por defecto) ----
 #define SSR_CH1_PIN GPIO_NUM_11   // Ventilación
 #define SSR_CH2_PIN GPIO_NUM_12   // Calefacción (manta térmica)
 #define SSR_CH3_PIN GPIO_NUM_13   // Humidificación
 #define SSR_CH4_PIN GPIO_NUM_14   // Iluminación (fotoperiodo)
 
+// Valor por defecto para SSR_ACTIVE_LOW (1=low-level, 0=high-level).
+// Se sobreescribe en tiempo de ejecución desde NVS (BLE provisioning o backend).
 #define SSR_ACTIVE_LOW 1
 
 // ---- FreeRTOS: Core Pinning ----
