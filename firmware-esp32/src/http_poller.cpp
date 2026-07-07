@@ -12,6 +12,8 @@ HTTPPoller::HTTPPoller() : client() {
   pollDeadline = 0;
   bodyStarted = false;
   memset(hdrBuf, 0, 4);
+  _ssrActiveLow = true;
+  _ssrActiveLowPrev = true;
   for (int i = 0; i < ACTUATOR_CHANNELS; i++) {
     desired[i].state = 0;
     desired[i].mode = 0;
@@ -23,6 +25,55 @@ void HTTPPoller::init(const char* id, const char* h, uint16_t p) {
   host = String(h);
   port = p;
   client.setTimeout(3000);
+}
+
+bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress) {
+  if (WiFi.status() != WL_CONNECTED) return false;
+
+  WiFiClient regClient;
+  regClient.setTimeout(5000);
+
+  if (!regClient.connect(host.c_str(), port)) {
+    Serial.printf("[REG] Fallo conexión a %s:%u\n", host.c_str(), port);
+    return false;
+  }
+
+  String body;
+  body += "{\"deviceId\":\"";
+  body += deviceId;
+  body += "\",\"macAddress\":\"";
+  body += macAddress;
+  body += "\",\"firmwareVersion\":\"";
+  body += fwVersion;
+  body += "\"}";
+
+  regClient.printf("POST /api/v1/devices/register HTTP/1.1\r\n"
+    "Host: %s:%u\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: %u\r\n"
+    "Connection: close\r\n\r\n%s",
+    host.c_str(), port, body.length(), body.c_str());
+
+  unsigned long deadline = millis() + 5000;
+  while (!regClient.available() && millis() < deadline) {
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+
+  if (!regClient.available()) {
+    Serial.println("[REG] Timeout esperando respuesta");
+    regClient.stop();
+    return false;
+  }
+
+  String response;
+  while (regClient.available()) {
+    response += (char)regClient.read();
+  }
+  regClient.stop();
+
+  bool ok = response.indexOf("200 OK") >= 0 || response.indexOf("201 Created") >= 0;
+  Serial.printf("[REG] Dispositivo %s: %s\n", ok ? "registrado" : "falló", deviceId.c_str());
+  return ok;
 }
 
 void HTTPPoller::loop() {
@@ -300,6 +351,12 @@ void HTTPPoller::runParse() {
   }
 
   applyActuators(actuators);
+
+  _ssrActiveLowPrev = _ssrActiveLow;
+  if (doc["ssrActiveLow"].is<bool>()) {
+    _ssrActiveLow = doc["ssrActiveLow"].as<bool>();
+  }
+
   pollState = POLL_IDLE;
   lastPollOk = true;
 }
@@ -319,4 +376,12 @@ void HTTPPoller::applyActuators(JsonArray actuators) {
     desired[2].state ? "ON" : "OFF", desired[2].mode ? "RM" : "LC",
     desired[3].state ? "ON" : "OFF", desired[3].mode ? "RM" : "LC");
 #endif
+}
+
+bool HTTPPoller::getSsrActiveLow() {
+  return _ssrActiveLow;
+}
+
+bool HTTPPoller::ssrActiveLowChanged() {
+  return _ssrActiveLow != _ssrActiveLowPrev;
 }

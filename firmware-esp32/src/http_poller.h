@@ -27,8 +27,11 @@ public:
   void init(const char* deviceId, const char* host, uint16_t port);
   void loop();
   bool isConnected();
+  bool registerDevice(const char* fwVersion, const char* macAddress);
   void getDesired(int ch, uint8_t* state, uint8_t* mode);
   unsigned int getFailCount() { return failCount; }
+  bool getSsrActiveLow();
+  bool ssrActiveLowChanged();
 
 private:
   WiFiClient client;
@@ -47,6 +50,9 @@ private:
   String httpResponse;
   bool bodyStarted;
   char hdrBuf[4];
+
+  bool _ssrActiveLow;
+  bool _ssrActiveLowPrev;
 
   void beginRequest();
   void runConnect();

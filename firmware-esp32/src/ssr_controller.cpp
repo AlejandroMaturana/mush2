@@ -1,7 +1,7 @@
 #include "ssr_controller.h"
 #include "config.h"
 
-SSRController::SSRController() {
+SSRController::SSRController() : _activeLow(true) {
   uint8_t pins[4] = {SSR_CH1_PIN, SSR_CH2_PIN, SSR_CH3_PIN, SSR_CH4_PIN};
   for (int i = 0; i < SSR_CHANNELS; i++) {
     channels[i].pin = pins[i];
@@ -10,6 +10,7 @@ SSRController::SSRController() {
     channels[i].minOnTime = 3000;
     channels[i].maxOnTime = 0;
   }
+  loadFromNVS();
 }
 
 void SSRController::init() {
@@ -22,7 +23,7 @@ void SSRController::init() {
 }
 
 uint8_t SSRController::resolvePinState(uint8_t state) {
-  if (SSR_ACTIVE_LOW) {
+  if (_activeLow) {
     return state ? LOW : HIGH;
   } else {
     return state ? HIGH : LOW;
@@ -99,4 +100,33 @@ bool SSRController::processCommand(uint8_t channel, const char* command, char* r
 
   snprintf(response, responseSize, "INVALID_STATE");
   return false;
+}
+
+void SSRController::setActiveLow(bool activeLow) {
+  if (_activeLow == activeLow) return;
+  _activeLow = activeLow;
+  saveToNVS();
+  for (int i = 0; i < SSR_CHANNELS; i++) {
+    digitalWrite(channels[i].pin, resolvePinState(channels[i].state));
+  }
+}
+
+bool SSRController::getActiveLow() {
+  return _activeLow;
+}
+
+void SSRController::loadFromNVS() {
+  Preferences prefs;
+  prefs.begin(SSR_NVS_NS, true);
+  _activeLow = prefs.getBool(SSR_NVS_KEY, true);
+  prefs.end();
+  Serial.printf("[SSR] Modo cargado desde NVS: active-%s\n", _activeLow ? "LOW" : "HIGH");
+}
+
+void SSRController::saveToNVS() {
+  Preferences prefs;
+  prefs.begin(SSR_NVS_NS, false);
+  prefs.putBool(SSR_NVS_KEY, _activeLow);
+  prefs.end();
+  Serial.printf("[SSR] Modo guardado en NVS: active-%s\n", _activeLow ? "LOW" : "HIGH");
 }
