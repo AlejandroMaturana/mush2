@@ -1,4 +1,11 @@
-const BLUE = '#3b82f6', GREEN = '#22c55e', RED = '#ef4444'
+const root = typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null
+const CSS_VAR = (name, fallback) => root?.getPropertyValue(name)?.trim() || fallback
+
+const GAUGE_COLORS = {
+  blue: CSS_VAR('--gauge-blue', '#3b82f6'),
+  green: CSS_VAR('--gauge-green', '#22c55e'),
+  red: CSS_VAR('--gauge-red', '#ef4444'),
+}
 
 function hexToRgb(h) {
   h = h.replace('#', '')
@@ -19,14 +26,14 @@ function colorForValue(v, min, max, optMin, optMax) {
   if (v <= optMin) {
     const span = optMin - min
     const t = span > 0 ? clamp01((v - min) / span) : 1
-    return lerpColor(BLUE, GREEN, t)
+    return lerpColor(GAUGE_COLORS.blue, GAUGE_COLORS.green, t)
   }
   if (v >= optMax) {
     const span = max - optMax
     const t = span > 0 ? clamp01((v - optMax) / span) : 1
-    return lerpColor(GREEN, RED, t)
+    return lerpColor(GAUGE_COLORS.green, GAUGE_COLORS.red, t)
   }
-  return GREEN
+  return GAUGE_COLORS.green
 }
 
 function pt(cx, cy, r, deg) {
@@ -57,7 +64,7 @@ function DomeGauge({ value, prevValue, min, max, optMin, optMax, unit, label, de
   const optMinPct = ((optMin - min) / (max - min) * 100).toFixed(2)
   const optMaxPct = ((optMax - min) / (max - min) * 100).toFixed(2)
   const optBounds = optMinPct < optMaxPct
-    ? [{ offset: 0, color: BLUE }, { offset: +optMinPct, color: GREEN }, { offset: +optMaxPct, color: GREEN }, { offset: 100, color: RED }]
+    ? [{ offset: 0, color: GAUGE_COLORS.blue }, { offset: +optMinPct, color: GAUGE_COLORS.green }, { offset: +optMaxPct, color: GAUGE_COLORS.green }, { offset: 100, color: GAUGE_COLORS.red }]
     : [{ offset: 0, color: GREEN }, { offset: 0, color: GREEN }]
 
   const delta = !noData && prevValue !== undefined ? value - prevValue : 0
