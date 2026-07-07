@@ -383,6 +383,9 @@ void taskPoller(void* pvParameters) {
           actuatorDesired[ch - 1] = state;
           actuatorMode[ch - 1] = mode;
         }
+        if (httpPoller.ssrActiveLowChanged()) {
+          ssr.setActiveLow(httpPoller.getSsrActiveLow());
+        }
       }
     }
 
@@ -718,6 +721,17 @@ void setup() {
     sharedLightOn = true;
 
     sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
+
+    // Registro en backend (self-registration post-provisioning)
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char macStr[18];
+    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    for (int i = 0; i < 5; i++) {
+      if (httpPoller.registerDevice(FIRMWARE_VERSION, macStr)) break;
+      vTaskDelay(pdMS_TO_TICKS(2000));
+    }
 
     if (otaConfirmacion.selfTest()) {
       otaConfirmacion.confirm();
