@@ -1,28 +1,21 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { getDevices, getLatestTelemetry, getActuators } from '../../api/client.js'
+import { getDevices, updateDevice, getLatestTelemetry, getActuators } from '../../api/client.js'
 import ToggleSwitch from '../../components/ui/ToggleSwitch.jsx'
-import StatusBadge from '../../components/ui/StatusBadge.jsx'
 import LoadingState from '../../components/ui/LoadingState.jsx'
 import ErrorState from '../../components/ui/ErrorState.jsx'
 import EmptyState from '../../components/ui/EmptyState.jsx'
 
-const DEFAULT_META = [
-  { channel: 1, label: 'AIR EXCHANGE', icon: 'air' },
-  { channel: 2, label: 'MIST SPRAYERS', icon: 'water_drop' },
-  { channel: 3, label: 'CO2 INJECTION', icon: 'co2' },
-  { channel: 4, label: 'UV-C STERILIZER', icon: 'light' },
-]
-
 function DeviceSettings() {
-  const { id } = useParams()
   const [devices, setDevices] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [device, setDevice] = useState(null)
   const [telemetry, setTelemetry] = useState(null)
   const [actuators, setActuators] = useState([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [renameMsg, setRenameMsg] = useState(null)
   const [firmwareCmd, setFirmwareCmd] = useState('')
   const [firmwareLog, setFirmwareLog] = useState([
     { text: 'System initialized. BIO-OS v2.4.0-STABLE', type: 'ok' },
@@ -41,11 +34,12 @@ function DeviceSettings() {
     try {
       const devs = await getDevices()
       setDevices(devs)
-      const targetId = id || selectedId || devs[0]?.id
+      const targetId = selectedId || devs[0]?.id
       if (targetId) {
         setSelectedId(targetId)
         const dev = devs.find(d => d.id === Number(targetId)) || devs[0]
         setDevice(dev)
+        setRenameValue(dev.chamberName || dev.deviceId || '')
         const [tel, acts] = await Promise.all([
           getLatestTelemetry(dev.id).catch(() => null),
           getActuators(dev.id).catch(() => []),
@@ -61,7 +55,22 @@ function DeviceSettings() {
     }
   }
 
-  useEffect(() => { loadData() }, [id])
+  useEffect(() => { loadData() }, [])
+
+  async function handleRename() {
+    if (!device || !renameValue.trim()) return
+    setSaving(true)
+    setRenameMsg(null)
+    try {
+      await updateDevice(device.id, { chamberName: renameValue.trim() })
+      setDevice(prev => ({ ...prev, chamberName: renameValue.trim() }))
+      setRenameMsg({ type: 'ok', text: 'Device name updated successfully' })
+    } catch (err) {
+      setRenameMsg({ type: 'err', text: err.message || 'Failed to rename device' })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function handleFirmwareCmd(e) {
     if (e.key === 'Enter' && firmwareCmd.trim()) {
@@ -80,15 +89,13 @@ function DeviceSettings() {
   if (error && devices.length === 0) return <ErrorState message={error} onRetry={loadData} />
   if (devices.length === 0) return <EmptyState icon="developer_board" title="No devices" message="Connect a device to configure hardware settings." />
 
-  const isCritical = device?.status === 'OFFLINE' || device?.status === 'CRITICAL'
-
   return (
     <div className="max-w-[1600px] mx-auto">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-headline-lg text-on-surface mb-1">Device Configuration</h1>
-            <p className="text-on-surface-variant text-body-md">Hardware parameters and critical system core settings.</p>
+            <p className="text-on-surface-variant text-body-md">Hardware parameters, network identity and critical system core settings.</p>
           </div>
           <select
             className="bg-surface-container border border-outline-variant rounded-md text-body-md text-on-surface px-3 py-1.5 cursor-pointer"
@@ -105,6 +112,83 @@ function DeviceSettings() {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-4 space-y-4">
           <section className="glass-card p-5 rounded-xl border border-outline-variant">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-secondary">badge</span>
+              <h3 className="font-label-caps text-label-caps text-on-surface-variant">DEVICE IDENTITY</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="font-label-caps text-9px text-on-surface-variant mb-1">DEVICE ID</p>
+                <p className="font-mono text-data-sm text-secondary tracking-widest">{device?.deviceId || 'MUSH-PRIME-001'}</p>
+              </div>
+              <div>
+                <p className="font-label-caps text-9px text-on-surface-variant mb-1">CHAMBER NAME</p>
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 bg-surface-container-lowest border border-outline-variant rounded px-3 py-1.5 text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    placeholder="Enter chamber name..."
+                  />
+                  <button
+                    onClick={handleRename}
+                    disabled={saving || !renameValue.trim()}
+                    className="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-10px rounded hover:opacity-90 disabled:opacity-40 transition-all"
+                  >
+                    {saving ? '...' : 'SAVE'}
+                  </button>
+                </div>
+                {renameMsg && (
+                  <p className={`text-10px mt-1 ${renameMsg.type === 'ok' ? 'text-primary' : 'text-error'}`}>
+                    {renameMsg.text}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="font-label-caps text-9px text-on-surface-variant mb-1">OPERATIONAL STATUS</p>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary breathing-pulse" />
+                  <span className="font-mono text-data-sm text-primary">
+                    {device?.status === 'ONLINE' ? 'ONLINE' : device?.status || 'ACTIVE'}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="font-label-caps text-9px text-on-surface-variant mb-1">FIRMWARE VERSION</p>
+                <p className="font-mono text-data-sm text-on-surface">{device?.firmwareVersion || 'V2.4.0-STABLE'}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="glass-card p-5 rounded-xl border border-outline-variant">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-secondary">router</span>
+              <h3 className="font-label-caps text-label-caps text-on-surface-variant">NETWORK IDENTITY</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-2.5 bg-surface-container-low rounded">
+                <span className="font-label-caps text-9px text-on-surface-variant">MAC ADDRESS</span>
+                <span className="font-mono text-data-sm text-on-surface">{device?.mac || 'E4:5F:01:A2:33:9C'}</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-surface-container-low rounded">
+                <span className="font-label-caps text-9px text-on-surface-variant">IP ADDRESS</span>
+                <span className="font-mono text-data-sm text-on-surface">{device?.ip || '192.168.1.144'}</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-surface-container-low rounded">
+                <span className="font-label-caps text-9px text-on-surface-variant">SIGNAL STRENGTH</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-data-sm text-on-surface">{device?.rssi || '-42'} dBm</span>
+                  <div className="flex gap-0.5">
+                    {[2, 3, 4, 5].map(h => (
+                      <div key={h} className="w-1 rounded-sm" style={{ height: `${h*4}px`, background: h < 5 ? 'var(--primary)' : 'var(--outline-variant)' }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="glass-card p-5 rounded-xl border border-outline-variant">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-label-caps text-label-caps text-on-surface-variant">SYSTEM RESOURCE MONITOR</h3>
               <span className="text-10px text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">REALTIME</span>
@@ -116,7 +200,7 @@ function DeviceSettings() {
                   <span className="text-primary">{device?.status === 'ONLINE' ? '42.8' : '--'}%</span>
                 </div>
                 <div className="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
-                  <div className="bg-primary h-full" style={{ width: device?.status === 'ONLINE' ? '42.8%' : '0%' }} />
+                  <div className="bg-primary h-full rounded" style={{ width: device?.status === 'ONLINE' ? '42.8%' : '0%' }} />
                 </div>
               </div>
               <div>
@@ -125,7 +209,7 @@ function DeviceSettings() {
                   <span className="text-secondary">{device?.status === 'ONLINE' ? '78.2' : '--'} MB / 128 MB</span>
                 </div>
                 <div className="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full" style={{ width: device?.status === 'ONLINE' ? '61%' : '0%' }} />
+                  <div className="bg-secondary h-full rounded" style={{ width: device?.status === 'ONLINE' ? '61%' : '0%' }} />
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 bg-surface-container rounded border border-outline-variant">
@@ -221,69 +305,33 @@ function DeviceSettings() {
             </div>
           </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section className="glass-card p-5 rounded-xl border border-outline-variant">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-secondary">wifi</span>
-                <h3 className="font-label-caps text-label-caps text-on-surface-variant">NETWORK TOPOLOGY</h3>
-              </div>
-              <div className="relative h-40 bg-surface-container-lowest rounded border border-outline-variant flex items-center justify-center overflow-hidden mb-4">
-                <div className="absolute inset-0">
-                  <svg className="w-full h-full opacity-30">
-                    <circle cx="50%" cy="50%" fill="none" r="40" stroke="#44e2cd" strokeDasharray="4 4" strokeWidth="1" />
-                    <circle cx="50%" cy="50%" fill="none" r="20" stroke="#44e2cd" strokeDasharray="4 4" strokeWidth="1" />
-                    <g className="bioluminescent-path">
-                      <line stroke="#4de082" strokeWidth="1" x1="50%" y1="50%" x2="20%" y2="20%" />
-                      <line stroke="#4de082" strokeWidth="1" x1="50%" y1="50%" x2="80%" y2="30%" />
-                      <line stroke="#4de082" strokeWidth="1" x1="50%" y1="50%" x2="70%" y2="80%" />
-                    </g>
-                  </svg>
-                </div>
-                <div className="z-10 text-center">
-                  <div className="font-label-caps text-10px text-secondary">CENTRAL CORE</div>
-                  <div className="text-data-sm text-on-surface">{device?.status === 'ONLINE' ? '-42 dBm' : '--'}</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-surface-container-high rounded border border-outline-variant">
-                  <div className="font-label-caps text-9px text-on-surface-variant">PACKET LOSS</div>
-                  <div className="text-data-sm font-bold text-primary">{device?.status === 'ONLINE' ? '0.002%' : '--'}</div>
-                </div>
-                <div className="p-3 bg-surface-container-high rounded border border-outline-variant">
-                  <div className="font-label-caps text-9px text-on-surface-variant">NODE COUNT</div>
-                  <div className="text-data-sm font-bold text-on-surface">{device?.status === 'ONLINE' ? '08 ACTIVE' : '--'}</div>
-                </div>
-              </div>
-            </section>
-
-            <section className="glass-card p-5 rounded-xl border border-outline-variant">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-primary">developer_board</span>
-                <h3 className="font-label-caps text-label-caps text-on-surface-variant">ACTUATOR HARDWARE MAP</h3>
-              </div>
-              <div className="space-y-2">
-                {(actuators.length > 0 ? actuators : DEFAULT_META).map(a => {
-                  const ch = a.channel || a
-                  const meta = DEFAULT_META.find(m => m.channel === (a.channel || a)) || DEFAULT_META[0]
-                  const isOn = a.state === 'ON' || a.state === true
-                  return (
-                    <div key={ch} className="flex items-center justify-between p-3 bg-surface-container rounded hover:bg-surface-container-high transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded flex items-center justify-center text-10px font-bold ${isOn ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'}`}>
-                          {ch}
-                        </div>
-                        <span className={`text-data-sm ${isOn ? 'text-on-surface' : 'text-on-surface-variant'}`}>{meta.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-10px ${isOn ? 'text-primary' : 'text-on-surface-variant'}`}>{isOn ? 'ON' : 'OFF'}</span>
-                        <ToggleSwitch checked={isOn} onChange={() => {}} />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-          </div>
+          <section className="glass-card p-5 rounded-xl border border-outline-variant">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-secondary">settings_power</span>
+              <h3 className="font-label-caps text-label-caps text-on-surface-variant">ACTUATOR STATUS</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(actuators.length > 0 ? actuators : [
+                { channel: 1, label: 'AIR EXCHANGE', state: true },
+                { channel: 2, label: 'MIST SPRAYERS', state: false },
+                { channel: 3, label: 'CO2 INJECTION', state: true },
+                { channel: 4, label: 'UV-C STERILIZER', state: false },
+              ]).map(a => {
+                const isOn = a.state === 'ON' || a.state === true
+                return (
+                  <div key={a.channel} className={`p-3 rounded-lg border text-center transition-all ${isOn ? 'bg-primary/10 border-primary/30' : 'bg-surface-container-low border-outline-variant/30'}`}>
+                    <span className={`text-9px font-label-caps ${isOn ? 'text-primary' : 'text-on-surface-variant'}`}>
+                      CH{a.channel}
+                    </span>
+                    <p className={`text-10px mt-1 font-semibold ${isOn ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                      {a.label || `ACTUATOR ${a.channel}`}
+                    </p>
+                    <div className={`mt-2 w-2 h-2 rounded-full mx-auto ${isOn ? 'bg-primary breathing-pulse' : 'bg-outline-variant'}`} />
+                  </div>
+                )
+              })}
+            </div>
+          </section>
 
           <section className="glass-card rounded-xl border border-outline-variant overflow-hidden">
             <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high">
