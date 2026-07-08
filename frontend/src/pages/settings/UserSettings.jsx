@@ -1,22 +1,43 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../api/AuthContext.jsx'
 import ToggleSwitch from '../../components/ui/ToggleSwitch.jsx'
-import LoadingState from '../../components/ui/LoadingState.jsx'
-import ErrorState from '../../components/ui/ErrorState.jsx'
 
 function UserSettings() {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [twoFA, setTwoFA] = useState(true)
+  const [twoFA, setTwoFA] = useState(false)
+  const [showModal, setShowModal] = useState(null)
+  const [step, setStep] = useState(1)
+  const [verifyCode, setVerifyCode] = useState('')
+  const [backupCodes] = useState([
+    '7F3A-2D91-B8C4', 'E5B2-9A17-4F60', 'C81D-3E56-A0F9',
+    '4A7F-1B82-D0E3', 'F90C-6E41-2B75', '9812-D7AB-3F0E',
+    'B3E4-50C2-9D16', '0F7A-68D1-4C53',
+  ])
   const [sessions] = useState([
     { id: 'MUSH_CORE_77', ip: '192.168.1.104', origin: 'Lab_Main_Console', activity: 'System Configuration Change', status: 'current', ts: '2024-10-12 08:42:12' },
     { id: 'MUSH_MOBILE_02', ip: '10.0.42.18', origin: 'Field_Tablet_Alpha', activity: 'Environment Scan Upload', status: 'active', ts: '2024-10-12 07:15:01' },
     { id: 'EXT_SAT_LINK', ip: '204.1.22.9', origin: 'Remote_Monitoring_Node', activity: 'Read-Only Telemetry Data', status: 'active', ts: '2024-10-11 23:59:59' },
   ])
 
-  if (loading) return <LoadingState message="Loading user configuration..." />
-  if (error) return <ErrorState message={error} onRetry={() => setError(null)} />
+  function handleSetup() {
+    setShowModal('setup')
+    setStep(1)
+    setVerifyCode('')
+  }
+
+  function handleDisable() {
+    setShowModal('disable')
+  }
+
+  function confirmDisable() {
+    setTwoFA(false)
+    setShowModal(null)
+  }
+
+  function confirmSetup() {
+    setTwoFA(true)
+    setShowModal(null)
+  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -69,28 +90,38 @@ function UserSettings() {
                 <span className="material-symbols-outlined text-secondary">security</span>
                 <h3 className="font-label-caps text-label-caps text-secondary">SECURITY & CRYPTOGRAPHIC ACCESS</h3>
               </div>
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-9px font-bold border border-primary/20">PROTECTION ACTIVE</span>
+              <span className={`px-2 py-0.5 rounded text-9px font-bold border ${twoFA ? 'bg-primary/10 text-primary border-primary/20' : 'bg-surface-container-high text-on-surface-variant border-outline-variant'}`}>
+                {twoFA ? 'PROTECTION ACTIVE' : '2FA OFF'}
+              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-surface-container-lowest p-4 rounded border border-outline-variant flex items-center justify-between">
+              <div className="bg-surface-container-lowest p-4 rounded border border-outline-variant">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-secondary">fingerprint</span>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-body-md text-on-surface font-semibold">2FA Authentication</p>
-                    <p className="text-10px text-on-surface-variant">Biometric protection active</p>
+                    <p className="text-10px text-on-surface-variant">{twoFA ? 'Two-factor authentication active' : 'Not configured'}</p>
                   </div>
                 </div>
-                <ToggleSwitch checked={twoFA} onChange={setTwoFA} />
+                <div className="mt-3 flex gap-2">
+                  {twoFA ? (
+                    <button onClick={handleDisable} className="text-10px font-label-caps text-error hover:underline">DISABLE</button>
+                  ) : (
+                    <button onClick={handleSetup} className="text-10px font-label-caps text-primary hover:underline">SET UP</button>
+                  )}
+                </div>
               </div>
-              <div className="bg-surface-container-lowest p-4 rounded border border-outline-variant flex items-center justify-between">
+              <div className="bg-surface-container-lowest p-4 rounded border border-outline-variant">
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-secondary">vpn_key</span>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-body-md text-on-surface font-semibold">Crypto Keys</p>
                     <p className="text-10px text-on-surface-variant">4 active keys</p>
                   </div>
                 </div>
-                <button className="text-10px font-label-caps text-primary hover:underline">MANAGE</button>
+                <div className="mt-3">
+                  <button className="text-10px font-label-caps text-primary hover:underline">MANAGE</button>
+                </div>
               </div>
             </div>
           </section>
@@ -160,6 +191,131 @@ function UserSettings() {
           </section>
         </div>
       </div>
+
+      {showModal === 'setup' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card rounded-xl border border-outline-variant w-full max-w-lg mx-4 overflow-hidden">
+            <div className="p-5 border-b border-outline-variant flex justify-between items-center">
+              <h3 className="font-label-caps text-label-caps text-on-surface">SET UP 2FA AUTHENTICATION</h3>
+              <button onClick={() => setShowModal(null)} className="material-symbols-outlined text-on-surface-variant hover:text-on-surface">close</button>
+            </div>
+
+            {step === 1 && (
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary text-on-primary text-10px font-bold flex items-center justify-center">1</span>
+                  <span className="font-label-caps text-10px text-on-surface-variant">SCAN QR CODE</span>
+                </div>
+                <div className="flex justify-center py-4">
+                  <div className="w-48 h-48 bg-surface-container-high border border-outline-variant rounded flex items-center justify-center">
+                    <div className="text-center">
+                      <span className="material-symbols-outlined text-48px text-on-surface-variant opacity-30">qr_code</span>
+                      <p className="text-9px text-on-surface-variant mt-1">QR placeholder</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-10px text-on-surface-variant text-center">
+                  Scan this QR code with your authenticator app, or manually enter the key below.
+                </p>
+                <div className="flex items-center justify-between p-3 bg-surface-container-low rounded border border-outline-variant">
+                  <span className="font-mono text-data-sm text-secondary text-xs">MUSH2-7F3A-2D91-B8C4-USER-{user?.id || '001'}</span>
+                  <button className="text-10px font-label-caps text-primary hover:underline">COPY</button>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => setShowModal(null)} className="px-4 py-2 border border-outline text-on-surface-variant font-label-caps text-10px rounded hover:border-primary transition-all">CANCEL</button>
+                  <button onClick={() => setStep(2)} className="px-4 py-2 bg-primary text-on-primary font-label-caps text-10px rounded hover:opacity-90 transition-all">NEXT</button>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary text-on-primary text-10px font-bold flex items-center justify-center">2</span>
+                  <span className="font-label-caps text-10px text-on-surface-variant">VERIFY CODE</span>
+                </div>
+                <p className="text-body-md text-on-surface-variant">
+                  Enter the 6-digit code from your authenticator app to verify setup.
+                </p>
+                <div className="flex justify-center gap-3">
+                  {[0, 1, 2, 3, 4, 5].map(i => (
+                    <input
+                      key={i}
+                      className="w-10 h-12 bg-surface-container-lowest border border-outline-variant rounded text-center text-headline-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                      maxLength={1}
+                      value={verifyCode[i] || ''}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '')
+                        const newCode = verifyCode.split('')
+                        newCode[i] = val
+                        setVerifyCode(newCode.join(''))
+                        if (val && i < 5) {
+                          const next = document.activeElement?.parentElement?.children[i + 1]
+                          next?.focus()
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => setStep(1)} className="px-4 py-2 border border-outline text-on-surface-variant font-label-caps text-10px rounded hover:border-primary transition-all">BACK</button>
+                  <button
+                    onClick={() => setStep(3)}
+                    disabled={verifyCode.length < 6}
+                    className="px-4 py-2 bg-primary text-on-primary font-label-caps text-10px rounded hover:opacity-90 disabled:opacity-40 transition-all"
+                  >
+                    VERIFY
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary text-on-primary text-10px font-bold flex items-center justify-center">3</span>
+                  <span className="font-label-caps text-10px text-on-surface-variant">BACKUP CODES</span>
+                </div>
+                <div className="bg-primary/5 border border-primary/20 rounded p-4">
+                  <p className="text-10px text-primary mb-3">
+                    Save these codes in a secure place. Each code can be used once to access your account if you lose your authenticator device.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {backupCodes.map(code => (
+                      <div key={code} className="font-mono text-data-sm text-secondary bg-surface-container-lowest rounded px-2 py-1 text-center">
+                        {code}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={confirmSetup}
+                    className="px-4 py-2 bg-primary text-on-primary font-label-caps text-10px rounded hover:opacity-90 transition-all"
+                  >
+                    DONE — ACTIVATE 2FA
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showModal === 'disable' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card rounded-xl border border-outline-variant w-full max-w-sm mx-4 p-5">
+            <h3 className="font-label-caps text-label-caps text-on-surface mb-3">DISABLE 2FA</h3>
+            <p className="text-body-md text-on-surface-variant mb-5">
+              Are you sure? Disabling two-factor authentication will reduce the security level of your account.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowModal(null)} className="px-4 py-2 border border-outline text-on-surface-variant font-label-caps text-10px rounded hover:border-primary transition-all">CANCEL</button>
+              <button onClick={confirmDisable} className="px-4 py-2 bg-error text-on-error font-label-caps text-10px rounded hover:opacity-90 transition-all">DISABLE 2FA</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
