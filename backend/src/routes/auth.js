@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
@@ -147,6 +148,39 @@ router.get('/me', authenticate, async (req, res) => {
   });
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
   res.json(user);
+});
+
+router.patch('/me', authenticate, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const { username, email } = req.body;
+
+    if (username !== undefined) {
+      const existing = await User.findOne({ where: { username, id: { [Op.ne]: user.id } } });
+      if (existing) return res.status(409).json({ error: 'El usuario ya existe' });
+      user.username = username;
+    }
+
+    if (email !== undefined) {
+      const existing = await User.findOne({ where: { email, id: { [Op.ne]: user.id } } });
+      if (existing) return res.status(409).json({ error: 'El email ya está registrado' });
+      user.email = email;
+    }
+
+    await user.save();
+
+    await logAudit({
+      userId: user.id, action: 'UPDATE_PROFILE', resource: 'auth',
+      details: { username, email }, ip: req.ip, userAgent: req.headers['user-agent'],
+    });
+
+    res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
+  } catch (err) {
+    console.error('[AUTH] Update error:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
 });
 
 export default router;
