@@ -18,8 +18,8 @@ async function start() {
     console.log('[DB] Conexión establecida');
 
     if (env.NODE_ENV === 'development') {
-      await sequelize.sync();
-      console.log('[DB] Modelos sincronizados');
+      await sequelize.sync({ alter: true });
+      console.log('[DB] Modelos sincronizados (alter sin drop)');
     }
 
     startControlEngine();
