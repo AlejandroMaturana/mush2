@@ -35,5 +35,7 @@ User.belongsToMany(Device, { through: UserChamberAccess, foreignKey: 'userId' })
 Device.belongsToMany(User, { through: UserChamberAccess, foreignKey: 'deviceId' });
 
 Device.hasMany(UserChamberAccess, { foreignKey: 'deviceId' });
+Device.hasMany(CultivationCycle, { foreignKey: 'deviceId' });
+CultivationCycle.belongsTo(Device, { foreignKey: 'deviceId' });
 
 export { Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess };
