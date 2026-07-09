@@ -2,13 +2,17 @@ import { createServer } from 'http';
 import app from './app.js';
 import { env } from './config/env.js';
 import sequelize from './config/database.js';
-import { startControlEngine } from './services/controlEngine.js';
-import { startWebSocketServer, sendActuatorUpdate } from './services/webSocketServer.js';
-import { startMqttBridge, publishActuatorCommand } from './services/mqttBridge.js';
+import { startControlEngine, stopControlEngine } from './services/controlEngine.js';
+import { startWebSocketServer, stopWebSocketServer, sendActuatorUpdate } from './services/webSocketServer.js';
+import { startMqttBridge, stopMqttBridge, publishActuatorCommand } from './services/mqttBridge.js';
 import { events } from './services/eventBus.js';
 import { installTimestampedConsole } from './services/logger.js';
+import { syncAllFromThingSpeak } from './services/thingSpeakSync.js';
 
 installTimestampedConsole();
+
+const TS_SYNC_INTERVAL = parseInt(process.env.TS_SYNC_INTERVAL || '300000', 10); // 5 min default
+let tsSyncHandle = null;
 
 async function start() {
   try {
@@ -30,6 +34,12 @@ async function start() {
 
     httpServer.listen(env.PORT, () => {
       console.log(`[Server] Mush2 backend en puerto ${env.PORT}`);
+
+      if (env.TS.apiKey) {
+        syncAllFromThingSpeak().catch(() => {});
+        tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_SYNC_INTERVAL);
+        console.log(`[ThingSpeak] Sync activo cada ${TS_SYNC_INTERVAL / 1000}s`);
+      }
     });
 
     const publishActuators = (data) => {
@@ -52,6 +62,10 @@ function shutdown(signal) {
   return async () => {
     console.log(`[Process] ${signal} — cerrando conexiones...`);
     try {
+      if (tsSyncHandle) clearInterval(tsSyncHandle);
+      stopControlEngine();
+      stopMqttBridge();
+      stopWebSocketServer();
       await sequelize.close();
       console.log('[DB] Conexión cerrada');
     } catch { /* ignore */ }
