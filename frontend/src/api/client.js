@@ -162,4 +162,9 @@ export async function getSystemMetrics() {
   return data
 }
 
+export async function validateThingSpeak(deviceId, apiKey) {
+  const { data } = await client.post(`/devices/${deviceId}/thingSpeak/validate`, { apiKey })
+  return data
+}
+
 export default client
