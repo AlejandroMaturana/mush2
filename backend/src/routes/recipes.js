@@ -1,5 +1,5 @@
 import express from 'express';
-import { Recipe, CultivationCycle, CycleState } from '../models/index.js';
+import { Recipe, CultivationCycle, CycleState, Device } from '../models/index.js';
 import { logAudit } from '../services/auditService.js';
 
 const router = express.Router();
@@ -100,7 +100,33 @@ router.post('/cycles', async (req, res) => {
       return res.status(401).json({ error: 'Autenticación requerida' });
     }
 
-    const cycle = await CultivationCycle.create({ ...req.body, userId: req.user.id });
+    const { recipeId, species, strain, startDate, deviceId, chamberId, notes } = req.body;
+
+    if (!recipeId || !species) {
+      return res.status(400).json({ error: 'recipeId y species son requeridos' });
+    }
+
+    let resolvedChamberId = chamberId;
+    if (deviceId) {
+      const dev = await Device.findByPk(deviceId);
+      if (!dev) {
+        return res.status(400).json({ error: 'El dispositivo no existe' });
+      }
+      if (dev.chamberId != null && resolvedChamberId == null) {
+        resolvedChamberId = dev.chamberId;
+      }
+    }
+
+    const cycle = await CultivationCycle.create({
+      recipeId: parseInt(recipeId, 10),
+      species,
+      strain: strain || undefined,
+      startDate: startDate || undefined,
+      deviceId: deviceId || undefined,
+      chamberId: resolvedChamberId || undefined,
+      notes: notes || undefined,
+      userId: req.user.id,
+    });
 
     await logAudit({
       userId: req.user.id,
