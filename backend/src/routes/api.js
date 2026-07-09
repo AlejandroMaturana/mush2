@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import express from 'express';
-import { Device, Telemetry, Actuator } from '../models/index.js';
+import { Device, Telemetry, Actuator, UserChamberAccess } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
@@ -31,19 +31,31 @@ router.post('/devices', async (req, res) => {
       return res.status(401).json({ error: 'Autenticación requerida' });
     }
 
-    const { deviceId, macAddress, chamberName, chamberLocation } = req.body;
+    const { deviceId, macAddress, chamberName, chamberLocation, chamberId } = req.body;
     if (!deviceId || !macAddress) {
       return res.status(400).json({ error: 'deviceId y macAddress requeridos' });
     }
 
     const [device, created] = await Device.findOrCreate({
       where: { deviceId },
-      defaults: { deviceId, macAddress, userId: req.user.id, chamberName, chamberLocation, status: 'ONLINE' },
+      defaults: { deviceId, macAddress, userId: req.user.id, chamberName, chamberLocation, chamberId, status: 'ONLINE' },
     });
 
     if (!created) {
-      await device.update({ userId: req.user.id, chamberName: chamberName || device.chamberName });
+      const updates = { userId: req.user.id };
+      if (chamberName !== undefined) updates.chamberName = chamberName;
+      if (chamberLocation !== undefined) updates.chamberLocation = chamberLocation;
+      if (chamberId !== undefined) updates.chamberId = chamberId;
+      await device.update(updates);
     }
+
+    await UserChamberAccess.upsert({
+      userId: req.user.id,
+      deviceId: device.id,
+      role: 'OWNER',
+      invitedBy: req.user.id,
+      acceptedAt: new Date(),
+    });
 
     await logAudit({
       userId: req.user.id,
@@ -90,6 +102,50 @@ router.post('/devices/register', async (req, res) => {
     res.status(created ? 201 : 200).json({ data: device });
   } catch (err) {
     console.error('[REGISTER] Error:', err.message);
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.post('/devices/:id/claim', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Autenticación requerida' });
+    }
+
+    const device = await Device.findByPk(req.params.id);
+    if (!device) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
+    }
+
+    if (device.userId) {
+      return res.status(409).json({ error: 'El dispositivo ya tiene un dueño asignado' });
+    }
+
+    const { chamberName, chamberLocation, chamberId } = req.body;
+    const updates = { userId: req.user.id };
+    if (chamberName !== undefined) updates.chamberName = chamberName;
+    if (chamberLocation !== undefined) updates.chamberLocation = chamberLocation;
+    if (chamberId !== undefined) updates.chamberId = chamberId;
+    await device.update(updates);
+
+    await UserChamberAccess.upsert({
+      userId: req.user.id,
+      deviceId: device.id,
+      role: 'OWNER',
+      invitedBy: req.user.id,
+      acceptedAt: new Date(),
+    });
+
+    await logAudit({
+      userId: req.user.id,
+      action: 'DEVICE_CLAIM',
+      resource: 'device',
+      resourceId: device.id,
+      details: { deviceId: device.deviceId },
+    });
+
+    res.json({ data: device, message: 'Dispositivo reclamado exitosamente' });
+  } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
