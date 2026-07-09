@@ -147,6 +147,10 @@ function DeviceSettings() {
                 <span className="font-mono text-data-sm text-on-surface">{device.firmwareVersion || '—'}</span>
               </div>
               <div className="flex items-center justify-between p-2.5 bg-surface-container-low rounded">
+                <span className="font-label-caps text-9px text-on-surface-variant">HW REVISION</span>
+                <span className="font-mono text-data-sm text-on-surface">{device.hwRevision || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-surface-container-low rounded">
                 <span className="font-label-caps text-9px text-on-surface-variant">CHAMBER ID</span>
                 <span className="font-mono text-data-sm text-on-surface">{device.chamberId != null ? device.chamberId : '—'}</span>
               </div>

@@ -221,7 +221,7 @@ function DeviceDetail() {
             <StatusBadge status={isOnline ? 'online' : 'critical'} label={isOnline ? 'ONLINE' : device.status} />
           </div>
           <p className="text-body-md text-on-surface-variant" style={{ marginTop: '4px' }}>
-            Firmware {device.firmwareVersion} · Last seen {device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'never'}
+            {device.hwRevision ? `HW ${device.hwRevision} · ` : ''}Firmware {device.firmwareVersion} · {device.macAddress || 'MAC —'} · Last seen {device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'never'}
           </p>
         </div>
       </section>
