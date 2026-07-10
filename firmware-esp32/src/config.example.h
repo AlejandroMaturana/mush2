@@ -137,6 +137,11 @@
 #define DEFAULT_HUM_MAX 85.0
 #define DEFAULT_CO2_MAX 1200
 
+// ---- NVS Actuator Hold Window (ms) ----
+#ifndef ACTUATOR_HOLD_WINDOW_MS
+#define ACTUATOR_HOLD_WINDOW_MS 300000UL
+#endif
+
 // ---- BLE Provisioning ----
 #ifndef BLE_PROV_TIMEOUT_MS
 #define BLE_PROV_TIMEOUT_MS 300000

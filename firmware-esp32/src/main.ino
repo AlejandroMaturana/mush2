@@ -21,6 +21,7 @@
 #include "device_manager.h"
 #include "mqtt_client.h"
 #include "ble_provisioning.h"
+#include "actuator_nvs.h"
 
 // Global instances
 WiFiManager wifi;
@@ -66,6 +67,11 @@ char sharedHwRev[10] = "";
 // Actuator desired states (written by Core 0, read by Core 1)
 volatile uint8_t actuatorDesired[4] = {0, 0, 0, 0};
 volatile uint8_t actuatorMode[4] = {0, 0, 0, 0};  // 0=LOCAL, 1=REMOTE
+
+// NVS persistence — hold window and provisional state
+volatile bool provisionalMode = false;
+volatile unsigned long lastActuatorPersist = 0;
+uint32_t holdWindow[4] = {ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS};
 
 // Task handles
 TaskHandle_t taskSensorsHandle = NULL;
@@ -380,15 +386,68 @@ void taskPoller(void* pvParameters) {
       // MQTT es primario para comandos de actuadores; HTTP poller es fallback
       if (!mqtt.isConnected()) {
         httpPoller.loop();
-        for (int ch = 1; ch <= 4; ch++) {
-          uint8_t state, mode;
-          httpPoller.getDesired(ch, &state, &mode);
-          actuatorDesired[ch - 1] = state;
-          actuatorMode[ch - 1] = mode;
+
+        if (httpPoller.isConnected()) {
+          // Apply actuator states from poller
+          for (int ch = 1; ch <= 4; ch++) {
+            uint8_t state, mode;
+            httpPoller.getDesired(ch, &state, &mode);
+            actuatorDesired[ch - 1] = state;
+            actuatorMode[ch - 1] = mode;
+          }
+
+          // Apply setpoints if changed (v0.14.0)
+          if (httpPoller.hasSetpoints() && httpPoller.setpointsChanged()) {
+            float tMin, tMax, hMin, hMax;
+            uint16_t cMax;
+            httpPoller.getSetpoints(&tMin, &tMax, &hMin, &hMax, &cMax);
+            Setpoints sp = { tMin, tMax, hMin, hMax, cMax };
+            hyst.setSetpoints(sp);
+            Serial.printf("[POLL] Setpoints: T[%.1f-%.1f] H[%.1f-%.1f] CO2<=%u\n",
+              tMin, tMax, hMin, hMax, cMax);
+          }
+
+          // Handle no_active_cycle status
+          if (!httpPoller.hasActiveCycle()) {
+            for (int ch = 0; ch < 4; ch++) {
+              actuatorMode[ch] = 0;
+            }
+          }
+
+          // SSR mode
+          if (httpPoller.ssrActiveLowChanged()) {
+            ssr.setActiveLow(httpPoller.getSsrActiveLow());
+          }
+
+          // Successful reconciliation — clear provisional, persist
+          provisionalMode = false;
+          ActuatorPersistedData data;
+          memcpy(data.desired, (const uint8_t*)actuatorDesired, 4);
+          memcpy(data.mode, (const uint8_t*)actuatorMode, 4);
+          actuatorNVSSave(&data);
+          lastActuatorPersist = millis();
         }
-        if (httpPoller.ssrActiveLowChanged()) {
-          ssr.setActiveLow(httpPoller.getSsrActiveLow());
+      }
+    }
+
+    // Check hold window expiry (even if WiFi is down)
+    if (provisionalMode && lastActuatorPersist > 0) {
+      unsigned long age = millis() - lastActuatorPersist;
+      bool expired = true;
+      for (int ch = 0; ch < 4; ch++) {
+        if (age < holdWindow[ch]) {
+          expired = false;
+          break;
         }
+      }
+      if (expired) {
+        Serial.println("[ACTNVS] Hold window expirado — safe defaults");
+        for (int ch = 0; ch < 4; ch++) {
+          actuatorDesired[ch] = 0;
+          actuatorMode[ch] = 0;
+        }
+        // CH4 (light) OFF en incubación por defecto
+        provisionalMode = false;
       }
     }
 
@@ -412,15 +471,42 @@ void otaMqttCallback(const char* url, const char* version) {
   Serial.printf("[OTA] Comando recibido via MQTT: %s (v%s)\n", otaCommandUrl, otaCommandVersion);
 }
 
-void mqttActuatorCallback(const ActuatorCommand* cmds, int count) {
-  for (int i = 0; i < count; i++) {
-    int ch = cmds[i].channel;
+void mqttActuatorCallback(const MqttActuatorMessage* msg) {
+  // Apply actuator commands
+  for (int i = 0; i < msg->cmdCount; i++) {
+    int ch = msg->cmds[i].channel;
     if (ch < 1 || ch > 4) continue;
-    actuatorDesired[ch - 1] = cmds[i].state;
-    actuatorMode[ch - 1] = cmds[i].mode;
+    actuatorDesired[ch - 1] = msg->cmds[i].state;
+    actuatorMode[ch - 1] = msg->cmds[i].mode;
     Serial.printf("[MQTT] Actuator ch%d: %s (REMOTE)\n",
-      ch, cmds[i].state ? "ON" : "OFF");
+      ch, msg->cmds[i].state ? "ON" : "OFF");
   }
+
+  // Apply setpoints if present
+  if (msg->hasSetpoints) {
+    Setpoints sp = { msg->tempMin, msg->tempMax, msg->humMin, msg->humMax, msg->co2Max };
+    hyst.setSetpoints(sp);
+    Serial.printf("[MQTT] Setpoints actualizados: T[%.1f-%.1f] H[%.1f-%.1f] CO2<=%u\n",
+      sp.tempMin, sp.tempMax, sp.humMin, sp.humMax, sp.co2Max);
+  }
+
+  // Handle cycle status
+  if (strcmp(msg->status, "no_active_cycle") == 0) {
+    for (int ch = 0; ch < 4; ch++) {
+      actuatorMode[ch] = 0;  // LOCAL
+    }
+    Serial.println("[MQTT] No hay ciclo activo — modo LOCAL");
+  }
+
+  // Clear provisional mode on successful reconciliation
+  provisionalMode = false;
+
+  // Persist to NVS
+  ActuatorPersistedData data;
+  memcpy(data.desired, (const uint8_t*)actuatorDesired, 4);
+  memcpy(data.mode, (const uint8_t*)actuatorMode, 4);
+  actuatorNVSSave(&data);
+  lastActuatorPersist = millis();
 }
 
 void taskMQTT(void* pvParameters) {
@@ -711,6 +797,32 @@ void setup() {
     Setpoints defaultSp = {DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, DEFAULT_HUM_MIN, DEFAULT_HUM_MAX, DEFAULT_CO2_MAX};
     hyst.init(defaultSp);
     Serial.println("[HYST] Controlador de histéresis iniciado");
+
+    // Load persisted actuator state and apply HOLD_WINDOW (v0.14.0)
+    actuatorNVSInit();
+    actuatorNVSLoadHoldWindow(holdWindow);
+    ActuatorPersistedData persisted;
+    uint32_t persistTs = 0;
+    if (actuatorNVSLoad(&persisted, &persistTs) && persistTs > 0) {
+      unsigned long age = millis() - persistTs;
+      provisionalMode = false;
+      for (int ch = 0; ch < ACTUATOR_CHANNELS; ch++) {
+        if (age < holdWindow[ch]) {
+          actuatorDesired[ch] = persisted.desired[ch];
+          actuatorMode[ch] = persisted.mode[ch];
+          provisionalMode = true;
+        }
+      }
+      if (provisionalMode) {
+        Serial.printf("[ACTNVS] Estado restaurado (age=%lums): %u%u%u%u / %u%u%u%u\n",
+          age,
+          persisted.desired[0], persisted.desired[1], persisted.desired[2], persisted.desired[3],
+          persisted.mode[0], persisted.mode[1], persisted.mode[2], persisted.mode[3]);
+      } else {
+        Serial.printf("[ACTNVS] Hold window expirado (age=%lums) — arranque fresco\n", age);
+      }
+      lastActuatorPersist = persistTs;
+    }
 
     httpPoller.init(deviceManager.getDeviceId().c_str(), BACKEND_HOST, BACKEND_PORT);
     ota.init(deviceManager.getDeviceId().c_str());
