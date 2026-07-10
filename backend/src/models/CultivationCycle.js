@@ -23,6 +23,14 @@ const CultivationCycle = sequelize.define('CultivationCycle', {
 }, {
   tableName: 'cultivation_cycles',
   timestamps: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['deviceId'],
+      where: { status: 'ACTIVE' },
+      name: 'idx_unique_active_device_cycle',
+    },
+  ],
 });
 
 export default CultivationCycle;
