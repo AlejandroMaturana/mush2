@@ -275,4 +275,9 @@ export async function getDeviceEvents(deviceId, params = {}) {
   return data
 }
 
+export async function getChamberAnalytics(chamberId) {
+  const { data } = await client.get(`/chambers/${chamberId}/analytics`)
+  return data
+}
+
 export default client

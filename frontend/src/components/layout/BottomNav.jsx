@@ -4,6 +4,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', icon: 'dashboard', label: 'Dash' },
   { to: '/recipes', icon: 'potted_plant', label: 'Recipes' },
   { to: '/cycles', icon: 'cyclone', label: 'Cycles' },
+  { to: '/analytics', icon: 'analytics', label: 'Analytics' },
   { to: '/alarms', icon: 'warning', label: 'Alarms' },
   { to: '/logs', icon: 'history', label: 'Logs' },
   { to: '/diagnostics', icon: 'diagnosis', label: 'Diag' },

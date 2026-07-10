@@ -10,6 +10,7 @@ import apiKeysRouter from './apiKeys.js';
 import settingsRouter from './settings.js';
 import diagnosticsRouter from './diagnostics.js';
 import eventsRouter from './events.js';
+import analyticsRouter from './analytics.js';
 import { authenticate, optionalAuth } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { tenantScope } from '../middlewares/tenant.js';
@@ -30,5 +31,6 @@ router.use('/api-keys', apiKeysRouter);
 router.use('/settings', settingsRouter);
 router.use('/diag', authenticate, diagnosticsRouter);
 router.use('/events', eventsRouter);
+router.use('/chambers', analyticsRouter);
 
 export default router;
