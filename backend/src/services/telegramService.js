@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { UserPreference, Device, TelegramDeviceConfig } from '../models/index.js';
+import { Op } from 'sequelize';
+import { UserPreference, Device, TelegramDeviceConfig, UserChamberAccess, User } from '../models/index.js';
 
 let bot = null;
 let isReady = false;
@@ -33,7 +34,7 @@ export function initBot(token, botUsername) {
         const prefs = await UserPreference.findOne({
           where: {
             telegramLinkToken: code,
-            telegramLinkTokenExpires: { [require('sequelize').Op.gt]: new Date() },
+            telegramLinkTokenExpires: { [Op.gt]: new Date() },
           },
         });
 
@@ -61,7 +62,7 @@ export function initBot(token, botUsername) {
       try {
         const prefs = await UserPreference.findOne({ where: { telegramChatId: String(chatId) } });
         if (prefs) {
-          const user = await require('../models/index.js').User.findByPk(prefs.userId, { attributes: ['username'] });
+          const user = await User.findByPk(prefs.userId, { attributes: ['username'] });
           bot.sendMessage(chatId, `✅ *Vinculado*\n\nUsuario: \`${user?.username || '—'}\`\nChat ID: \`${chatId}\``, { parse_mode: 'Markdown' });
         } else {
           bot.sendMessage(chatId, '❌ No estás vinculado. Usa `/link CODIGO` con el código generado en Mush2.', { parse_mode: 'Markdown' });
@@ -159,22 +160,15 @@ export async function notifyDeviceAlarm(deviceId, alarm) {
     const device = await Device.findByPk(deviceId);
     if (!device) return;
 
-    const access = await require('../models/index.js').UserChamberAccess.findOne({
-      where: { deviceId },
-      include: [{
-        association: 'User',
-        attributes: ['id'],
-        include: [{
-          model: UserPreference,
-          as: 'UserPreference',
-          where: { telegramEnabled: true },
-          required: true,
-        }],
-      }],
+    const ownerId = device.userId;
+    if (!ownerId) return;
+
+    const prefs = await UserPreference.findOne({
+      where: { userId: ownerId, telegramEnabled: true, telegramChatId: { [Op.ne]: null } },
     });
 
-    if (access?.User?.UserPreference?.telegramChatId) {
-      await sendAlarm(access.User.UserPreference.telegramChatId, alarm, device);
+    if (prefs?.telegramChatId) {
+      await sendAlarm(prefs.telegramChatId, alarm, device);
     }
   } catch (err) {
     console.error('[TELEGRAM] Error in notifyDeviceAlarm:', err.message);

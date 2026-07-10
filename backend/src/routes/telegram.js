@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import { UserPreference, TelegramDeviceConfig, Device } from '../models/index.js';
+import { UserPreference, TelegramDeviceConfig, Device, UserChamberAccess } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
-import { checkDeviceAccess } from '../middlewares/tenant.js';
 
 const router = Router();
 
@@ -70,15 +69,21 @@ router.post('/unlink', authenticate, async (req, res) => {
   }
 });
 
+async function canAccessDevice(userId, deviceId) {
+  const device = await Device.findByPk(deviceId);
+  if (!device) return false;
+  if (device.userId === userId) return true;
+  const access = await UserChamberAccess.findOne({ where: { userId, deviceId } });
+  return !!access;
+}
+
 router.get('/device/:deviceId', authenticate, async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    const device = await Device.findByPk(deviceId);
-    if (!device) return res.status(404).json({ error: 'NOT_FOUND' });
-
-    const access = await checkDeviceAccess(req)(deviceId);
-    if (!access) return res.status(403).json({ error: 'FORBIDDEN' });
+    if (!await canAccessDevice(req.user.id, deviceId)) {
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    }
 
     let config = await TelegramDeviceConfig.findOne({ where: { deviceId } });
     if (!config) {
@@ -96,11 +101,9 @@ router.patch('/device/:deviceId', authenticate, async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    const device = await Device.findByPk(deviceId);
-    if (!device) return res.status(404).json({ error: 'NOT_FOUND' });
-
-    const access = await checkDeviceAccess(req)(deviceId);
-    if (!access) return res.status(403).json({ error: 'FORBIDDEN' });
+    if (!await canAccessDevice(req.user.id, deviceId)) {
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    }
 
     const allowed = ['enabled', 'alertOnFault', 'alertOnRange', 'alertOnDisconnect', 'alertOnSystem', 'minSeverity'];
     const updates = {};
