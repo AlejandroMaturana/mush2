@@ -5,6 +5,7 @@ import DeviceDetail from './pages/DeviceDetail.jsx'
 import Recipes from './pages/Recipes.jsx'
 import Cycles from './pages/Cycles.jsx'
 import Alarms from './pages/Alarms.jsx'
+import Logs from './pages/Logs.jsx'
 import Settings from './pages/Settings.jsx'
 import SettingsHub from './pages/settings/SettingsHub.jsx'
 import UserSettings from './pages/settings/UserSettings.jsx'
@@ -42,6 +43,7 @@ function App() {
               <Route path="/recipes" element={<Recipes />} />
               <Route path="/cycles" element={<Cycles />} />
               <Route path="/alarms" element={<Alarms />} />
+              <Route path="/logs" element={<Logs />} />
               <Route path="/settings" element={<Settings />}>
                 <Route index element={<SettingsHub />} />
                 <Route path="user" element={<UserSettings />} />
