@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { updateProfileSettings } from '../api/client.js'
 
 const ThemeContext = createContext(null)
 
@@ -23,6 +24,7 @@ export function ThemeProvider({ children }) {
 
   const setThemeMode = useCallback((mode) => {
     setTheme(mode === 'light' || mode === 'dark' ? mode : 'dark')
+    updateProfileSettings({ preferences: { theme: mode === 'light' || mode === 'dark' ? mode : 'dark' } }).catch(() => {})
   }, [])
 
   return (

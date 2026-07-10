@@ -215,4 +215,39 @@ export async function rotateApiKey(id) {
   return data
 }
 
+export async function getProfile() {
+  const { data } = await client.get('/settings/profile')
+  return data.data
+}
+
+export async function updateProfileSettings(payload) {
+  const { data } = await client.patch('/settings/profile', payload)
+  return data.data
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await client.post('/settings/change-password', { currentPassword, newPassword })
+  return data
+}
+
+export async function getSystemSettings() {
+  const { data } = await client.get('/settings/system')
+  return data.data
+}
+
+export async function updateSystemSettings(settings) {
+  const { data } = await client.patch('/settings/system', { settings })
+  return data
+}
+
+export async function seedSystemSettings() {
+  const { data } = await client.post('/settings/system/seed')
+  return data
+}
+
+export async function getPublicSettings() {
+  const { data } = await client.get('/settings/system/public')
+  return data.data
+}
+
 export default client
