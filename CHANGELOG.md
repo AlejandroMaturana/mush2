@@ -1,5 +1,15 @@
 # Changelog — Mush2
 
+## 0.19.6
+
+### Backend — v0.14.1
+
+- ### Fixed
+- Optimizado el `ControlEngine` para registrar y persistir únicamente cambios reales en el estado de los actuadores.
+- Eliminado el logging repetitivo durante ciclos sin transiciones de estado.
+- Reducidas las escrituras innecesarias en la base de datos, actualizando los actuadores solo cuando su estado cambia efectivamente.
+- Mejorada la legibilidad de los registros del motor de control al eliminar eventos redundantes.
+
 ## 0.19.5
 
 ## Firmware ESP32-S3 (v0.13.0)
