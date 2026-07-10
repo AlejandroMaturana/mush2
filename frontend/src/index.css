@@ -746,6 +746,8 @@ input, select, textarea, button { color: var(--on-surface); }
 .text-tertiary { color: var(--amber); }
 .text-outline { color: var(--outline); }
 .text-error { color: var(--error-red); }
+.text-warning { color: var(--amber); }
+.text-info { color: var(--teal); }
 .text-primary { color: var(--spore-green); }
 .text-on-secondary { color: var(--on-secondary); }
 
@@ -1134,7 +1136,68 @@ input, select, textarea, button { color: var(--on-surface); }
 
 
 
-/* === Animations === */
+/* === Alarm Badge === */
+.alarm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all 0.2s;
+  position: relative;
+}
+.alarm-badge:hover { filter: brightness(1.2); }
+.alarm-badge.badge-critical { background: rgba(255, 180, 171, 0.15); color: var(--error-red); }
+.alarm-badge.badge-high { background: rgba(255, 182, 87, 0.15); color: var(--amber); }
+.alarm-badge.badge-medium { background: rgba(107, 251, 154, 0.1); color: var(--spore-green); }
+.alarm-badge.badge-low { background: rgba(188, 202, 187, 0.1); color: var(--on-surface-variant); }
+.alarm-badge-icon { font-size: 16px; }
+.alarm-badge-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+@keyframes alarm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.alarm-badge.badge-critical { animation: alarm-pulse 2s infinite; }
+
+/* === Select Dropdown === */
+.select {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--on-surface);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.select:focus { border-color: var(--spore-green); }
+
+/* === Button Variants === */
+.btn-sm {
+  font-size: 9px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--on-surface-variant);
+  border: 1px solid var(--outline-variant);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+}
+.btn-outline:hover { background: var(--surface-variant); color: var(--on-surface); }
+.btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* === Animations */
 @keyframes status-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(1.2); }

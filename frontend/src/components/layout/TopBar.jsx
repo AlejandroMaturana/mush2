@@ -1,4 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
+import AlarmBadge from '../alarm/AlarmBadge.jsx'
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -27,6 +28,7 @@ function TopBar({ user, onLogout }) {
         </nav>
       </div>
       <div className="topbar-right">
+        <AlarmBadge />
         {user && (
           <div className="topbar-user">
             <span className="user-avatar">{user.username?.charAt(0).toUpperCase()}</span>

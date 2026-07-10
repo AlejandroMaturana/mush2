@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Device, Telemetry, Recipe, CultivationCycle, CycleState, Actuator } from '../models/index.js';
+import { Device, Telemetry, Recipe, CultivationCycle, CycleState, Actuator, Alarm } from '../models/index.js';
 import { events } from './eventBus.js';
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
@@ -50,6 +50,68 @@ function getPhaseThresholds(recipe, phase) {
     default:
       return null;
   }
+}
+
+function severityFromDeviation(value, min, max) {
+  if (value == null) return null;
+  if (min != null && value < min) {
+    const diff = min - value;
+    if (diff > 3) return 'CRITICAL';
+    if (diff > 1.5) return 'HIGH';
+    return 'MEDIUM';
+  }
+  if (max != null && value > max) {
+    const diff = value - max;
+    if (diff > 3) return 'CRITICAL';
+    if (diff > 1.5) return 'HIGH';
+    return 'MEDIUM';
+  }
+  return null;
+}
+
+async function ensureAlarm(deviceId, type, sensorType, severity, message, currentValue, thresholdMin, thresholdMax) {
+  const existing = await Alarm.findOne({
+    where: { deviceId, type, sensorType, resolvedAt: null },
+  });
+  if (existing) return existing;
+
+  const alarm = await Alarm.create({
+    deviceId, type, sensorType, severity, message,
+    currentValue, thresholdMin, thresholdMax,
+  });
+
+  events.emit('alarm', {
+    id: alarm.id,
+    deviceId,
+    type,
+    severity,
+    sensorType,
+    message,
+    currentValue,
+    createdAt: alarm.createdAt,
+  });
+
+  return alarm;
+}
+
+async function resolveAlarm(deviceId, type, sensorType) {
+  const active = await Alarm.findOne({
+    where: { deviceId, type, sensorType, resolvedAt: null },
+  });
+  if (!active) return;
+
+  await active.update({ resolvedAt: new Date() });
+
+  events.emit('alarm', {
+    id: active.id,
+    deviceId,
+    type,
+    severity: active.severity,
+    sensorType,
+    message: active.message,
+    resolvedAt: active.resolvedAt,
+    currentValue: active.currentValue,
+  });
 }
 
 function calcVPD(temp, hum) {
@@ -230,6 +292,31 @@ async function evaluateCycle(cycle) {
     if (vpd != null) {
       if (vpd > 0.9) deviations.push(`VPD_HIGH:${vpd.toFixed(3)}`);
       if (vpd < 0.3) deviations.push(`VPD_LOW:${vpd.toFixed(3)}`);
+    }
+
+    const alarmChecks = [
+      { sensorType: 'TEMPERATURE', value: temp, min: thresholds.tempMin, max: thresholds.tempMax },
+      { sensorType: 'HUMIDITY', value: hum, min: thresholds.humMin, max: thresholds.humMax },
+      { sensorType: 'CO2', value: co2, min: null, max: thresholds.co2Max },
+    ];
+
+    for (const check of alarmChecks) {
+      if (check.value == null) continue;
+      const sev = severityFromDeviation(check.value, check.min, check.max);
+      if (sev) {
+        await ensureAlarm(
+          device.id,
+          'THRESHOLD_CROSSED',
+          check.sensorType,
+          sev,
+          `${check.sensorType} fuera de rango: ${check.value.toFixed(1)} (rango: ${check.min ?? '-'}–${check.max ?? '-'})`,
+          check.value,
+          check.min,
+          check.max,
+        );
+      } else {
+        await resolveAlarm(device.id, 'THRESHOLD_CROSSED', check.sensorType);
+      }
     }
 
     const commands = (temp != null) ? computeActuatorCommands(device.deviceId, temp, hum, co2, thresholds) : [];

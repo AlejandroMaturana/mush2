@@ -7,6 +7,7 @@ const PRIMARY_ITEMS = [
 ]
 
 const SYSTEM_ITEMS = [
+  { to: '/alarms', icon: 'warning', label: 'Alarms' },
   { to: '/settings', icon: 'settings', label: 'System' },
   { to: '/provisioning', icon: 'bluetooth', label: 'Provision' },
 ]

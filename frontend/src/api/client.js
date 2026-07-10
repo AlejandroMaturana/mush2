@@ -167,4 +167,27 @@ export async function validateThingSpeak(deviceId, apiKey) {
   return data
 }
 
+export async function getAlarms({ page = 1, limit = 50, severity, status } = {}) {
+  const params = { page, limit }
+  if (severity) params.severity = severity
+  if (status) params.status = status
+  const { data } = await client.get('/alarms', { params })
+  return data
+}
+
+export async function getAlarmStats() {
+  const { data } = await client.get('/alarms/stats')
+  return data.data
+}
+
+export async function acknowledgeAlarm(id) {
+  const { data } = await client.patch(`/alarms/${id}/acknowledge`)
+  return data
+}
+
+export async function resolveAlarm(id) {
+  const { data } = await client.patch(`/alarms/${id}/resolve`)
+  return data
+}
+
 export default client
