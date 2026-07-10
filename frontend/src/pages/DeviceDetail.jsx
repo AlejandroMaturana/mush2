@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getDevice, getActuators, setActuatorDirect, getLatestTelemetry } from '../api/client.js'
+import { getDevice, getActuators, setActuatorDirect, getLatestTelemetry, getTelegramDeviceConfig, updateTelegramDeviceConfig } from '../api/client.js'
 import { useSSE } from '../api/useSSE.js'
 import DomeGauge from '../components/ui/DomeGauge.jsx'
 import ChartPanel from '../components/ui/ChartPanel.jsx'
@@ -27,6 +27,8 @@ function DeviceDetail() {
   const [logs, setLogs] = useState([])
   const [cmdHistory, setCmdHistory] = useState([])
   const [pendingChannels, setPendingChannels] = useState(new Set())
+  const [tgConfig, setTgConfig] = useState(null)
+  const [tgSaving, setTgSaving] = useState(false)
 
   const prevTelemetry = useRef({})
   const sparkHistory = useRef({ temp: [], hum: [], eco2: [], tvoc: [] })
@@ -45,6 +47,10 @@ function DeviceDetail() {
       setActuators(acts)
       setError(null)
       addLog('System initialized. Chamber telemetry active.', 'success')
+
+      getTelegramDeviceConfig(id).then(cfg => {
+        if (!cancelledRef.current) setTgConfig(cfg)
+      }).catch(() => {})
 
       const latest = await getLatestTelemetry(id)
       if (!cancelledRef.current && latest?.temperature != null) {
@@ -312,6 +318,79 @@ function DeviceDetail() {
           </div>
         </div>
       </div>
+
+      {tgConfig && (
+        <section className="bg-surface-container border border-outline-variant" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-sm">send</span>
+              <span className="chart-panel-label">TELEGRAM ALERTS</span>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <span className="text-8px font-label-caps text-on-surface-variant">ENABLED</span>
+              <input type="checkbox" className="toggle-checkbox" checked={tgConfig.enabled} onChange={async e => {
+                const val = e.target.checked
+                setTgConfig(prev => ({ ...prev, enabled: val }))
+                setTgSaving(true)
+                try { await updateTelegramDeviceConfig(id, { enabled: val }) } catch {}
+                setTgSaving(false)
+              }} />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-4" style={{ padding: '12px' }}>
+            <div>
+              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">MIN SEVERITY</label>
+              <select className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-body-sm text-on-surface cursor-pointer" value={tgConfig.minSeverity} onChange={async e => {
+                const val = e.target.value
+                setTgConfig(prev => ({ ...prev, minSeverity: val }))
+                setTgSaving(true)
+                try { await updateTelegramDeviceConfig(id, { minSeverity: val }) } catch {}
+                setTgSaving(false)
+              }}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              {tgSaving && <span className="text-8px text-on-surface-variant">SAVING...</span>}
+            </div>
+            <div className="flex items-center justify-between p-2 bg-surface-container-low rounded">
+              <span className="text-8px font-label-caps text-on-surface-variant">SENSOR FAULT</span>
+              <input type="checkbox" className="toggle-checkbox" checked={tgConfig.alertOnFault} onChange={async e => {
+                const val = e.target.checked
+                setTgConfig(prev => ({ ...prev, alertOnFault: val }))
+                try { await updateTelegramDeviceConfig(id, { alertOnFault: val }) } catch {}
+              }} />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-surface-container-low rounded">
+              <span className="text-8px font-label-caps text-on-surface-variant">OUT OF RANGE</span>
+              <input type="checkbox" className="toggle-checkbox" checked={tgConfig.alertOnRange} onChange={async e => {
+                const val = e.target.checked
+                setTgConfig(prev => ({ ...prev, alertOnRange: val }))
+                try { await updateTelegramDeviceConfig(id, { alertOnRange: val }) } catch {}
+              }} />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-surface-container-low rounded">
+              <span className="text-8px font-label-caps text-on-surface-variant">DISCONNECT</span>
+              <input type="checkbox" className="toggle-checkbox" checked={tgConfig.alertOnDisconnect} onChange={async e => {
+                const val = e.target.checked
+                setTgConfig(prev => ({ ...prev, alertOnDisconnect: val }))
+                try { await updateTelegramDeviceConfig(id, { alertOnDisconnect: val }) } catch {}
+              }} />
+            </div>
+            <div className="flex items-center justify-between p-2 bg-surface-container-low rounded">
+              <span className="text-8px font-label-caps text-on-surface-variant">SYSTEM ERROR</span>
+              <input type="checkbox" className="toggle-checkbox" checked={tgConfig.alertOnSystem} onChange={async e => {
+                const val = e.target.checked
+                setTgConfig(prev => ({ ...prev, alertOnSystem: val }))
+                try { await updateTelegramDeviceConfig(id, { alertOnSystem: val }) } catch {}
+              }} />
+            </div>
+          </div>
+        </section>
+      )}
 
       <ChartPanel deviceId={id} telemetry={telemetry} has={has} />
     </div>

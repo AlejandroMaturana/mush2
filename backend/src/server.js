@@ -8,6 +8,8 @@ import { startMqttBridge, stopMqttBridge, publishActuatorCommand } from './servi
 import { events } from './services/eventBus.js';
 import { installTimestampedConsole } from './services/logger.js';
 import { syncAllFromThingSpeak } from './services/thingSpeakSync.js';
+import { initBot as initTelegramBot, stopBot as stopTelegramBot, notifyDeviceAlarm, reconfigureBot } from './services/telegramService.js';
+import SystemSetting from './models/SystemSetting.js';
 
 installTimestampedConsole();
 
@@ -29,6 +31,20 @@ async function start() {
     startControlEngine();
     startMqttBridge();
 
+    const [tgToken, tgUsername] = await Promise.all([
+      SystemSetting.findOne({ where: { key: 'telegram_bot_token' } }),
+      SystemSetting.findOne({ where: { key: 'telegram_bot_username' } }),
+    ]);
+    const botToken = tgToken?.value || env.TELEGRAM_BOT_TOKEN;
+    const botUsername = tgUsername?.value || env.TELEGRAM_BOT_USERNAME;
+    if (botToken) {
+      try { await initTelegramBot(botToken, botUsername); } catch (e) {
+        console.error(`[TELEGRAM] Bot init failed: ${e.message}`);
+      }
+    } else {
+      console.log('[TELEGRAM] No token configured — bot disabled. Configure via System Settings.');
+    }
+
     const httpServer = createServer(app);
     startWebSocketServer(httpServer);
 
@@ -48,6 +64,12 @@ async function start() {
     };
 
     events.on('control_eval', publishActuators);
+
+    events.on('alarm', (alarm) => {
+      if (alarm.deviceId && !alarm.resolvedAt) {
+        notifyDeviceAlarm(alarm.deviceId, alarm);
+      }
+    });
   } catch (err) {
     console.error('[FATAL] Error al iniciar:', err);
     process.exit(1);
@@ -62,6 +84,7 @@ function shutdown(signal) {
     try {
       if (tsSyncHandle) clearInterval(tsSyncHandle);
       stopControlEngine();
+      stopTelegramBot();
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();

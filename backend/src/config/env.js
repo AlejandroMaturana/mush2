@@ -26,4 +26,7 @@ export const env = {
   },
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+
+  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
+  TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME || 'Mush2Bot',
 };

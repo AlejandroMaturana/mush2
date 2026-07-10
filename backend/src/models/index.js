@@ -13,6 +13,7 @@ import Alarm from './Alarm.js';
 import ApiKey from './ApiKey.js';
 import UserPreference from './UserPreference.js';
 import SystemSetting from './SystemSetting.js';
+import TelegramDeviceConfig from './TelegramDeviceConfig.js';
 
 Device.hasMany(Sensor, { foreignKey: 'deviceId' });
 Sensor.belongsTo(Device, { foreignKey: 'deviceId' });
@@ -56,4 +57,9 @@ AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(UserPreference, { foreignKey: 'userId' });
 UserPreference.belongsTo(User, { foreignKey: 'userId' });
 
-export { Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting };
+Device.hasOne(TelegramDeviceConfig, { foreignKey: 'deviceId' });
+TelegramDeviceConfig.belongsTo(Device, { foreignKey: 'deviceId' });
+
+UserChamberAccess.belongsTo(User, { foreignKey: 'userId' });
+
+export { Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting, TelegramDeviceConfig };

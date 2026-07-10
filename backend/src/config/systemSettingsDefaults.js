@@ -33,6 +33,8 @@ export const SYSTEM_SETTINGS_DEFAULTS = [
 
   // === Integration ===
   { key: 'thingspeak_enabled', value: 'true', type: 'boolean', label: 'ThingSpeak Integration Enabled', category: 'integration' },
+  { key: 'telegram_bot_token', value: '', type: 'string', label: 'Telegram Bot Token', description: 'Token del bot obtenido de @BotFather en Telegram', category: 'integration' },
+  { key: 'telegram_bot_username', value: '', type: 'string', label: 'Telegram Bot Username', description: 'Username del bot (sin @)', category: 'integration' },
   { key: 'telegram_bot_enabled', value: 'false', type: 'boolean', label: 'Telegram Bot Enabled', category: 'integration' },
   { key: 'api_rate_limit_per_minute', value: '60', type: 'number', label: 'API Rate Limit (per minute)', category: 'integration' },
   { key: 'webhook_retry_count', value: '3', type: 'number', label: 'Webhook Retry Count', category: 'integration' },

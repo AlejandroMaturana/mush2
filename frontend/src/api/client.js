@@ -280,4 +280,39 @@ export async function getChamberAnalytics(chamberId) {
   return data
 }
 
+export async function linkTelegram() {
+  const { data } = await client.post('/telegram/link')
+  return data.data
+}
+
+export async function getTelegramStatus() {
+  const { data } = await client.get('/telegram/link')
+  return data.data
+}
+
+export async function unlinkTelegram() {
+  const { data } = await client.post('/telegram/unlink')
+  return data.data
+}
+
+export async function getTelegramDeviceConfig(deviceId) {
+  const { data } = await client.get(`/telegram/device/${deviceId}`)
+  return data.data
+}
+
+export async function updateTelegramDeviceConfig(deviceId, payload) {
+  const { data } = await client.patch(`/telegram/device/${deviceId}`, payload)
+  return data.data
+}
+
+export async function configureTelegramBot(token, username) {
+  const { data } = await client.post('/telegram/configure', { token, username })
+  return data.data
+}
+
+export async function getTelegramBotStatus() {
+  const { data } = await client.get('/telegram/bot-status')
+  return data.data
+}
+
 export default client

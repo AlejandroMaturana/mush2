@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getSystemSettings, updateSystemSettings, seedSystemSettings } from '../../api/client.js'
+import { getSystemSettings, updateSystemSettings, seedSystemSettings, configureTelegramBot, getTelegramBotStatus } from '../../api/client.js'
 import LoadingState from '../../components/ui/LoadingState.jsx'
 import ErrorState from '../../components/ui/ErrorState.jsx'
 import EmptyState from '../../components/ui/EmptyState.jsx'
@@ -24,6 +24,11 @@ function SystemSettings() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
   const [seedMsg, setSeedMsg] = useState(null)
+  const [tgToken, setTgToken] = useState('')
+  const [tgUsername, setTgUsername] = useState('')
+  const [tgStatus, setTgStatus] = useState(null)
+  const [tgSaving, setTgSaving] = useState(false)
+  const [tgMsg, setTgMsg] = useState(null)
 
   async function fetchSettings() {
     try {
@@ -38,6 +43,39 @@ function SystemSettings() {
   }
 
   useEffect(() => { fetchSettings() }, [])
+
+  async function loadTgStatus() {
+    try {
+      const st = await getTelegramBotStatus()
+      setTgStatus(st)
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (!loading) {
+      loadTgStatus()
+      const tgTok = settings.find(s => s.key === 'telegram_bot_token')
+      const tgUser = settings.find(s => s.key === 'telegram_bot_username')
+      if (tgTok) setTgToken(tgTok.value)
+      if (tgUser) setTgUsername(tgUser.value)
+    }
+  }, [loading, settings])
+
+  async function handleConfigureTelegram(e) {
+    e.preventDefault()
+    if (!tgToken) return
+    setTgSaving(true)
+    setTgMsg(null)
+    try {
+      const result = await configureTelegramBot(tgToken, tgUsername)
+      setTgStatus({ running: result.running, username: result.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: result.lastError })
+      setTgMsg({ type: result.running ? 'ok' : 'err', text: result.running ? 'Bot initialized successfully' : `Bot failed: ${result.lastError || 'unknown error'}` })
+    } catch (err) {
+      setTgMsg({ type: 'err', text: err.response?.data?.error || err.message })
+    } finally {
+      setTgSaving(false)
+    }
+  }
 
   function handleChange(key, value) {
     setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s))
@@ -142,6 +180,52 @@ function SystemSettings() {
           ))}
         </div>
       )}
+
+      <div className="glass-card p-5 rounded-xl border border-outline-variant mt-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="material-symbols-outlined text-secondary">send</span>
+          <h3 className="font-label-caps text-label-caps text-on-surface-variant">TELEGRAM BOT</h3>
+        </div>
+
+        {tgStatus && (
+          <div className="flex items-center gap-3 p-3 bg-surface-container-low rounded mb-4">
+            <span className={`text-body-md ${tgStatus.running ? 'text-primary' : 'text-error'}`}>
+              {tgStatus.running ? '●' : '○'}
+            </span>
+            <div>
+              <p className="text-body-md text-on-surface">{tgStatus.running ? 'Bot running' : 'Bot stopped'}</p>
+              {tgStatus.username && <p className="text-body-sm text-on-surface-variant">@{tgStatus.username}</p>}
+              {tgStatus.lastError && <p className="text-body-sm text-error">Error: {tgStatus.lastError}</p>}
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleConfigureTelegram} className="space-y-4 max-w-lg">
+          <div>
+            <label className="font-label-caps text-9px text-on-surface-variant block mb-1">BOT TOKEN</label>
+            <input type="password" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2.5 text-body-md text-on-surface font-mono focus:border-primary outline-none" value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" autoComplete="off" />
+          </div>
+          <div>
+            <label className="font-label-caps text-9px text-on-surface-variant block mb-1">BOT USERNAME</label>
+            <input className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2.5 text-body-md text-on-surface font-mono focus:border-primary outline-none" value={tgUsername} onChange={e => setTgUsername(e.target.value)} placeholder="MyMush2Bot" />
+          </div>
+          {tgMsg && <p className={`text-body-md ${tgMsg.type === 'ok' ? 'text-primary' : 'text-error'}`}>{tgMsg.text}</p>}
+          <button type="submit" disabled={tgSaving || !tgToken} className="px-6 py-2.5 bg-primary text-on-primary font-label-caps text-label-caps rounded hover:opacity-90 disabled:opacity-40 transition-all">{tgSaving ? 'INITIALIZING...' : 'SAVE & INITIALIZE BOT'}</button>
+        </form>
+
+        <details className="mt-4">
+          <summary className="font-label-caps text-9px text-on-surface-variant cursor-pointer">How to create a Telegram bot?</summary>
+          <div className="mt-3 p-3 bg-surface-container-low rounded text-body-sm text-on-surface-variant space-y-1">
+            <p>1. Open Telegram and search for <strong>@BotFather</strong></p>
+            <p>2. Send <code className="bg-surface-container-lowest px-1 rounded font-mono">/newbot</code></p>
+            <p>3. Choose a display name (e.g. <em>My Mush2 Bot</em>)</p>
+            <p>4. Choose a username ending in <em>Bot</em> (e.g. <em>MyMush2Bot</em>)</p>
+            <p>5. Copy the <strong>HTTP API token</strong> BotFather gives you</p>
+            <p>6. Paste it in the <strong>Bot Token</strong> field above and save</p>
+            <p className="mt-2 text-10px text-outline">Token format: <code className="font-mono">1234567890:ABCdefGHIjklMNOpqrsTUVwxyz-123456</code></p>
+          </div>
+        </details>
+      </div>
     </div>
   )
 }

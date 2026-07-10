@@ -38,6 +38,9 @@ importers:
       mqtt:
         specifier: ^5.15.1
         version: 5.15.1
+      node-telegram-bot-api:
+        specifier: ^1.1.2
+        version: 1.1.2
       pg:
         specifier: ^8.13.1
         version: 8.22.0
@@ -1906,6 +1909,10 @@ packages:
 
   node-releases@2.0.50:
     resolution: {integrity: sha512-J6l92tKHX6w8Jy5nO1Vuc01NoIiRGi/d6qBKVxh+IQ8Cr3b6HbVNfKiF8ZpFKufTwpwxMmce2W3iQZ861ZRyTg==}
+    engines: {node: '>=18'}
+
+  node-telegram-bot-api@1.1.2:
+    resolution: {integrity: sha512-PtLczp0WZCQz7LHsObl1WIyfMSTco58cfYXITqB4Fbeuybd/A/sM729h892fbcjz+szJ9lpu+/pfewUs9NObrg==}
     engines: {node: '>=18'}
 
   normalize-path@3.0.0:
@@ -4756,6 +4763,8 @@ snapshots:
   node-int64@0.4.0: {}
 
   node-releases@2.0.50: {}
+
+  node-telegram-bot-api@1.1.2: {}
 
   normalize-path@3.0.0: {}
 
