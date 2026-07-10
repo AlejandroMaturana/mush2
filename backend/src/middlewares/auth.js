@@ -1,101 +1,96 @@
 /**
  * Authentication Middleware — Mush2 Backend
  * 
- * Middleware para validación de JWT en endpoints protegidos.
- * Soporta dos modos:
- * 1. authenticate() — Requiere token válido (401 si falta/inválido)
- * 2. optionalAuth() — Intenta parsear token, pero permite continuar si inválido
- * 
- * Token format: `Bearer <jwt>`
- * Algoritmo: HS256 (HMAC con JWT_SECRET)
+ * Middleware para validación de JWT y/o API Key.
+ * Soporta autenticación dual:
+ * 1. JWT via header `Authorization: Bearer <token>` (prioridad)
+ * 2. API Key via header `X-API-Key: <key>` (fallback)
  * 
  * @module middlewares/auth
- * @see {@link ../config/env.js}
  */
 
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import { ApiKey, User } from '../models/index.js';
 
-/**
- * Middleware de autenticación requerida.
- * 
- * Extrae JWT del header Authorization y verifica su validez.
- * Si es válido, asigna decoded token a req.user.
- * 
- * @function authenticate
- * @param {Object} req - Express request object
- * @param {string} req.headers.authorization - "Bearer <token>"
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware
- * 
- * @returns {void}
- * 
- * @throws {Error} 401 si token falta, está inválido o expirado
- * 
- * @example
- * // En routes/admin.js
- * router.get('/users', authenticate, (req, res) => {
- *   console.log(req.user.id, req.user.role);
- * });
- */
-export function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token requerido' });
+async function authenticateWithApiKey(req) {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey) return null;
+
+  const keyHash = ApiKey.hashKey(apiKey);
+  const key = await ApiKey.findOne({
+    where: { keyHash, isActive: true },
+    include: [{ model: User, attributes: ['id', 'username', 'role', 'isActive'] }],
+  });
+
+  if (!key) return { error: 'API key inválida' };
+  if (!key.User || !key.User.isActive) return { error: 'Usuario inactivo' };
+  if (key.expiresAt && new Date(key.expiresAt) < new Date()) return { error: 'API key expirada' };
+
+  const clientIp = req.ip || req.connection?.remoteAddress;
+  if (key.ipWhitelist && key.ipWhitelist.length > 0) {
+    if (!key.ipWhitelist.includes(clientIp)) return { error: 'IP no autorizada para esta API key' };
   }
+
+  await key.update({ lastUsedAt: new Date(), lastIpAddress: clientIp, authFailures: 0 });
+
+  return {
+    user: {
+      id: key.User.id,
+      username: key.User.username,
+      role: key.User.role,
+      authMethod: 'api_key',
+      apiKeyId: key.id,
+    },
+  };
+}
+
+function authenticateWithJwt(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded;
-    next();
+    return { user: { ...decoded, authMethod: 'jwt' } };
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expirado', code: 'TOKEN_EXPIRED' });
-    }
-    return res.status(401).json({ error: 'Token inválido' });
+    if (err.name === 'TokenExpiredError') return { error: 'Token expirado', code: 'TOKEN_EXPIRED' };
+    return { error: 'Token inválido' };
   }
 }
 
-/**
- * Middleware de autenticación opcional.
- * 
- * Intenta extraer y verificar JWT.
- * Si es válido, asigna a req.user.
- * Si no existe o es inválido, deja req.user = null y continúa.
- * 
- * Útil para endpoints que pueden servir contenido público + privado.
- * 
- * @function optionalAuth
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware
- * 
- * @returns {void}
- * 
- * @example
- * // En routes/api.js (listado de recetas público, pero muestra favoritos si autenticado)
- * router.get('/recipes', optionalAuth, (req, res) => {
- *   const recipes = await getRecipes();
- *   if (req.user) {
- *     recipes = recipes.map(r => ({ ...r, isFavorite: r.userId === req.user.id }));
- *   }
- *   res.json(recipes);
- * });
- */
-export function optionalAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    req.user = null;
+export async function authenticate(req, res, next) {
+  const jwtResult = authenticateWithJwt(req);
+  if (jwtResult && jwtResult.user) {
+    req.user = jwtResult.user;
     return next();
   }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    req.user = jwt.verify(token, env.JWT_SECRET);
-  } catch {
-    req.user = null;
+  const apiResult = await authenticateWithApiKey(req);
+  if (apiResult && apiResult.user) {
+    req.user = apiResult.user;
+    return next();
   }
+
+  const errMsg = apiResult?.error || jwtResult?.error || 'Autenticación requerida';
+  const code = jwtResult?.code;
+  return res.status(401).json({ error: errMsg, ...(code ? { code } : {}) });
+}
+
+export async function optionalAuth(req, res, next) {
+  const jwtResult = authenticateWithJwt(req);
+  if (jwtResult && jwtResult.user) {
+    req.user = jwtResult.user;
+    return next();
+  }
+
+  const apiResult = await authenticateWithApiKey(req);
+  if (apiResult && apiResult.user) {
+    req.user = apiResult.user;
+    return next();
+  }
+
+  req.user = null;
   next();
 }
 

@@ -10,6 +10,7 @@ import SettingsHub from './pages/settings/SettingsHub.jsx'
 import UserSettings from './pages/settings/UserSettings.jsx'
 import DeviceSettings from './pages/settings/DeviceSettings.jsx'
 import CultivationSettings from './pages/settings/CultivationSettings.jsx'
+import ApiKeysSettings from './pages/settings/ApiKeysSettings.jsx'
 import Provisioning from './pages/Provisioning.jsx'
 import Landing from './pages/Landing.jsx'
 import { useAuth } from './api/AuthContext.jsx'
@@ -45,6 +46,7 @@ function App() {
                 <Route path="user" element={<UserSettings />} />
                 <Route path="device" element={<DeviceSettings />} />
                 <Route path="cultivation" element={<CultivationSettings />} />
+                <Route path="api-keys" element={<ApiKeysSettings />} />
               </Route>
               <Route path="/provisioning" element={<Provisioning />} />
             </Routes>

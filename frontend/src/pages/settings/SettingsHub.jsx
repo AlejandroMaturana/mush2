@@ -22,6 +22,13 @@ const HUB_CARDS = [
     subtitle: 'Parameters, recipes & cycles',
     color: 'tertiary',
   },
+  {
+    to: '/settings/api-keys',
+    icon: 'vpn_key',
+    title: 'API Keys',
+    subtitle: 'Manage programmatic access & integration',
+    color: 'secondary',
+  },
 ]
 
 function SettingsHub() {

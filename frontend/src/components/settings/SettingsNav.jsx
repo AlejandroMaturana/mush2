@@ -5,6 +5,7 @@ const SECTIONS = [
   { to: '/settings/user', icon: 'fingerprint', label: 'User' },
   { to: '/settings/device', icon: 'developer_board', label: 'Device' },
   { to: '/settings/cultivation', icon: 'potted_plant', label: 'Cultivation' },
+  { to: '/settings/api-keys', icon: 'vpn_key', label: 'API Keys' },
 ]
 
 function SettingsNav() {

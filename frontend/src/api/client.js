@@ -190,4 +190,29 @@ export async function resolveAlarm(id) {
   return data
 }
 
+export async function getApiKeys({ page = 1, limit = 50 } = {}) {
+  const { data } = await client.get('/api-keys', { params: { page, limit } })
+  return data
+}
+
+export async function createApiKey(payload = {}) {
+  const { data } = await client.post('/api-keys', payload)
+  return data
+}
+
+export async function updateApiKey(id, payload) {
+  const { data } = await client.patch(`/api-keys/${id}`, payload)
+  return data
+}
+
+export async function deleteApiKey(id) {
+  const { data } = await client.delete(`/api-keys/${id}`)
+  return data
+}
+
+export async function rotateApiKey(id) {
+  const { data } = await client.post(`/api-keys/${id}/rotate`)
+  return data
+}
+
 export default client
