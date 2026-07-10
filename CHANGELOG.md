@@ -1,5 +1,34 @@
 # Changelog — Mush2
 
+## 0.19.5
+
+## Firmware ESP32-S3 (v0.13.0)
+
+### Nuevo
+- Módulo `actuator_nvs` para guardar/cargar estados de actuadores en NVS (schema v1)
+  - Guarda `desired[]` y `mode[]` para 4 actuadores
+  - Guarda timestamp para control de expiración
+- Constante `ACTUATOR_HOLD_WINDOW_MS` (5 minutos por defecto)
+- Flag `provisionalMode` para cuando no hay ciclo activo
+
+### Mejoras
+- HTTP Poller ahora parsea `status`, `phase` y `setpoints` de la API
+- HTTP Poller guarda automáticamente los estados en NVS después de cada poll exitoso
+- MQTT ahora soporta setpoints en mensajes (nuevo struct `MqttActuatorMessage`)
+- En `main.ino`:
+  - Se carga `HOLD_WINDOW` en `setup()`
+  - Los setpoints del HTTP poller se aplican y se chequea expiración
+  - En callback MQTT: se persisten setpoints y se usan defaults seguros si `no_active_cycle`
+
+### Fixes
+- OTA: Ya no se sobrescribe la versión del firmware en post-boot
+- OTA: Se apagan todos los SSR antes de empezar el flashing
+
+### Resultado
+- **Backend**: correr migraciones para el nuevo índice
+- **Firmware**: actualizar todos los ESP32-S3 a esta versión
+
+
 ## 2026-07-10
 
 ### Backend — v0.13.0
@@ -14,6 +43,7 @@
 - Paneles: MQTT Status, Chamber Control Mode, tabla de canales SSR, Publish Test
 - **UI**:
 - Enlace a "Diag" agregado en Sidebar y BottomNav
+
 **Resultado**: Módulo completo de diagnóstico para monitoreo en tiempo real de MQTT, estado de actuadores y registro de eventos del sistema.
 
 ### Frontend — v1.5.0
