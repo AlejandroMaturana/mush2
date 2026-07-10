@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import express from 'express';
-import { Device, Telemetry, Actuator, UserChamberAccess } from '../models/index.js';
+import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
@@ -190,6 +190,19 @@ router.patch('/devices/:id', checkDeviceAccess, async (req, res) => {
 
     res.json(device);
   } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/devices/:id/cycle', checkDeviceAccess, async (req, res) => {
+  try {
+    const cycle = await CultivationCycle.findOne({
+      where: { deviceId: req.params.id, status: 'ACTIVE' },
+      include: [{ model: Recipe }],
+    });
+    res.json({ data: cycle });
+  } catch (err) {
+    console.error('[DEVICES] Error fetching cycle:', err);
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
