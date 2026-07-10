@@ -29,6 +29,13 @@ const HUB_CARDS = [
     subtitle: 'Manage programmatic access & integration',
     color: 'secondary',
   },
+  {
+    to: '/settings/system',
+    icon: 'settings',
+    title: 'System',
+    subtitle: 'Global configuration & parameters',
+    color: 'tertiary',
+  },
 ]
 
 function SettingsHub() {

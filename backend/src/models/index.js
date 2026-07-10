@@ -11,6 +11,8 @@ import AuditLog from './AuditLog.js';
 import UserChamberAccess from './UserChamberAccess.js';
 import Alarm from './Alarm.js';
 import ApiKey from './ApiKey.js';
+import UserPreference from './UserPreference.js';
+import SystemSetting from './SystemSetting.js';
 
 Device.hasMany(Sensor, { foreignKey: 'deviceId' });
 Sensor.belongsTo(Device, { foreignKey: 'deviceId' });
@@ -48,4 +50,7 @@ User.hasMany(Alarm, { foreignKey: 'acknowledgedBy', as: 'acknowledgedAlarms' });
 User.hasMany(ApiKey, { foreignKey: 'userId' });
 ApiKey.belongsTo(User, { foreignKey: 'userId' });
 
-export { Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey };
+User.hasOne(UserPreference, { foreignKey: 'userId' });
+UserPreference.belongsTo(User, { foreignKey: 'userId' });
+
+export { Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting };
