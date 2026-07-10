@@ -16,6 +16,8 @@ UserPreference.init({
   emailAlerts: { type: DataTypes.BOOLEAN, defaultValue: false },
   telegramEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
   telegramChatId: { type: DataTypes.STRING(64), allowNull: true },
+  telegramLinkToken: { type: DataTypes.STRING(32), allowNull: true },
+  telegramLinkTokenExpires: { type: DataTypes.DATE, allowNull: true },
   webhookUrl: { type: DataTypes.STRING(512), allowNull: true },
   minAlertSeverity: { type: DataTypes.ENUM('info', 'warning', 'critical'), defaultValue: 'warning' },
 }, {

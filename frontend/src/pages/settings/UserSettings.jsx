@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../api/AuthContext.jsx'
-import { getProfile, updateProfileSettings, changePassword } from '../../api/client.js'
+import { getProfile, updateProfileSettings, changePassword, linkTelegram, getTelegramStatus, unlinkTelegram } from '../../api/client.js'
 import { useTheme } from '../../contexts/ThemeContext.jsx'
 import LoadingState from '../../components/ui/LoadingState.jsx'
 import ErrorState from '../../components/ui/ErrorState.jsx'
@@ -22,6 +22,11 @@ function UserSettings() {
   const [pwMsg, setPwMsg] = useState(null)
   const [pwSaving, setPwSaving] = useState(false)
 
+  const [telegramStatus, setTelegramStatus] = useState(null)
+  const [telegramLoading, setTelegramLoading] = useState(false)
+  const [telegramCode, setTelegramCode] = useState(null)
+  const [telegramMsg, setTelegramMsg] = useState(null)
+
   async function loadProfile() {
     try {
       const data = await getProfile()
@@ -37,6 +42,52 @@ function UserSettings() {
   }
 
   useEffect(() => { loadProfile() }, [])
+
+  async function loadTelegramStatus() {
+    try {
+      const st = await getTelegramStatus()
+      setTelegramStatus(st)
+      setTelegramCode(null)
+    } catch { }
+  }
+
+  useEffect(() => {
+    if (!loading) loadTelegramStatus()
+  }, [loading])
+
+  async function handleLinkTelegram() {
+    setTelegramLoading(true)
+    setTelegramMsg(null)
+    try {
+      const result = await linkTelegram()
+      if (result.linked) {
+        setTelegramStatus(result)
+        setTelegramMsg({ type: 'ok', text: 'Already linked' })
+      } else {
+        setTelegramCode(result.code)
+        setTelegramStatus({ linked: false })
+        setTelegramMsg({ type: 'ok', text: `Send /link ${result.code} to @Mush2Bot on Telegram` })
+      }
+    } catch (err) {
+      setTelegramMsg({ type: 'err', text: err.response?.data?.error || err.message })
+    } finally {
+      setTelegramLoading(false)
+    }
+  }
+
+  async function handleUnlinkTelegram() {
+    setTelegramLoading(true)
+    try {
+      await unlinkTelegram()
+      setTelegramStatus({ linked: false })
+      setTelegramCode(null)
+      setTelegramMsg({ type: 'ok', text: 'Telegram unlinked' })
+    } catch (err) {
+      setTelegramMsg({ type: 'err', text: err.response?.data?.error || err.message })
+    } finally {
+      setTelegramLoading(false)
+    }
+  }
 
   async function handleSaveProfile(e) {
     e.preventDefault()
@@ -203,6 +254,46 @@ function UserSettings() {
           </div>
         </div>
       )}
+
+      <div className="glass-card p-6 rounded-xl border border-outline-variant">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="material-symbols-outlined text-secondary">send</span>
+          <h3 className="font-label-caps text-label-caps text-secondary">TELEGRAM</h3>
+        </div>
+        <div className="max-w-lg">
+          {telegramStatus?.linked ? (
+            <div>
+              <div className="flex items-center gap-3 p-3 bg-surface-container-low rounded mb-4">
+                <span className="text-primary text-body-md">✅</span>
+                <div>
+                  <p className="text-body-md text-on-surface">Linked to Telegram</p>
+                  <p className="text-body-sm text-on-surface-variant">Chat ID: {telegramStatus.chatId}</p>
+                </div>
+              </div>
+              <button onClick={handleUnlinkTelegram} disabled={telegramLoading} className="px-6 py-2.5 bg-error text-on-error font-label-caps text-label-caps rounded hover:opacity-90 disabled:opacity-40 transition-all">
+                {telegramLoading ? 'PROCESSING...' : 'UNLINK TELEGRAM'}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="text-body-md text-on-surface-variant mb-4">
+                Link your Telegram account to receive real-time alerts from your devices.
+              </p>
+              {telegramCode && (
+                <div className="p-4 bg-surface-container-lowest rounded border border-outline-variant mb-4">
+                  <p className="font-label-caps text-9px text-on-surface-variant mb-1">SEND THIS CODE TO @Mush2Bot</p>
+                  <p className="text-data-lg text-primary font-mono tracking-wider">{telegramCode}</p>
+                  <p className="text-body-sm text-on-surface-variant mt-2">Send <code className="bg-surface-container-low px-1 rounded">/link {telegramCode}</code> to @Mush2Bot on Telegram</p>
+                </div>
+              )}
+              {telegramMsg && <p className={`text-body-md mb-4 ${telegramMsg.type === 'ok' ? 'text-primary' : 'text-error'}`}>{telegramMsg.text}</p>}
+              <button onClick={handleLinkTelegram} disabled={telegramLoading} className="px-6 py-2.5 bg-primary text-on-primary font-label-caps text-label-caps rounded hover:opacity-90 disabled:opacity-40 transition-all">
+                {telegramLoading ? 'PROCESSING...' : telegramCode ? 'REFRESH CODE' : 'LINK TELEGRAM'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="glass-card p-6 rounded-xl border border-outline-variant">
         <div className="flex items-center gap-3 mb-6">

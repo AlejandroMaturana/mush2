@@ -8,6 +8,7 @@ import { startMqttBridge, stopMqttBridge, publishActuatorCommand } from './servi
 import { events } from './services/eventBus.js';
 import { installTimestampedConsole } from './services/logger.js';
 import { syncAllFromThingSpeak } from './services/thingSpeakSync.js';
+import { initBot as initTelegramBot, stopBot as stopTelegramBot, notifyDeviceAlarm } from './services/telegramService.js';
 
 installTimestampedConsole();
 
@@ -28,6 +29,7 @@ async function start() {
 
     startControlEngine();
     startMqttBridge();
+    initTelegramBot(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_BOT_USERNAME);
 
     const httpServer = createServer(app);
     startWebSocketServer(httpServer);
@@ -48,6 +50,12 @@ async function start() {
     };
 
     events.on('control_eval', publishActuators);
+
+    events.on('alarm', (alarm) => {
+      if (alarm.deviceId && !alarm.resolvedAt) {
+        notifyDeviceAlarm(alarm.deviceId, alarm);
+      }
+    });
   } catch (err) {
     console.error('[FATAL] Error al iniciar:', err);
     process.exit(1);
@@ -62,6 +70,7 @@ function shutdown(signal) {
     try {
       if (tsSyncHandle) clearInterval(tsSyncHandle);
       stopControlEngine();
+      stopTelegramBot();
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();
