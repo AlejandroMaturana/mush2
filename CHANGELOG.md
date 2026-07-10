@@ -1,5 +1,25 @@
 # Changelog — Mush2
 
+## 10-07-2026 - OS v1.6.0
+
+### Backend — v0.15.0
+
+**Nuevo:**
+- Modelo `TelegramDeviceConfig` — Configuración de alertas por dispositivo (`enabled`, tipos de alerta, `minSeverity`)
+- Servicio `telegramService.js` — Bot polling con comandos `/link`, `/status`, `/unlink`
+- Rutas `telegram.js` — Endpoints para link/unlink, status y CRUD de configuración por dispositivo
+**Modificado:**
+- Modelo `UserPreference` — Agregados campos `telegramLinkToken` y `telegramLinkTokenExpires`
+- `server.js` — Inicialización del bot y escucha de eventos de alarma para notificaciones
+- `client.js` — Añadidas 5 nuevas funciones API relacionadas con Telegram
+
+### Frontend — v1.6.0
+
+**Nuevo / Modificado:**
+- `UserSettings` — Nueva sección Telegram con flujo de vinculación/desvinculación vía código
+- `DeviceDetail` — Configuración de alertas Telegram por dispositivo
+**Resultado**: Sistema completo de notificaciones Telegram tanto a nivel usuario como por dispositivo, con vinculación segura vía código y configuración granular de alertas.
+
 ## 0.19.6
 
 ### Backend — v0.14.1
