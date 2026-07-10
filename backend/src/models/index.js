@@ -50,6 +50,9 @@ User.hasMany(Alarm, { foreignKey: 'acknowledgedBy', as: 'acknowledgedAlarms' });
 User.hasMany(ApiKey, { foreignKey: 'userId' });
 ApiKey.belongsTo(User, { foreignKey: 'userId' });
 
+User.hasMany(AuditLog, { foreignKey: 'userId', as: 'auditLogs' });
+AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 User.hasOne(UserPreference, { foreignKey: 'userId' });
 UserPreference.belongsTo(User, { foreignKey: 'userId' });
 

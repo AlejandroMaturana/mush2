@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Op } from 'sequelize';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { User, AuditLog } from '../models/index.js';
@@ -79,13 +80,35 @@ router.patch('/users/:id/toggle-active', authenticate, requireMinRole('ADMIN'), 
 
 router.get('/audit-logs', authenticate, requireMinRole('ADMIN'), async (req, res) => {
   try {
-    const { limit = 100, offset = 0 } = req.query;
-    const logs = await AuditLog.findAll({
+    const { page = 1, limit = 50, action, resource, status, search, from, to } = req.query;
+    const where = {};
+    if (action) where.action = { [Op.iLike]: `%${action}%` };
+    if (resource) where.resource = { [Op.iLike]: `%${resource}%` };
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt[Op.gte] = new Date(from);
+      if (to) where.createdAt[Op.lte] = new Date(to);
+    }
+    if (search) {
+      where[Op.or] = [
+        { details: { [Op.iLike]: `%${search}%` } },
+        { action: { [Op.iLike]: `%${search}%` } },
+        { resource: { [Op.iLike]: `%${search}%` } },
+        { resourceId: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const { rows, count } = await AuditLog.findAndCountAll({
+      where,
+      include: [{ model: User, attributes: ['username'], as: 'user' }],
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit, 10),
-      offset: parseInt(offset, 10),
+      limit: parseInt(limit),
+      offset,
     });
-    res.json({ data: logs });
+    res.json({
+      data: rows,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

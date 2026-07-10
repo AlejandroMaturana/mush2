@@ -250,4 +250,9 @@ export async function getPublicSettings() {
   return data.data
 }
 
+export async function getAuditLogs(params = {}) {
+  const { data } = await client.get('/admin/audit-logs', { params })
+  return data
+}
+
 export default client

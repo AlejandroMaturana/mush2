@@ -2,6 +2,60 @@
 
 ## 2026-07-10
 
+### Backend — v0.12.0
+
+- ### Backend & Frontend — R4: Preferencias de Usuario + Configuración del Sistema
+### Backend
+- **Nuevo**: Modelo `UserPreference` con campos:
+- `theme`, `language`, `dateFormat`, `notificaciones`, `webhookUrl`, `minAlertSeverity`
+- Campos legacy de R3 (`telegramEnabled`, `telegramChatId`) para compatibilidad
+- **Nuevo**: Modelo `SystemSetting` tipo clave-valor con soporte para `type` (`string`/`number`/`boolean`/`json`)
+- **Datos**:
+- 29 valores por defecto en `systemSettingsDefaults.js` (instalación, timing, storage, environment, states, alarms, integration, ota)
+- **API**:
+- `/api/settings/profile` (GET/PATCH)
+- `/api/settings/change-password`
+- `/api/settings/system` (GET/PATCH/seed)
+- `/api/settings/system/public`
+### Frontend
+- **Nuevo**: Página `UserSettings` con:
+- Perfil de usuario
+- Preferencias personales
+- Cambio de contraseña
+- **Nuevo**: Página `SystemSettings` con:
+- Editor agrupado por categorías
+- Funciones de seed y restore
+- **Mejora**: `ThemeContext` ahora persiste el tema a través de la API del backend (ya no solo en localStorage)
+**Resultado**: Implementación completa de R4 con preferencias de usuario y configuración avanzada del sistema, centralizando toda la configuración persistente en el backend.
+
+### Frontend — v1.4.0
+
+- ### Backend & Frontend — R4: Preferencias de Usuario + Configuración del Sistema
+### Backend
+- **Nuevo**: Modelo `UserPreference` con campos:
+- `theme`, `language`, `dateFormat`, `notificaciones`, `webhookUrl`, `minAlertSeverity`
+- Campos legacy de R3 (`telegramEnabled`, `telegramChatId`) para compatibilidad
+- **Nuevo**: Modelo `SystemSetting` tipo clave-valor con soporte para `type` (`string`/`number`/`boolean`/`json`)
+- **Datos**:
+- 29 valores por defecto en `systemSettingsDefaults.js` (instalación, timing, storage, environment, states, alarms, integration, ota)
+- **API**:
+- `/api/settings/profile` (GET/PATCH)
+- `/api/settings/change-password`
+- `/api/settings/system` (GET/PATCH/seed)
+- `/api/settings/system/public`
+### Frontend
+- **Nuevo**: Página `UserSettings` con:
+- Perfil de usuario
+- Preferencias personales
+- Cambio de contraseña
+- **Nuevo**: Página `SystemSettings` con:
+- Editor agrupado por categorías
+- Funciones de seed y restore
+- **Mejora**: `ThemeContext` ahora persiste el tema a través de la API del backend (ya no solo en localStorage)
+**Resultado**: Implementación completa de R4 con preferencias de usuario y configuración avanzada del sistema, centralizando toda la configuración persistente en el backend.
+
+## 2026-07-10
+
 ### Backend & Frontend — API Keys (v0.11.0 / v1.3.0)
 
 ### Backend

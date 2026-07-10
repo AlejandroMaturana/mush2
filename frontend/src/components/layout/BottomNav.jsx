@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/recipes', icon: 'potted_plant', label: 'Recipes' },
   { to: '/cycles', icon: 'cyclone', label: 'Cycles' },
   { to: '/alarms', icon: 'warning', label: 'Alarms' },
+  { to: '/logs', icon: 'history', label: 'Logs' },
   { to: '/settings', icon: 'settings', label: 'System' },
 ]
 
