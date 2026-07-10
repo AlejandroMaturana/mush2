@@ -11,6 +11,16 @@ struct ActuatorCommand {
   uint8_t mode;
 };
 
+struct MqttActuatorMessage {
+  const ActuatorCommand* cmds;
+  int cmdCount;
+  const char* status;
+  const char* phase;
+  bool hasSetpoints;
+  float tempMin, tempMax, humMin, humMax;
+  uint16_t co2Max;
+};
+
 class MQTTClient {
 public:
   MQTTClient();
@@ -24,7 +34,7 @@ public:
   bool publishAlarm(const char* reason);
 
   void setOtaCallback(void (*cb)(const char* url, const char* version));
-  void setActuatorCallback(void (*cb)(const ActuatorCommand* cmds, int count));
+  void setActuatorCallback(void (*cb)(const MqttActuatorMessage* msg));
 
   bool isFallbackActive() { return _usingFallback; }
 
@@ -38,7 +48,7 @@ private:
   bool _usingFallback;
 
   void (*_otaCb)(const char* url, const char* version);
-  void (*_actuatorCb)(const ActuatorCommand* cmds, int count);
+  void (*_actuatorCb)(const MqttActuatorMessage* msg);
 
   void _connect();
   void _onMessage(char* topic, uint8_t* payload, unsigned int len);

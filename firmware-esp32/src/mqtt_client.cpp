@@ -23,7 +23,7 @@ void MQTTClient::setOtaCallback(void (*cb)(const char* url, const char* version)
   _otaCb = cb;
 }
 
-void MQTTClient::setActuatorCallback(void (*cb)(const ActuatorCommand* cmds, int count)) {
+void MQTTClient::setActuatorCallback(void (*cb)(const MqttActuatorMessage* msg)) {
   _actuatorCb = cb;
 }
 
@@ -200,8 +200,26 @@ void MQTTClient::_onMessage(char* topic, uint8_t* payload, unsigned int len) {
       cmds[i].mode = (strcmp(a["mode"] | "LOCAL", "REMOTE") == 0) ? 1 : 0;
     }
 
+    MqttActuatorMessage msg;
+    msg.cmds = cmds;
+    msg.cmdCount = count;
+    msg.status = doc["status"] | "";
+    msg.phase = doc["phase"] | "";
+
+    if (doc["setpoints"].is<JsonObject>()) {
+      JsonObject sp = doc["setpoints"];
+      msg.hasSetpoints = true;
+      msg.tempMin = sp["tempMin"] | 0.0f;
+      msg.tempMax = sp["tempMax"] | 0.0f;
+      msg.humMin = sp["humMin"] | 0.0f;
+      msg.humMax = sp["humMax"] | 0.0f;
+      msg.co2Max = sp["co2Max"] | 0;
+    } else {
+      msg.hasSetpoints = false;
+    }
+
     if (_actuatorCb) {
-      _actuatorCb(cmds, count);
+      _actuatorCb(&msg);
     }
     return;
   }
