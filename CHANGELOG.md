@@ -1,5 +1,42 @@
 # Changelog — Mush2
 
+## 2026-07-10
+
+### Backend & Frontend — API Keys (v0.11.0 / v1.3.0)
+
+### Backend
+
+- **Nuevo**: Modelo `ApiKey` con:
+  - `generateKey()` → clave raw con prefijo `mush_`
+  - `hashKey()` → hash SHA-256 para almacenamiento seguro
+- **Auth**:
+  - Middleware `auth.js` actualizado con autenticación **dual**:
+    - JWT (prioridad)
+    - X-API-Key (fallback)
+- **Seguridad**:
+  - Soporte de IP whitelist
+  - Expiración de keys
+  - Rate limiting
+  - Tracking de auth failures
+- **API**:
+  - CRUD completo en `/api/api-keys`:
+    - Listar (paginado)
+    - Crear (devuelve la clave raw solo una vez)
+    - Actualizar
+    - Revocar (soft delete)
+    - Rotar
+
+### Frontend
+
+- **Nuevo**: Página `/settings/api-keys`
+  - Tabla de claves con paginación
+  - Modal para copiar clave al crear o rotar
+- **UI**:
+  - Entrada en `SettingsNav`
+  - Nueva card en `SettingsHub`
+
+**Resultado**: Sistema completo y seguro de API Keys para integración multi-dispositivo y clientes externos, con excelente experiencia de usuario en el frontend.
+
 ## 2026-07-09
 
 ### Backend — v0.10.0
