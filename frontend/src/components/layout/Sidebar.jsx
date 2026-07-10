@@ -7,6 +7,7 @@ const PRIMARY_ITEMS = [
 ]
 
 const SYSTEM_ITEMS = [
+  { to: '/analytics', icon: 'analytics', label: 'Analytics' },
   { to: '/alarms', icon: 'warning', label: 'Alarms' },
   { to: '/logs', icon: 'history', label: 'Logs' },
   { to: '/diagnostics', icon: 'diagnosis', label: 'Diag' },

@@ -7,6 +7,7 @@ import Cycles from './pages/Cycles.jsx'
 import Alarms from './pages/Alarms.jsx'
 import Logs from './pages/Logs.jsx'
 import Diagnostics from './pages/Diagnostics.jsx'
+import Analytics from './pages/Analytics.jsx'
 import Settings from './pages/Settings.jsx'
 import SettingsHub from './pages/settings/SettingsHub.jsx'
 import UserSettings from './pages/settings/UserSettings.jsx'
@@ -46,6 +47,7 @@ function App() {
               <Route path="/alarms" element={<Alarms />} />
               <Route path="/logs" element={<Logs />} />
               <Route path="/diagnostics" element={<Diagnostics />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="/settings" element={<Settings />}>
                 <Route index element={<SettingsHub />} />
                 <Route path="user" element={<UserSettings />} />
