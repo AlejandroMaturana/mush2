@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import express from 'express';
-import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe } from '../models/index.js';
+import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe, IntegrationCredentials } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
@@ -407,6 +407,56 @@ router.post('/devices/:id/thingSpeak/validate', checkDeviceAccess, async (req, r
       return res.status(504).json({ error: 'Timeout al conectar con ThingSpeak' });
     }
     res.status(500).json({ error: 'Error validando ThingSpeak', details: err.message });
+  }
+});
+
+router.get('/devices/:id/integrations', checkDeviceAccess, async (req, res) => {
+  try {
+    const list = await IntegrationCredentials.findAll({
+      where: { deviceId: req.params.id },
+      attributes: ['id', 'provider', 'status', 'lastUsed', 'lastError', 'createdAt', 'updatedAt'],
+    });
+    res.json({ data: list });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (req, res) => {
+  try {
+    const { channelId, readKey, writeKey, syncInterval } = req.body;
+    if (!channelId) {
+      return res.status(400).json({ error: 'channelId requerido' });
+    }
+
+    const instance = await IntegrationCredentials.setCredentials(req.params.id, 'THINGSPEAK', {
+      channelId,
+      readKey: readKey || '',
+      writeKey: writeKey || '',
+      syncInterval: syncInterval || 300000,
+    });
+
+    await Device.update({
+      thingSpeakEnabled: true,
+      thingSpeakChannelId: channelId,
+      thingSpeakReadKey: readKey || null,
+      thingSpeakWriteKey: writeKey || null,
+      thingSpeakSyncInterval: syncInterval || 300000,
+    }, { where: { id: req.params.id } });
+
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'INTEGRATION_UPDATE',
+        resource: 'integration',
+        resourceId: instance.id,
+        details: { deviceId: req.device.deviceId, provider: 'THINGSPEAK' },
+      });
+    }
+
+    res.json({ data: { id: instance.id, provider: 'THINGSPEAK', status: instance.status } });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
 
