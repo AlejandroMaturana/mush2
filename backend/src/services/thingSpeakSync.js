@@ -1,5 +1,5 @@
 import { env } from '../config/env.js';
-import { Device, Telemetry, Sensor } from '../models/index.js';
+import { Device, Telemetry, Sensor, IntegrationCredentials } from '../models/index.js';
 
 const SENSOR_MAP = {
   field1: { type: 'TEMPERATURE', unit: '°C' },
@@ -32,8 +32,22 @@ export async function syncDeviceFromThingSpeak(deviceId) {
     const interval = device.thingSpeakSyncInterval || 300000;
     if (now - lastSync < interval) return;
 
-    const channelId = device.thingSpeakChannelId;
-    const apiKey = device.thingSpeakReadKey;
+    let channelId = device.thingSpeakChannelId;
+    let apiKey = device.thingSpeakReadKey;
+
+    if (!channelId || !apiKey) {
+      const creds = await IntegrationCredentials.findOne({
+        where: { deviceId, provider: 'THINGSPEAK', status: 'ACTIVE' },
+      });
+      if (creds) {
+        const decrypted = creds.getDecryptedCredentials();
+        if (decrypted) {
+          channelId = decrypted.channelId || channelId;
+          apiKey = decrypted.readKey || apiKey;
+        }
+      }
+    }
+
     if (!channelId || !apiKey) {
       console.log(`[TS] No ThingSpeak keys for device ${deviceId}`);
       return;
