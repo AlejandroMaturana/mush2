@@ -2,6 +2,14 @@
 
 ## 2026-07-11
 
+### Backend — v0.16.1
+
+**Modificado**
+- Instalada en todas las dependencias acordes crypto-js@^4.2.0
+- Actualizado pnpm-lock.yaml en la raíz
+
+## 2026-07-11
+
 ### Backend — v0.16.0
 
 - **Nuevo:**
