@@ -10,6 +10,7 @@ import { installTimestampedConsole } from './services/logger.js';
 import { syncAllFromThingSpeak } from './services/thingSpeakSync.js';
 import { initBot as initTelegramBot, stopBot as stopTelegramBot, notifyDeviceAlarm, reconfigureBot } from './services/telegramService.js';
 import SystemSetting from './models/SystemSetting.js';
+import { startDataRetentionJob, stopDataRetentionJob } from './jobs/dataRetentionJob.js';
 
 installTimestampedConsole();
 
@@ -54,6 +55,8 @@ async function start() {
       syncAllFromThingSpeak().catch(() => {});
       tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
       console.log(`[ThingSpeak] Sync check cada ${TS_CHECK_INTERVAL / 1000}s (intervalos por dispositivo)`);
+
+      startDataRetentionJob();
     });
 
     const publishActuators = (data) => {
@@ -84,6 +87,7 @@ function shutdown(signal) {
     try {
       if (tsSyncHandle) clearInterval(tsSyncHandle);
       stopControlEngine();
+      stopDataRetentionJob();
       stopTelegramBot();
       stopMqttBridge();
       stopWebSocketServer();

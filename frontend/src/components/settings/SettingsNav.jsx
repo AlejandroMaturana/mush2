@@ -6,6 +6,7 @@ const SECTIONS = [
   { to: '/settings/device', icon: 'developer_board', label: 'Device' },
   { to: '/settings/cultivation', icon: 'potted_plant', label: 'Cultivation' },
   { to: '/settings/api-keys', icon: 'vpn_key', label: 'API Keys' },
+  { to: '/settings/subscription', icon: 'workspace_premium', label: 'Suscripción' },
   { to: '/settings/system', icon: 'settings', label: 'System' },
 ]
 

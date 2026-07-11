@@ -30,6 +30,13 @@ const HUB_CARDS = [
     color: 'secondary',
   },
   {
+    to: '/settings/subscription',
+    icon: 'workspace_premium',
+    title: 'Suscripción',
+    subtitle: 'Plan, límites API & retención de datos',
+    color: 'primary',
+  },
+  {
     to: '/settings/system',
     icon: 'settings',
     title: 'System',

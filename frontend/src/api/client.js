@@ -310,6 +310,26 @@ export async function configureTelegramBot(token, username) {
   return data.data
 }
 
+export async function getSubscription() {
+  const { data } = await client.get('/subscriptions/mine')
+  return data
+}
+
+export async function getSubscriptionUsage() {
+  const { data } = await client.get('/subscriptions/mine/usage')
+  return data
+}
+
+export async function upgradePlan(plan) {
+  const { data } = await client.patch('/subscriptions/mine/upgrade', { plan })
+  return data
+}
+
+export async function cancelSubscription() {
+  const { data } = await client.patch('/subscriptions/mine/cancel')
+  return data
+}
+
 export async function getTelegramBotStatus() {
   const { data } = await client.get('/telegram/bot-status')
   return data.data

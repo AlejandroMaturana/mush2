@@ -2,6 +2,41 @@
 
 ## 2026-07-11
 
+### Backend - Suscripciones y Rate Limiting - v0.16.0
+
+**Nuevo Modelo y Lógica**
+- Modelo `Subscription` con planes **FREE**, **BASIC** y **PREMIUM**
+- Métodos: `createForUser()`, `usagePercentage()` e `isExceeded()`
+- Registro automático de plan **FREE** al crear un nuevo usuario
+
+**Rate Limiting**
+- Nuevo middleware `subscriptionRateLimit` con conteo atómico y reset por período
+- Aplicado a rutas protegidas
+
+**Rutas y Jobs**
+- Nuevas rutas en `/api/subscriptions`:
+  - `/mine` (plan actual)
+  - `/mine/usage`
+  - `upgrade`, `cancel`
+  - Rutas de administración
+- Nuevo job `dataRetentionJob` (ejecutado cada 60 minutos) para purga automática de `AuditLog`, `Telemetry` y `Alarm`
+- Montaje del `subscriptionsRouter` y gestión del job en `server.js`
+
+### Frontend - Suscripciones y Rate Limiting - v1.7.0
+
+- **Nueva página**: `SubscriptionSettings`
+  - Visualización del plan actual
+  - Barra de uso
+  - Opciones de upgrade y cancelación
+- Enlace agregado en `SettingsNav`
+- Nueva card en `SettingsHub`
+- Ruta `/settings/subscription` configurada
+- Nuevos métodos en `api/client.js` para manejar suscripciones
+
+**Resultado**: Sistema completo de suscripciones con planes, rate limiting inteligente y gestión de retención de datos.
+
+## 2026-07-11
+
 ### Backend — v0.16.1
 
 **Modificado**

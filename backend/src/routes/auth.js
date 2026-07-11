@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Subscription from '../models/Subscription.js';
 import { env } from '../config/env.js';
 import { authenticate } from '../middlewares/auth.js';
 import { logAudit } from '../services/auditService.js';
@@ -28,6 +29,8 @@ router.post('/register', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await User.create({ username, email, passwordHash });
+
+    await Subscription.createForUser(user.id, 'FREE');
 
     await logAudit({
       userId: user.id, action: 'REGISTER', resource: 'auth',
