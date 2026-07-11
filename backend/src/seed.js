@@ -1,6 +1,6 @@
 import sequelize from './config/database.js';
 import bcrypt from 'bcryptjs';
-import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device } from './models/index.js';
+import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device, IntegrationCredentials } from './models/index.js';
 
 const RECIPES = [
   {
@@ -230,6 +230,12 @@ async function seed() {
         thingSpeakReadKey: 'ABCDEFGHIJKLMNOP',
         thingSpeakWriteKey: 'ZYXWVUTSRQPONMLK',
         thingSpeakSyncInterval: 300000,
+      });
+      await IntegrationCredentials.setCredentials(device.id, 'THINGSPEAK', {
+        channelId: '123456',
+        readKey: 'ABCDEFGHIJKLMNOP',
+        writeKey: 'ZYXWVUTSRQPONMLK',
+        syncInterval: 300000,
       });
       console.log(`[Seed] ThingSpeak habilitado en dispositivo ${device.deviceId}`);
     }
