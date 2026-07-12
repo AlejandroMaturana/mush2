@@ -146,11 +146,16 @@ router.post('/logout', authenticate, async (req, res) => {
 });
 
 router.get('/me', authenticate, async (req, res) => {
-  const user = await User.findByPk(req.user.id, {
-    attributes: ['id', 'username', 'email', 'role', 'lastLoginAt', 'createdAt'],
-  });
-  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-  res.json(user);
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'username', 'email', 'role', 'lastLoginAt', 'createdAt'],
+    });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(user);
+  } catch (err) {
+    console.error('[AUTH] /me error:', err.message);
+    res.status(500).json({ error: 'Error interno' });
+  }
 });
 
 router.patch('/me', authenticate, async (req, res) => {

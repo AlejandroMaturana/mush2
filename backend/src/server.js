@@ -98,5 +98,13 @@ function shutdown(signal) {
   };
 }
 
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught Exception:', err);
+  shutdown('uncaughtException')();
+});
+
 process.on('SIGTERM', shutdown('SIGTERM'));
 process.on('SIGINT', shutdown('SIGINT'));

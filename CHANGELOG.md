@@ -2,6 +2,31 @@
 
 ## 2026-07-12
 
+### Backend — Mejoras de Estabilidad y Corrección de Errores — v0.17.2
+
+**Fixes**
+- **Server**: Agregados handlers globales de errores no capturados
+- `process.on('unhandledRejection')` y `process.on('uncaughtException')`
+- Errores ahora se loguean en lugar de matar silenciosamente el proceso
+- **Middleware**: Protección de `checkDeviceAccess` contra errores de base de datos
+- Envolvido en `try/catch`
+- Evita `unhandled promise rejections` en las 11 rutas de dispositivos
+- Retorna error 500 controlado
+- **Auth**: Protección del endpoint `GET /me`
+- Handler envuelto en `try/catch`
+- Evita crashes por errores en `User.findByPk()`
+- **Telegram**: Prevención de crashes en `bot.sendMessage`
+- Añadido `.catch()` a las 8 llamadas del bot
+- Errores de Telegram (red, rate limit, etc.) ahora se loguean sin afectar el proceso
+**Chore**
+- **Dev Script**: Optimización para evitar reinicios innecesarios
+- Cambiado a `node --watch --watch-path=src src/server.js`
+- Ignora cambios en carpetas `logs/`, `node_modules`, etc.
+
+**Resultado**: Backend significativamente más estable, con mejor manejo de errores inesperados y menor probabilidad de caídas silenciosas.
+
+## 2026-07-12
+
 ### Firmware (ESP32-S3) — v0.15.0 - Robustez del firmware
 
 - HealthMonitor: heartbeat por tarea con enum `HeartbeatTaskId` (7 tareas)

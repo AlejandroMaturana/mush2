@@ -42,7 +42,7 @@ export async function initBot(token, botUsername) {
     bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
       const text = `🤖 *Mush2 Bot*\n\nComandos disponibles:\n• \`/link CODIGO\` — Vincular tu cuenta de Telegram\n• \`/status\` — Ver estado de vinculación\n• \`/unlink\` — Desvincular Telegram`;
-      bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, text, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
     });
 
     bot.onText(/\/link (.+)/, async (msg, match) => {
@@ -58,7 +58,7 @@ export async function initBot(token, botUsername) {
         });
 
         if (!prefs) {
-          return bot.sendMessage(chatId, '❌ Código inválido o expirado. Genera uno nuevo desde Mush2.');
+          return bot.sendMessage(chatId, '❌ Código inválido o expirado. Genera uno nuevo desde Mush2.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         }
 
         await prefs.update({
@@ -68,11 +68,11 @@ export async function initBot(token, botUsername) {
           telegramLinkTokenExpires: null,
         });
 
-        bot.sendMessage(chatId, `✅ *¡Cuenta vinculada con éxito!*\n\nAhora recibirás alertas de tus dispositivos Mush2.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ *¡Cuenta vinculada con éxito!*\n\nAhora recibirás alertas de tus dispositivos Mush2.`, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         console.log(`[TELEGRAM] User ${prefs.userId} linked chat ${chatId}`);
       } catch (err) {
         console.error('[TELEGRAM] Error en /link:', err.message);
-        bot.sendMessage(chatId, '❌ Error al vincular. Intenta de nuevo.');
+        bot.sendMessage(chatId, '❌ Error al vincular. Intenta de nuevo.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
       }
     });
 
@@ -82,9 +82,9 @@ export async function initBot(token, botUsername) {
         const prefs = await UserPreference.findOne({ where: { telegramChatId: String(chatId) } });
         if (prefs) {
           const user = await User.findByPk(prefs.userId, { attributes: ['username'] });
-          bot.sendMessage(chatId, `✅ *Vinculado*\n\nUsuario: \`${user?.username || '—'}\`\nChat ID: \`${chatId}\``, { parse_mode: 'Markdown' });
+          bot.sendMessage(chatId, `✅ *Vinculado*\n\nUsuario: \`${user?.username || '—'}\`\nChat ID: \`${chatId}\``, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         } else {
-          bot.sendMessage(chatId, '❌ No estás vinculado. Usa `/link CODIGO` con el código generado en Mush2.', { parse_mode: 'Markdown' });
+          bot.sendMessage(chatId, '❌ No estás vinculado. Usa `/link CODIGO` con el código generado en Mush2.', { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         }
       } catch (err) {
         console.error('[TELEGRAM] Error en /status:', err.message);
@@ -97,9 +97,9 @@ export async function initBot(token, botUsername) {
         const prefs = await UserPreference.findOne({ where: { telegramChatId: String(chatId) } });
         if (prefs) {
           await prefs.update({ telegramChatId: null, telegramEnabled: false });
-          bot.sendMessage(chatId, '✅ *Telegram desvinculado.*\n\nYa no recibirás alertas.', { parse_mode: 'Markdown' });
+          bot.sendMessage(chatId, '✅ *Telegram desvinculado.*\n\nYa no recibirás alertas.', { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         } else {
-          bot.sendMessage(chatId, '❌ No estás vinculado.');
+          bot.sendMessage(chatId, '❌ No estás vinculado.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
         }
       } catch (err) {
         console.error('[TELEGRAM] Error en /unlink:', err.message);
