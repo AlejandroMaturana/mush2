@@ -29,6 +29,9 @@
 #include "actuator_nvs.h"
 #include "ble_provisioning.h"
 #include "health_monitor.h"
+#include "button_driver.h"
+#include "button_fsm.h"
+#include "button_handler.h"
 
 // ============================================================
 //  Global objects (defined in main.ino)
@@ -49,6 +52,9 @@ extern ThingSpeakClient ts;
 extern MQTTClient mqtt;
 extern BLEProvisioning bleProv;
 extern Adafruit_NeoPixel led;
+extern ButtonDriver buttonDriver;
+extern ButtonFsm buttonFsm;
+extern ButtonHandler buttonHandler;
 
 // ============================================================
 //  Shared state (accessed across cores, declared volatile)
@@ -102,6 +108,7 @@ extern TaskHandle_t taskPollerHandle;
 extern TaskHandle_t taskOTAHandle;
 extern TaskHandle_t taskTelemetryHandle;
 extern TaskHandle_t taskMQTTHandle;
+extern TaskHandle_t taskButtonHandle;
 
 // ============================================================
 //  Task entry points (implemented in tasks.cpp)
@@ -114,6 +121,7 @@ void taskOTA(void* pvParameters);
 void taskMQTT(void* pvParameters);
 void taskTelemetry(void* pvParameters);
 void taskProvisioningIdle(void* pvParameters);
+void taskButton(void* pvParameters);
 
 // ============================================================
 //  Helper functions (implemented in tasks.cpp)

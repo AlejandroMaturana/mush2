@@ -29,6 +29,9 @@
 #include "logger.h"
 #include "health_monitor.h"
 #include "telemetry_buffer.h"
+#include "button_driver.h"
+#include "button_fsm.h"
+#include "button_handler.h"
 #include "tasks.h"
 
 // ============================================================
@@ -96,6 +99,7 @@ TaskHandle_t taskPollerHandle = NULL;
 TaskHandle_t taskOTAHandle = NULL;
 TaskHandle_t taskTelemetryHandle = NULL;
 TaskHandle_t taskMQTTHandle = NULL;
+TaskHandle_t taskButtonHandle = NULL;
 
 // OTA command state (set by serial or MQTT)
 volatile bool otaCommandPending = false;
@@ -281,14 +285,24 @@ void setup() {
     xTaskCreatePinnedToCore(taskMQTT, "MQTT", STACK_MQTT, NULL, PRIORITY_MQTT, &taskMQTTHandle, CORE_NETWORK);
     xTaskCreatePinnedToCore(taskTelemetry, "Telemetry", STACK_TELEMETRY, NULL, PRIORITY_TELEMETRY, &taskTelemetryHandle, CORE_NETWORK);
 
+    telemetryBuffer.init(&eventBus);
+
+    // Inicializar boton SMFB
+    if (BUTTON_PIN >= 0) {
+      buttonDriver.init(BUTTON_PIN);
+      buttonFsm.init();
+      buttonHandler.init(&sm);
+      xTaskCreatePinnedToCore(taskButton, "Button", BUTTON_TASK_STACK,
+                              NULL, BUTTON_TASK_PRIORITY, &taskButtonHandle, CORE_CONTROL);
+    }
+
     healthMonitor.init(&eventBus, taskSensorsHandle, taskSSRHandle,
                        taskWiFiHandle, taskMQTTHandle, taskOTAHandle,
-                       taskTelemetryHandle);
-    telemetryBuffer.init(&eventBus);
+                       taskTelemetryHandle, taskButtonHandle);
     xTaskCreatePinnedToCore(taskMonitor, "Monitor", 4096, NULL, 1, NULL, CORE_NETWORK);
 
     Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
-    Serial.printf("[SYS] %d tareas FreeRTOS creadas\n", 8);
+    Serial.printf("[SYS] %d tareas FreeRTOS creadas\n", 9);
     setLEDColor(0, 0, 0);
 
   } else {

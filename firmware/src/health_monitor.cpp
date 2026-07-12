@@ -9,7 +9,7 @@ HealthMonitor healthMonitor;
 HealthMonitor::HealthMonitor()
   : _bus(nullptr), _taskSensors(nullptr), _taskSSR(nullptr),
     _taskWiFi(nullptr), _taskMQTT(nullptr), _taskOTA(nullptr),
-    _taskTelemetry(nullptr), _healthy(true) {
+    _taskTelemetry(nullptr), _taskButton(nullptr), _healthy(true) {
   memset(&_metrics, 0, sizeof(_metrics));
   for (int i = 0; i < HB_TASK_COUNT; i++) {
     _lastHeartbeat[i] = 0;
@@ -18,7 +18,7 @@ HealthMonitor::HealthMonitor()
 
 void HealthMonitor::init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
                          TaskHandle_t wifi, TaskHandle_t mqtt, TaskHandle_t ota,
-                         TaskHandle_t telemetry) {
+                         TaskHandle_t telemetry, TaskHandle_t button) {
   _bus = bus;
   _taskSensors = sensors;
   _taskSSR = ssr;
@@ -26,7 +26,8 @@ void HealthMonitor::init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
   _taskMQTT = mqtt;
   _taskOTA = ota;
   _taskTelemetry = telemetry;
-  LOG_I("HEALTH", "HealthMonitor inicializado");
+  _taskButton = button;
+  LOG_I("HEALTH", "HealthMonitor inicializado (8 tasks tracked)");
 }
 
 uint16_t HealthMonitor::_getStackHighWater(TaskHandle_t task) {
@@ -52,6 +53,7 @@ void HealthMonitor::_checkTaskStacks() {
   _metrics.stackMQTT = _getStackHighWater(_taskMQTT);
   _metrics.stackOTA = _getStackHighWater(_taskOTA);
   _metrics.stackTelemetry = _getStackHighWater(_taskTelemetry);
+  _metrics.stackButton = _getStackHighWater(_taskButton);
 }
 
 void HealthMonitor::_checkI2C() {
@@ -117,7 +119,7 @@ void HealthMonitor::_checkHeartbeats() {
   }
 
   if (!_metrics.heartbeatsHealthy) {
-    const char* taskNames[] = {"Sensors", "SSR", "WiFi", "MQTT", "OTA", "Telemetry", "Poller"};
+    const char* taskNames[] = {"Sensors", "SSR", "WiFi", "MQTT", "OTA", "Telemetry", "Poller", "Button"};
     for (int i = 0; i < HB_TASK_COUNT; i++) {
       if (_metrics.staleTaskMask & (1 << i)) {
         LOG_W("HEALTH", "Task %s STALE (no heartbeat >%dms)", taskNames[i], HEARTBEAT_TIMEOUT_MS);

@@ -674,3 +674,33 @@ void taskTelemetry(void* pvParameters) {
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_TELEMETRY));
   }
 }
+
+// ============================================================
+//  FreeRTOS Tasks — Core 1 (Button SMFB)
+// ============================================================
+
+void taskButton(void* pvParameters) {
+  esp_err_t wdtErr = esp_task_wdt_add(NULL);
+  if (wdtErr != ESP_OK) Serial.printf("[BUTTON] WDT add: %s (0x%x)\n",
+    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
+  TickType_t lastWake = xTaskGetTickCount();
+
+  while (true) {
+    esp_task_wdt_reset();
+    healthMonitor.feed(HB_BUTTON);
+
+    buttonFsm.loop();
+
+    if (buttonFsm.isHolding()) {
+      uint32_t duration = buttonFsm.getHoldDuration();
+      buttonHandler.ledHoldProgress(duration);
+    }
+
+    ButtonGesture gesture = buttonFsm.getGesture();
+    if (gesture != BTN_NONE) {
+      buttonHandler.handleGesture(gesture, buttonFsm.getHoldDuration());
+    }
+
+    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(BUTTON_TASK_DELAY_MS));
+  }
+}
