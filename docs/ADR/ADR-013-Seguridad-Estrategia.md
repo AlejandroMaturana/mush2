@@ -10,7 +10,7 @@ El proyecto Mush2 opera en un modelo de 3 capas (firmware ESP32-S3 → backend N
 
 ### 1. Gestión de Secretos
 
-- **Secretos en repositorio**: `firmware-esp32/src/config.h` contiene claves WiFi, API key de ThingSpeak, dirección IP del backend local y contraseñas WiFi en texto plano. El archivo `.env` raíz contiene credenciales de base de datos y JWT secret, y está commiteado en el repositorio Git.
+- **Secretos en repositorio**: `firmware/src/config.h` contiene claves WiFi, API key de ThingSpeak, dirección IP del backend local y contraseñas WiFi en texto plano. El archivo `.env` raíz contiene credenciales de base de datos y JWT secret, y está commiteado en el repositorio Git.
 - **Reutilización de clave criptográfica**: `encryption.js` usa `JWT_SECRET` como clave AES-256-GCM para el cifrado simétrico. Esto viola el principio de separación de propósitos: la misma clave se usa para firmar tokens JWT y cifrar datos en repositorio.
 - **JWT_SECRET por defecto**: `env.js` define `'dev-secret-change-in-production'` como fallback si no existe la variable de entorno. No hay validación de que sea una clave segura en producción.
 - **Sin rotación de secretos**: No hay mecanismo para rotar JWT_SECRET, API keys de ThingSpeak, ni claves WiFi.
@@ -264,10 +264,10 @@ Fase 5 (futuro): Madurez — continuo
 - `backend/src/services/mqttBridge.js` — Conexión a broker público sin TLS
 - `backend/src/server.js` — sync({ alter: true }) en desarrollo (línea 16)
 - `backend/src/services/auditService.js` — Esqueleto de auditoría sin implementar
-- `firmware-esp32/src/config.h` — Secretos en texto plano (líneas 12-24)
-- `firmware-esp32/src/http_poller.h` — Conexión HTTP sin TLS
-- `firmware-esp32/src/thingspeak_client.cpp` — Conexión HTTP sin TLS
-- `firmware-esp32/generate_config.py` — Script existente para generar config.h desde .env
+- `firmware/src/config.h` — Secretos en texto plano (líneas 12-24)
+- `firmware/src/http_poller.h` — Conexión HTTP sin TLS
+- `firmware/src/thingspeak_client.cpp` — Conexión HTTP sin TLS
+- `firmware/generate_config.py` — Script existente para generar config.h desde .env
 - `docs/ADR/ADR-007-JWT-RBAC.md` — Decisión original de autenticación JWT + RBAC
 - `docs/ADR/ADR-008-HTTP-Command-Protocol.md` — Protocolo HTTP polling (contradice MQTT activo)
 - `docs/ADR/ADR-006-Logs-Monitoreo-estrategia.md` — Estrategia de logs (sin auditoría de seguridad)

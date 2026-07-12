@@ -7,7 +7,7 @@
 
 El repositorio del proyecto Mush2 ha ido creciendo de forma orgánica en sus tres componentes principales:
 
-- firmware-esp32
+- firmware
 - backend
 - frontend
 

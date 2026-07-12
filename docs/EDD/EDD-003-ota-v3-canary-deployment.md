@@ -160,7 +160,7 @@ void OtaHandler::postBootValidation() {
 ### Tabla de particiones
 
 ```
-# firmware-esp32/partitions.csv
+# firmware/partitions.csv
 # Name,   Type, SubType, Offset,   Size, Flags
 nvs,       data, nvs,     0x9000,   0x5000,
 otadata,   data, ota,     0xe000,   0x2000,

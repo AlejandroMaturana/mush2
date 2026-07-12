@@ -148,14 +148,14 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 
 | Archivo | Propósito |
 |---------|-----------|
-| `firmware-esp32/src/ota_nvs.{h,cpp}` | Inicialización NVS (namespace `mush2`, key `fw_version`), esquema v1 |
-| `firmware-esp32/src/ota_decisor.{h,cpp}` | `OTASelector`: validación de URL, SemVer, RSSI mínimo |
-| `firmware-esp32/src/ota_shutdown.{h,cpp}` | `OTAShutdown`: apagado seguro de SSR, sensores, comunicaciones |
-| `firmware-esp32/src/ota_executor.{h,cpp}` | `OTAExecutor`: descarga HTTPS + SHA-256 verify (mbedtls) + Update.write() |
-| `firmware-esp32/src/ota_postboot.{h,cpp}` | `OTAConfirmation`: self-test (WiFi, I2C, AHT21, heap) + confirm() |
-| `firmware-esp32/src/mqtt_client.{h,cpp}` | Cliente MQTT con PubSubClient, callback OTA 3 params (url, version, hash) |
-| `firmware-esp32/src/state_machine.{h,cpp}` | Matriz 9×9 con `fsmTransition()`, transición `INIT→SAFE`, NVS persistence |
-| `firmware-esp32/partitions.csv` | OTA dual 8MB (app0/app1, spiffs, coredump) |
+| `firmware/src/ota_nvs.{h,cpp}` | Inicialización NVS (namespace `mush2`, key `fw_version`), esquema v1 |
+| `firmware/src/ota_decisor.{h,cpp}` | `OTASelector`: validación de URL, SemVer, RSSI mínimo |
+| `firmware/src/ota_shutdown.{h,cpp}` | `OTAShutdown`: apagado seguro de SSR, sensores, comunicaciones |
+| `firmware/src/ota_executor.{h,cpp}` | `OTAExecutor`: descarga HTTPS + SHA-256 verify (mbedtls) + Update.write() |
+| `firmware/src/ota_postboot.{h,cpp}` | `OTAConfirmation`: self-test (WiFi, I2C, AHT21, heap) + confirm() |
+| `firmware/src/mqtt_client.{h,cpp}` | Cliente MQTT con PubSubClient, callback OTA 3 params (url, version, hash) |
+| `firmware/src/state_machine.{h,cpp}` | Matriz 9×9 con `fsmTransition()`, transición `INIT→SAFE`, NVS persistence |
+| `firmware/partitions.csv` | OTA dual 8MB (app0/app1, spiffs, coredump) |
 
 ### Flujo OTA v3 completo
 

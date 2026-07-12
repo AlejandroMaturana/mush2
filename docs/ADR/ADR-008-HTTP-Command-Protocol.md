@@ -261,8 +261,8 @@ CREATE INDEX idx_command_queue_device_status
 | Firmware detecta WiFi caído | Inmediato | Estado DEGRADED, reintenta cada 10s hasta 5 veces, luego SAFE |
 
 ## Referencias
-- Implementación firmware: `firmware-esp32/src/http_poller.h`, `firmware-esp32/src/http_poller.cpp`, `firmware-esp32/src/main.ino`
+- Implementación firmware: `firmware/src/http_poller.h`, `firmware/src/http_poller.cpp`, `firmware/src/main.ino`
 - Implementación backend: `backend/src/routes/actuators.js`, `backend/src/routes/api.js`, `backend/src/services/controlEngine.js`
-- Configuración: `firmware-esp32/src/config.h`
+- Configuración: `firmware/src/config.h`
 - Contrato API: `docs/contracts/api-contract.md`
 - Ver también: ADR-001 (placa ESP32-S3), ADR-004 (ThingSpeak backhaul), ADR-005 (PostgreSQL)

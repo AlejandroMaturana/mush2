@@ -111,7 +111,7 @@ curl http://localhost:3797/monitoring/health/polling | jq
 **Fix:**
 
 ```cpp
-// firmware-esp32/src/http_poller.cpp
+// firmware/src/http_poller.cpp
 http.setTimeout(10000);  // aumentar timeout
 http.setConnectTimeout(5000);  // más tolerante
 ```

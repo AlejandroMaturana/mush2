@@ -25,7 +25,7 @@ pnpm run dev  # Vite, puerto 5173, proxy /api y /events a localhost:3797
 
 ### Firmware
 ```bash
-cd firmware-esp32
+cd firmware
 python generate_config.py ../.env  # genera config.h desde .env
 pio run --target upload            # flashear ESP32-S3-DevKitC-1
 pio device monitor                 # logs serial 115200 baud

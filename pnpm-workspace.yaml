@@ -1,4 +1,4 @@
 packages:
   - "frontend"
   - "backend"
-  - "firmware-esp32"
+  - "firmware"

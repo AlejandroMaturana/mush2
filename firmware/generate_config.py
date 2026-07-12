@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate firmware-esp32/src/config.h from .env file."""
+"""Generate firmware/src/config.h from .env file."""
 
 import os
 import re

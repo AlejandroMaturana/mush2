@@ -28,7 +28,7 @@ jobs:
 
       - name: Create config.h
         run: |
-          cd firmware-esp32
+          cd firmware
           echo '#ifndef CONFIG_H
           #define CONFIG_H
           #define WIFI_SSID_1 ""
@@ -57,7 +57,7 @@ jobs:
           #endif' > src/config.h
 
       - name: Build firmware
-        run: cd firmware-esp32 && pio run
+        run: cd firmware && pio run
 
   backend:
     name: Backend test

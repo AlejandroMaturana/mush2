@@ -2,6 +2,24 @@
 
 ## 2026-07-12
 
+### Chore & Refactor — Renombre firmware-esp32→firmware
+
+**Renombrado del directorio**: `firmware-esp32/` → `firmware/`
+- Cambio masivo y atómico en todo el monorepo
+- Actualizadas todas las referencias (22 archivos, ~62 ocurrencias)
+- Afectados: workspace pnpm, CI/CD, documentación, ADRs, scripts y configuraciones
+
+**Archivos clave actualizados:**
+`.github/workflows/ci.yml`
+`pnpm-workspace.yaml`
+`pnpm-lock.yaml`
+Múltiples ADRs y documentación de arquitectura
+Scripts internos y plantillas de GitHub
+
+**Resultado**: Estructura más breve. El directorio `firmware/` ahora refleja mejor el nombre y facilita el mantenimiento.
+
+## 2026-07-12
+
 ### Backend — Mejoras de Estabilidad y Corrección de Errores — v0.17.2
 
 **Fixes**

@@ -97,10 +97,10 @@ public:
 
 ## Referencias
 
-- Implementacion: `firmware-esp32/src/event_bus.h`, `firmware-esp32/src/event_bus.cpp`
-- Integracion: `firmware-esp32/src/tasks.cpp` (taskSSR)
-- Consumidor MQTT: `firmware-esp32/src/mqtt_client.cpp`
-- Consumidor Logger: `firmware-esp32/src/logger.cpp`
-- Consumidor TelemetryBuffer: `firmware-esp32/src/telemetry_buffer.cpp`
+- Implementacion: `firmware/src/event_bus.h`, `firmware/src/event_bus.cpp`
+- Integracion: `firmware/src/tasks.cpp` (taskSSR)
+- Consumidor MQTT: `firmware/src/mqtt_client.cpp`
+- Consumidor Logger: `firmware/src/logger.cpp`
+- Consumidor TelemetryBuffer: `firmware/src/telemetry_buffer.cpp`
 - ADR-012-FreeRTOS: Decision de usar FreeRTOS con 6 tareas
 - ADR-014-OTA-v3: Sistema OTA que ahora publica eventos via bus

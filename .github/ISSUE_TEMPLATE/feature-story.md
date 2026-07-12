@@ -12,7 +12,7 @@ assignees: ''
 
 ## Contexto
 
-- **Componente:** `[firmware-esp32 / backend / frontend / docs]`
+- **Componente:** `[firmware / backend / frontend / docs]`
 - **Epic:** #---
 - **Milestone:** M--
 - **Prioridad:** `[🔥 Crítica / ⚡ Alta / 📋 Media / 💤 Baja]`

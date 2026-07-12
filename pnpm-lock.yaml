@@ -67,7 +67,7 @@ importers:
         specifier: ^7.2.2
         version: 7.2.2
 
-  firmware-esp32: {}
+  firmware: {}
 
   frontend:
     dependencies:

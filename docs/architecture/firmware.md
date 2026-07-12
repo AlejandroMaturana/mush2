@@ -40,7 +40,7 @@
 ## Estructura de Directorios
 
 ```
-firmware-esp32/
+firmware/
 ├── src/
 │   ├── main.cpp               # Setup + 7 tareas FreeRTOS, globals, setup()/loop()
 │   ├── tasks.h/.cpp           # Tareas FreeRTOS extraídas + helpers

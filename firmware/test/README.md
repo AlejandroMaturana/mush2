@@ -50,7 +50,7 @@ test/
 ### Con PlatformIO (recomendado)
 
 ```bash
-cd firmware-esp32/test/S3_test-<nombre>
+cd firmware/test/S3_test-<nombre>
 pio run -t upload
 pio device monitor
 ```

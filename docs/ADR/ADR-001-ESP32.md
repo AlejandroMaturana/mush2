@@ -63,5 +63,5 @@ board_upload.flash_size = 16MB
 - Polling a backend local: cada 3 segundos (`POLL_INTERVAL`)
 
 ## Referencias
-- Implementación: `firmware-esp32/platformio.ini`, `firmware-esp32/src/config.h`
+- Implementación: `firmware/platformio.ini`, `firmware/src/config.h`
 - Ver también: ADR-002 (sensores), ADR-003 (SSRs)

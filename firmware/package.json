@@ -1,5 +1,5 @@
 {
-  "name": "firmware-esp32",
+  "name": "firmware",
   "version": "0.15.0",
   "private": true,
   "description": "",

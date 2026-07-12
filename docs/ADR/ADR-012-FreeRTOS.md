@@ -171,12 +171,12 @@ Fase 4 (largo plazo): taskMonitor + Health Check
 
 ## Referencias
 
-- `firmware-esp32/src/main.ino` — Setup + globals, 8 tareas FreeRTOS
-- `firmware-esp32/src/tasks.h/.cpp` — Tareas FreeRTOS extraídas + helpers
-- `firmware-esp32/src/health_monitor.h/.cpp` — taskMonitor: health checks periódicos
-- `firmware-esp32/src/event_bus.h/.cpp` — Event Bus in-memory (pub/sub)
-- `firmware-esp32/src/config.h` — Stack sizes, prioridades, delays, CORE_CONTROL/CORE_NETWORK
-- `firmware-esp32/src/state_machine.cpp` — Software Watchdog (SWDT): `feedWatchdog()`, `handleWatchdog()`
+- `firmware/src/main.ino` — Setup + globals, 8 tareas FreeRTOS
+- `firmware/src/tasks.h/.cpp` — Tareas FreeRTOS extraídas + helpers
+- `firmware/src/health_monitor.h/.cpp` — taskMonitor: health checks periódicos
+- `firmware/src/event_bus.h/.cpp` — Event Bus in-memory (pub/sub)
+- `firmware/src/config.h` — Stack sizes, prioridades, delays, CORE_CONTROL/CORE_NETWORK
+- `firmware/src/state_machine.cpp` — Software Watchdog (SWDT): `feedWatchdog()`, `handleWatchdog()`
 - `docs/ADR/ADR-001-ESP32.md` — Decisión original de FreeRTOS + dual-core
 - `docs/ADR/ADR-010-Mecanismo-Fail-Safe-Overheat.md` — Mecanismos de seguridad térmica
 - `docs/ADR/ADR-017-Event-Bus.md` — Event Bus architecture decision

@@ -33,7 +33,7 @@ assignees: ''
 
 ## Entorno
 
-- **Componente:** `[firmware-esp32 / backend / frontend]`
+- **Componente:** `[firmware / backend / frontend]`
 - **Versión:** `[0.9.0]`
 - **Hardware:** `[ESP32-S3-DevKitC-1]`
 - **SO:** `[Windows / Linux / macOS]`
