@@ -46,8 +46,8 @@ Subscription.init({
   apiCallsPerMonth: { type: DataTypes.INTEGER, defaultValue: 1000, allowNull: false },
   apiCallsUsedThisMonth: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
   dataRetentionDays: { type: DataTypes.INTEGER, defaultValue: 30, allowNull: false },
-  currentPeriodStart: { type: DataTypes.DATE, allowNull: false },
-  currentPeriodEnd: { type: DataTypes.DATE, allowNull: false },
+  currentPeriodStart: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  currentPeriodEnd: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal("NOW() + INTERVAL '1 month'") },
   canceledAt: { type: DataTypes.DATE, allowNull: true },
 }, {
   sequelize,
