@@ -2,6 +2,38 @@
 
 ## 2026-07-11
 
+### Firmware (ESP32-S3) — Refactor de Resiliencia y Arquitectura v0.14.0
+
+**Nuevo**
+- EventBus: Sistema pub/sub thread-safe basado en FreeRTOS queue (10 tipos de eventos)
+- Logger: Multi-sink (Serial, SPIFFS con rotación, MQTT) + macros `LOG_*` convenientes
+- HealthMonitor: 7ª tarea FreeRTOS dedicada a chequeos periódicos (heap, stack, I2C, sensores)
+- TelemetryBuffer: Buffer en RAM (200 entradas) + persistencia offline en SPIFFS con replay automático al reconectar
+
+**Refactor**
+- Tasks Module: Extracción completa de todas las tareas FreeRTOS a `tasks.{h,cpp}`
+  - `main.ino` reducido de 944 → 223 líneas (mucho más limpio)
+- State Machine: Mejoras en transiciones y persistencia de estado en NVS (`fsmState`)
+- Setpoints: Persistencia automática en NVS
+- OTA: 
+  - Implementada verificación **SHA-256** con mbedtls
+  - Refactor de acoplamiento (eliminados `externs`)
+  - Mejora en self-test post-boot
+
+**Correcciones**
+- Corrección de bugs detectados durante el refactor (printf, includes, nombres de instancias)
+
+**Documentación**
+- ADR-012-FreeRTOS: Actualizado con implementación real de 8 tareas y taskMonitor
+- ADR-014-OTA-v3: Actualizado con verificación SHA-256 y flujo mejorado
+- ADR-016: Nuevo — Capability-based Subscription
+- ADR-017: Nuevo — Event-Bus Architecture
+- firmware.md: Sección completa actualizada con estructura actual y 7 tareas
+
+**Resultado**: Firmware mucho más robusto, mantenible y observable, con mejor separación de responsabilidades, logging avanzado, monitoreo de salud y resiliencia offline.
+
+## 2026-07-11
+
 ### Backend - Suscripciones y Rate Limiting - v0.16.0
 
 **Nuevo Modelo y Lógica**
