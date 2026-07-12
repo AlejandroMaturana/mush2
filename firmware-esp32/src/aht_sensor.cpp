@@ -60,7 +60,7 @@ SensorReading AHTSensor::read() {
   esp_task_wdt_reset();
 
   // Wait for conversion (AHT21 max 80ms)
-  delay(80);
+  vTaskDelay(pdMS_TO_TICKS(80));
 
   esp_task_wdt_reset();
 
