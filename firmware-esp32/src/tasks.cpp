@@ -31,6 +31,17 @@ void processPhotoperiod() {
 }
 
 // ============================================================
+//  NTP timestamp helper
+// ============================================================
+
+time_t getTimestamp() {
+  if (ntpSynced) {
+    return time(NULL);
+  }
+  return (time_t)((millis()) / 1000);
+}
+
+// ============================================================
 //  OTA / MQTT callbacks
 // ============================================================
 
@@ -104,12 +115,16 @@ void taskSensors(void* pvParameters) {
 
       if (sensorFailCount >= 3) {
         ssr.setAll(0);
-        strcpy(systemState, "SAFE_SENSOR");
+        sensorFailed = true;
+        sm.setError("SENSOR_FAIL_AHT21");
         Serial.println("[ALARM] SENSOR_FAIL_AHT21");
         if (fallbackActive && (millis() - fallbackStart > 300000)) {
           fallbackActive = false;
+          lastSensorValid = 0;
+          Serial.println("[SENSOR] Fallback expirado — sin datos válidos");
         }
-        if (!fallbackActive && lastSensorValid > 0) {
+        if (!fallbackActive && lastSensorValid > 0 &&
+            (millis() - lastSensorValid < 600000)) {
           fallbackActive = true;
           fallbackStart = millis();
           fallbackTemp = lastValidTemp;
@@ -126,7 +141,10 @@ void taskSensors(void* pvParameters) {
       if (sensorFailCount > 0) {
         sensorFailCount = 0;
         Serial.println("[SENSOR] Sensor recuperado");
-        if (strcmp(systemState, "SAFE_SENSOR") == 0) strcpy(systemState, "NORMAL");
+        if (sensorFailed) {
+          sensorFailed = false;
+          sm.fsmTransition(ST_NORMAL, "sensor recovered");
+        }
       }
       lastSensorValid = millis();
       lastValidTemp = temp;
@@ -173,7 +191,7 @@ void taskSensors(void* pvParameters) {
       }
     } else if (!fallbackActive) {
       sharedSensorsValid = false;
-      strcpy(systemState, "DEGRADED");
+      sm.fsmTransition(ST_DEGRADED, "sensor fail no fallback");
       Serial.println("[SENSOR] Lectura inválida — sin fallback disponible");
     }
 
@@ -225,7 +243,7 @@ void taskSSR(void* pvParameters) {
         finalState[1] = 0;
       }
 
-      if (strcmp(systemState, "SAFE_SENSOR") == 0) {
+      if (sensorFailed) {
         finalState[0] = 0;
         finalState[1] = 0;
         finalState[2] = 0;
@@ -255,7 +273,7 @@ void taskSSR(void* pvParameters) {
     }
 
     DeviceState current = sm.getState();
-    bool faultActive = sharedOverheatActive || strcmp(systemState, "SAFE_SENSOR") == 0;
+    bool faultActive = sharedOverheatActive || sensorFailed;
 
     if ((current == ST_NORMAL || current == ST_DEGRADED) && faultActive) {
       sm.fsmTransition(ST_ERROR, "fault detected");
@@ -273,7 +291,7 @@ void taskSSR(void* pvParameters) {
       if (reason) Serial.printf("[ALARM] %s\n", reason);
     }
 
-    if (sharedOverheatActive || strcmp(systemState, "SAFE_SENSOR") == 0) {
+    if (sharedOverheatActive || sensorFailed) {
       setLEDColor(255, 0, 0);
     } else if (!sharedSensorsValid) {
       setLEDColor(255, 255, 0);

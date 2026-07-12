@@ -69,7 +69,8 @@ extern volatile float lastValidTemp;
 extern volatile float lastValidHum;
 extern volatile bool fallbackActive;
 extern volatile unsigned long sensorFailCount;
-extern char systemState[16];
+extern volatile bool sensorFailed;
+extern volatile bool ntpSynced;
 extern char sharedMac[18];
 extern char sharedFwVer[20];
 extern char sharedHwRev[10];
@@ -117,6 +118,7 @@ void taskProvisioningIdle(void* pvParameters);
 // ============================================================
 void setLEDColor(uint8_t r, uint8_t g, uint8_t b);
 void processPhotoperiod();
+time_t getTimestamp();
 void otaMqttCallback(const char* url, const char* version, const char* hash);
 void mqttActuatorCallback(const MqttActuatorMessage* msg);
 
