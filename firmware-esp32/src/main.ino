@@ -5,6 +5,7 @@
 #include <esp_task_wdt.h>
 #include <time.h>
 #include <esp_sntp.h>
+#include <esp_timer.h>
 #include "config.h"
 #include "wifi_manager.h"
 #include "state_machine.h"
@@ -84,7 +85,7 @@ volatile uint8_t actuatorMode[4] = {0, 0, 0, 0};
 
 // NVS persistence
 volatile bool provisionalMode = false;
-volatile unsigned long lastActuatorPersist = 0;
+volatile int64_t lastActuatorPersist = 0;
 uint32_t holdWindow[4] = {ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS, ACTUATOR_HOLD_WINDOW_MS};
 
 // Task handles
@@ -256,14 +257,20 @@ void setup() {
       vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
-    if (otaConfirmacion.selfTest()) {
-      otaConfirmacion.confirm();
-      String ver = nvsGetFwVer();
-      Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
-      char successPayload[128];
-      snprintf(successPayload, sizeof(successPayload),
-        "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
-      mqtt.publish("ota/status", successPayload, true);
+    if (otaConfirmacion.isPendingVerification()) {
+      if (otaConfirmacion.selfTest()) {
+        otaConfirmacion.confirm();
+        String ver = nvsGetFwVer();
+        Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
+        char successPayload[128];
+        snprintf(successPayload, sizeof(successPayload),
+          "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
+        mqtt.publish("ota/status", successPayload, true);
+      } else {
+        Serial.println("[OTA] Self-test falló — rollback pendiente");
+      }
+    } else {
+      esp_ota_mark_app_valid_cancel_rollback();
     }
 
     xTaskCreatePinnedToCore(taskSensors, "Sensors", STACK_SENSORS, NULL, PRIORITY_SENSORS, &taskSensorsHandle, CORE_CONTROL);

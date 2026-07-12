@@ -5,6 +5,19 @@
 #include <freertos/FreeRTOS.h>
 #include "event_bus.h"
 
+enum HeartbeatTaskId {
+  HB_SENSORS = 0,
+  HB_SSR,
+  HB_WIFI,
+  HB_MQTT,
+  HB_OTA,
+  HB_TELEMETRY,
+  HB_POLLER,
+  HB_TASK_COUNT
+};
+
+#define HEARTBEAT_TIMEOUT_MS 30000
+
 struct HealthMetrics {
   uint32_t freeHeap;
   uint32_t minFreeHeap;
@@ -21,6 +34,8 @@ struct HealthMetrics {
   uint8_t nvsWriteErrors;
   uint32_t uptime;
   uint8_t rebootCount;
+  bool heartbeatsHealthy;
+  uint8_t staleTaskMask;
 };
 
 class HealthMonitor {
@@ -29,6 +44,7 @@ public:
   void init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
             TaskHandle_t wifi, TaskHandle_t mqtt, TaskHandle_t ota,
             TaskHandle_t telemetry);
+  void feed(HeartbeatTaskId task);
   void checkQuick();
   void checkComprehensive();
   HealthMetrics getMetrics();
@@ -45,12 +61,15 @@ private:
   TaskHandle_t _taskOTA;
   TaskHandle_t _taskTelemetry;
   bool _healthy;
+  unsigned long _lastHeartbeat[HB_TASK_COUNT];
 
   void _checkHeap();
   void _checkTaskStacks();
   void _checkI2C();
   void _checkSensors();
+  void _checkHeartbeats();
   void _publishMetrics();
+  void _recoverI2C();
   uint16_t _getStackHighWater(TaskHandle_t task);
 };
 

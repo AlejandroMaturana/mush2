@@ -5,7 +5,7 @@
 #include <Preferences.h>
 
 #define SSR_CHANNELS 4
-#define SSR_NVS_NS "mush2"
+#define SSR_NVS_NS "mush2_ssr"
 #define SSR_NVS_KEY "ssr_mode"
 
 struct SSRChannel {

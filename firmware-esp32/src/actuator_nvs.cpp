@@ -1,4 +1,5 @@
 #include "actuator_nvs.h"
+#include <esp_timer.h>
 
 void actuatorNVSInit() {
   Preferences prefs;
@@ -43,7 +44,7 @@ void actuatorNVSSave(const ActuatorPersistedData* data) {
   Preferences prefs;
   prefs.begin(ACTUATOR_NVS_NS, false);
   prefs.putBytes(ACTUATOR_NVS_KEY_STATE, data, sizeof(ActuatorPersistedData));
-  prefs.putULong(ACTUATOR_NVS_KEY_TS, millis());
+  prefs.putULong(ACTUATOR_NVS_KEY_TS, (uint32_t)(esp_timer_get_time() / 1000));
   prefs.end();
 }
 

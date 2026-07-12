@@ -1,5 +1,6 @@
 #include "health_monitor.h"
 #include "logger.h"
+#include "config.h"
 #include <Wire.h>
 #include <esp_task_wdt.h>
 
@@ -10,6 +11,9 @@ HealthMonitor::HealthMonitor()
     _taskWiFi(nullptr), _taskMQTT(nullptr), _taskOTA(nullptr),
     _taskTelemetry(nullptr), _healthy(true) {
   memset(&_metrics, 0, sizeof(_metrics));
+  for (int i = 0; i < HB_TASK_COUNT; i++) {
+    _lastHeartbeat[i] = 0;
+  }
 }
 
 void HealthMonitor::init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
@@ -60,6 +64,66 @@ void HealthMonitor::_checkI2C() {
   _metrics.sensorEns160 = (errEns == 0);
 
   _metrics.i2cBusHealthy = (errAht == 0 || errEns == 0);
+
+  if (!_metrics.i2cBusHealthy) {
+    LOG_W("HEALTH", "I2C bus falló — intentando recuperación");
+    _recoverI2C();
+
+    Wire.beginTransmission(0x38);
+    errAht = Wire.endTransmission();
+    _metrics.sensorAht21 = (errAht == 0);
+
+    Wire.beginTransmission(0x53);
+    errEns = Wire.endTransmission();
+    _metrics.sensorEns160 = (errEns == 0);
+
+    _metrics.i2cBusHealthy = (errAht == 0 || errEns == 0);
+    if (_metrics.i2cBusHealthy) {
+      LOG_I("HEALTH", "I2C recuperado tras recovery");
+    }
+  }
+}
+
+void HealthMonitor::_recoverI2C() {
+  pinMode(I2C_SCL, OUTPUT);
+  for (int i = 0; i < 9; i++) {
+    digitalWrite(I2C_SCL, LOW);
+    delayMicroseconds(5);
+    digitalWrite(I2C_SCL, HIGH);
+    delayMicroseconds(5);
+  }
+  Wire.end();
+  Wire.begin(I2C_SDA, I2C_SCL);
+  Wire.setClock(I2C_FREQ);
+  delay(10);
+}
+
+void HealthMonitor::feed(HeartbeatTaskId task) {
+  if (task < HB_TASK_COUNT) {
+    _lastHeartbeat[task] = millis();
+  }
+}
+
+void HealthMonitor::_checkHeartbeats() {
+  unsigned long now = millis();
+  _metrics.staleTaskMask = 0;
+  _metrics.heartbeatsHealthy = true;
+
+  for (int i = 0; i < HB_TASK_COUNT; i++) {
+    if (_lastHeartbeat[i] > 0 && (now - _lastHeartbeat[i]) > HEARTBEAT_TIMEOUT_MS) {
+      _metrics.staleTaskMask |= (1 << i);
+      _metrics.heartbeatsHealthy = false;
+    }
+  }
+
+  if (!_metrics.heartbeatsHealthy) {
+    const char* taskNames[] = {"Sensors", "SSR", "WiFi", "MQTT", "OTA", "Telemetry", "Poller"};
+    for (int i = 0; i < HB_TASK_COUNT; i++) {
+      if (_metrics.staleTaskMask & (1 << i)) {
+        LOG_W("HEALTH", "Task %s STALE (no heartbeat >%dms)", taskNames[i], HEARTBEAT_TIMEOUT_MS);
+      }
+    }
+  }
 }
 
 void HealthMonitor::_checkSensors() {
@@ -101,14 +165,16 @@ void HealthMonitor::checkComprehensive() {
   _checkHeap();
   _checkTaskStacks();
   _checkSensors();
+  _checkHeartbeats();
   _metrics.uptime = millis() / 1000;
   _publishMetrics();
 
-  LOG_I("HEALTH", "Heap:%lu/%lu Stack(S:%u R:%u W:%u M:%u O:%u T:%u) I2C:%s",
+  LOG_I("HEALTH", "Heap:%lu/%lu Stack(S:%u R:%u W:%u M:%u O:%u T:%u) I2C:%s HB:%s",
     _metrics.freeHeap, _metrics.minFreeHeap,
     _metrics.stackSensors, _metrics.stackSSR, _metrics.stackWiFi,
     _metrics.stackMQTT, _metrics.stackOTA, _metrics.stackTelemetry,
-    _metrics.i2cBusHealthy ? "OK" : "FAIL");
+    _metrics.i2cBusHealthy ? "OK" : "FAIL",
+    _metrics.heartbeatsHealthy ? "OK" : "STALE");
 }
 
 HealthMetrics HealthMonitor::getMetrics() {

@@ -129,16 +129,22 @@ void StateMachine::loadRebootCount() {
   Preferences prefs;
   prefs.begin(prefsNamespace, true);
   rebootCount = prefs.getUChar(REBOOT_COUNT_KEY, 0);
+  uint8_t savedState = prefs.getUChar(STATE_KEY, ST_INIT);
   prefs.end();
 
   if (rebootCount > 50) rebootCount = 0;
 
-  uint8_t newCount = rebootCount + 1;
-  prefs.begin(prefsNamespace, false);
-  prefs.putUChar(REBOOT_COUNT_KEY, newCount);
-  prefs.end();
-
-  Serial.printf("[STATE] Boot #%d\n", newCount);
+  bool abnormalBoot = (savedState == ST_ERROR || savedState == ST_RECOVERY ||
+                       savedState == ST_OTA_UPDATING);
+  if (abnormalBoot) {
+    rebootCount++;
+    prefs.begin(prefsNamespace, false);
+    prefs.putUChar(REBOOT_COUNT_KEY, rebootCount);
+    prefs.end();
+    Serial.printf("[STATE] Boot #%d (abnormal — state was %s)\n", rebootCount, getStateName((DeviceState)savedState));
+  } else {
+    Serial.printf("[STATE] Boot #%d (normal)\n", rebootCount);
+  }
 }
 
 void StateMachine::saveRebootCount() {

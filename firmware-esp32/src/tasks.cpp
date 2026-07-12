@@ -87,7 +87,7 @@ void mqttActuatorCallback(const MqttActuatorMessage* msg) {
   memcpy(data.desired, (const uint8_t*)actuatorDesired, 4);
   memcpy(data.mode, (const uint8_t*)actuatorMode, 4);
   actuatorNVSSave(&data);
-  lastActuatorPersist = millis();
+  lastActuatorPersist = esp_timer_get_time();
 }
 
 // ============================================================
@@ -104,6 +104,7 @@ void taskSensors(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_SENSORS);
 
     SensorReading reading = aht.read();
     float temp = reading.temperature;
@@ -213,6 +214,7 @@ void taskSSR(void* pvParameters) {
   while (true) {
     sm.feedWatchdog();
     sm.handleWatchdog();
+    healthMonitor.feed(HB_SSR);
 
     float temp = sharedTemp;
     float hum = sharedHum;
@@ -350,6 +352,7 @@ void taskWiFi(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_WIFI);
 
     wifi.loop();
     bool wifiOk = wifi.isConnected();
@@ -388,6 +391,7 @@ void taskPoller(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_POLLER);
 
     if (wifi.isConnected()) {
       if (!mqtt.isConnected()) {
@@ -426,13 +430,14 @@ void taskPoller(void* pvParameters) {
           memcpy(data.desired, (const uint8_t*)actuatorDesired, 4);
           memcpy(data.mode, (const uint8_t*)actuatorMode, 4);
           actuatorNVSSave(&data);
-          lastActuatorPersist = millis();
+          lastActuatorPersist = esp_timer_get_time();
         }
       }
     }
 
     if (provisionalMode && lastActuatorPersist > 0) {
-      unsigned long age = millis() - lastActuatorPersist;
+      int64_t ageUs = esp_timer_get_time() - lastActuatorPersist;
+      unsigned long age = (unsigned long)(ageUs / 1000);
       bool expired = true;
       for (int ch = 0; ch < 4; ch++) {
         if (age < holdWindow[ch]) {
@@ -466,6 +471,7 @@ void taskMQTT(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_MQTT);
 
     if (wifi.isConnected()) {
       mqtt.loop();
@@ -484,6 +490,7 @@ void taskOTA(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_OTA);
 
     if (wifi.isConnected()) {
       ota.loop();
@@ -580,6 +587,7 @@ void taskTelemetry(void* pvParameters) {
 
   while (true) {
     esp_task_wdt_reset();
+    healthMonitor.feed(HB_TELEMETRY);
 
     unsigned long now = millis();
     bool wifiOk = wifi.isConnected();
