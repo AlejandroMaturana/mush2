@@ -76,7 +76,9 @@ void EventBus::publish(const Event& event) {
     Serial.printf("[EVENTBUS] Cola llena, evento %d descartado\n", event.type);
     return;
   }
+  portENTER_CRITICAL(&_spinlock);
   _pendingCount++;
+  portEXIT_CRITICAL(&_spinlock);
 }
 
 void EventBus::publishFromISR(const Event& event) {
@@ -84,7 +86,9 @@ void EventBus::publishFromISR(const Event& event) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   xQueueSendFromISR(_eventQueue, &event, &xHigherPriorityTaskWoken);
+  portENTER_CRITICAL(&_spinlock);
   _pendingCount++;
+  portEXIT_CRITICAL(&_spinlock);
 
   if (xHigherPriorityTaskWoken) {
     portYIELD_FROM_ISR();
@@ -96,7 +100,9 @@ void EventBus::loop() {
 
   Event event;
   while (xQueueReceive(_eventQueue, &event, 0) == pdTRUE) {
+    portENTER_CRITICAL(&_spinlock);
     _pendingCount--;
+    portEXIT_CRITICAL(&_spinlock);
 
     xSemaphoreTake(_subscriberMutex, portMAX_DELAY);
 
@@ -114,5 +120,8 @@ void EventBus::loop() {
 }
 
 uint32_t EventBus::getPendingCount() {
-  return _pendingCount;
+  portENTER_CRITICAL(&_spinlock);
+  uint32_t count = _pendingCount;
+  portEXIT_CRITICAL(&_spinlock);
+  return count;
 }

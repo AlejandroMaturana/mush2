@@ -123,7 +123,8 @@ private:
   TypeSubscribers _typeSubscribers[EVT_COUNT];
   QueueHandle_t _eventQueue;
   SemaphoreHandle_t _subscriberMutex;
-  uint32_t _pendingCount;
+  volatile uint32_t _pendingCount;
+  portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
   bool _initialized;
 };
 
