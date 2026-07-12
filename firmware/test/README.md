@@ -29,7 +29,8 @@ test/
 ├── S3_test-SSR-4ch/                  ← Prueba SSR 4 canales (active-LOW)
 ├── S3_test-i2c-ENS160-AHT21/         ← Bus I2C + sensores ENS160 + AHT21
 ├── S3_test-http-poller/              ← HTTP polling FSM + backend
-└── S3_test-watchdog/                 ← Watchdog SW/HW + safe mode
+├── S3_test-watchdog/                 ← Watchdog SW/HW + safe mode
+└── S3_test-button/                   ← Boton SMFB (debounce, gestos, LED feedback)
 ```
 
 ## Inventario de Pruebas
@@ -44,6 +45,7 @@ test/
 | `http-poller` | HTTP Poller + SSR | WiFi + TCP + HTTP + parseo JSON + **criterio: response valida = COMPLETE** (actuators vacío = OK, no FAIL) + aplicación a SSR + **ciclo test local** (CH1→CH4 round-robin 3s mientras backend no envíe actuators) | Ninguna (WiFi + GPIO nativo) |
 | `watchdog` | Watchdog + State Machine | SW WDT (30s timeout), Task WDT (10s), contador de reboots en NVS, safe mode, transiciones de FSM, cascading reboot | Ninguna (autocontenido) |
 | `actuator-chain` | SSR + Hyst + REMOTE | SSR init + toggle cada canal + resolvePinState + Hysteresis evaluate (6 casos) + REMOTE override + overheat override + test interactivo por serial | `ssr_controller`, `hysteresis_controller` de `src/` |
+| `button` | SMFB (boton) | Debounce 20ms, click, double-click, hold 3s, hold 10s, cancelacion, GPIO pull-up | `Adafruit NeoPixel` |
 
 ## Cómo Ejecutar una Prueba
 
