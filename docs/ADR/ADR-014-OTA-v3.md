@@ -122,7 +122,7 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 
 | Atributo | Cómo se aborda |
 |----------|---------------|
-| Seguridad | HTTPS con CA cert, validación de URL, versión |
+| Seguridad | HTTPS con CA cert, SHA-256 verification (mbedtls), validación de URL, versión |
 | Resiliencia | Rollback nativo del bootloader, safe shutdown, restore post-fallo |
 | Disponibilidad | OTA en Core 0, control en Core 1 — no hay downtime del ambiente |
 | Mantenibilidad | 4 capas separadas en archivos individuales, cada una con única responsabilidad |
@@ -151,10 +151,10 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 | `firmware-esp32/src/ota_nvs.{h,cpp}` | Inicialización NVS (namespace `mush2`, key `fw_version`), esquema v1 |
 | `firmware-esp32/src/ota_decisor.{h,cpp}` | `OTASelector`: validación de URL, SemVer, RSSI mínimo |
 | `firmware-esp32/src/ota_shutdown.{h,cpp}` | `OTAShutdown`: apagado seguro de SSR, sensores, comunicaciones |
-| `firmware-esp32/src/ota_executor.{h,cpp}` | `OTAExecutor`: descarga HTTPS vía `Update.write()` |
-| `firmware-esp32/src/ota_postboot.{h,cpp}` | `OTAConfirmation`: `esp_ota_get_state_partition()` + `confirm()` |
-| `firmware-esp32/src/mqtt_client.{h,cpp}` | Cliente MQTT con PubSubClient, tarea FreeRTOS dedicada |
-| `firmware-esp32/src/state_machine.{h,cpp}` | Matriz 9×9 con `fsmTransition()`, transición `INIT→SAFE` |
+| `firmware-esp32/src/ota_executor.{h,cpp}` | `OTAExecutor`: descarga HTTPS + SHA-256 verify (mbedtls) + Update.write() |
+| `firmware-esp32/src/ota_postboot.{h,cpp}` | `OTAConfirmation`: self-test (WiFi, I2C, AHT21, heap) + confirm() |
+| `firmware-esp32/src/mqtt_client.{h,cpp}` | Cliente MQTT con PubSubClient, callback OTA 3 params (url, version, hash) |
+| `firmware-esp32/src/state_machine.{h,cpp}` | Matriz 9×9 con `fsmTransition()`, transición `INIT→SAFE`, NVS persistence |
 | `firmware-esp32/partitions.csv` | OTA dual 8MB (app0/app1, spiffs, coredump) |
 
 ### Flujo OTA v3 completo
@@ -164,7 +164,7 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 2. OTASelector → valida URL, SemVer, RSSI → rechaza o autoriza
 3. OTAShutdown → SSR off, sensores reposo, comunicaciones detenidas
 4. FSM → ST_OTA_UPDATING
-5. OTAExecutor → HTTP GET con WiFiClient → Update.write() → reboot
+5. OTAExecutor → HTTP GET con WiFiClient → SHA-256 verify (mbedtls) → Update.write() → reboot
 6. Post-boot → OTAConfirmation → self-test → confirm() vía MQTT
 ```
 
@@ -187,6 +187,47 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 | 7 | `client.flush()` + `vTaskDelay(50)` post-connect | `http_poller.cpp` | Asegurar que datos salgan al wire |
 | 8 | De-chunking de HTTP chunked encoding | `http_poller.cpp` | Manejar `Transfer-Encoding: chunked` del server |
 | 9 | `BACKEND_PORT 3000→3797` | `config.example.h` | Coincidir con puerto real del backend Express |
+
+### SHA-256 Verification vía mbedtls (2026-07-11)
+
+El ejecutor OTA ahora verifica la integridad del firmware descargado usando SHA-256 via la librería mbedtls del ESP-IDF:
+
+```cpp
+// ota_executor.cpp
+#include "mbedtls/sha256.h"
+#include "mbedtls/error.h"
+
+bool OTAExecutor::verifySha256(const uint8_t* data, size_t len, const char* expectedHash) {
+  mbedtls_sha256_context ctx;
+  mbedtls_sha256_init(&ctx);
+  mbedtls_sha256_starts(&ctx, 0);
+  mbedtls_sha256_update(&ctx, data, len);
+  uint8_t hash[32];
+  mbedtls_sha256_finish(&ctx, hash);
+  mbedtls_sha256_free(&ctx);
+
+  // Comparar con hash esperado
+  char hashHex[65];
+  for (int i = 0; i < 32; i++) sprintf(hashHex + i*2, "%02x", hash[i]);
+  return strncasecmp(hashHex, expectedHash, 64) == 0;
+}
+```
+
+| Aspecto | Detalle |
+|---------|---------|
+| Librería | mbedtls (incluida en ESP-IDF) |
+| Campo | `OtaCandidate.hash` (String, hex de 64 chars) |
+| Fuente del hash | Comando MQTT: `{"url":"...", "version":"...", "hash":"..."}` |
+| Comportamiento | Si no hay hash → verificación omitida (backward compatible) |
+| Si falla | OTA abortada, publica `ota/rejected` con `causa: "hash_no_coincide"` |
+
+**Callback MQTT actualizado** (3 parámetros):
+
+```cpp
+// mqtt_client.h
+typedef void (*OtaCallback)(const char* url, const char* version, const char* hash);
+void setOtaCallback(OtaCallback cb);
+```
 
 ### Comprobación en hardware
 

@@ -1,6 +1,6 @@
 # ADR-012: FreeRTOS como Base de Tiempo Real y Estrategia de Tareas
 
-**Estado:** Aceptado
+**Estado:** Aceptado (actualizado 2026-07-11)
 **Fecha:** 2026-06-28
 **Decisión:** Formalizar FreeRTOS como el núcleo de tiempo real del sistema, estableciendo una arquitectura de tareas basada en dominios funcionales con sincronización explícita, jerarquía de prioridades definida y un plan de refactorización del watchdog que consolide los dos mecanismos actuales (TWDT + SWDT) en un solo sistema jerárquico.
 
@@ -32,17 +32,15 @@ Se mantienen los 6 dominios funcionales pero se redefine su asignación y priori
 ```
 Core 1 (Control) — Scheduling: round-robin con prioridades estáticas
 ├── [P1] taskSensors    → I2C: AHT21 + ENS160. Delay basado en vTaskDelayUntil.
-├── [P2] taskSSR        → Histeresis + actuadores + software watchdog multicore.
-└── [P3] taskMonitor    → (NUEVA) Watchdog supervisor: monitorea salud de todas las tareas.
+└── [P2] taskSSR        → Histeresis + actuadores + software watchdog multicore.
 
 Core 0 (Red) — Scheduling: round-robin con prioridades estáticas
 ├── [P1] taskWiFi       → Gestión de conexión WiFi (dual SSID).
 ├── [P2] taskPoller     → HTTP polling al backend. Escribe cola de comandos.
 ├── [P3] taskOTA        → Over-the-air updates.
-└── [P4] taskTelemetry  → ThingSpeak + stats periódicos.
+├── [P4] taskTelemetry  → ThingSpeak + stats periódicos.
+└── [P5] taskMQTT       → Conexión MQTT + loop().
 ```
-
-**NOTA**: `taskMonitor` se introduce en una fase posterior de refactorización (ver roadmap más abajo). Inicialmente se mantienen las 6 tareas actuales.
 
 ### 2. Sincronización entre tareas
 
@@ -89,11 +87,12 @@ Nivel 3: Health Check por tarea — 60s
 |-------|-----------|-------------------|------------|------|
 | Sensors | `configMAX_PRIORITIES-1` | 8192 | 8000 | 1 |
 | SSR | `configMAX_PRIORITIES-2` | 4096 | 250 | 1 |
-| Monitor | `configMAX_PRIORITIES-2` | 2048 | 1000 | 1 |
 | WiFi | `configMAX_PRIORITIES-3` | 4096 | 1000 | 0 |
 | Poller | `configMAX_PRIORITIES-4` | 8192 | 500 | 0 |
 | OTA | `configMAX_PRIORITIES-4` | 4096 | 100 | 0 |
+| MQTT | `configMAX_PRIORITIES-4` | 4096 | 500 | 0 |
 | Telemetry | `configMAX_PRIORITIES-4` | 4096 | 5000 | 0 |
+| Monitor | 1 | 4096 | 60000/300000 | 0 |
 
 **Stack de Sensors se mantiene en 8192** por el uso de `ArduinoJson` y `printf` con floats. **Stack de Poller se mantiene en 8192** por las respuestas HTTP y parsing JSON.
 
@@ -156,10 +155,11 @@ Fase 3 (medio plazo): I2C No Bloqueante
 └── taskSensors: usar vTaskDelay() entre request y read
 
 Fase 4 (largo plazo): taskMonitor + Health Check
-├── Nueva tarea en Core 1 con prioridad alta
-├── Monitorea heartbeats de todas las tareas
-├── Transiciones automáticas de estado (NORMAL → DEGRADED → RECOVERY)
-└── Logging estructurado de eventos de watchdog
+├── Implementado como HealthMonitor (health_monitor.h/cpp)
+├── Tarea en Core 0 con prioridad baja (1)
+├── Monitorea heap, task stacks, bus I2C, presencia de sensores
+├── PublishEvent via EventBus (EVT_HEALTH_UPDATE)
+└── Logging estructurado de eventos de watchdog ✓ (2026-07-11)
 ```
 
 ## Alternativas Descartadas
@@ -171,13 +171,12 @@ Fase 4 (largo plazo): taskMonitor + Health Check
 
 ## Referencias
 
-- `firmware-esp32/src/main.ino` — Creación de 6 tareas FreeRTOS (líneas 506-533)
+- `firmware-esp32/src/main.ino` — Setup + globals, 8 tareas FreeRTOS
+- `firmware-esp32/src/tasks.h/.cpp` — Tareas FreeRTOS extraídas + helpers
+- `firmware-esp32/src/health_monitor.h/.cpp` — taskMonitor: health checks periódicos
+- `firmware-esp32/src/event_bus.h/.cpp` — Event Bus in-memory (pub/sub)
 - `firmware-esp32/src/config.h` — Stack sizes, prioridades, delays, CORE_CONTROL/CORE_NETWORK
 - `firmware-esp32/src/state_machine.cpp` — Software Watchdog (SWDT): `feedWatchdog()`, `handleWatchdog()`
-- `firmware-esp32/src/aht_sensor.cpp` — `delay(80)` bloqueante (línea 63)
-- `firmware-esp32/src/ens160_sensor.cpp` — Llamadas a `esp_task_wdt_reset()`
-- `firmware-esp32/test/S3_test-watchdog/` — Test suite de watchdog
 - `docs/ADR/ADR-001-ESP32.md` — Decisión original de FreeRTOS + dual-core
 - `docs/ADR/ADR-010-Mecanismo-Fail-Safe-Overheat.md` — Mecanismos de seguridad térmica
-- `docs/roadmap/consideraciones.md` — Pseudocódigo de flujo de control
-- `generic-report-agentA.md`, `generic-report-agentB.md` — Análisis de crash loops por watchdog timeout
+- `docs/ADR/ADR-017-Event-Bus.md` — Event Bus architecture decision
