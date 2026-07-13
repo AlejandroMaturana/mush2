@@ -1,6 +1,6 @@
 {
   "name": "mush2",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "private": true,
   "description": "Full-stack application for the Mush2 appweb",
   "scripts": {

@@ -2,7 +2,27 @@
 
 ## 2026-07-13
 
-### Firmware (ESP32-S3) — BLE Provisioning Bug Fixes — v0.17.0
+### Backend — v0.18.0
+
+- - Añadida función publishHealth() en mqtt_client con 17 métricas (heap, stacks, sensores, etc.)
+- Health Monitor ahora publica cada 60s al topic mush2/{deviceId}/health
+- Backend: suscripción en mqttBridge.js + handler handleHealth()
+- Nuevo modelo DeviceHealth con asociación a Device
+- Nuevos endpoints: GET /devices/:id/health y /health/latest
+- Preparación para monitoreo en tiempo real y alertas
+
+### Firmware (ESP32-S3) — v0.18.0
+
+- - Añadida función publishHealth() en mqtt_client con 17 métricas (heap, stacks, sensores, etc.)
+- Health Monitor ahora publica cada 60s al topic mush2/{deviceId}/health
+- Backend: suscripción en mqttBridge.js + handler handleHealth()
+- Nuevo modelo DeviceHealth con asociación a Device
+- Nuevos endpoints: GET /devices/:id/health y /health/latest
+- Preparación para monitoreo en tiempo real y alertas
+
+## 2026-07-13
+
+### Firmware (ESP32-S3) — BLE Provisioning Bug Fixes — v0.16.2
 
 **Bug Fixes**
 - `button_handler.cpp`: Fixed factory reset not clearing WiFi credentials — now clears both `mush2` and `mush2_prov` NVS namespaces
@@ -20,6 +40,21 @@
 - `Provisioning.jsx`: Added `console.warn` for device registration errors (was silently swallowed)
 
 **Behavior**: If WiFi fails repeatedly (5 complete retry cycles with exponential backoff), the device automatically clears credentials and restarts into BLE provisioning mode, allowing the user to reconfigure WiFi.
+
+### Phase 11 — Firmware Health Metrics vía MQTT
+
+**Firmware**
+- `mqtt_client.h/cpp`: Added `publishHealth()` method — publishes comprehensive health metrics to `mush2/{deviceId}/health` topic
+- `health_monitor.cpp`: `_publishMetrics()` now calls `mqtt.publishHealth()` when MQTT is connected (every 60s)
+- Health payload includes: freeHeap, minFreeHeap, maxAllocHeap, stack watermarks (7 tasks), I2C health, sensor status, stale task mask, uptime, reboot count
+
+**Backend**
+- `mqttBridge.js`: Added subscription to `+/health` topic + `handleHealth()` function
+- `models/DeviceHealth.js`: New model with 18 fields for health metrics persistence
+- `models/index.js`: Added DeviceHealth association with Device
+- `routes/api.js`: Added `GET /api/v1/devices/:id/health` (historical) and `GET /api/v1/devices/:id/health/latest` endpoints
+
+**Data Flow**: Firmware (60s) → MQTT `+/health` → Backend `handleHealth()` → `device_health` table → REST API
 
 ### Firmware (ESP32-S3) — Correcciones y Botón Multifunción — v0.16.1
 
