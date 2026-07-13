@@ -1,6 +1,72 @@
 import sequelize from './config/database.js';
 import bcrypt from 'bcryptjs';
-import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device, IntegrationCredentials } from './models/index.js';
+import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device, IntegrationCredentials, SpeciesProfile } from './models/index.js';
+
+const SPECIES_PROFILES = [
+  {
+    name: 'Melena de León',
+    scientificName: 'Hericium erinaceus',
+    adapterClass: 'MEDICINAL',
+    originClimate: 'Templado húmedo',
+    difficultyLevel: 'INTERMEDIATE',
+    compounds: { betaGlucans: 30, erinacinas: true, hericenones: true },
+    description: 'Hongo medicinal con forma de cascada blanca. Rico en erinacinas que estimulan la producción de NGF (Factor de Crecimiento Nervioso). Requiere CO₂ bajo para desarrollo óptimo.',
+  },
+  {
+    name: 'Reishi',
+    scientificName: 'Ganoderma lucidum',
+    adapterClass: 'MEDICINAL',
+    originClimate: 'Subtropical',
+    difficultyLevel: 'ADVANCED',
+    compounds: { betaGlucans: 40, triterpenes: true, ganodermanontriol: true },
+    description: 'El "hongo de la inmortalidad". Rico en triterpenos y betaglucanos. Forma de estante o sombrero. Ciclo largo pero alto valor medicinal.',
+  },
+  {
+    name: 'Shiitake',
+    scientificName: 'Lentinula edodes',
+    adapterClass: 'EDIBLE',
+    originClimate: 'Templado',
+    difficultyLevel: 'INTERMEDIATE',
+    compounds: { betaGlucans: 25, lentinan: true, eritadenina: true },
+    description: 'Hongo comestible premium de origen asiático. Requiere sustrato de madera dura. Alto valor nutricional y sabor umami intenso.',
+  },
+  {
+    name: 'Cola de Pavo',
+    scientificName: 'Trametes versicolor',
+    adapterClass: 'MEDICINAL',
+    originClimate: 'Templado',
+    difficultyLevel: 'BEGINNER',
+    compounds: { betaGlucans: 35, polysaccharopeptide: true, PSP: true },
+    description: 'Hongo medicinal con forma de abanico. Alto contenido de PSP (polisacárido péptido). Ideal para principiantes por su resistencia.',
+  },
+  {
+    name: 'Cordyceps',
+    scientificName: 'Cordyceps militaris',
+    adapterClass: 'MEDICINAL',
+    originClimate: 'Montañoso templado',
+    difficultyLevel: 'ADVANCED',
+    compounds: { cordycepin: true, adenosina: true, betaGlucans: 20 },
+    description: 'Parásito de insectos con potentes propiedades energéticas. La versión cultivada (C. militaris) reemplaza al salvaje C. sinensis.',
+  },
+  {
+    name: 'Pleurotus',
+    scientificName: 'Pleurotus ostreatus',
+    adapterClass: 'EDIBLE',
+    originClimate: 'Templado húmedo',
+    difficultyLevel: 'BEGINNER',
+    compounds: { betaGlucans: 15, lovastatina: true, ergotioneina: true },
+    description: 'Ostra común. Hongo comestible ideal para principiantes. Crecimiento rápido y rendimiento alto.',
+  },
+  {
+    name: 'Chaga',
+    scientificName: 'Inonotus obliquus',
+    adapterClass: 'MEDICINAL',
+    originClimate: 'Boreal frío',
+    difficultyLevel: 'ADVANCED',
+    compounds: { betaGlucans: 45, melanina: true, superoxidoDismutasa: true },
+    description: 'Hongo parásito de abedules. Altísimo contenido de antioxidantes. Extracción por calor obligatoria.',
+  },
+];
 
 const RECIPES = [
   {
@@ -136,6 +202,28 @@ async function seed() {
         defaults: data,
       });
       console.log(`[Seed] ${created ? 'Creada' : 'Ya existe'}: receta ${recipe.name}`);
+    }
+
+    // ── ESPECIES ──
+    for (const data of SPECIES_PROFILES) {
+      const [species, created] = await SpeciesProfile.findOrCreate({
+        where: { scientificName: data.scientificName },
+        defaults: data,
+      });
+      console.log(`[Seed] ${created ? 'Creada' : 'Ya existe'}: especie ${species.name}`);
+    }
+
+    // ── VINCULAR RECETAS CON ESPECIES ──
+    const allSpecies = await SpeciesProfile.findAll();
+    const speciesMap = Object.fromEntries(allSpecies.map(s => [s.scientificName, s.id]));
+
+    const allRecipes = await Recipe.findAll({ where: { speciesId: null } });
+    for (const recipe of allRecipes) {
+      const speciesId = speciesMap[recipe.species];
+      if (speciesId) {
+        await recipe.update({ speciesId });
+        console.log(`[Seed] Vinculada receta "${recipe.name}" con especie (id=${speciesId})`);
+      }
     }
 
     // ── USUARIOS DE PRUEBA ──

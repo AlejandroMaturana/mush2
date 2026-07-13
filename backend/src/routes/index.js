@@ -13,6 +13,7 @@ import eventsRouter from './events.js';
 import analyticsRouter from './analytics.js';
 import telegramRouter from './telegram.js';
 import subscriptionsRouter from './subscriptions.js';
+import speciesRouter from './species.js';
 import { authenticate, optionalAuth } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { tenantScope } from '../middlewares/tenant.js';
@@ -37,5 +38,6 @@ router.use('/events', eventsRouter);
 router.use('/chambers', analyticsRouter);
 router.use('/subscriptions', subscriptionsRouter);
 router.use('/telegram', authenticate, checkApiRateLimit, telegramRouter);
+router.use('/species', optionalAuth, checkApiRateLimit, tenantScope, speciesRouter);
 
 export default router;
