@@ -1,8 +1,13 @@
 #include "health_monitor.h"
 #include "logger.h"
 #include "config.h"
+#include "mqtt_client.h"
+#include "state_machine.h"
 #include <Wire.h>
 #include <esp_task_wdt.h>
+
+extern MQTTClient mqtt;
+extern StateMachine sm;
 
 HealthMonitor healthMonitor;
 
@@ -134,6 +139,7 @@ void HealthMonitor::_checkSensors() {
 
 void HealthMonitor::_publishMetrics() {
   _metrics.uptime = millis() / 1000;
+  _metrics.rebootCount = sm.getRebootCount();
 
   if (_bus) {
     Event event;
@@ -149,6 +155,19 @@ void HealthMonitor::_publishMetrics() {
     event.payload.healthUpdate.taskStackTelemetry = _metrics.stackTelemetry;
     event.payload.healthUpdate.i2cHealthy = _metrics.i2cBusHealthy;
     _bus->publish(event);
+  }
+
+  // Publish health metrics via MQTT (every 60s)
+  if (mqtt.isConnected()) {
+    mqtt.publishHealth(
+      _metrics.freeHeap, _metrics.minFreeHeap, _metrics.maxAllocHeap,
+      _metrics.stackSensors, _metrics.stackSSR, _metrics.stackWiFi,
+      _metrics.stackMQTT, _metrics.stackOTA, _metrics.stackTelemetry,
+      _metrics.stackButton, _metrics.i2cBusHealthy,
+      _metrics.sensorAht21, _metrics.sensorEns160,
+      _metrics.staleTaskMask, _metrics.heartbeatsHealthy,
+      _metrics.uptime, _metrics.rebootCount
+    );
   }
 
   _healthy = (_metrics.freeHeap > 30000) &&

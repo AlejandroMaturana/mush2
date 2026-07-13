@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import { Device, Telemetry, Actuator } from '../models/index.js';
+import { Device, Telemetry, Actuator, DeviceHealth } from '../models/index.js';
 import { events } from './eventBus.js';
 import { sendActuatorUpdate } from './webSocketServer.js';
 
@@ -41,6 +41,7 @@ function createClient(broker, isFallback) {
     c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/ack`, { qos: 1 });
+    c.subscribe(`${TOPIC_PREFIX}/+/health`, { qos: 1 });
   });
 
   c.on('message', (topic, payload) => {
@@ -77,6 +78,8 @@ function createClient(broker, isFallback) {
         }
       } else if (type === 'alarm') {
         events.emit('alarm', { deviceId, ...data });
+      } else if (type === 'health') {
+        handleHealth(deviceId, data);
       } else if (type === 'ack') {
         events.emit('ack', {
           deviceId,
@@ -229,5 +232,44 @@ async function handleTelemetry(deviceId, data) {
     });
   } catch (err) {
     console.error(`[MQTT] Error handling telemetry from ${deviceId}:`, err.message);
+  }
+}
+
+async function handleHealth(deviceId, data) {
+  try {
+    const [device] = await Device.findOrCreate({
+      where: { deviceId },
+      defaults: { deviceId, status: 'ONLINE' },
+    });
+
+    const ts = new Date(data.ts || Date.now());
+
+    await DeviceHealth.create({
+      deviceId: device.id,
+      freeHeap: data.freeHeap,
+      minFreeHeap: data.minFreeHeap,
+      maxAllocHeap: data.maxAllocHeap,
+      stackSensors: data.stack?.sensors,
+      stackSSR: data.stack?.ssr,
+      stackWiFi: data.stack?.wifi,
+      stackMQTT: data.stack?.mqtt,
+      stackOTA: data.stack?.ota,
+      stackTelemetry: data.stack?.telemetry,
+      stackButton: data.stack?.button,
+      i2cHealthy: data.i2cHealthy,
+      sensorAht21: data.sensorAht21,
+      sensorEns160: data.sensorEns160,
+      staleTaskMask: data.staleTaskMask,
+      heartbeatsHealthy: data.heartbeatsHealthy,
+      uptime: data.uptime,
+      rebootCount: data.rebootCount,
+      timestamp: ts,
+    });
+
+    await device.update({ lastSeen: ts, status: 'ONLINE' });
+
+    events.emit('health', { deviceId, ...data });
+  } catch (err) {
+    console.error(`[MQTT] Error handling health from ${deviceId}:`, err.message);
   }
 }

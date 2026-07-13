@@ -87,6 +87,35 @@ bool MQTTClient::publishAlarm(const char* reason) {
   return publish("alarm", payload);
 }
 
+bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t maxAllocHeap,
+                               uint16_t stackSensors, uint16_t stackSSR, uint16_t stackWiFi,
+                               uint16_t stackMQTT, uint16_t stackOTA, uint16_t stackTelemetry,
+                               uint16_t stackButton, bool i2cHealthy, bool sensorAht21, bool sensorEns160,
+                               uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount) {
+  char payload[512];
+  snprintf(payload, sizeof(payload),
+    "{\"freeHeap\":%lu,\"minFreeHeap\":%lu,\"maxAllocHeap\":%lu,"
+    "\"stack\":{"
+      "\"sensors\":%u,\"ssr\":%u,\"wifi\":%u,"
+      "\"mqtt\":%u,\"ota\":%u,\"telemetry\":%u,\"button\":%u"
+    "},"
+    "\"i2cHealthy\":%s,\"sensorAht21\":%s,\"sensorEns160\":%s,"
+    "\"staleTaskMask\":%u,\"heartbeatsHealthy\":%s,"
+    "\"uptime\":%lu,\"rebootCount\":%u,"
+    "\"ts\":%lu}",
+    freeHeap, minFreeHeap, maxAllocHeap,
+    stackSensors, stackSSR, stackWiFi,
+    stackMQTT, stackOTA, stackTelemetry, stackButton,
+    i2cHealthy ? "true" : "false",
+    sensorAht21 ? "true" : "false",
+    sensorEns160 ? "true" : "false",
+    staleTaskMask,
+    heartbeatsHealthy ? "true" : "false",
+    uptime, rebootCount,
+    millis());
+  return publish("health", payload);
+}
+
 void MQTTClient::_connect() {
   if (WiFi.status() != WL_CONNECTED) return;
 
