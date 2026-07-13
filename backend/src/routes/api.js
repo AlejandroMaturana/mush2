@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import express from 'express';
-import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe, IntegrationCredentials, DeviceHealth } from '../models/index.js';
+import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
@@ -487,6 +487,45 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
     }
 
     res.json({ data: { id: instance.id, provider: 'THINGSPEAK', status: instance.status } });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
+  try {
+    const { component, from, to, limit = 100 } = req.query;
+    const where = { deviceId: req.params.id };
+    if (component) where.component = component;
+    if (from || to) {
+      where.timestamp = {};
+      if (from) where.timestamp[Op.gte] = new Date(from);
+      if (to) where.timestamp[Op.lte] = new Date(to);
+    }
+    const data = await DeviceMaintenance.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit, 10),
+    });
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/devices/:id/maintenance/latest', checkDeviceAccess, async (req, res) => {
+  try {
+    const latest = await DeviceMaintenance.findAll({
+      where: { deviceId: req.params.id },
+      order: [['timestamp', 'DESC']],
+      group: ['component'],
+      attributes: [
+        'component',
+        [DeviceMaintenance.sequelize.fn('MAX', DeviceMaintenance.sequelize.col('health')), 'health'],
+        [DeviceMaintenance.sequelize.fn('MAX', DeviceMaintenance.sequelize.col('timestamp')), 'timestamp'],
+      ],
+    });
+    res.json({ data: latest });
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }

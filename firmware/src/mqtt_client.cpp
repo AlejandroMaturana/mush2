@@ -91,8 +91,9 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
                                uint16_t stackSensors, uint16_t stackSSR, uint16_t stackWiFi,
                                uint16_t stackMQTT, uint16_t stackOTA, uint16_t stackTelemetry,
                                uint16_t stackButton, bool i2cHealthy, bool sensorAht21, bool sensorEns160,
-                               uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount) {
-  char payload[512];
+                               uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount,
+                               bool bootTestPassed, const char* bootTestFailReason) {
+  char payload[640];
   snprintf(payload, sizeof(payload),
     "{\"freeHeap\":%lu,\"minFreeHeap\":%lu,\"maxAllocHeap\":%lu,"
     "\"stack\":{"
@@ -102,6 +103,7 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
     "\"i2cHealthy\":%s,\"sensorAht21\":%s,\"sensorEns160\":%s,"
     "\"staleTaskMask\":%u,\"heartbeatsHealthy\":%s,"
     "\"uptime\":%lu,\"rebootCount\":%u,"
+    "\"bootTestPassed\":%s,\"bootTestFailReason\":\"%s\","
     "\"ts\":%lu}",
     freeHeap, minFreeHeap, maxAllocHeap,
     stackSensors, stackSSR, stackWiFi,
@@ -112,8 +114,18 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
     staleTaskMask,
     heartbeatsHealthy ? "true" : "false",
     uptime, rebootCount,
+    bootTestPassed ? "true" : "false",
+    bootTestFailReason ? bootTestFailReason : "",
     millis());
   return publish("health", payload);
+}
+
+bool MQTTClient::publishMaintenance(const char* component, uint8_t health, uint32_t estimatedFailure, const char* reason) {
+  char payload[256];
+  snprintf(payload, sizeof(payload),
+    "{\"component\":\"%s\",\"health\":%u,\"estimatedFailure\":%lu,\"reason\":\"%s\",\"ts\":%lu}",
+    component, health, estimatedFailure, reason, millis());
+  return publish("maintenance", payload);
 }
 
 void MQTTClient::_connect() {

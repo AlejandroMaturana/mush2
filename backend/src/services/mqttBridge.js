@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import { Device, Telemetry, Actuator, DeviceHealth } from '../models/index.js';
+import { Device, Telemetry, Actuator, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { events } from './eventBus.js';
 import { sendActuatorUpdate } from './webSocketServer.js';
 
@@ -42,6 +42,7 @@ function createClient(broker, isFallback) {
     c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/ack`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/health`, { qos: 1 });
+    c.subscribe(`${TOPIC_PREFIX}/+/maintenance`, { qos: 1 });
   });
 
   c.on('message', (topic, payload) => {
@@ -80,6 +81,8 @@ function createClient(broker, isFallback) {
         events.emit('alarm', { deviceId, ...data });
       } else if (type === 'health') {
         handleHealth(deviceId, data);
+      } else if (type === 'maintenance') {
+        handleMaintenance(deviceId, data);
       } else if (type === 'ack') {
         events.emit('ack', {
           deviceId,
@@ -271,5 +274,31 @@ async function handleHealth(deviceId, data) {
     events.emit('health', { deviceId, ...data });
   } catch (err) {
     console.error(`[MQTT] Error handling health from ${deviceId}:`, err.message);
+  }
+}
+
+async function handleMaintenance(deviceId, data) {
+  try {
+    const [device] = await Device.findOrCreate({
+      where: { deviceId },
+      defaults: { deviceId, status: 'ONLINE' },
+    });
+
+    const ts = new Date(data.ts || Date.now());
+
+    await DeviceMaintenance.create({
+      deviceId: device.id,
+      component: data.component,
+      health: data.health,
+      estimatedFailure: data.estimatedFailure,
+      reason: data.reason,
+      timestamp: ts,
+    });
+
+    await device.update({ lastSeen: ts, status: 'ONLINE' });
+
+    events.emit('maintenance', { deviceId, ...data });
+  } catch (err) {
+    console.error(`[MQTT] Error handling maintenance from ${deviceId}:`, err.message);
   }
 }

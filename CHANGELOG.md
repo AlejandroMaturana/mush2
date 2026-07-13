@@ -2,6 +2,34 @@
 
 ## 2026-07-13
 
+### Backend — v0.21.0
+
+- Nuevo modelo DeviceMaintenance
+Handler handleMaintenance() + suscripción a +/maintenance topic"
+GET /devices/:id/maintenance
+GET /maintenance/latest"
+
+### Firmware (ESP32-S3) — v0.20.0
+
+- Nueva interfaz I_Sensor y registro centralizado de sensores
+Estructura de drivers modularizada
+Preparación para mejor manejo y extensibilidad de sensores"
+- Nueva función publishMaintenance() al topic mush2/{deviceId}/maintenance
+Soporte para onActuatorChange() desde comandos MQTT
+- Nueva clase PredictiveMaintenance para tracking de tiempos de respuesta
+Monitoreo de 4 actuadores: VENT, HEATER, HUMIDIFIER, LIGHT
+Detección de degradación con umbrales y rolling window de 10 lecturas
+- Integración en mqttActuatorCallback, taskSensors, taskSSR y taskTelemetry
+Evaluación cada 5 minutos y publicación cuando health < 50%
+- Añadidos campos de I2C trending y predictive alerts
+Mejoras en seguimiento de fallos y métricas de recuperación"
+Actualizaciones en taskSensors y adaptive frequency
+Mejoras en MqttCmdBuffer (ring buffer con TTL)"
+Integración de sensor_registry y boot diagnostics
+Mejoras en inicialización y pruebas de arranque"
+
+## 2026-07-13
+
 ### Firmware (ESP32-S3) — v0.19.0
 
 - Nueva clase ring buffer con TTL (32 comandos, 5 minutos)
@@ -14,7 +42,13 @@ Métricas adicionales para resiliencia I2C
 Preparación de parámetros configurables para taskSensors y recovery
 - Intervalo dinámico entre 5s y 30s según sensorStabilityScore
 Lógica de incremento/decremento lineal de frecuencia
-Integración de phase awareness desde MQTT"
+Integración de phase awareness desde MQTT
+- Sistema predictivo de mantenimiento: PredictiveMaintenance
+Seguimiento de tiempo de respuesta de actuadores (VENT, HEATER, HUMIDIFIER, LIGHT)
+Detección de degradación con umbrales por componente
+publicación MQTT en topic `mush2/{deviceId}/maintenance`
+- Integración en taskTelemetry: publicación cada 5 minutos si health < 50
+Tracking de cambios de actuadores en taskSSR y mqttActuatorCallback
 
 ## 2026-07-13
 
@@ -32,6 +66,13 @@ Montaje del router de cycles
 - Evaluador de transiciones basado en sensores y tiempo
 Reglas definidas para las 7 especies (minDays, maxDays, sensorTrigger, etc.)
 Soporte para modos MANUAL, SEMI_AUTO y AUTO
+- Handler MQTT para topic `+/maintenance`
+Almacena reportes en modelo DeviceMaintenance
+Emisión de evento `maintenance` en eventBus
+- Nuevo modelo DeviceMaintenance (component, health, estimatedFailure, reason)
+Auto-sync con `sync({ alter: true })`
+- Rutas API: GET /devices/:id/maintenance, GET /devices/:id/maintenance/latest
+Filtros por componente y rango de fechas
 
 ## 2026-07-13
 

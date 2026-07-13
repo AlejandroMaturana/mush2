@@ -42,6 +42,8 @@ struct HealthMetrics {
   uint32_t i2cRecoveryAttempts;
   uint32_t i2cRecoverySuccesses;
   bool i2cPredictiveAlert;
+  bool bootTestPassed;
+  char bootTestFailReason[64];
 };
 
 class HealthMonitor {

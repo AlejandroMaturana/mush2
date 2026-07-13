@@ -32,6 +32,8 @@
 #include "button_driver.h"
 #include "button_fsm.h"
 #include "button_handler.h"
+#include "boot_test.h"
+#include "sensor_registry.h"
 #include "tasks.h"
 
 // ============================================================
@@ -54,6 +56,9 @@ ThingSpeakClient ts;
 MQTTClient mqtt;
 BLEProvisioning bleProv;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);
+SensorRegistry sensorRegistry;
+BootTest bootTest;
+BootTestResult bootResult;
 
 // ============================================================
 //  Shared state (accessed across cores, declared volatile)
@@ -188,13 +193,19 @@ void setup() {
     sntp_set_time_sync_notification_cb(ntpSyncCallback);
     configTime(0, 0, NTP_SERVER);
 
-    if (!aht.init()) {
-      Serial.println("[ERROR] AHT21 no disponible");
-    }
-    if (ens.init()) {
-      sharedEnsValid = true;
-    } else {
-      Serial.println("[INFO] ENS160 no presente — operando solo con AHT21");
+    // Run boot self-test
+    bootTest.init();
+    bootResult = bootTest.run();
+
+    // Auto-detect and initialize sensors via registry
+    sensorRegistry.init();
+    sensorRegistry.autoDetect();
+    sensorRegistry.printStatus();
+
+    // Update shared sensor flags
+    ISensor* ensSensor = sensorRegistry.getSensor("ENS160");
+    if (ensSensor) {
+      sharedEnsValid = ensSensor->isPresent();
     }
 
     ssr.init();
@@ -244,7 +255,13 @@ void setup() {
     lightCycleStart = bootTime;
     sharedLightOn = true;
 
-    sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
+    // Determine initial state based on boot test and WiFi
+    if (!bootResult.overall) {
+      sm.fsmTransition(ST_SAFE, bootResult.failReason);
+      Serial.printf("[BOOT] CRITICAL FAIL: %s — entering ST_SAFE\n", bootResult.failReason);
+    } else {
+      sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
+    }
 
     // Capture device info for MQTT and backend
     uint8_t mac[6];

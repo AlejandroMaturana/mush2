@@ -2,6 +2,7 @@
 #define MQTT_CMD_BUFFER_H
 
 #include <Arduino.h>
+#include "config.h"
 
 struct MqttCommand {
   uint32_t id;

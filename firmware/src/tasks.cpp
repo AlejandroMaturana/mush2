@@ -1,4 +1,5 @@
 #include "tasks.h"
+#include "drivers/ens160/ens160_driver.h"
 
 // ============================================================
 //  LED RGB Helper
@@ -86,6 +87,7 @@ void mqttActuatorCallback(const MqttActuatorMessage* msg) {
     if (ch < 1 || ch > 4) continue;
     actuatorDesired[ch - 1] = msg->cmds[i].state;
     actuatorMode[ch - 1] = msg->cmds[i].mode;
+    predictiveMaint.onActuatorChange(ch, msg->cmds[i].state == 1, millis());
     Serial.printf("[MQTT] Actuator ch%d: %s (REMOTE)\n",
       ch, msg->cmds[i].state ? "ON" : "OFF");
   }
@@ -132,11 +134,17 @@ void taskSensors(void* pvParameters) {
   unsigned long lastSensorValid = 0;
   unsigned long fallbackStart = 0;
 
+  ISensor* ahtSensor = sensorRegistry.getSensor("AHT21");
+  ISensor* ensSensor = sensorRegistry.getSensor("ENS160");
+
   while (true) {
     esp_task_wdt_reset();
     healthMonitor.feed(HB_SENSORS);
 
-    SensorReading reading = aht.read();
+    SensorReading reading = {0, 0, false};
+    if (ahtSensor) {
+      ahtSensor->read(&reading);
+    }
     float temp = reading.temperature;
     float hum = reading.humidity;
 
@@ -188,8 +196,10 @@ void taskSensors(void* pvParameters) {
       sharedHum = hum;
 
       EnsReading ensReading = {0, 0, 0, false};
-      if (ens.isPresent()) {
-        ensReading = ens.read(temp, hum);
+      if (ensSensor && ensSensor->isPresent()) {
+        ENS160Driver* ensDriver = static_cast<ENS160Driver*>(ensSensor);
+        ensDriver->setCompensation(temp, hum);
+        ensSensor->read(&ensReading);
 
         if (!ensReading.valid) {
           Serial.println("[ALARM] ENS160_FAIL");
@@ -231,6 +241,8 @@ void taskSensors(void* pvParameters) {
         Serial.printf(" | eCO₂: %u ppm | TVOC: %u ppb | AQI: %u", sharedEco2, sharedTvoc, sharedAqi);
       }
       Serial.printf(" | Interval: %ums\n", currentSensorInterval);
+
+      predictiveMaint.onSensorReading(temp, hum, sharedEnsValid ? sharedEco2 : 0, millis());
     } else if (!fallbackActive) {
       sharedSensorsValid = false;
       sensorStabilityScore = 0;
@@ -299,6 +311,12 @@ void taskSSR(void* pvParameters) {
       ssr.setChannel(2, finalState[1]);
       ssr.setChannel(3, finalState[2]);
       ssr.setChannel(4, finalState[3]);
+
+      for (int ch = 0; ch < 4; ch++) {
+        if (ssr.getChannel(ch + 1) != finalState[ch]) {
+          predictiveMaint.onActuatorChange(ch + 1, finalState[ch] == 1, millis());
+        }
+      }
 
       if (hyst.getOverheatState() == OH_ACTIVE) {
         unsigned long now = millis();
@@ -723,6 +741,24 @@ void taskTelemetry(void* pvParameters) {
         modeStr.c_str(),
         sharedLightOn ? "ON" : "OFF",
         ssrStr);
+    }
+
+    static unsigned long lastMaintEval = 0;
+    if (now - lastMaintEval >= 300000) {
+      lastMaintEval = now;
+      predictiveMaint.evaluate();
+
+      MaintenanceReport reports[4];
+      uint8_t reportCount = predictiveMaint.getReport(reports, 4);
+
+      if (wifiOk && mqttOk) {
+        for (uint8_t i = 0; i < reportCount; i++) {
+          if (reports[i].health < 50) {
+            mqtt.publishMaintenance(reports[i].component, reports[i].health,
+              reports[i].estimatedFailure, reports[i].reason);
+          }
+        }
+      }
     }
 
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_TELEMETRY));

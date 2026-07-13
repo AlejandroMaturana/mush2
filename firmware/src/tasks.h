@@ -32,6 +32,9 @@
 #include "button_driver.h"
 #include "button_fsm.h"
 #include "button_handler.h"
+#include "predictive_maintenance.h"
+#include "sensor_registry.h"
+#include "boot_test.h"
 
 // ============================================================
 //  Global objects (defined in main.ino)
@@ -55,6 +58,10 @@ extern Adafruit_NeoPixel led;
 extern ButtonDriver buttonDriver;
 extern ButtonFsm buttonFsm;
 extern ButtonHandler buttonHandler;
+extern PredictiveMaintenance predictiveMaint;
+extern SensorRegistry sensorRegistry;
+extern BootTest bootTest;
+extern BootTestResult bootResult;
 
 // ============================================================
 //  Shared state (accessed across cores, declared volatile)

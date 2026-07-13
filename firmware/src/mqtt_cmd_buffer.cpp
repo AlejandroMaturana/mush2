@@ -1,4 +1,5 @@
 #include "mqtt_cmd_buffer.h"
+#include "tasks.h"
 
 MqttCmdBuffer mqttCmdBuffer;
 

@@ -3,11 +3,14 @@
 #include "config.h"
 #include "mqtt_client.h"
 #include "state_machine.h"
+#include "boot_test.h"
+#include "tasks.h"
 #include <Wire.h>
 #include <esp_task_wdt.h>
 
 extern MQTTClient mqtt;
 extern StateMachine sm;
+extern BootTestResult bootResult;
 
 HealthMonitor healthMonitor;
 
@@ -158,6 +161,8 @@ void HealthMonitor::_checkHeartbeats() {
 
 void HealthMonitor::_checkSensors() {
   _checkI2C();
+  _metrics.bootTestPassed = bootResult.overall;
+  strncpy(_metrics.bootTestFailReason, bootResult.failReason, sizeof(_metrics.bootTestFailReason));
 }
 
 void HealthMonitor::_publishMetrics() {
@@ -189,7 +194,8 @@ void HealthMonitor::_publishMetrics() {
       _metrics.stackButton, _metrics.i2cBusHealthy,
       _metrics.sensorAht21, _metrics.sensorEns160,
       _metrics.staleTaskMask, _metrics.heartbeatsHealthy,
-      _metrics.uptime, _metrics.rebootCount
+      _metrics.uptime, _metrics.rebootCount,
+      _metrics.bootTestPassed, _metrics.bootTestFailReason
     );
   }
 
