@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import express from 'express';
-import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe, IntegrationCredentials } from '../models/index.js';
+import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, Recipe, IntegrationCredentials, DeviceHealth } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
@@ -288,6 +288,38 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
       limit: limitNum,
     });
     res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
+  try {
+    const { from, to, limit = 100 } = req.query;
+    const where = { deviceId: req.params.id };
+    if (from || to) {
+      where.timestamp = {};
+      if (from) where.timestamp[Op.gte] = new Date(from);
+      if (to) where.timestamp[Op.lte] = new Date(to);
+    }
+    const data = await DeviceHealth.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit, 10),
+    });
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/devices/:id/health/latest', checkDeviceAccess, async (req, res) => {
+  try {
+    const latest = await DeviceHealth.findOne({
+      where: { deviceId: req.params.id },
+      order: [['timestamp', 'DESC']],
+    });
+    res.json(latest || {});
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
