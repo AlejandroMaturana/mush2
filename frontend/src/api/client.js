@@ -335,4 +335,29 @@ export async function getTelegramBotStatus() {
   return data.data
 }
 
+export async function getSpecies(params = {}) {
+  const { data } = await client.get('/species', { params })
+  return data.data
+}
+
+export async function getSpeciesById(id) {
+  const { data } = await client.get(`/species/${id}`)
+  return data
+}
+
+export async function createSpecies(species) {
+  const { data } = await client.post('/species', species)
+  return data
+}
+
+export async function updateSpecies(id, species) {
+  const { data } = await client.put(`/species/${id}`, species)
+  return data
+}
+
+export async function deleteSpecies(id) {
+  const { data } = await client.delete(`/species/${id}`)
+  return data
+}
+
 export default client
