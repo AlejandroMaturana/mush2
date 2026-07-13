@@ -14,7 +14,8 @@ Device ──1:N── Sensor
   └──1:N── Event
 
 User ──1:N── AuditLog
-  ├──1:N── Subscription
+  ├──1:N── Subscription        ← modelo basado en capacidades (ADR-016)
+  ├──1:1── UserPreference
   └──N:M── Chamber (via UserChamberAccess)
 
 Recipe ──1:N── CultivationCycle
@@ -157,6 +158,27 @@ Chamber ──1:N── Device
 | details | JSONB | Detalles adicionales |
 | createdAt | TIMESTAMP | — |
 
+### Subscription
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | INTEGER PK | autoincrement |
+| userId | UUID FK(user) | Titular de la suscripción |
+| plan | ENUM(FREE,BASIC,PREMIUM) | Plan actual (default: FREE) |
+| status | ENUM(ACTIVE,CANCELED,PAST_DUE) | Estado (default: ACTIVE) |
+| apiCallsPerMonth | INTEGER | Límite de requests según plan (1k/10k/100k) |
+| apiCallsUsedThisMonth | INTEGER | Contador de uso en el período actual |
+| dataRetentionDays | INTEGER | Días de retención según plan (30/90/365) |
+| currentPeriodStart | DATE | Inicio del período facturado (default: now()) |
+| currentPeriodEnd | DATE | Fin del período facturado (default: now() + 1 mes) |
+| canceledAt | DATE | Nullable; fecha de solicitud de cancelación |
+
+Reglas de negocio:
+- `apiCallsPerMonth` y `dataRetentionDays` se copian del plan al crear/upgrade (no se resuelven dinámicamente del plan para evitar cambios retroactivos)
+- `apiCallsUsedThisMonth` se resetea al renovar el período
+- `status` se marca `CANCELED` cuando el usuario solicita baja; `canceledAt` registra la fecha
+- Un job diario (`subscriptionExpiration.js`) maneja la expiración al final del período
+- No hay período de gracia: al expirar se degrada a FREE (o se purga según disposición de capacidades)
+
 ### UserChamberAccess
 | Campo | Tipo | Descripción |
 |---|---|---|
@@ -169,3 +191,7 @@ Chamber ──1:N── Device
 
 En desarrollo: `sequelize.sync({ alter: true })` al iniciar.
 En producción: migraciones versionadas (ADR-013 Fase 3).
+
+## Notas sobre el Modelo de Suscripción
+
+La tabla `Subscription` reemplaza el diseño legacy (con columnas `startDate`/`endDate`/`autoRenew`/`stripe*`) por un modelo basado en capacidades. La migración (`DROP TABLE subscriptions CASCADE; sync({ alter: true })`) eliminó la tabla legacy y la recreó con el schema actual. Ver `docs/ADR/ADR-016-capability-based-subscription.md` para la decisión arquitectónica completa.

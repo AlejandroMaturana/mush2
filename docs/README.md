@@ -30,6 +30,9 @@ Describe **cómo están construidos** los componentes del sistema.
 | [`firmware.md`](architecture/firmware.md) | Arquitectura firmware ESP32-S3: módulos, tareas FreeRTOS, pinout, state machine |
 | [`frontend.md`](architecture/frontend.md) | Árbol de componentes React, routing, SSE, diseño |
 | [`database.md`](architecture/database.md) | Esquema PostgreSQL: entidades, relaciones, índices |
+| [`capability-catalog.md`](architecture/capability-catalog.md) | Catálogo de capacidades, recursos, cuotas y políticas por plan |
+| [`authorization-model.md`](architecture/authorization-model.md) | Modelo de autorización: autenticación dual, RBAC, capacidades, tenant scope |
+| [`qos-policy.md`](architecture/qos-policy.md) | Políticas de calidad de servicio: frecuencias, protocolos, degradación |
 
 ### 🤝 Contratos (`docs/contracts/`)
 Define los **contratos de comunicación** entre componentes. Son inmutables sin incrementar versión.
@@ -56,6 +59,8 @@ Registro de **decisiones de arquitectura** tomadas y su justificación. Una vez 
 | ADR-001 a ADR-006 | Plataforma, sensores, SSR, ThingSpeak, PostgreSQL, logging |
 | ADR-007 a ADR-010 | JWT/RBAC, protocolo HTTP, control histéresis, fail-safe |
 | ADR-011 a ADR-014 | Recetas/ciclos, FreeRTOS, seguridad, OTA v3 |
+| ADR-015 | Reestructuración de documentación |
+| ADR-016 | Política de Capacidades Basada en Suscripción |
 
 ### 🧩 Engineering Design Documents (`docs/EDD/`)
 Documentos de **diseño de alto nivel** para subsistemas complejos. Se crean _antes_ de implementar.
@@ -79,6 +84,8 @@ Documentos de **diseño de alto nivel** para subsistemas complejos. Se crean _an
 | [`RFC-0003-multi-device-dashboard.md`](RFC/RFC-0003-multi-device-dashboard.md) | DRAFT | Dashboard multi-dispositivo simultáneo |
 | [`RFC-0004-notificaciones-push.md`](RFC/RFC-0004-notificaciones-push.md) | DRAFT | Sistema de notificaciones push |
 | [`RFC-0005-BLE-Provisioning-&-Device-Bootstrap.md`](RFC/RFC-0005-BLE-Provisioning-&-Device-Bootstrap.md) | ACCEPTED | BLE Provisioning & Device Bootstrap |
+| [`RFC-0006-realtime-streaming.md`](RFC/RFC-0006-realtime-streaming.md) | DRAFT | Real-Time Streaming y QoS |
+| [`RFC-0007-device-limits.md`](RFC/RFC-0007-device-limits.md) | DRAFT | Límites de dispositivos por plan |
 
 ### 🎨 Diseño (`docs/design/`)
 Lineamientos visuales, design tokens y decisiones de UX.
@@ -115,16 +122,16 @@ Procedimientos de despliegue y operación del sistema.
 |---|---|
 | [`deployment.md`](operations/deployment.md) | Entornos, instrucciones de despliegue, CI/CD |
 
-### 📊 Diagramas (`docs/diagrams/`)
-Diagramas de arquitectura en formato `.drawio` (editable con [draw.io](https://draw.io)).
+### 📊 Diagramas (`docs/diagrams/`) — Pendiente
+Diagramas de arquitectura visual. **Contenido pendiente de definir/actualizar** — se completará en una iteración posterior.
 
 | Diagrama | Contenido |
 |---|---|
-| `architecture.drawio` | Diagrama de componentes del sistema |
-| `database.drawio` | Esquema de base de datos con relaciones |
-| `sequence.drawio` | Diagramas de secuencia de flujos críticos |
-| `state_machine.drawio` | Máquina de estados del firmware |
-| `exports/` | Imágenes exportadas (PNG/SVG) para visualización en GitHub |
+| `architecture.drawio` | 🔄 Pendiente — Diagrama de componentes del sistema (actualizar con capability model) |
+| `database.drawio` | 🔄 Pendiente — Esquema de base de datos con relaciones (incluir Subscription) |
+| `sequence.drawio` | 🔄 Pendiente — Diagramas de secuencia de flujos críticos (incluir flujo de autorización) |
+| `state_machine.drawio` | 🔄 Pendiente — Máquina de estados del firmware |
+| `exports/` | 🔄 Pendiente — Imágenes exportadas (PNG/SVG) para visualización en GitHub |
 
 ### 👤 Usuario (`docs/user/`)
 Documentación para operadores y cultivadores.
@@ -146,16 +153,17 @@ Documentación para operadores y cultivadores.
 ## Estado de la documentación
 
 | Sección | Estado | Última actualización |
-|---|---|---|
-| `architecture/` | ✅ Completo | 2026-07-05 |
+|---|---|---|---|
+| `architecture/` | ✅ Completo (5 docs: 3 actualizados + 2 nuevos capability/authorization/qos) | 2026-07-11 |
 | `contracts/` | ✅ Completo | 2026-06-30 |
 | `protocol/` | ✅ Completo | 2026-06-30 |
-| `ADR/` | ✅ 14 ADRs (001–014) | 2026-07-05 |
+| `ADR/` | ✅ 16 ADRs (001–016) | 2026-07-11 |
 | `EDD/` | 🟡 En construcción | 2026-07-05 |
-| `rfc/` | 🟡 Borradores | 2026-07-05 |
+| `rfc/` | 🟡 7 RFCs (0001–0005, 0012–0013) | 2026-07-11 |
 | `design/` | ✅ Completo | 2026-07-05 |
 | `governance/` | ✅ Completo | 2026-06-30 |
 | `roadmap/` | ✅ Consolidado | 2026-07-05 |
+| `diagrams/` | 🔄 Pendiente — pendiente de actualizar | 2026-07-11 |
 | `operations/` | 🟡 Solo dev local | 2026-07-05 |
 | `user/` | 🟡 Manual básico | 2026-06-30 |
 

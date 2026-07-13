@@ -8,9 +8,11 @@
 | Framework | Express 5 |
 | ORM | Sequelize 6 |
 | Base de datos | PostgreSQL 16 |
-| Autenticación | JWT (HS256) + bcryptjs |
+| Autenticación | JWT (HS256) + bcryptjs + API Key |
+| Autorización | RBAC (4 roles) + capability gate + tenant scope |
 | MQTT Cliente | mqtt.js |
 | Seguridad | Helmet, CORS, express-rate-limit |
+| Jobs | node-cron (data retention, expiration) |
 | Validación | express-validator |
 | Pruebas | Jest + Supertest |
 | Package manager | pnpm |
@@ -25,7 +27,7 @@ backend/
 │   ├── config/
 │   │   ├── database.js    # Conexión Sequelize
 │   │   └── env.js         # Variables de entorno validadas
-│   ├── models/            # Modelos Sequelize (18+)
+│   ├── models/            # Modelos Sequelize (19)
 │   │   ├── index.js       # Asociaciones
 │   │   ├── Chamber.js
 │   │   ├── Device.js
@@ -44,6 +46,9 @@ backend/
 │   │   ├── IntegrationCredentials.js
 │   │   ├── UserChamberAccess.js
 │   │   └── UserPreference.js
+│   ├── jobs/              # Tareas programadas
+│   │   ├── dataRetention.js   # Purga según plan de suscripción
+│   │   └── subscriptionExpiration.js # Cancelación al final del período
 │   ├── controllers/       # Lógica de endpoints
 │   │   ├── authController.js
 │   │   ├── chamberController.js
@@ -65,11 +70,12 @@ backend/
 │   │   ├── api.js         # API REST versión 1
 │   │   └── admin.js       # Rutas de administración
 │   ├── middlewares/        # Middleware personalizado
-│   │   ├── auth.js        # Verificación JWT
-│   │   ├── rbac.js        # Control de roles
+│   │   ├── auth.js        # Verificación JWT + API Key dual
+│   │   ├── rbac.js        # Control de roles (RBAC)
+│   │   ├── capability.js  # Capability gate (requiere capacidades específicas)
 │   │   ├── audit.js       # Logging de auditoría
-│   │   ├── subscription.js # Límites por plan
-│   │   └── validate.js    # Validación de entrada
+│   │   ├── subscription.js # Límites por plan (rate limiting por suscripción)
+│   │   └── validate.js    # Validación de entrada (express-validator)
 │   ├── services/          # Lógica de negocio
 │   │   ├── controlEngine.js   # Motor de reglas
 │   │   ├── controlState.js    # Estado del controlador
@@ -133,6 +139,13 @@ User 1──N AuditLog
 - `GET /api/v1/cycles` — Ciclos activos
 - `POST /api/v1/cycles` — Iniciar ciclo
 
+### Suscripción
+- `GET /api/v1/subscriptions` — Plan activo del usuario autenticado
+- `GET /api/v1/subscriptions/usage` — Consumo actual vs límites del plan
+- `POST /api/v1/subscriptions/check` — Verifica si una acción está permitida
+- `PATCH /api/v1/subscriptions` — Cambiar de plan
+- `DELETE /api/v1/subscriptions` — Cancelar suscripción (fin del período)
+
 ## Servicios Clave
 
 ### mqttService.js
@@ -155,6 +168,21 @@ User 1──N AuditLog
 - Evita duplicados por timestamp
 - Marca integridad en cada registro sincronizado
 
+### dataRetention.js (Job)
+- Ejecución diaria vía node-cron
+- Purga telemetría según `data.retention.days` del plan (FREE=30d, BASIC=90d, PREMIUM=365d)
+- Preserva eventos estructurales (alarmas, cambios de estado) independientemente del plan
+
+### subscriptionExpiration.js (Job)
+- Ejecución diaria vía node-cron
+- Identifica suscripciones cuyo `currentPeriodEnd` ya venció
+- Marca como `canceled` y programa purge de datos al final del período
+
+### Telegram Service (notifications)
+- Notificaciones de alarmas y eventos vía bot (`@Mush2_bot`)
+- Canal de comunicación directo con el usuario
+- Comandos de consulta rápida
+
 ## WebSockets / SSE
 
 El backend expone eventos Server-Sent Events en `GET /api/v1/events`:
@@ -172,9 +200,22 @@ data: {"deviceId":1,"type":"HIGH_TEMP","severity":"HIGH","message":"..."}
 
 ## Roles y Permisos
 
+### RBAC (Identidad)
+
 | Rol | Permisos |
 |---|---|
 | `SUPER_ADMIN` | Todo el sistema |
 | `ADMIN` | CRUD en su organización |
 | `OPERATOR` | Control y monitoreo |
 | `VIEWER` | Solo lectura |
+
+### Capability Gate (Suscripción)
+
+Independientemente del rol RBAC, cada acción se verifica contra el plan del usuario:
+
+1. ¿El usuario tiene una suscripción activa?
+2. ¿La capacidad requerida está disponible en su plan?
+3. ¿El recurso solicitado está dentro del límite de su plan?
+4. ¿La cuota del período actual no se ha agotado?
+
+Ver `docs/architecture/authorization-model.md` para la matriz detallada de decisión request→response.

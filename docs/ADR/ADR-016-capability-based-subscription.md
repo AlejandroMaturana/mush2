@@ -90,8 +90,8 @@ Toda capacidad en la plataforma se clasifica en una de las siguientes categoría
 - `docs/architecture/capability-catalog.md` — catálogo detallado de capacidades, recursos, cuotas y políticas.
 - `docs/architecture/authorization-model.md` — modelo de autorización basado en capacidades.
 - `docs/architecture/qos-policy.md` — políticas de calidad de servicio por plan.
-- `docs/RFC/RFC-012-realtime-streaming.md` — RFC de streaming en tiempo real.
-- `docs/RFC/RFC-013-device-limits.md` — RFC de límites de dispositivos.
+- `docs/RFC/RFC-0006-realtime-streaming.md` — RFC de streaming en tiempo real.
+- `docs/RFC/RFC-0007-device-limits.md` — RFC de límites de dispositivos.
 
 ## Referencias
 
