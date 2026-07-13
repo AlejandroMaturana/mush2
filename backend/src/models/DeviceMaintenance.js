@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../database.js';
+import sequelize from '../config/database.js';
 
 const DeviceMaintenance = sequelize.define('DeviceMaintenance', {
   id: {
