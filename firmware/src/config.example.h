@@ -140,6 +140,36 @@
 #define TEMP_CRITICAL 32.0
 #define TEMP_RECOVERY 28.0
 
+// ---- Adaptive Sensor Frequency ----
+#ifndef SENSOR_FREQ_MIN_MS
+#define SENSOR_FREQ_MIN_MS 5000
+#endif
+#ifndef SENSOR_FREQ_MAX_MS
+#define SENSOR_FREQ_MAX_MS 30000
+#endif
+#ifndef SENSOR_STABILITY_THRESHOLD
+#define SENSOR_STABILITY_THRESHOLD 10
+#endif
+#ifndef SENSOR_INSTABILITY_THRESHOLD
+#define SENSOR_INSTABILITY_THRESHOLD 3
+#endif
+
+// ---- I2C Recovery Trending ----
+#ifndef I2C_RECOVERY_TREND_WINDOW
+#define I2C_RECOVERY_TREND_WINDOW 16
+#endif
+#ifndef I2C_PREDICTIVE_THRESHOLD
+#define I2C_PREDICTIVE_THRESHOLD 5
+#endif
+
+// ---- MQTT Command Buffer ----
+#ifndef MQTT_CMD_BUFFER_SIZE
+#define MQTT_CMD_BUFFER_SIZE 32
+#endif
+#ifndef MQTT_CMD_TTL_MS
+#define MQTT_CMD_TTL_MS 300000UL
+#endif
+
 // ---- Post-humidification timing (ms) ----
 #define POST_VENT_DELAY 10000
 #define POST_VENT_DURATION 30000
