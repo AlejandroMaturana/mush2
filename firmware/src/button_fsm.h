@@ -2,15 +2,6 @@
 #define BUTTON_FSM_H
 
 #include <Arduino.h>
-#include "button_driver.h"
-#include "event_bus.h"
-
-// ============================================================
-//  Button FSM — Clasificacion de gestos
-//  Consume edges confirmados del ButtonDriver.
-//  Clasifica: Click, Double-Click, Hold-3s, Hold-10s.
-//  Publica EVT_BUTTON via EventBus.
-// ============================================================
 
 enum ButtonGesture {
   BTN_NONE = 0,
@@ -39,13 +30,13 @@ public:
 
 private:
   ButtonFsmState _state;
-  uint32_t _pressStartTime;
-  uint32_t _releaseTime;
-  bool _gestureReady;
-  ButtonGesture _lastGesture;
+  unsigned long _pressStart;
+  unsigned long _releaseTime;
+  bool _hold3sFired;
+  bool _hold10sFired;
+  ButtonGesture _pendingGesture;
 
   void _reset();
-  void _publishGesture(ButtonGesture gesture, uint32_t holdDuration);
 };
 
 extern ButtonFsm buttonFsm;

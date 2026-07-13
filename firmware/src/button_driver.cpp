@@ -4,65 +4,32 @@
 ButtonDriver buttonDriver;
 
 ButtonDriver::ButtonDriver()
-  : _pin(-1), _isrTimestamp(0), _rawLevel(true), _debouncedLevel(true),
-    _pendingEdge(false), _pendingIsPress(false), _pendingTimestamp(0),
-    _lastTransitionTime(0) {
-}
+  : _pin(-1), _edgeFlag(false), _lastEdgeTime(0) {}
 
-bool ButtonDriver::init(int gpioPin) {
-  _pin = gpioPin;
-
+void ButtonDriver::init(int pin) {
+  _pin = pin;
   pinMode(_pin, INPUT_PULLUP);
-
-  _debouncedLevel = digitalRead(_pin);
-  _rawLevel = _debouncedLevel;
-  _lastTransitionTime = millis();
-
   attachInterruptArg(digitalPinToInterrupt(_pin), _isrHandler, this, CHANGE);
-
-  Serial.printf("[BUTTON] Driver init: GPIO%d (INPUT_PULLUP, active LOW)\n", _pin);
-  return true;
-}
-
-void IRAM_ATTR ButtonDriver::_isrHandler(void* arg) {
-  ButtonDriver* self = static_cast<ButtonDriver*>(arg);
-  self->_rawLevel = !digitalRead(self->_pin);
-  self->_isrTimestamp = millis();
-}
-
-void ButtonDriver::poll() {
-  uint32_t now = millis();
-  bool raw = _rawLevel;
-
-  if (raw != _debouncedLevel) {
-    if ((now - _lastTransitionTime) >= BUTTON_DEBOUNCE_MS) {
-      _debouncedLevel = raw;
-      _pendingEdge = true;
-      _pendingIsPress = raw;
-      _pendingTimestamp = _isrTimestamp;
-      _lastTransitionTime = now;
-    }
-  } else {
-    _lastTransitionTime = now;
-  }
-}
-
-bool ButtonDriver::isPressed() {
-  return _debouncedLevel;
+  Serial.printf("[BUTTON] Driver init GPIO%d (pull-up, CHANGE)\n", _pin);
 }
 
 bool ButtonDriver::edgeDetected() {
-  if (_pendingEdge) {
-    _pendingEdge = false;
+  if (_edgeFlag) {
+    _edgeFlag = false;
     return true;
   }
   return false;
 }
 
-bool ButtonDriver::edgeIsPress() {
-  return _pendingIsPress;
+bool ButtonDriver::isPressed() {
+  return _pin >= 0 && digitalRead(_pin) == LOW;
 }
 
-uint32_t ButtonDriver::getEdgeTimestamp() {
-  return _pendingTimestamp;
+void IRAM_ATTR ButtonDriver::_isrHandler(void* arg) {
+  ButtonDriver* self = static_cast<ButtonDriver*>(arg);
+  unsigned long now = millis();
+  if (now - self->_lastEdgeTime >= BUTTON_DEBOUNCE_MS) {
+    self->_edgeFlag = true;
+    self->_lastEdgeTime = now;
+  }
 }

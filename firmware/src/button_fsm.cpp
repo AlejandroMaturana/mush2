@@ -1,130 +1,96 @@
 #include "button_fsm.h"
+#include "button_driver.h"
 #include "config.h"
 
 ButtonFsm buttonFsm;
 
 ButtonFsm::ButtonFsm()
-  : _state(BFSM_IDLE), _pressStartTime(0), _releaseTime(0),
-    _gestureReady(false), _lastGesture(BTN_NONE) {
-}
+  : _state(BFSM_IDLE), _pressStart(0), _releaseTime(0),
+    _hold3sFired(false), _hold10sFired(false), _pendingGesture(BTN_NONE) {}
 
 void ButtonFsm::init() {
-  _reset();
+  _state = BFSM_IDLE;
   Serial.println("[BUTTON] FSM initialized");
 }
 
 void ButtonFsm::loop() {
-  buttonDriver.poll();
+  bool edge = buttonDriver.edgeDetected();
+  bool pressed = buttonDriver.isPressed();
+  unsigned long now = millis();
 
-  uint32_t now = millis();
+  switch (_state) {
+    case BFSM_IDLE:
+      if (edge && pressed) {
+        _pressStart = now;
+        _hold3sFired = false;
+        _hold10sFired = false;
+        _state = BFSM_PRESSED;
+      }
+      break;
 
-  if (buttonDriver.edgeDetected()) {
-    bool isPress = buttonDriver.edgeIsPress();
-    uint32_t edgeTs = buttonDriver.getEdgeTimestamp();
-
-    switch (_state) {
-      case BFSM_IDLE:
-        if (isPress) {
-          _pressStartTime = edgeTs;
-          _state = BFSM_PRESSED;
-        }
-        break;
-
-      case BFSM_PRESSED:
-        if (!isPress) {
-          uint32_t pressDuration = edgeTs - _pressStartTime;
-          if (pressDuration < BUTTON_CLICK_MAX_MS) {
-            _releaseTime = edgeTs;
-            _state = BFSM_WAIT_SECOND_PRESS;
-          } else {
-            _reset();
-          }
-        }
-        break;
-
-      case BFSM_HOLD_3S_REACHED:
-        if (!isPress) {
+    case BFSM_PRESSED:
+      if (edge && !pressed) {
+        unsigned long held = now - _pressStart;
+        if (held < BUTTON_CLICK_MAX_MS) {
+          _releaseTime = now;
+          _state = BFSM_WAIT_SECOND_PRESS;
+        } else {
           _reset();
         }
-        break;
+      } else if (!edge && !_hold3sFired && (now - _pressStart >= BUTTON_HOLD_3S_MS)) {
+        _hold3sFired = true;
+        _pendingGesture = BTN_HOLD_3S;
+        _state = BFSM_HOLD_3S_REACHED;
+      }
+      break;
 
-      case BFSM_HOLD_10S_REACHED:
-        if (!isPress) {
-          _reset();
-        }
-        break;
+    case BFSM_HOLD_3S_REACHED:
+      if (edge && !pressed) {
+        _reset();
+      } else if (!edge && !_hold10sFired && (now - _pressStart >= BUTTON_HOLD_10S_MS)) {
+        _hold10sFired = true;
+        _pendingGesture = BTN_HOLD_10S;
+        _state = BFSM_HOLD_10S_REACHED;
+      }
+      break;
 
-      case BFSM_WAIT_SECOND_PRESS:
-        if (isPress) {
-          uint32_t gapDuration = edgeTs - _releaseTime;
-          if (gapDuration <= BUTTON_DOUBLE_GAP_MS) {
-            _publishGesture(BTN_DOUBLE_CLICK, 0);
-            _reset();
-          } else {
-            _pressStartTime = edgeTs;
-            _state = BFSM_PRESSED;
-          }
-        }
-        break;
-    }
-  }
+    case BFSM_HOLD_10S_REACHED:
+      if (edge && !pressed) {
+        _reset();
+      }
+      break;
 
-  if (_state == BFSM_PRESSED) {
-    uint32_t held = now - _pressStartTime;
-
-    if (held >= BUTTON_HOLD_10S_MS) {
-      _publishGesture(BTN_HOLD_10S, held);
-      _state = BFSM_HOLD_10S_REACHED;
-    } else if (held >= BUTTON_HOLD_3S_MS) {
-      _publishGesture(BTN_HOLD_3S, held);
-      _state = BFSM_HOLD_3S_REACHED;
-    }
-  }
-
-  if (_state == BFSM_WAIT_SECOND_PRESS) {
-    if ((now - _releaseTime) > BUTTON_DOUBLE_GAP_MS) {
-      _publishGesture(BTN_CLICK, 0);
-      _reset();
-    }
+    case BFSM_WAIT_SECOND_PRESS:
+      if (edge && pressed) {
+        _pendingGesture = BTN_DOUBLE_CLICK;
+        _state = BFSM_PRESSED;
+        _hold3sFired = true;
+        _hold10sFired = true;
+      } else if ((now - _releaseTime) > BUTTON_DOUBLE_GAP_MS) {
+        _pendingGesture = BTN_CLICK;
+        _reset();
+      }
+      break;
   }
 }
 
 ButtonGesture ButtonFsm::getGesture() {
-  if (_gestureReady) {
-    _gestureReady = false;
-    return _lastGesture;
-  }
-  return BTN_NONE;
+  ButtonGesture g = _pendingGesture;
+  _pendingGesture = BTN_NONE;
+  return g;
 }
 
 bool ButtonFsm::isHolding() {
-  return (_state == BFSM_PRESSED || _state == BFSM_HOLD_3S_REACHED);
+  return _state == BFSM_PRESSED || _state == BFSM_HOLD_3S_REACHED;
 }
 
 uint32_t ButtonFsm::getHoldDuration() {
-  if (_state == BFSM_PRESSED || _state == BFSM_HOLD_3S_REACHED) {
-    return millis() - _pressStartTime;
-  }
-  return 0;
+  if (_state == BFSM_IDLE || _state == BFSM_WAIT_SECOND_PRESS) return 0;
+  return millis() - _pressStart;
 }
 
 void ButtonFsm::_reset() {
   _state = BFSM_IDLE;
-  _pressStartTime = 0;
-  _releaseTime = 0;
-}
-
-void ButtonFsm::_publishGesture(ButtonGesture gesture, uint32_t holdDuration) {
-  _lastGesture = gesture;
-  _gestureReady = true;
-
-  Event event;
-  event.type = EVT_BUTTON;
-  event.timestamp = millis();
-  event.payload.button.gesture = (uint8_t)gesture;
-  event.payload.button.holdDuration = holdDuration;
-  eventBus.publish(event);
-
-  const char* names[] = {"NONE", "CLICK", "DOUBLE_CLICK", "HOLD_3S", "HOLD_10S"};
-  Serial.printf("[BUTTON] Gesture: %s (hold=%lums)\n", names[gesture], holdDuration);
+  _hold3sFired = false;
+  _hold10sFired = false;
 }
