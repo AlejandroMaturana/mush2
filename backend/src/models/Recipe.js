@@ -5,6 +5,7 @@ const Recipe = sequelize.define('Recipe', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   userId: { type: DataTypes.UUID, allowNull: true },
   name: { type: DataTypes.STRING(100), allowNull: false },
+  speciesId: { type: DataTypes.INTEGER, allowNull: true },
   species: { type: DataTypes.STRING(100), allowNull: false },
   incubationTempMin: { type: DataTypes.DECIMAL(5, 2) },
   incubationTempMax: { type: DataTypes.DECIMAL(5, 2) },

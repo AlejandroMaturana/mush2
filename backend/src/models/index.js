@@ -18,6 +18,7 @@ import TelegramDeviceConfig from './TelegramDeviceConfig.js';
 import IntegrationCredentials from './IntegrationCredentials.js';
 import Subscription from './Subscription.js';
 import DeviceHealth from './DeviceHealth.js';
+import SpeciesProfile from './SpeciesProfile.js';
 
 Device.hasMany(Sensor, { foreignKey: 'deviceId' });
 Sensor.belongsTo(Device, { foreignKey: 'deviceId' });
@@ -84,4 +85,7 @@ Subscription.belongsTo(User, { foreignKey: 'userId' });
 Device.hasMany(DeviceHealth, { foreignKey: 'deviceId' });
 DeviceHealth.belongsTo(Device, { foreignKey: 'deviceId' });
 
-export { Chamber, Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting, TelegramDeviceConfig, IntegrationCredentials, Subscription, DeviceHealth };
+SpeciesProfile.hasMany(Recipe, { foreignKey: 'speciesId' });
+Recipe.belongsTo(SpeciesProfile, { foreignKey: 'speciesId' });
+
+export { Chamber, Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting, TelegramDeviceConfig, IntegrationCredentials, Subscription, DeviceHealth, SpeciesProfile };
