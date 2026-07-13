@@ -93,6 +93,27 @@ extern volatile bool provisionalMode;
 extern volatile int64_t lastActuatorPersist;
 extern uint32_t holdWindow[4];
 
+// Adaptive sensor frequency
+extern volatile uint32_t sensorStabilityScore;
+extern volatile uint32_t currentSensorInterval;
+extern volatile uint32_t sensorReadCount;
+
+// Phase awareness
+extern char currentPhase[16];
+extern volatile unsigned long phaseStartedAt;
+
+// I2C recovery trending
+extern volatile uint32_t i2cFailureCount;
+extern volatile uint32_t i2cRecoveryAttempts;
+extern volatile uint32_t i2cRecoverySuccesses;
+extern volatile unsigned long i2cFailureHistory[I2C_RECOVERY_TREND_WINDOW];
+extern volatile uint8_t i2cFailureHistoryIndex;
+extern volatile bool i2cPredictiveAlert;
+
+// MQTT command buffer
+extern volatile bool mqttCmdBufferHasData;
+extern volatile uint32_t mqttCmdBufferCount;
+
 // OTA command state (set by serial or MQTT)
 extern volatile bool otaCommandPending;
 extern char otaCommandUrl[256];

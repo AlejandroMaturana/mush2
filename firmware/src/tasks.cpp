@@ -97,6 +97,13 @@ void mqttActuatorCallback(const MqttActuatorMessage* msg) {
       sp.tempMin, sp.tempMax, sp.humMin, sp.humMax, sp.co2Max);
   }
 
+  if (msg->phase[0] != '\0' && strcmp(msg->phase, currentPhase) != 0) {
+    strncpy(currentPhase, msg->phase, sizeof(currentPhase) - 1);
+    currentPhase[sizeof(currentPhase) - 1] = '\0';
+    phaseStartedAt = millis();
+    Serial.printf("[MQTT] Fase actualizada: %s\n", currentPhase);
+  }
+
   if (strcmp(msg->status, "no_active_cycle") == 0) {
     for (int ch = 0; ch < 4; ch++) {
       actuatorMode[ch] = 0;
@@ -206,22 +213,35 @@ void taskSensors(void* pvParameters) {
       sharedSensorsValid = true;
       sharedUptime = (millis() - bootTime) / 1000;
 
+      sensorReadCount++;
+      if (sensorStabilityScore < SENSOR_STABILITY_THRESHOLD) {
+        sensorStabilityScore++;
+      }
+      if (sensorStabilityScore >= SENSOR_STABILITY_THRESHOLD) {
+        currentSensorInterval = SENSOR_FREQ_MAX_MS;
+      } else if (sensorStabilityScore > 0) {
+        uint32_t range = SENSOR_FREQ_MAX_MS - SENSOR_FREQ_MIN_MS;
+        currentSensorInterval = SENSOR_FREQ_MIN_MS + (range * sensorStabilityScore / SENSOR_STABILITY_THRESHOLD);
+      } else {
+        currentSensorInterval = SENSOR_FREQ_MIN_MS;
+      }
+
       Serial.printf("[SENSOR] T: %.1f°C | HR: %.1f%%", temp, hum);
       if (sharedEnsValid) {
-        Serial.printf(" | eCO₂: %u ppm | TVOC: %u ppb | AQI: %u\n",
-          sharedEco2, sharedTvoc, sharedAqi);
-      } else {
-        Serial.println();
+        Serial.printf(" | eCO₂: %u ppm | TVOC: %u ppb | AQI: %u", sharedEco2, sharedTvoc, sharedAqi);
       }
+      Serial.printf(" | Interval: %ums\n", currentSensorInterval);
     } else if (!fallbackActive) {
       sharedSensorsValid = false;
+      sensorStabilityScore = 0;
+      currentSensorInterval = SENSOR_FREQ_MIN_MS;
       sm.fsmTransition(ST_DEGRADED, "sensor fail no fallback");
       Serial.println("[SENSOR] Lectura inválida — sin fallback disponible");
     }
 
     processPhotoperiod();
 
-    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(DELAY_SENSORS));
+    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(currentSensorInterval));
   }
 }
 
