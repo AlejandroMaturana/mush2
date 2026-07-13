@@ -1,4 +1,4 @@
-import { PhaseTransition, CultivationCycle, Recipe } from './index.js';
+import { PhaseTransition, CultivationCycle, Recipe } from '../models/index.js';
 import { events } from './eventBus.js';
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
