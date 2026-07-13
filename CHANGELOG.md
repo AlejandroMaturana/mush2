@@ -2,6 +2,40 @@
 
 ## 2026-07-13
 
+### Backend — v0.20.0
+
+- Nuevo modelo PhaseTransition con historial completo (triggerType, status, triggerData, etc.)
+Añadidos phaseStartedAt y adaptationConfig (JSONB) en CultivationCycle
+Configuradas asociaciones entre modelos
+- evaluateCycle() ahora usa phaseEvaluator
+Lógica de creación y ejecución automática de transiciones
+Actualización de phaseStartedAt y emisión de evento PHASE_TRANSITION
+- Rutas completas: GET/POST/PATCH cycles + POST /transition, GET /transitions
+Soporte para transición manual, abort y consulta de historial
+Montaje del router de cycles
+- Evaluador de transiciones basado en sensores y tiempo
+Reglas definidas para las 7 especies (minDays, maxDays, sensorTrigger, etc.)
+Soporte para modos MANUAL, SEMI_AUTO y AUTO
+
+## 2026-07-13
+
+### Phase 13A — Adaptive Automation Backend
+
+**Backend**
+- New model `PhaseTransition` — tracks phase transitions with trigger type, sensor data, approval status
+- CultivationCycle: added `phaseStartedAt` (DATETIME) and `adaptationConfig` (JSONB: mode, sensorBasedTrigger)
+- New service `phaseEvaluator.js` — evaluates sensor-based phase transitions per species:
+  - 7 species rules: Hericium erinaceus, Ganoderma lucidum, Lentinula edodes, Trametes versicolor, Cordyceps militaris, Pleurotus ostreatus, Inonotus obliquus
+  - Sensor sustain condition tracking with rolling window
+  - 3 modes: MANUAL (time-only), SEMI_AUTO (suggest + approve), AUTO (execute automatically)
+- controlEngine.js: integrated PhaseTransitionEvaluator into evaluateCycle()
+- New routes `/api/v1/cycles` — full CRUD:
+  - GET/POST /cycles, GET/PATCH /cycles/:id
+  - POST /cycles/:id/transition (manual override)
+  - GET /cycles/:id/transitions (transition history)
+  - POST /cycles/:id/abort
+  - GET /cycles/:id/states (CycleState history)
+
 ### Backend — v0.19.0
 
 - Rutas completas: GET/POST/PUT/DELETE /api/v1/species con filtros
