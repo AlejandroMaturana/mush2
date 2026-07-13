@@ -74,7 +74,12 @@ void HealthMonitor::_checkI2C() {
 
   if (!_metrics.i2cBusHealthy) {
     LOG_W("HEALTH", "I2C bus falló — intentando recuperación");
+    i2cFailureCount++;
+    i2cFailureHistory[i2cFailureHistoryIndex] = millis();
+    i2cFailureHistoryIndex = (i2cFailureHistoryIndex + 1) % I2C_RECOVERY_TREND_WINDOW;
+
     _recoverI2C();
+    i2cRecoveryAttempts++;
 
     Wire.beginTransmission(0x38);
     errAht = Wire.endTransmission();
@@ -86,9 +91,27 @@ void HealthMonitor::_checkI2C() {
 
     _metrics.i2cBusHealthy = (errAht == 0 || errEns == 0);
     if (_metrics.i2cBusHealthy) {
+      i2cRecoverySuccesses++;
       LOG_I("HEALTH", "I2C recuperado tras recovery");
     }
+
+    uint32_t recentFailures = 0;
+    unsigned long now = millis();
+    for (int i = 0; i < I2C_RECOVERY_TREND_WINDOW; i++) {
+      if (i2cFailureHistory[i] > 0 && (now - i2cFailureHistory[i]) < 300000) {
+        recentFailures++;
+      }
+    }
+    if (recentFailures >= I2C_PREDICTIVE_THRESHOLD) {
+      i2cPredictiveAlert = true;
+      LOG_W("HEALTH", "I2C predictive alert: %lu failures in 5min window", recentFailures);
+    }
   }
+
+  _metrics.i2cFailureCount = i2cFailureCount;
+  _metrics.i2cRecoveryAttempts = i2cRecoveryAttempts;
+  _metrics.i2cRecoverySuccesses = i2cRecoverySuccesses;
+  _metrics.i2cPredictiveAlert = i2cPredictiveAlert;
 }
 
 void HealthMonitor::_recoverI2C() {

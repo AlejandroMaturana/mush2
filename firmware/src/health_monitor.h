@@ -38,6 +38,10 @@ struct HealthMetrics {
   uint8_t rebootCount;
   bool heartbeatsHealthy;
   uint8_t staleTaskMask;
+  uint32_t i2cFailureCount;
+  uint32_t i2cRecoveryAttempts;
+  uint32_t i2cRecoverySuccesses;
+  bool i2cPredictiveAlert;
 };
 
 class HealthMonitor {
