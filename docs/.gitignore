@@ -1,0 +1,10 @@
+# Dependencias de Node.js
+node_modules/
+
+# Artefactos de VitePress
+.vitepress/dist/
+.vitepress/cache/
+
+# Entorno local
+.env
+.env.local

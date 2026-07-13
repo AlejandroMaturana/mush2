@@ -1,0 +1,18 @@
+{
+  "name": "@mush2/docs",
+  "version": "0.1.0",
+  "description": "Documentación técnica del sistema Mush2 — publicada con VitePress en GitHub Pages",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
