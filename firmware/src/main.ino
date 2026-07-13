@@ -56,8 +56,6 @@ ThingSpeakClient ts;
 MQTTClient mqtt;
 BLEProvisioning bleProv;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);
-SensorRegistry sensorRegistry;
-BootTest bootTest;
 BootTestResult bootResult;
 
 // ============================================================
@@ -106,6 +104,27 @@ TaskHandle_t taskOTAHandle = NULL;
 TaskHandle_t taskTelemetryHandle = NULL;
 TaskHandle_t taskMQTTHandle = NULL;
 TaskHandle_t taskButtonHandle = NULL;
+
+// Phase awareness
+char currentPhase[16] = "";
+volatile unsigned long phaseStartedAt = 0;
+
+// Adaptive sensor frequency
+volatile uint32_t sensorStabilityScore = 0;
+volatile uint32_t currentSensorInterval = SENSOR_FREQ_MAX_MS;
+volatile uint32_t sensorReadCount = 0;
+
+// I2C recovery trending
+volatile uint32_t i2cFailureCount = 0;
+volatile uint32_t i2cRecoveryAttempts = 0;
+volatile uint32_t i2cRecoverySuccesses = 0;
+volatile unsigned long i2cFailureHistory[I2C_RECOVERY_TREND_WINDOW] = {0};
+volatile uint8_t i2cFailureHistoryIndex = 0;
+volatile bool i2cPredictiveAlert = false;
+
+// MQTT command buffer
+volatile bool mqttCmdBufferHasData = false;
+volatile uint32_t mqttCmdBufferCount = 0;
 
 // OTA command state (set by serial or MQTT)
 volatile bool otaCommandPending = false;

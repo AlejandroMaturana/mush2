@@ -2,6 +2,24 @@
 
 ## 2026-07-13
 
+### Backend — v0.21.1
+
+- Ajustado al patrón estándar `../config/database.js` usado por el resto de modelos"
+Corregido tipo de campo para mejor rango de valores en métricas de mantenimiento predictivo"
+Eliminadas definiciones duplicadas de bootTest y sensorRegistry (ya están en sus .cpp)
+Añadidas todas las variables globales faltantes
+Mejora de organización y compilación limpia"
+
+### Firmware (ESP32-S3) — v0.20.1
+
+- Ajustado al patrón estándar `../config/database.js` usado por el resto de modelos"
+Corregido tipo de campo para mejor rango de valores en métricas de mantenimiento predictivo"
+Eliminadas definiciones duplicadas de bootTest y sensorRegistry (ya están en sus .cpp)
+Añadidas todas las variables globales faltantes
+Mejora de organización y compilación limpia"
+
+## 2026-07-13
+
 ### Backend — v0.21.0
 
 - Nuevo modelo DeviceMaintenance
