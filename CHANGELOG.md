@@ -2,6 +2,24 @@
 
 ## 2026-07-13
 
+### Actualización Documentación Capacidades y Suscripción- v0.17.14
+
+**Nuevo**
+- `authorization-model.md` - Modelo de autorización
+- `capability-catalog.md` - Catálogo de capacidades
+- `qos-policy.md` - Políticas de QoS
+- `RFC-0006-realtime-streaming.md` - Streaming en tiempo real
+- `RFC-0007-device-limits.md` - Límites de dispositivos
+- `RFC-0008-button-interaction.md` - Interacción con botones
+
+**Cambios**
+- **ADR-016**: Actualización de referencias
+- **architecture.md**: Nuevo modelo de capacidades y suscripción
+- **backend.md**: Actualización de roles, permisos y suscripciones
+- **database.md**: Añadida entidad de suscripción
+
+## 2026-07-13
+
 ### Backend — v0.21.1
 
 - Ajustado al patrón estándar `../config/database.js` usado por el resto de modelos"
