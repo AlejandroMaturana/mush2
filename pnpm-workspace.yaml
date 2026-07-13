@@ -1,4 +1,7 @@
 packages:
-  - "frontend"
-  - "backend"
-  - "firmware"
+  - frontend
+  - backend
+  - firmware
+
+ignoredBuiltDependencies:
+  - esbuild
