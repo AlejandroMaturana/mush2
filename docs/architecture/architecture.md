@@ -75,9 +75,32 @@ Firmware (Reglas locales)
 | Backend | Frontend | REST/SSE | 3797 | Tiempo real | JSON |
 | Frontend | Backend | REST (JWT) | 3797 | Acciones usuario | JSON |
 
+## Modelo de Capacidades (Capability-Based Subscription)
+
+La plataforma implementa un modelo de suscripción basado en capacidades (ADR-016). La suscripción determina políticas de acceso a recursos compartidos, no diferencias funcionales del controlador.
+
+### Clasificación
+
+| Tipo | Descripción | Ejemplo |
+|------|-------------|---------|
+| **Capacidad** | Funcionalidad habilitada/deshabilitada | `automation.recipes`, `integrations.mqtt` |
+| **Recurso** | Entidad consumible con límite | `devices.max`, `storage.gb` |
+| **Cuota** | Límite medible sobre un recurso | `api.requests.per_month`, `data.retention.days` |
+| **Política** | Regla de comportamiento del sistema | `qos.refresh_rate`, `disposition.cancel` |
+
+### Planes
+
+| Plan | API Calls/mes | Retención | Dispositivos | QoS |
+|------|---------------|-----------|--------------|-----|
+| FREE | 1,000 | 30 días | 1 | Polling 30s |
+| BASIC | 10,000 | 90 días | 5 | WebSocket 5s |
+| PREMIUM | 100,000 | 365 días | Ilimitado | Streaming < 1s |
+
+Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capacidades.
+
 ## Stack Tecnológico
 
-### Firmware (ESP8266)
+### Firmware (ESP8266/ESP32-S3)
 - **Lenguaje**: C++11 (PlatformIO / Arduino Core)
 - **Sensores**: AHT21 (I2C), ENS160 (I2C)
 - **Actuadores**: SSR 4 canales (active-high configurable)
@@ -89,7 +112,8 @@ Firmware (Reglas locales)
 - **Runtime**: Node.js 20+
 - **Framework**: Express 5
 - **ORM**: Sequelize 6 + PostgreSQL 16
-- **Autenticación**: JWT (HS256), bcryptjs
+- **Autenticación**: JWT (HS256) + API Key dual, bcryptjs
+- **Autorización**: RBAC (4 roles) + capability-based rate limiting + tenant scope
 - **MQTT Cliente**: mqtt.js
 - **Seguridad**: Helmet, CORS, rate limiting
 - **Pruebas**: Jest + Supertest
@@ -98,24 +122,25 @@ Firmware (Reglas locales)
 - **Framework**: React 18 + Vite
 - **Estado**: Context API + hooks
 - **Visualización**: Chart.js + react-chartjs-2
-- **Tiempo real**: Server-Sent Events (SSE)
-- **Estilos**: CSS Modules (o Tailwind, por definir)
+- **Tiempo real**: Server-Sent Events (SSE), WebSocket
+- **Estilos**: CSS Modules / Tailwind
 - **Build**: Vite con chunks y lazy loading
 
 ### Base de Datos (PostgreSQL)
-- **Entidades**: 18+ (Chamber, Device, Sensor, Actuator, Telemetry, Recipe, Cycle, User, etc.)
+- **Entidades**: 19 (Chamber, Device, Sensor, Actuator, Telemetry, Recipe, Cycle, User, Subscription, etc.)
 - **Backup**: pg_dump diario
-- **Migraciones**: Sequelize migrations con alter sync para desarrollo
+- **Migraciones**: Sequelize `sync({ alter: true })` para desarrollo; migraciones versionadas para producción
 
 ## Seguridad
 
 1. **JWT**: Token firmado con HS256, expiración configurable, renovación por refresh token
-2. **Cifrado**: AES-256-GCM para claves de ThingSpeak almacenadas en DB
-3. **Rate Limiting**: 100 peticiones/15min en `/api/*`
-4. **CSP**: Content-Security-Policy estricta (Helmet)
-5. **CORS**: Solo orígenes autorizados
-6. **Contraseñas**: bcryptjs (salt rounds 12)
-7. **Secretos**: Todos en `.env`, validados con script `validate-env.js`
+2. **API Key**: Autenticación alternativa para integraciones M2M (prefijo visible `mush2_*`)
+3. **Cifrado**: AES-256-GCM para claves de ThingSpeak almacenadas en DB
+4. **Rate Limiting**: Capa global (100/15min) + capa por suscripción (definida en `capability-catalog.md`)
+5. **CSP**: Content-Security-Policy estricta (Helmet)
+6. **CORS**: Solo orígenes autorizados
+7. **Contraseñas**: bcryptjs (salt rounds 12)
+8. **Secretos**: Todos en `.env`, validados con script `validate-env.js`
 
 ## Máquina de Estados del Dispositivo (Firmware)
 
@@ -148,3 +173,14 @@ Firmware (Reglas locales)
 - `frontend.md` — Arquitectura del frontend React (componentes, estados, rutas)
 - `firmware.md` — Arquitectura del firmware (módulos, pines, estados)
 - `database.md` — Esquema de base de datos y relaciones
+
+### Documentación de Suscripción
+
+- `docs/ADR/ADR-016-capability-based-subscription.md` — ADR del modelo (decisión arquitectónica)
+- `docs/architecture/capability-catalog.md` — Catálogo completo de capacidades con valores y disposición
+- `docs/architecture/authorization-model.md` — Modelo de autorización en 4 capas y matriz de decisión
+- `docs/architecture/qos-policy.md` — Políticas de QoS por plan
+
+### Planos (Pending / docs/diagrams/)
+
+- `docs/diagrams/` — Diagramas de arquitectura, flujos de autorización y secuencia (pendiente de completar)
