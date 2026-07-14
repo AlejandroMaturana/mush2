@@ -1,7 +1,8 @@
 import express from 'express';
-import { CultivationCycle, CycleState, PhaseTransition, Recipe, Device } from '../models/index.js';
+import { CultivationCycle, CycleState, PhaseTransition, Recipe, Device, BioactiveProfile } from '../models/index.js';
 import { executePhaseTransition } from '../services/phaseEvaluator.js';
 import { logAudit } from '../services/auditService.js';
+import { getCorrelation, getEnvironmentSummary } from '../services/bioactiveAnalyzer.js';
 
 const router = express.Router();
 
@@ -202,6 +203,83 @@ router.get('/cycles/:id/states', async (req, res) => {
       limit: parseInt(req.query.limit || '100', 10),
     });
     res.json({ data: states });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/cycles/:id/bioactives', async (req, res) => {
+  try {
+    const { compoundName, from, to, limit = 100 } = req.query;
+    const where = { cycleId: req.params.id };
+    if (compoundName) where.compoundName = compoundName;
+    if (from || to) {
+      where.analysisDate = {};
+      if (from) where.analysisDate[Op.gte] = new Date(from);
+      if (to) where.analysisDate[Op.lte] = new Date(to);
+    }
+    const data = await BioactiveProfile.findAll({
+      where,
+      order: [['compoundName', 'ASC'], ['analysisDate', 'DESC']],
+      limit: parseInt(limit, 10),
+    });
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.post('/cycles/:id/bioactives', async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
+
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+
+    const { compoundName, concentration, unit, analysisDate, labSource, notes } = req.body;
+    if (!compoundName || concentration === undefined) {
+      return res.status(400).json({ error: 'compoundName y concentration son requeridos' });
+    }
+
+    const profile = await BioactiveProfile.create({
+      cycleId: parseInt(req.params.id, 10),
+      compoundName,
+      concentration: parseFloat(concentration),
+      unit: unit || 'mg/g',
+      analysisDate: analysisDate || new Date(),
+      labSource: labSource || null,
+      notes: notes || null,
+      timestamp: new Date(),
+    });
+
+    await logAudit({
+      userId: req.user.id,
+      action: 'BIOACTIVE_ADD',
+      resource: 'bioactive',
+      resourceId: profile.id,
+      details: { cycleId: req.params.id, compoundName, concentration },
+    });
+
+    res.status(201).json(profile);
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/cycles/:id/bioactives/correlation', async (req, res) => {
+  try {
+    const result = await getCorrelation(req.params.id);
+    if (!result) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.get('/cycles/:id/environment-summary', async (req, res) => {
+  try {
+    const summary = await getEnvironmentSummary(req.params.id);
+    res.json(summary);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }

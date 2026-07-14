@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getCycles, getRecipes, createCycle, updateCycle, getDevices } from '../api/client.js'
 import LoadingState from '../components/ui/LoadingState.jsx'
 
@@ -53,6 +54,11 @@ function CycleCard({ cycle, onUpdate }) {
       </div>
 
       <div className="flex gap-2">
+        {(isActive || isCompleted) && (
+          <Link to={`/cycles/${cycle.id}/bioactives`} className="btn btn-outline flex-1 text-center">
+            BIOACTIVES
+          </Link>
+        )}
         {isActive && (
           <button onClick={() => handleUpdate({ status: 'COMPLETED' })} className="btn btn-primary flex-1">
             COMPLETE

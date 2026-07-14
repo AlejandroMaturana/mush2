@@ -360,4 +360,24 @@ export async function deleteSpecies(id) {
   return data
 }
 
+export async function getBioactives(cycleId, params = {}) {
+  const { data } = await client.get(`/cycles/${cycleId}/bioactives`, { params })
+  return data.data
+}
+
+export async function addBioactive(cycleId, payload) {
+  const { data } = await client.post(`/cycles/${cycleId}/bioactives`, payload)
+  return data
+}
+
+export async function getBioactiveCorrelation(cycleId) {
+  const { data } = await client.get(`/cycles/${cycleId}/bioactives/correlation`)
+  return data
+}
+
+export async function getEnvironmentSummary(cycleId) {
+  const { data } = await client.get(`/cycles/${cycleId}/environment-summary`)
+  return data
+}
+
 export default client

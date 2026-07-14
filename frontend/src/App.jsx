@@ -6,6 +6,7 @@ import Recipes from './pages/Recipes.jsx'
 import SpeciesLibrary from './pages/SpeciesLibrary.jsx'
 import RecipeComparator from './pages/RecipeComparator.jsx'
 import Cycles from './pages/Cycles.jsx'
+import BioactiveDashboard from './pages/BioactiveDashboard.jsx'
 import Alarms from './pages/Alarms.jsx'
 import Logs from './pages/Logs.jsx'
 import Diagnostics from './pages/Diagnostics.jsx'
@@ -49,6 +50,7 @@ function App() {
               <Route path="/recipes/compare" element={<RecipeComparator />} />
               <Route path="/species" element={<SpeciesLibrary />} />
               <Route path="/cycles" element={<Cycles />} />
+              <Route path="/cycles/:id/bioactives" element={<BioactiveDashboard />} />
               <Route path="/alarms" element={<Alarms />} />
               <Route path="/logs" element={<Logs />} />
               <Route path="/diagnostics" element={<Diagnostics />} />
