@@ -2,9 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import { env } from './config/env.js';
 import { events } from './services/eventBus.js';
 import router from './routes/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
@@ -104,6 +110,19 @@ data: ${JSON.stringify(data)}
     clearInterval(keepAlive);
   });
 });
+
+if (env.NODE_ENV === 'production') {
+  const publicDir = resolve(__dirname, '../public');
+  if (existsSync(publicDir)) {
+    app.use(express.static(publicDir, { maxAge: '1d', index: 'index.html' }));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api/') || req.path === '/events' || req.path === '/health') {
+        return next();
+      }
+      res.sendFile(resolve(publicDir, 'index.html'));
+    });
+  }
+}
 
 export default app;
 
