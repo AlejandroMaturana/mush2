@@ -1,16 +1,15 @@
 # Changelog — Mush2
 
-## 2026-07-14
+## 2026-07-13
 
-### Phase 14 — Bioactive Traceability
+### Backend - Bioactive Traceability — v0.22.0
 
-**Backend**
 - Nuevo modelo `BioactiveProfile` — registro de análisis de compuestos bioactivos por ciclo
 - Servicio `bioactiveAnalyzer.js` — correlación compuestos-ambiente, resumen por fase, insights automáticos
 - Asociación CycleState ↔ BioactiveProfile en models/index.js
 - Rutas en `cycles.js`: GET/POST bioactives, GET correlation, GET environment-summary
 
-**Frontend**
+### Frontend - Bioactive Traceability — v1.9.0
 - Nueva página `BioactiveDashboard.jsx` — formulario de análisis, barras de compuestos, entorno por fase, historial
 - Nuevo componente `CompoundBar.jsx` — barra de concentración media con rango
 - Integración en `Cycles.jsx` — badge "BIOACTIVES" en CycleCard para ciclos activos/completados
