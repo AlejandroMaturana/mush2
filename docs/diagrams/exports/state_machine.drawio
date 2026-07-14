@@ -1,0 +1,225 @@
+<mxfile host="65bd71144e">
+    <diagram id="state-machine-main" name="State Machine">
+        <mxGraphModel dx="691" dy="388" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="&lt;b&gt;Mush2 — Device State Machine (Firmware ESP32-S3)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=16;fontColor=#1a1a2e;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="10" width="900" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;b&gt;BOOT&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#616161;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="90" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="CPU init, GPIO, Serial" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="487" y="136" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&lt;b&gt;INIT&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="210" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="Sensors I2C init&#xa;Watchdog config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="250" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="&lt;b&gt;WIFI&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1565c0;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="330" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="Connect to WiFi&#xa;(2 redes failover)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="295" y="370" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="&lt;b&gt;NORMAL&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="340" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="Full operation&#xa;Read sensors 10s&#xa;HTTP connected" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="475" y="380" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="&lt;b&gt;DEGRADED&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="500" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="Sensor fail&#xa;Actuators OK&#xa;Limited control" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="475" y="548" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="&lt;b&gt;ERROR&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="340" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="61" value="Critical failure&#xa;No sensors&#xa;Auto-reboot pending" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="645" y="380" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="&lt;b&gt;RECOVERY&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#4527a0;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="490" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="71" value="Retry sensors&#xa;Attempt re-init&#xa;I2C bus reset" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="645" y="530" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="80" value="&lt;b&gt;SAFE&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b71c1c;fontSize=13;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="490" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="81" value="5+ reboots detected&#xa;EEPROM counter exceeded&#xa;WiFi only, wait cmd" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="530" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#616161;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="10" target="20" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="101" value="I2C OK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e65100;fontSize=9;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" parent="1" source="20" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="102" value="I2C bus lock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c62828;fontSize=9;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" parent="1" source="20" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="103" value="WiFi + HTTP connected" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1565c0;fontSize=9;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" parent="1" source="30" target="40" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="104" value="Sin conexión" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c62828;fontSize=9;exitX=0.7;exitY=0;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" parent="1" source="30" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="105" value="Sensor fail ×3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e65100;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="40" target="50" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="106" value="Sensor recovered" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2e7d32;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="50" target="40" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="530" y="550"/>
+                            <mxPoint x="460" y="550"/>
+                            <mxPoint x="460" y="440"/>
+                            <mxPoint x="600" y="440"/>
+                            <mxPoint x="600" y="320"/>
+                            <mxPoint x="530" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="107" value="Overheat &gt; 32°C" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c62828;fontSize=9;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" parent="1" source="40" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="108" value="Auto-reboot trigger" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4527a0;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="60" target="70" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="109" value="or watchdog reset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="470" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="110" value="Re-init OK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4527a0;fontSize=9;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=0.7;entryY=1;entryDx=0;entryDy=0;" parent="1" source="70" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="111" value="5+ reboots → SAFE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#b71c1c;fontSize=9;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" edge="1">
+                    <mxGeometry x="-0.28" y="-20" relative="1" as="geometry">
+                        <mxPoint x="662.0000000000003" y="510" as="sourcePoint"/>
+                        <mxPoint x="411.9999999999998" y="510" as="targetPoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="112" value="Reset / cmd received" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#b71c1c;fontSize=9;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="80" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="350" y="310"/>
+                            <mxPoint x="460" y="310"/>
+                            <mxPoint x="460" y="170"/>
+                            <mxPoint x="530" y="170"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="113" value="Partial recovery" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e65100;fontSize=9;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="60" target="50" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="114" value="Crash / watchdog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c62828;fontSize=9;exitX=0.8;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" parent="1" source="50" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="200" value="&lt;b&gt;Failure Conditions &amp; Transitions&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="620" width="950" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="201" value="&lt;b&gt;Failure&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="655" width="200" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="202" value="&lt;b&gt;Detection&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="655" width="250" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="203" value="&lt;b&gt;Action&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="655" width="480" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="210" value="WiFi desconectado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="679" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="211" value="WiFi.status() != WL_CONNECTED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="679" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="212" value="Reintentar cada 5s, rotar entre 2 redes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="679" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="213" value="HTTP desconectado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="707" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="214" value="!httpClient.connected()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="707" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="215" value="Reintentar cada 10s, rotar entre 2 brokers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="707" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="216" value="Sensor I2C error" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="735" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="217" value="!aht.begin() o NACK I2C × 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="735" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="218" value="Incrementar contador, cambiar a DEGRADED. Ventilación cíclica" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="735" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="219" value="Overheat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="763" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="220" value="Temp &gt; 32°C (TEMP_CRITICAL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="763" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="221" value="Override: apagar todo, forzar ventilador ON. Recuperar al bajar de 28°C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="763" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="222" value="Crash / Watchdog" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="791" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="223" value="Watchdog HW 8s / SW 30s" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="791" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="224" value="Reinicio suave. Contador EEPROM +1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="791" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="225" value="5+ reinicios seguidos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="819" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="226" value="Contador EEPROM &gt; 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="819" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="227" value="Modo SAFE: solo WiFi, esperar comando de reset" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="819" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="228" value="ENS160 CO₂ anómalo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="847" width="200" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="229" value="CO₂ &lt; 400 ppm × 3 lecturas" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="847" width="250" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="230" value="Asumir 800 ppm. Activar alarma. Operar solo con T/H" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff;strokeColor=#999;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="847" width="480" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="300" value="&lt;b&gt;State Colors&lt;/b&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 8px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="90" width="220" height="270" as="geometry"/>
+                </mxCell>
+                <mxCell id="301" value="🔄 BOOT — Power-on / Init" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#616161;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="120" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="302" value="⚙️ INIT — System init" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="154" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="303" value="📡 WIFI — Connect" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1565c0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="188" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="304" value="✅ NORMAL — Full op" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="222" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="305" value="⚠️ DEGRADED — Limited" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="256" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="306" value="❌ ERROR — Critical" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="290" width="180" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="307" value="🔁 RECOVERY — Retry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#4527a0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="324" width="180" height="26" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
