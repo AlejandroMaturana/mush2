@@ -35,4 +35,4 @@ ENV PORT=3797
 
 EXPOSE 3797
 
-CMD ["node", "backend/src/server.js"]
+CMD ["sh", "-c", "node backend/src/sync-db.js && node backend/src/server.js"]
