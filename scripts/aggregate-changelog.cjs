@@ -3,13 +3,12 @@ const path = require('path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const ROOT_CHANGELOG = path.join(PROJECT_ROOT, 'CHANGELOG.md');
-const PACKAGE_DIRS = ['backend', 'frontend', 'firmware', 'docs'];
+const PACKAGE_DIRS = ['backend', 'frontend', 'firmware'];
 
 const LABELS = {
   'mush2-backend': 'Backend',
   'mush2-frontend': 'Frontend',
   'firmware': 'Firmware (ESP32-S3)',
-  '@mush2/docs': 'Docs',
 };
 
 function getPkgVersion(dir) {
