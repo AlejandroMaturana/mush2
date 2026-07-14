@@ -2,6 +2,7 @@ packages:
   - frontend
   - backend
   - firmware
+  - docs
 
 ignoredBuiltDependencies:
   - esbuild
