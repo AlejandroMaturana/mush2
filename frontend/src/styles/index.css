@@ -77,6 +77,40 @@
   --gradient-title-text: linear-gradient(135deg, var(--spore-green), var(--teal));
 }
 
+.light {
+  /* === Superficies === */
+  --bg-deep: #f4f7f5;
+  --surface-dim: #eff2f0;
+  --surface-container: #e9ece9;
+  --surface-container-low: #eff2f0;
+  --surface-container-high: #dee1de;
+  --surface-container-highest: #d2d5d2;
+  --surface-variant: #dee1de;
+  --surface-bright: #f5f8f6;
+  --surface-container-lowest: #ffffff;
+  --outline-variant: #bec2be;
+  --outline: #6e776e;
+
+  /* === Texto === */
+  --on-surface: #191c19;
+  --on-surface-variant: #424942;
+  --on-primary: #ffffff;
+  --on-primary-container: #005e2d;
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
+
+  /* === Contenedores === */
+  --primary-container: #0d7a3a;
+  --on-secondary: #f0fdf4;
+  --error-container: #ffdad6;
+
+  /* === Efectos === */
+  --glow-primary: 0 0 8px rgba(74, 222, 128, 0.15);
+  --glow-error: 0 0 8px rgba(255, 100, 100, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: #d0d4d0;
+}
+
 
 /* =========================================================================
    CAPA 2: RESET + BASE
@@ -115,6 +149,16 @@ input, select, textarea, button { color: var(--on-surface); font-family: inherit
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+
+/* Light-mode base overrides */
+html.light body {
+  background-image: none;
+}
+html.light ::selection {
+  background: rgba(13, 122, 58, 0.2);
+}
+html.light ::-webkit-scrollbar-thumb { background: var(--outline-variant); }
+html.light ::-webkit-scrollbar-track { background: var(--surface-container); }
 
 
 /* =========================================================================

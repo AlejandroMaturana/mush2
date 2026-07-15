@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { useAlarms } from '../../app/providers/AlarmProvider'
+import { useTheme } from '../../app/providers/ThemeProvider'
 
 const PAGE_TITLES = {
   '/overview': 'Overview',
@@ -21,6 +22,7 @@ function TopBar() {
   const location = useLocation()
   const stats = useAlarms()
   const activeCount = stats?.total || 0
+  const { isDark, toggleTheme } = useTheme()
 
   const title = Object.entries(PAGE_TITLES).find(
     ([path]) => location.pathname === path || location.pathname.startsWith(path + '/')
@@ -55,6 +57,9 @@ function TopBar() {
             }}>{activeCount > 99 ? '99+' : activeCount}</span>
           </button>
         )}
+        <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+          <span className="material-symbols-outlined text-16px">{isDark ? 'light_mode' : 'dark_mode'}</span>
+        </button>
         {user && (
           <div className="topbar-user">
             <span className="user-avatar">{user.username?.charAt(0).toUpperCase()}</span>
