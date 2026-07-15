@@ -597,6 +597,15 @@ input, select, textarea, button { color: var(--on-surface); font-family: inherit
 }
 .btn-primary:hover { filter: brightness(1.1); box-shadow: var(--glow-primary); }
 
+.btn-glow {
+  background: var(--spore-green);
+  color: var(--on-primary);
+  padding: 8px 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 8px var(--spore-glow);
+}
+.btn-glow:hover { filter: brightness(1.1); box-shadow: var(--glow-primary); }
+
 .btn-secondary {
   background: transparent;
   color: var(--on-surface-variant);
