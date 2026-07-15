@@ -1,32 +1,46 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home.jsx'
-import Dashboard from './pages/Dashboard.jsx'
-import DeviceDetail from './pages/DeviceDetail.jsx'
-import Recipes from './pages/Recipes.jsx'
-import SpeciesLibrary from './pages/SpeciesLibrary.jsx'
-import RecipeComparator from './pages/RecipeComparator.jsx'
-import Cycles from './pages/Cycles.jsx'
-import BioactiveDashboard from './pages/BioactiveDashboard.jsx'
-import Alarms from './pages/Alarms.jsx'
-import Logs from './pages/Logs.jsx'
-import Diagnostics from './pages/Diagnostics.jsx'
-import Analytics from './pages/Analytics.jsx'
-import Settings from './pages/Settings.jsx'
-import SettingsHub from './pages/settings/SettingsHub.jsx'
-import UserSettings from './pages/settings/UserSettings.jsx'
-import DeviceSettings from './pages/settings/DeviceSettings.jsx'
-import CultivationSettings from './pages/settings/CultivationSettings.jsx'
-import ApiKeysSettings from './pages/settings/ApiKeysSettings.jsx'
-import SystemSettings from './pages/settings/SystemSettings.jsx'
-import SubscriptionSettings from './pages/settings/SubscriptionSettings.jsx'
-import Provisioning from './pages/Provisioning.jsx'
-import Landing from './pages/Landing.jsx'
-import { useAuth } from './api/AuthContext.jsx'
-import AppShell from './components/layout/AppShell.jsx'
-import { AlarmProvider } from './contexts/AlarmContext.jsx'
+import { Suspense } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './app/providers/AuthProvider'
+import AppShell from './layouts/AppShell/AppShell'
+import { AlarmProvider } from './app/providers/AlarmProvider'
+import { publicRoutes, protectedRoutes } from './app/routes'
+import LoadingState from './shared/components/LoadingState'
+
+function AppRoutes({ routes, isProtected }) {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <Routes>
+        {routes.map((route) =>
+          route.children ? (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<route.element />}
+            >
+              {route.children.map((child) => (
+                <Route
+                  key={child.path || 'index'}
+                  index={child.index}
+                  path={child.path}
+                  element={<child.element />}
+                />
+              ))}
+            </Route>
+          ) : (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<route.element />}
+            />
+          )
+        )}
+      </Routes>
+    </Suspense>
+  )
+}
 
 function App() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   return (
     <BrowserRouter
@@ -36,36 +50,11 @@ function App() {
       }}
     >
       {!user ? (
-        <Routes>
-          <Route path="*" element={<Landing />} />
-        </Routes>
+        <AppRoutes routes={publicRoutes} isProtected={false} />
       ) : (
         <AlarmProvider>
-          <AppShell user={user} onLogout={logout}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/devices/:id" element={<DeviceDetail />} />
-              <Route path="/recipes" element={<Recipes />} />
-              <Route path="/recipes/compare" element={<RecipeComparator />} />
-              <Route path="/species" element={<SpeciesLibrary />} />
-              <Route path="/cycles" element={<Cycles />} />
-              <Route path="/cycles/:id/bioactives" element={<BioactiveDashboard />} />
-              <Route path="/alarms" element={<Alarms />} />
-              <Route path="/logs" element={<Logs />} />
-              <Route path="/diagnostics" element={<Diagnostics />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/settings" element={<Settings />}>
-                <Route index element={<SettingsHub />} />
-                <Route path="user" element={<UserSettings />} />
-                <Route path="device" element={<DeviceSettings />} />
-                <Route path="cultivation" element={<CultivationSettings />} />
-                <Route path="api-keys" element={<ApiKeysSettings />} />
-                <Route path="system" element={<SystemSettings />} />
-                <Route path="subscription" element={<SubscriptionSettings />} />
-              </Route>
-              <Route path="/provisioning" element={<Provisioning />} />
-            </Routes>
+          <AppShell>
+            <AppRoutes routes={protectedRoutes} isProtected />
           </AppShell>
         </AlarmProvider>
       )}
