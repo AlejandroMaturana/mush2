@@ -22,7 +22,7 @@ export async function updateDevice(id, payload) {
 
 export async function getActuators(deviceId) {
   const { data } = await client.get(`/devices/${deviceId}/actuators`)
-  return data
+  return data.data ?? data
 }
 
 export async function setActuatorDirect(deviceId, actuatorId, value) {

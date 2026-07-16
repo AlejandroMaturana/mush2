@@ -3,10 +3,12 @@ import { CultivationCycle, CycleState, PhaseTransition, Recipe, Device, Bioactiv
 import { executePhaseTransition } from '../services/phaseEvaluator.js';
 import { logAudit } from '../services/auditService.js';
 import { getCorrelation, getEnvironmentSummary } from '../services/bioactiveAnalyzer.js';
+import { getPhaseThresholds } from '../services/controlEngine.js';
+import { publishActuatorCommand } from '../services/mqttBridge.js';
 
 const router = express.Router();
 
-router.get('/cycles', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const where = {};
     if (req.tenant && req.tenant.userId) where.userId = req.tenant.userId;
@@ -24,7 +26,7 @@ router.get('/cycles', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const cycle = await CultivationCycle.findByPk(req.params.id, {
       include: [
@@ -39,7 +41,7 @@ router.get('/cycles/:id', async (req, res) => {
   }
 });
 
-router.post('/cycles', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
@@ -76,7 +78,7 @@ router.post('/cycles', async (req, res) => {
   }
 });
 
-router.patch('/cycles/:id', async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const cycle = await CultivationCycle.findByPk(req.params.id);
     if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
@@ -95,13 +97,36 @@ router.patch('/cycles/:id', async (req, res) => {
     }
 
     await cycle.update(updates);
+
+    if (updates.status === 'ACTIVE' && cycle.deviceId) {
+      try {
+        const recipe = await Recipe.findByPk(cycle.recipeId);
+        if (recipe) {
+          const thresholds = getPhaseThresholds(recipe, cycle.currentPhase || 'INCUBATION');
+          if (thresholds) {
+            const config = {
+              phase: cycle.currentPhase || 'INCUBATION',
+              setpoints: {
+                tempMin: thresholds.tempMin,
+                tempMax: thresholds.tempMax,
+                humMin: thresholds.humMin,
+                humMax: thresholds.humMax,
+                co2Max: thresholds.co2Max,
+              },
+            };
+            publishActuatorCommand(cycle.deviceId, [], config);
+          }
+        }
+      } catch { /* best-effort: activation already saved */ }
+    }
+
     res.json(cycle);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
 
-router.post('/cycles/:id/transition', async (req, res) => {
+router.post('/:id/transition', async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
@@ -148,7 +173,7 @@ router.post('/cycles/:id/transition', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id/transitions', async (req, res) => {
+router.get('/:id/transitions', async (req, res) => {
   try {
     const transitions = await PhaseTransition.findAll({
       where: { cycleId: req.params.id },
@@ -161,7 +186,7 @@ router.get('/cycles/:id/transitions', async (req, res) => {
   }
 });
 
-router.post('/cycles/:id/abort', async (req, res) => {
+router.post('/:id/abort', async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
@@ -195,7 +220,7 @@ router.post('/cycles/:id/abort', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id/states', async (req, res) => {
+router.get('/:id/states', async (req, res) => {
   try {
     const states = await CycleState.findAll({
       where: { cycleId: req.params.id },
@@ -208,7 +233,7 @@ router.get('/cycles/:id/states', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id/bioactives', async (req, res) => {
+router.get('/:id/bioactives', async (req, res) => {
   try {
     const { compoundName, from, to, limit = 100 } = req.query;
     const where = { cycleId: req.params.id };
@@ -229,7 +254,7 @@ router.get('/cycles/:id/bioactives', async (req, res) => {
   }
 });
 
-router.post('/cycles/:id/bioactives', async (req, res) => {
+router.post('/:id/bioactives', async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
@@ -266,7 +291,7 @@ router.post('/cycles/:id/bioactives', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id/bioactives/correlation', async (req, res) => {
+router.get('/:id/bioactives/correlation', async (req, res) => {
   try {
     const result = await getCorrelation(req.params.id);
     if (!result) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
@@ -276,7 +301,7 @@ router.get('/cycles/:id/bioactives/correlation', async (req, res) => {
   }
 });
 
-router.get('/cycles/:id/environment-summary', async (req, res) => {
+router.get('/:id/environment-summary', async (req, res) => {
   try {
     const summary = await getEnvironmentSummary(req.params.id);
     res.json(summary);
