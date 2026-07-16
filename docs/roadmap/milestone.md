@@ -485,6 +485,101 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 
 ---
 
+## M7e — Estabilización Funcional (Fase 7e)
+
+**Período**: 2026-07-15
+**Objetivo**: Eliminar inconsistencias entre firmware, backend, base de datos y frontend para garantizar que la información operacional represente fielmente el estado real del hardware.
+
+**ADR**: `docs/ADR/ADR-018-functional-integrity-stabilization.md`
+
+**Audit source**: Auditoría completa de integridad funcional — 28 hallazgos en 3 componentes.
+
+### Entregables — Firmware (v0.21.0)
+- [x] Reemplazar `millis()` por `getTimestamp()` en los 5 payloads MQTT (telemetry, status, alarm, health, maintenance)
+- [x] Unificar mensaje de connect con `publishStatus()` en lugar de `{"status":"ONLINE"}` suelto
+- [x] Declarar `getTimestamp()` en `tasks.h` para acceso desde `mqtt_client.cpp`
+
+### Entregables — Backend (v0.23.0)
+- [x] Mapear firmware state → Device.status (NORMAL→ONLINE, DEGRADED→MAINTENANCE, ERROR→ERROR)
+- [x] Persistir `mode` del firmware en Device.controlMode
+- [x] Almacenar campo `aqi` del sensor ENS160 en tabla telemetry
+- [x] Enviar setpoints y phase en comandos MQTT a firmware
+- [x] Fix SSE connected message (agregar `event:` header)
+- [x] Forward eventos `health`, `maintenance`, `phase_transition` vía SSE
+- [x] DELETE cascade para Device (todas las entidades relacionadas)
+- [x] Almacenar `bootTestPassed` y `bootTestFailReason` en DeviceHealth
+- [x] Fix `controlMode` en diagnostics (usar campo real, no fallback siempre 'AUTO')
+- [x] Eliminar valor inválido `RUNNING` del query de analytics
+- [x] Persistir sensorHistory del phaseEvaluator en DB (no en memoria)
+
+### Entregables — Frontend (v1.10.0)
+- [x] Null telemetry → gaps en charts (no ceros)
+- [x] Marcar stale values en DeviceDetail cuando sensor no reporta
+- [x] Obtener rangos de sensores de la receta activa (no hardcodeados)
+- [x] Unificar versiones (leer de package.json)
+- [x] Conectar datos de suscripción al backend (no hardcodeados)
+- [x] Fix error suppression en Telegram config (rollback en error)
+- [x] Consumir SSE health y maintenance events
+- [x] Eliminar texto decorativo falso del Login ("NODES_ONLINE", "SPORE_SYNC")
+
+### Entregables — Base de datos
+- [x] Columna `lastFirmwareState` en tabla devices
+- [x] Columna `controlMode` en tabla devices
+- [x] Columnas `bootTestPassed`, `bootTestFailReason` en device_health
+- [x] Valor `AQI` agregado al ENUM sensorType en telemetry
+
+### Criterios de aceptación
+- [x] `SELECT timestamp FROM telemetry LIMIT 5` retorna fechas > 2026-01-01
+- [x] Simular status MQTT con `state: "ERROR"` → Device.status cambia a `ERROR`
+- [x] Payload MQTT de topic `+/actuators` incluye `setpoints` y `phase`
+- [x] `SELECT * FROM telemetry WHERE "sensorType" = 'AQI'` retorna datos
+- [x] Eventos `health` llegan vía SSE al frontend
+- [x] Sensor offline → gráfica muestra gap, no línea en 0
+- [x] Sensor offline >30s → valor con opacidad reducida en DeviceDetail
+- [x] Gauge zones coinciden con rangos de la receta activa
+- [x] StatusFooter, Landing y Login muestran la misma versión
+- [x] Datos de suscripción son reales del backend, no hardcodeados
+
+### Issues vinculados
+| # | Título | Componente | Severidad |
+|---|--------|-----------|-----------|
+| 1 | millis() en payloads MQTT → timestamps epoch 1970 | Firmware | Crítico |
+| 2 | Device.status siempre ONLINE, nunca refleja firmware state | Backend | Crítico |
+| 3 | MQTT commands sin setpoints/phase → firmware ciego a recetas | Backend | Crítico |
+| 4 | Campo aqi silenciosamente descartado | Backend | Alto |
+| 5 | SSE connected message sin event type | Backend | Alto |
+| 6 | controlMode no existe en Device → diagnósticos siempre AUTO | Backend | Alto |
+| 7 | DELETE devices deja registros huérfanos | Backend | Alto |
+| 8 | health/maintenance/phase_transition events sin consumers | Backend | Alto |
+| 9 | bootTestPassed/bootTestFailReason descartados | Backend | Alto |
+| 10 | control_eval forward pero sin consumidor frontend | Frontend | Alto |
+| 11 | refreshFrequency preferencia guardada pero nunca usada | Frontend | Alto |
+| 12 | Null telemetry se renderiza como 0 en charts | Frontend | Medio |
+| 13 | Stale telemetry persiste sin indicador | Frontend | Medio |
+| 14 | Rangos de sensores hardcodeados | Frontend | Medio |
+| 15 | Versiones inconsistentes entre componentes | Frontend | Medio |
+| 16 | Datos de suscripción hardcodeados | Frontend | Medio |
+| 17 | Telegram config errores silenciados | Frontend | Medio |
+| 18 | TEMP_CRITICAL/TEMP_RECOVERY no configurables | Backend | Medio |
+| 19 | Logging DB siempre deshabilitado | Backend | Medio |
+| 20 | Encription key deriva de JWT_SECRET | Backend | Medio |
+| 21 | phaseEvaluator sensorHistory en memoria | Backend | Medio |
+| 22 | Texto decorativo falso en Login | Frontend | Bajo |
+| 23 | Datos seed con credenciales de prueba | Backend | Bajo |
+| 24 | Broker MQTT público por defecto | Backend | Bajo |
+| 25 | JWT_SECRET fallback predecible | Backend | Bajo |
+| 26 | Secuencia de fases duplicada en 4 archivos | Backend | Bajo |
+| 27 | actuatorState en memoria se pierde en reinicio | Backend | Bajo |
+| 28 | Endpoint de migración expuesto vía HTTP | Backend | Bajo |
+
+### Riesgos encontrados
+- **R1**: Cambio de timestamps requiere que todos los dispositivos se actualicen simultáneamente
+  - Mitigación: el backend acepta ambos formatos temporalmente con detección de rango
+- **R2**: Agregar columnas a ENUM existente puede fallar en某些 PostgreSQL versions
+  - Mitigación: usar ALTER TYPE ... ADD VALUE IF NOT EXISTS
+
+---
+
 ## Resumen de milestones
 
 | Milestone | Fase | Fecha | Entregables | Estado |
@@ -497,6 +592,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 | M5 | 5. Hardening | 2026-06-11 | Seguridad + Tests | ✅ |
 | M6 | 6. Multiusuario | 2026-06-12 | Tenencia | ✅ |
 | M7 | 7. Producción | 2026-06-13 | OTA + CI/CD + Docs | ✅ |
+| **M7e** | **7e. Estabilización** | **2026-07-15** | **Integridad funcional** | ✅ |
 | **M8** | **8. Multi-Cámara** | **Q3 2026** | **N nodos simultáneos** | 🔲 |
 | **M9** | **9. MQTT Propio + TLS** | **Q3 2026** | **Broker propio + cifrado** | 🔲 |
 | **M10** | **10+11. Observabilidad y Especies** | **Q4 2026** | **Alertas + Biblioteca especies** | 🔲 |

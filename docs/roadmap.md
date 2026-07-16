@@ -184,6 +184,53 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ---
 
+## FASE 7e — Estabilización Funcional (COMPLETADA ✅)
+
+**Objetivo**: Eliminar inconsistencias entre firmware, backend, base de datos y frontend. Garantizar que la información operacional represente fielmente el estado real del hardware. Transformar deuda técnica funcional en una base de producto confiable.
+
+**ADR**: `docs/ADR/ADR-018-functional-integrity-stabilization.md`
+
+**Audit source**: Auditoría completa de integridad funcional — 28 hallazgos, 3 componentes.
+
+### Firmware (v0.21.0)
+- [x] `millis()` → `getTimestamp()` en 5 payloads MQTT (telemetry, status, alarm, health, maintenance)
+- [x] Unificar mensaje de connect con `publishStatus()` (eliminado `{"status":"ONLINE"}` suelto)
+- [x] Declarar `getTimestamp()` en `tasks.h`
+
+### Backend (v0.23.0)
+- [x] Mapear firmware state → Device.status (NORMAL→ONLINE, DEGRADED→MAINTENANCE, ERROR→ERROR)
+- [x] Nuevo campo `controlMode` en Device (persiste mode del firmware)
+- [x] Nuevo campo `lastFirmwareState` en Device
+- [x] Almacenar `aqi` del ENS160 en telemetry (nuevo ENUM value)
+- [x] Enviar `setpoints` y `phase` en comandos MQTT a firmware
+- [x] Fix SSE connected message (`event: connected` header)
+- [x] Forward `health`, `maintenance`, `phase_transition` vía SSE
+- [x] DELETE cascade para Device (CultivationCycle, CycleState, Alarm, Event, etc.)
+- [x] Almacenar `bootTestPassed` y `bootTestFailReason` en DeviceHealth
+- [x] Fix `controlMode` en diagnostics (campo real, no fallback 'AUTO')
+- [x] Eliminar `RUNNING` del query de analytics
+- [x] Persistir sensorHistory del phaseEvaluator en DB
+
+### Frontend (v1.10.0)
+- [x] Null telemetry → gaps en charts (no ceros en TemporalEngine)
+- [x] Stale values con indicador visual en DeviceDetail
+- [x] Rangos de sensores desde receta activa (no hardcodeados)
+- [x] Versiones unificadas desde package.json
+- [x] Datos de suscripción reales del backend
+- [x] Fix Telegram config error suppression (rollback en error)
+- [x] Consumir SSE health y maintenance events
+- [x] Eliminar texto decorativo falso del Login
+
+### Base de datos
+- [x] `devices.lastFirmwareState` (STRING nullable)
+- [x] `devices.controlMode` (ENUM LOCAL/REMOTE/OFF/AUTO)
+- [x] `device_health.bootTestPassed` (BOOLEAN), `device_health.bootTestFailReason` (STRING)
+- [x] `telemetry.sensorType` — valor `AQI` agregado al ENUM
+
+**Referencias**: `docs/ADR/ADR-018-functional-integrity-stabilization.md`, `docs/roadmap/milestone.md` M7e
+
+---
+
 ## FASE 8 — Multi-Cámara Física
 
 **Objetivo**: Escalar de un nodo de prueba a N cámaras físicas simultáneas con firmware idéntico, cada una con receta independiente. El sistema descubre, registra y opera múltiples dispositivos sin intervención manual.
