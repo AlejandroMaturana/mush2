@@ -1,5 +1,6 @@
 #include "mqtt_client.h"
 #include "config.h"
+#include "tasks.h"
 #include <ArduinoJson.h>
 
 MQTTClient* MQTTClient::_instance = nullptr;
@@ -68,7 +69,7 @@ bool MQTTClient::publishTelemetry(float temp, float hum, uint16_t eco2, uint16_t
   char payload[256];
   snprintf(payload, sizeof(payload),
     "{\"temp\":%.1f,\"hum\":%.1f,\"co2\":%u,\"tvoc\":%u,\"aqi\":%u,\"ts\":%lu}",
-    temp, hum, eco2, tvoc, aqi, millis());
+    temp, hum, eco2, tvoc, aqi, (unsigned long)getTimestamp());
   return publish("telemetry", payload);
 }
 
@@ -76,14 +77,14 @@ bool MQTTClient::publishStatus(const char* state, const char* mode, int rssi, co
   char payload[256];
   snprintf(payload, sizeof(payload),
     "{\"state\":\"%s\",\"mode\":\"%s\",\"rssi\":%d,\"mac\":\"%s\",\"fwVer\":\"%s\",\"hwRev\":\"%s\",\"ts\":%lu}",
-    state, mode, rssi, mac, fwVer, hwRev, millis());
+    state, mode, rssi, mac, fwVer, hwRev, (unsigned long)getTimestamp());
   return publish("status", payload);
 }
 
 bool MQTTClient::publishAlarm(const char* reason) {
   char payload[128];
   snprintf(payload, sizeof(payload),
-    "{\"reason\":\"%s\",\"ts\":%lu}", reason, millis());
+    "{\"reason\":\"%s\",\"ts\":%lu}", reason, (unsigned long)getTimestamp());
   return publish("alarm", payload);
 }
 
@@ -116,7 +117,7 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
     uptime, rebootCount,
     bootTestPassed ? "true" : "false",
     bootTestFailReason ? bootTestFailReason : "",
-    millis());
+    (unsigned long)getTimestamp());
   return publish("health", payload);
 }
 
@@ -124,7 +125,7 @@ bool MQTTClient::publishMaintenance(const char* component, uint8_t health, uint3
   char payload[256];
   snprintf(payload, sizeof(payload),
     "{\"component\":\"%s\",\"health\":%u,\"estimatedFailure\":%lu,\"reason\":\"%s\",\"ts\":%lu}",
-    component, health, estimatedFailure, reason, millis());
+    component, health, estimatedFailure, reason, (unsigned long)getTimestamp());
   return publish("maintenance", payload);
 }
 
@@ -155,7 +156,7 @@ void MQTTClient::_connect() {
 
     Serial.printf("[MQTT] Suscrito a %s, %s\n", otaTopic, actTopic);
 
-    publish("status", "{\"status\":\"ONLINE\"}", false);
+    publishStatus(sm.getStateName(), "", WiFi.RSSI(), sharedMac, sharedFwVer, sharedHwRev);
   } else {
     Serial.printf("[MQTT] Fallo conexion %s, rc=%d\n", brokerLabel, _client.state());
 
