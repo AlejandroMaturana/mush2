@@ -1,16 +1,28 @@
 import { Op } from 'sequelize';
 import { Device, Telemetry, Recipe, CultivationCycle, CycleState, Actuator, Alarm } from '../models/index.js';
+import SystemSetting from '../models/SystemSetting.js';
 import { events } from './eventBus.js';
 import { evaluatePhaseTransition, executePhaseTransition } from './phaseEvaluator.js';
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
 const EVAL_INTERVAL = 60000;
-const TEMP_CRITICAL = 32.0;
-const TEMP_RECOVERY = 28.0;
+let TEMP_CRITICAL = 32.0;
+let TEMP_RECOVERY = 28.0;
 
 let intervalHandle = null;
 
 const actuatorState = {};
+
+async function loadSafetySettings() {
+  try {
+    const [critSetting, recSetting] = await Promise.all([
+      SystemSetting.findOne({ where: { key: 'temp_critical' } }),
+      SystemSetting.findOne({ where: { key: 'temp_recovery' } }),
+    ]);
+    if (critSetting) TEMP_CRITICAL = parseFloat(critSetting.value) || 32.0;
+    if (recSetting) TEMP_RECOVERY = parseFloat(recSetting.value) || 28.0;
+  } catch { /* use defaults */ }
+}
 
 function getActuatorState(deviceId) {
   if (!actuatorState[deviceId]) {
@@ -373,6 +385,7 @@ async function evaluateCycle(cycle) {
       if (elapsed >= thresholds.durationDays) {
         const currentIdx = PHASE_SEQUENCE.indexOf(cycle.currentPhase);
         if (currentIdx >= 0 && currentIdx < PHASE_SEQUENCE.length - 1) {
+          const prevPhase = cycle.currentPhase;
           const nextPhase = PHASE_SEQUENCE[currentIdx + 1];
           await cycle.update({ currentPhase: nextPhase, phaseStartedAt: new Date() });
           console.log(`[CONTROL] Cycle ${cycle.id} avanzó a fase ${nextPhase}`);
@@ -392,6 +405,18 @@ async function evaluateCycle(cycle) {
             deviceId: device.deviceId,
             cycleId: cycle.id,
             event: 'PHASE_TRANSITION',
+            fromPhase: prevPhase,
+            toPhase: nextPhase,
+          });
+          events.emit('phase_transition', {
+            deviceId: device.deviceId,
+            cycleId: cycle.id,
+            fromPhase: prevPhase,
+            toPhase: nextPhase,
+          });
+          events.emit('phase_transition', {
+            deviceId: device.deviceId,
+            cycleId: cycle.id,
             fromPhase: cycle.currentPhase,
             toPhase: nextPhase,
           });
@@ -422,6 +447,8 @@ async function evaluateCycle(cycle) {
 
 export async function evaluateAllCycles() {
   try {
+    await loadSafetySettings();
+
     const activeCycles = await CultivationCycle.findAll({
       where: {
         status: 'ACTIVE',

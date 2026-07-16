@@ -58,13 +58,19 @@ function createClient(broker, isFallback) {
       } else if (type === 'status') {
         connectedDevices.add(deviceId);
         events.emit('state', { deviceId, ...data });
-        if (data.mac || data.fwVer || data.hwRev) {
+        if (data.mac || data.fwVer || data.hwRev || data.state || data.mode) {
           Device.findOrCreate({ where: { deviceId }, defaults: { deviceId, status: 'ONLINE' } })
             .then(([device]) => {
               const updates = {};
               if (data.mac) updates.macAddress = data.mac;
               if (data.fwVer) updates.firmwareVersion = data.fwVer;
               if (data.hwRev) updates.hwRevision = data.hwRev;
+              if (data.state) {
+                updates.lastFirmwareState = data.state;
+                const stateMap = { NORMAL: 'ONLINE', DEGRADED: 'MAINTENANCE', ERROR: 'ERROR', SAFE: 'MAINTENANCE', OTA_UPDATING: 'MAINTENANCE' };
+                updates.status = stateMap[data.state] || device.status;
+              }
+              if (data.mode) updates.controlMode = data.mode;
               device.update(updates).catch(() => {});
             })
             .catch(() => {});
@@ -124,7 +130,7 @@ export function startMqttBridge() {
   return primaryClient;
 }
 
-export function publishActuatorCommand(deviceId, commands) {
+export function publishActuatorCommand(deviceId, commands, config = null) {
   const topic = `${TOPIC_PREFIX}/${deviceId}/actuators`;
   const payload = JSON.stringify({
     type: 'actuator_state',
@@ -135,6 +141,7 @@ export function publishActuatorCommand(deviceId, commands) {
       state: c.state,
       mode: c.mode || 'REMOTE',
     })),
+    ...(config || {}),
   });
   const opts = { qos: 1, retain: false };
 
@@ -185,6 +192,7 @@ async function handleTelemetry(deviceId, data) {
       { type: 'HUMIDITY', value: data.hum, unit: '%' },
       { type: 'CO2', value: data.co2, unit: 'ppm' },
       { type: 'VOC', value: data.tvoc, unit: 'ppb' },
+      { type: 'AQI', value: data.aqi, unit: 'AQI' },
     ];
 
     for (const s of sensors) {
@@ -207,6 +215,7 @@ async function handleTelemetry(deviceId, data) {
         humidity: data.hum,
         co2: data.co2,
         voc: data.tvoc,
+        aqi: data.aqi,
       },
     });
   } catch (err) {
@@ -240,6 +249,8 @@ async function handleHealth(deviceId, data) {
       sensorEns160: data.sensorEns160,
       staleTaskMask: data.staleTaskMask,
       heartbeatsHealthy: data.heartbeatsHealthy,
+      bootTestPassed: data.bootTest,
+      bootTestFailReason: data.bootTestFailReason,
       uptime: data.uptime,
       rebootCount: data.rebootCount,
       timestamp: ts,
