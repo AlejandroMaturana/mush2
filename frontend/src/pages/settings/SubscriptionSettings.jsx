@@ -22,10 +22,12 @@ function UsageBar({ used, limit, percentage }) {
 
 function UpgradeModal({ currentPlan, onClose, onUpgrade }) {
   const plans = [
-    { id: 'FREE', name: 'Free', calls: '1,000 / mes', retention: '30 días', price: 'Gratis', features: ['Hasta 1,000 llamadas API/mes', 'Retención de 30 días', '1 dispositivo'] },
+    { id: 'FREE', name: 'Free', calls: '50,000 / mes', retention: '30 días', price: 'Gratis', features: ['Hasta 50,000 llamadas API/mes', 'Retención de 30 días', '1 dispositivo'] },
     { id: 'BASIC', name: 'Basic', calls: '10,000 / mes', retention: '90 días', price: 'Próximamente', features: ['Hasta 10,000 llamadas API/mes', 'Retención de 90 días', 'Múltiples dispositivos', 'Soporte prioritario'] },
     { id: 'PREMIUM', name: 'Premium', calls: '100,000 / mes', retention: '365 días', price: 'Próximamente', features: ['Hasta 100,000 llamadas API/mes', 'Retención de 365 días', 'Dispositivos ilimitados', 'Soporte 24/7', 'API dedicada'] },
   ]
+  // NOTE: These plans mirror the backend Subscription model tiers.
+  // When the backend exposes a /plans endpoint, replace this with an API call.
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>

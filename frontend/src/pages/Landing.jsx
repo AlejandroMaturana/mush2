@@ -61,7 +61,7 @@ function Landing() {
       <footer className="h-10 flex items-center px-6" style={{ borderTop: '1px solid rgba(61,74,62,0.3)' }}>
         <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
           <span className="text-9px text-on-surface-variant">Mush2</span>
-          <span className="text-9px text-outline">v2.0.0</span>
+          <span className="text-9px text-outline">v1.9.0</span>
         </div>
       </footer>
 

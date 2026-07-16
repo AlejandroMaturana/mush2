@@ -121,18 +121,8 @@ function Login() {
             </div>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-outline-variant/30 flex justify-between items-center opacity-60">
-            <div>
-              <span className="text-data-sm text-on-surface-variant block">System Status</span>
-              <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="font-label-caps text-9px text-primary">NODES_ONLINE</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-data-sm text-on-surface-variant block">Latent Protocol</span>
-              <span className="font-label-caps text-9px text-amber">SPORE_SYNC_V8.1</span>
-            </div>
+          <div className="mt-6 pt-4 border-t border-outline-variant/30 flex justify-center">
+            <span className="text-8px text-on-surface-variant/40 font-label-caps">Open-source mushroom cultivation control</span>
           </div>
         </div>
 

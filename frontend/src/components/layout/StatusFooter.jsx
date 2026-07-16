@@ -1,7 +1,7 @@
 function StatusFooter() {
   return (
     <footer className="status-footer">
-      <span className="status-footer-left">Mush2 v1.1.3</span>
+      <span className="status-footer-left">Mush2 v1.9.0</span>
       <div className="status-footer-right" />
     </footer>
   )
