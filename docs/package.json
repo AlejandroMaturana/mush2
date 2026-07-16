@@ -1,6 +1,6 @@
 {
   "name": "@mush2/docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Documentación técnica del sistema Mush2 — publicada con VitePress en GitHub Pages",
   "type": "module",
   "private": true,

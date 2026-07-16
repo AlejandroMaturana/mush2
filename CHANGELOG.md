@@ -1,6 +1,46 @@
 # Changelog — Mush2
 
----
+## 2026-07-16
+
+### Backend — v0.23.0
+
+- Device: +lastFirmwareState, +controlMode (ENUM)
+DeviceHealth: +bootTestPassed, +bootTestFailReason
+Telemetry: +AQI al ENUM sensorType
+Subscription: aumento de límite FREE plan
+Mapeo firmwareState → Device.status
+Persistencia de controlMode
+Almacenamiento de AQI y bootTest data
+Envío de setpoints + phase en comandos MQTT
+TEMP_CRITICAL / TEMP_RECOVERY desde SystemSettings
+Fix SSE connected event header
+Forward de eventos health, maintenance y phase_transition
+Cascade DELETE robusto para Device
+Remover RUNNING de query analytics
+Rate limit desactivado en development
+
+### Frontend — v1.10.0
+
+- Null telemetry → gaps en charts
+Mostrar controlMode, lastFirmwareState, bootTest y AQI
+Consumir eventos health/maintenance vía SSE
+Rangos dinámicos desde receta"
+README.md: Añade links del proyecto
+Eliminar textos decorativos fake
+Conectar SubscriptionSettings con datos reales
+
+### Firmware (ESP32-S3) — v0.21.0
+
+- Reemplazar millis() por getTimestamp() (epoch)
+Unificar publishStatus() en conexión
+Inclusión correcta de AQI, bootTest y status completo
+Bump versión a 0.21.0
+
+### Docs — v0.1.1
+
+ADR-018: Functional Integrity Stabilization
+Actualización de roadmap.md y milestone.md
+Entrada en PROJECT_JOURNAL.md"
 
 ## 2026-07-13
 
