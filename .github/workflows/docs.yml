@@ -1,0 +1,74 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docs.yml — Publica la documentación en GitHub Pages con VitePress
+#
+# Trigger: push a la rama `gitpages`
+# Build:   via workspace monorepo (root pnpm-lock.yaml)
+# Deploy:  mecanismo oficial de GitHub Pages (actions/deploy-pages)
+# URL:     https://alejandromaturana.github.io/mush2/
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - gitpages
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build VitePress site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies (workspace root)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build VitePress site
+        run: pnpm --filter @mush2/docs build
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
