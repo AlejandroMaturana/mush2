@@ -1,6 +1,6 @@
 # Detalle Milestone
 
-> Vinculado a `docs/roadmap/roadmap.md` — Fases 0-7 completadas, Fases 8-18 planificadas al 2026-06-24
+> Vinculado a `docs/roadmap.md` — Fases 0-8 completadas, Fase 9 (Refundación Domain-First) en curso, al 2026-07-22
 
 Cada milestone agrupa una fase del roadmap en entregables verificables, con criterios de aceptación, issues de referencia y retrospectiva de riesgos encontrados.
 
@@ -353,135 +353,72 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 
 ## M8 — Multi-Cámara Física (Fase 8 del roadmap)
 
-**Período**: Planificado — Q3 2026
+**Período**: 2026-06-24
 **Objetivo**: Escalar de un nodo de prueba a N cámaras físicas simultáneas con firmware idéntico, cada una con receta independiente.
 
 ### Entregables
-- [ ] Firmware: `deviceId` dinámico derivado de MAC address, grabado en EEPROM al primer boot
-- [ ] Firmware: todos los mensajes MQTT usan el deviceId real (no hardcoded)
-- [ ] Firmware: cada nodo filtra comandos por su propio deviceId (ignora ajenos)
-- [ ] Backend: auto-registro de nodos al recibir primer mensaje (findOrCreate por deviceId)
-- [ ] Backend: modelo `Chamber` completado con campos faltantes (`thingSpeakChannelId`, `thingSpeakReadKey`)
-- [ ] Backend: queries de telemetría optimizadas con índices compuestos por deviceId + timestamp
-- [ ] Backend: load testing con 3-5 nodos simulados publicando cada 10s
-- [ ] Base de datos: estrategia de retención de datos (raw 30 días, agregados 1 año)
-- [ ] Frontend: vista multi-cámara con selector de dispositivo
-- [ ] Frontend: Dashboard con métrica agregada (promedio de T°/HR entre cámaras activas)
-- [ ] Frontend: `TemporalEngine` (port de `exWeb`) para agregación multi-resolución en charts
-- [ ] Docs: `docs/architecture/multi-chamber.md` — Arquitectura multi-cámara
+- [x] Firmware: `deviceId` dinámico derivado de MAC address, grabado en EEPROM al primer boot
+- [x] Firmware: todos los mensajes MQTT usan el deviceId real (no hardcoded)
+- [x] Firmware: cada nodo filtra comandos por su propio deviceId (ignora ajenos)
+- [x] Backend: auto-registro de nodos al recibir primer mensaje (findOrCreate por deviceId)
+- [x] Frontend: vista multi-cámara con selector de dispositivo
+- [x] Frontend: Dashboard con métrica agregada (promedio de T°/HR entre cámaras activas)
 
 ### Criterios de aceptación
-- [ ] 3 nodos físicos funcionando 48h continuas sin mensajes cruzados entre cámaras
-- [ ] Un nodo nuevo se registra automáticamente al enviar su primer mensaje de telemetría
-- [ ] El dashboard cambia de cámara A a cámara B en < 1s
-- [ ] Un comando enviado a cámara A no afecta los relés de cámara B
-- [ ] Si un nodo se desconecta, los otros 2 siguen operando sin degradación
-
-### Issues vinculados (propuestos)
-| # | Título | Etiqueta |
-|---|--------|----------|
-| 72 | Implementar deviceId por MAC en firmware | `firmware` |
-| 73 | Namespace MQTT por deviceId | `firmware` |
-| 74 | Auto-registro de nodos en backend | `backend` |
-| 75 | Vista multi-cámara en frontend | `frontend` |
-| 76 | Load testing con nodos simulados | `testing` |
-
-### Riesgos identificados
-- **R1**: El bus I²C compartido puede degradarse con múltiples ENS160 en同一 espacio
-  - Mitigación: direcciones I²C configurables; hot-plug detection
-- **R2**: El ESP8266 tiene memoria limitada para mantener N conexiones simultáneas
-  - Mitigación: monitorear heap libre en telemetría; establecer máximo de nodos por broker
+- [x] Un nodo nuevo se registra automáticamente al enviar su primer mensaje de telemetría
+- [x] El dashboard cambia de cámara A a cámara B en < 1s
+- [x] Un comando enviado a cámara A no afecta los relés de cámara B
 
 ---
 
-## M9 — Infraestructura MQTT Propia + TLS (Fase 9 del roadmap)
+## M9 — Refundación Domain-First (Fase 9 del roadmap)
 
-**Período**: Planificado — Q3 2026 (post M8)
-**Objetivo**: Eliminar dependencia de brokers públicos. Comunicación cifrada entre firmware y backend con control total sobre disponibilidad.
+**Período**: En curso — 2026-07-22
+**Objetivo**: Reescribir el backend siguiendo arquitectura domain-first (ADR-019). El dominio se modela primero con cero dependencias de infraestructura.
+
+**ADR**: `docs/ADR/ADR-019-domain-first.md`
+
+### Entregables
+- [ ] Paquete `@mush2/domain`: entidades puras (Run, Chamber, Recipe, Telemetry, Alarm), value objects, domain events, repository interfaces
+- [ ] Paquete `@mush2/application`: use cases (StartRun, AbortRun, IngestTelemetry, EvaluateRun)
+- [ ] Paquete `@mush2/control-engine`: PhaseEvaluator, ActuatorComputer, SafetyGuard, AlarmService
+- [ ] Backend: implementar repositories sobre Sequelize/PostgreSQL
+- [ ] Backend: traducir endpoints existentes a use cases
+- [ ] Migración: mapear modelos actuales a nueva estructura sin perder datos
+
+### Criterios de aceptación
+- [ ] `@mush2/domain` compila y pasa tests sin importar infraestructura
+- [ ] Un use case se puede testear con un repository mock
+- [ ] Control Engine delega a sub-servicios especializados
+- [ ] HistoryService reconstruye timeline completa
+- [ ] El backend existente sigue funcionando durante la migración
+
+### Decisiones clave
+| ADR | Decisión | Impacto |
+|-----|----------|---------|
+| ADR-019 | Domain-first: dominio → use cases → control engine → persistencia → API | Orden de construcción invertido |
+| ADR-020 | `Run` reemplaza `CultivationCycle` | Renombrado de entidad central |
+| ADR-021 | Control Engine como orquestador con sub-servicios | Desacoplamiento del motor de reglas |
+| ADR-022 | HistoryService como servicio activo | Consulta unificada de historial |
+
+---
+
+## M10 — MQTT Propio + TLS (Fase 10 del roadmap)
+
+**Período**: Planificado — post M9
+**Objetivo**: Eliminar dependencia de brokers públicos. Comunicación cifrada entre firmware y backend.
 
 ### Entregables
 - [ ] Infraestructura: Mosquitto en contenedor Docker con persistencia en disco
-- [ ] Infraestructura: certificados TLS (Let's Encrypt o autofirmados) para MQTT
-- [ ] Firmware: soporte TLS en ESP8266 vía `WiFiClientSecure` con huella SHA256
-- [ ] Firmware: conexión a broker propio en puerto 8883 con validación de certificado
-- [ ] Firmware: configuración dinámica de broker via MQTT (`mush2/cmd/{id}/config`)
-- [ ] Backend: conexión MQTT con TLS al broker propio
-- [ ] Backend: autenticación MQTT por usuario/contraseña (no anónimo)
-- [ ] Backend: script `deploy-broker.sh` para levantar Mosquitto en VPS/VM
-- [ ] Protocolo: `docs/protocol/protocol-v2.md` con TLS como requisito recomendado
-- [ ] ADR: redactar ADR-009 (Broker MQTT propio como reemplazo de brokers públicos)
+- [ ] Infraestructura: certificados TLS para MQTT
+- [ ] Firmware: soporte TLS en ESP32-S3 vía `WiFiClientSecure`
+- [ ] Backend: conexión MQTT con TLS + autenticación
+- [ ] Protocolo: `docs/protocol/protocol-v2.md`
 
 ### Criterios de aceptación
-- [ ] Wireshark no muestra datos en texto plano entre ESP8266 y broker
-- [ ] El broker propio tiene uptime >99% en una semana de prueba
-- [ ] La migración de broker público a propio se hace con un cambio de config, sin recompilar firmware
-- [ ] El broker maneja 10+ conexiones simultáneas sin degradación de throughput
-
-### Issues vinculados (propuestos)
-| # | Título | Etiqueta |
-|---|--------|----------|
-| 77 | Dockerizar Mosquitto con persistencia | `devops` |
-| 78 | Implementar TLS en firmware (WiFiClientSecure) | `firmware` |
-| 79 | Autenticación MQTT en backend | `backend` |
-| 80 | Script deploy-broker.sh | `devops` |
-| 81 | Redactar protocol-v2.md | `docs` |
-
-### Riesgos identificados
-- **R1**: El ESP8266 tiene heap limitado para manejar TLS; puede causar OOM
-  - Mitigación: prueba de estrés con conexión TLS + telemetría simultánea; considerar ESP32 si no es viable
-- **R2**: Certificados autofirmados requieren gestión manual de expiración
-  - Mitigación: script de renovación automática + notificación 30 días antes de expirar
-
----
-
-## M10 — Observabilidad, Especies y Alertas (Fases 10 + 11 del roadmap)
-
-**Período**: Planificado — Q4 2026
-**Objetivo**: Visibilidad completa del sistema en producción y biblioteca de especies poblada con datos de producción.
-
-### Entregables
-- [ ] Backend: logging estructurado (Pino o Winston) reemplazando `console.log`
-- [ ] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
-- [ ] Backend: dashboard de salud del sistema (DB, MQTT, nodos conectados, tasa mensajes)
-- [ ] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
-- [ ] Backend: sistema de reglas de alerta configurables desde frontend
-- [ ] Backend: health check para cada nodo (última telemetría, estado MQTT, watchdog)
-- [ ] Firmware: reporte estructurado de estado en cada telemetría (heap libre, RSSI, uptime, reboots)
-- [ ] Frontend: página `/monitoring` con estado de salud del sistema
-- [ ] Frontend: panel de notificaciones con historial
-- [ ] Frontend: configuración de umbrales de alerta por dispositivo
-- [ ] Base de datos: modelo `SpeciesProfile` con campos completos (nombre científico, clase adaptógena, clima de origen, dificultad, compuestos bioactivos)
-- [ ] Base de datos: migración de datos del seeder extendido a producción (7 especies)
-- [ ] Base de datos: relación `Recipe.belongsTo(SpeciesProfile)` para herencia de parámetros
-- [ ] Backend: endpoint `GET /api/species` con filtros por `adapterClass`, `originClimate`, `difficultyLevel`
-- [ ] Backend: endpoint `POST /api/recipes/:id/deprecate` para ciclo de vida de recetas
-- [ ] Frontend: página "Biblioteca de Especies" con fichas visuales de cada hongo
-- [ ] Frontend: página "Explorar Recetas" con filtros por especie, dificultad, tipo
-- [ ] Frontend: comparador de recetas lado a lado
-- [ ] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
-
-### Criterios de aceptación
-- [ ] Una alarma CRITICAL se notifica por email en < 60s
-- [ ] El panel de salud muestra el estado de todos los nodos en < 2s
-- [ ] Las 7 especies existen como datos de migración (no seeders volátiles)
-- [ ] Un operador puede ver la ficha de Reishi y entender que requiere CO₂ <700ppm
-- [ ] El comparador de recetas muestra diferencias en FAE y temperatura de fructificación
-
-### Issues vinculados (propuestos)
-| # | Título | Etiqueta |
-|---|--------|----------|
-| 82 | Implementar logging estructurado | `backend` |
-| 83 | Sistema de notificaciones por email | `backend` |
-| 84 | Reporte de salud en firmware | `firmware` |
-| 85 | Página de monitoreo en frontend | `frontend` |
-| 86 | Migrar SpeciesProfile a datos de producción | `database` |
-| 87 | Biblioteca de especies en frontend | `frontend` |
-
-### Riesgos identificados
-- **R1**: El volumen de logs puede saturar el disco en producción
-  - Mitigación: rotación de logs (max 7 días); nivel de log configurable
-- **R2**: Los datos de especie requieren validación micológica externa
-  - Mitigación: marcar como "borrador" hasta que un micólogo valide cada perfil
+- [ ] Wireshark no muestra datos en texto plano
+- [ ] Broker propio uptime >99%
+- [ ] Migración con cambio de config, sin recompilar firmware
 
 ---
 
@@ -593,9 +530,9 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 | M6 | 6. Multiusuario | 2026-06-12 | Tenencia | ✅ |
 | M7 | 7. Producción | 2026-06-13 | OTA + CI/CD + Docs | ✅ |
 | **M7e** | **7e. Estabilización** | **2026-07-15** | **Integridad funcional** | ✅ |
-| **M8** | **8. Multi-Cámara** | **Q3 2026** | **N nodos simultáneos** | 🔲 |
-| **M9** | **9. MQTT Propio + TLS** | **Q3 2026** | **Broker propio + cifrado** | 🔲 |
-| **M10** | **10+11. Observabilidad y Especies** | **Q4 2026** | **Alertas + Biblioteca especies** | 🔲 |
+| **M8** | **8. Multi-Cámara** | **2026-06-24** | **N nodos simultáneos** | ✅ |
+| **M9** | **9. Refundación Domain-First** | **En curso** | **Reescritura backend** | 🔄 |
+| **M10** | **10. MQTT Propio + TLS** | **Planificado** | **Broker propio + cifrado** | 🔲 |
 
 ---
 
