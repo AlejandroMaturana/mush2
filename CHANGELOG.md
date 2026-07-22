@@ -1,5 +1,50 @@
 # Changelog — Mush2
 
+## 2026-07-22
+
+### Backend — major refactoring and new health monitoring system — v1.0.0
+
+- Añadido sistema de monitoreo de salud de dispositivos (`deviceHealthService`)
+- Implementado `offlineWatchdog` para detectar dispositivos desconectados
+- Optimización significativa del startup del servidor con estados de readiness
+- Mejoras en configuración de base de datos, pool de conexiones y manejo de deadlocks
+- Mejoras en endpoints de monitoring y rutas
+
+### Frontend — New shared component library and page consolidation — v1.11.0
+
+- Migración completa de páginas a la nueva librería de componentes compartidos (`Panel`, `EntityHeader`, `StatusCard`, `DashboardGrid`, `EventFeed`, etc.)
+- Nuevas páginas: `CycleDetailPage`, `DeviceListPage` y paneles específicos
+- Nueva capa API (`client.js`), `AuthContext`, hook `useSSE` y Auth Modal
+- Reorganización de rutas, SettingsNav y estructura de componentes
+- Mejoras importantes de estilos: tokens CSS corregidos, clases reutilizables, responsive y light mode
+
+**Styles**
+- Corrección de custom properties rotas y adición de tokens RGB y efectos
+- Extracción de múltiples clases reutilizables (`.form-group`, `.settings-row`, badges, alerts, etc.)
+- Soporte responsivo con breakpoints
+- Limpieza de código legacy y componentes duplicados
+
+### Docs — Migración y Reorganización de Documentos Técnicos — v0.1.2
+
+- - **docs(adr)**: Migración y renumeración de ADRs a la nueva estructura
+- ADR-019 a ADR-022 movidos desde `.aaron/` y renumerados
+- Actualizado formato y encabezados
+- **docs(governance)**: Reorganización de archivos de gobernanza
+- `AGENT-BOUNDARIES.md` y `TASK-TEMPLATES.md` movidos a `docs/governance/` con nombres en lowercase
+- **docs(architecture)**: Reorganización de documentos de arquitectura
+- Movidos y renombrados: `capability-matrix`, `change-impact`, `engineering-architecture`, `mvp` y `use-cases`
+- **docs(operations)**: Limpieza y movimiento de runbooks
+- `DEBUG-RUNBOOK.md` movido a `docs/operations/`
+- Eliminada carpeta obsoleta `backend-spec/` y `.aaron/`
+- **docs(roadmap)**: Actualización de roadmap y milestones
+- Fase 8 marcada como **COMPLETADA**
+- Fase 9 (Refundación Domain-First) iniciada
+- Reorganización de fases 10-19 con nuevas dependencias
+**Resultado**: Estructura documental mucho más limpia, coherente y mantenible bajo la nueva taxonomía.
+
+**Otros**
+- Limpieza general de código muerto y archivos legacy
+
 ## 2026-07-16
 
 ### Backend — Fixed - v0.23.1
