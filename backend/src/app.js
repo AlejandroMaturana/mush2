@@ -6,6 +6,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { env } from './config/env.js';
+import { getReadiness } from './config/readiness.js';
 import { events } from './services/eventBus.js';
 import router from './routes/index.js';
 
@@ -46,10 +47,29 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  if (req.path.startsWith('/api/v1/auth')) return next();
+  if (req.path === '/events') return next();
+  const { status } = getReadiness();
+  if (status === 'starting') {
+    return res.status(503).json({ error: 'Servidor iniciando', status, retryAfter: 5 });
+  }
+  next();
+});
+
 app.use('/api/v1', router);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
+  const readiness = getReadiness();
+  const statusCode = readiness.status === 'starting' ? 503 : readiness.status === 'degraded' ? 200 : 200;
+  res.status(statusCode).json({
+    status: readiness.status,
+    uptime: process.uptime(),
+    startedAt: readiness.startedAt,
+    readyAt: readiness.readyAt,
+    services: readiness.services,
+  });
 });
 
 app.get('/events', (req, res) => {
@@ -59,89 +79,53 @@ app.get('/events', (req, res) => {
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
   });
+  res.flushHeaders();
 
-  res.write('event: connected\ndata: {"type":"connected"}\n\n');
+  let closed = false;
+  const safeWrite = (chunk) => { if (!closed) try { res.write(chunk); } catch {} };
 
-  const onAck = (data) => {
-    res.write(`event: ack
-data: ${JSON.stringify(data)}
+  safeWrite('event: connected\ndata: {"type":"connected"}\n\n');
 
-`);
-  };
-  const onState = (data) => {
-    res.write(`event: state
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onTelemetry = (data) => {
-    res.write(`event: telemetry
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onAlarm = (data) => {
-    res.write(`event: alarm
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onControlEval = (data) => {
-    res.write(`event: control_eval
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onHealth = (data) => {
-    res.write(`event: health
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onMaintenance = (data) => {
-    res.write(`event: maintenance
-data: ${JSON.stringify(data)}
-
-`);
-  };
-  const onPhaseTransition = (data) => {
-    res.write(`event: phase_transition
-data: ${JSON.stringify(data)}
-
-`);
+  const wrap = (type) => (data) => {
+    safeWrite(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
   };
 
-  events.on('ack', onAck);
-  events.on('state', onState);
-  events.on('telemetry', onTelemetry);
-  events.on('alarm', onAlarm);
-  events.on('control_eval', onControlEval);
-  events.on('health', onHealth);
-  events.on('maintenance', onMaintenance);
-  events.on('phase_transition', onPhaseTransition);
+  const listeners = {
+    ack: wrap('ack'),
+    state: wrap('state'),
+    telemetry: wrap('telemetry'),
+    alarm: wrap('alarm'),
+    control_eval: wrap('control_eval'),
+    health: wrap('health'),
+    maintenance: wrap('maintenance'),
+    phase_transition: wrap('phase_transition'),
+    device_health: wrap('device_health'),
+    device_status_changed: wrap('device_status_changed'),
+  };
 
-  const keepAlive = setInterval(() => {
-    res.write(':keepalive\n\n');
-  }, 30000);
+  for (const [type, fn] of Object.entries(listeners)) {
+    events.on(type, fn);
+  }
 
-  req.on('close', () => {
-    events.off('ack', onAck);
-    events.off('state', onState);
-    events.off('telemetry', onTelemetry);
-    events.off('alarm', onAlarm);
-    events.off('control_eval', onControlEval);
-    events.off('health', onHealth);
-    events.off('maintenance', onMaintenance);
-    events.off('phase_transition', onPhaseTransition);
+  const keepAlive = setInterval(() => safeWrite(':keepalive\n\n'), 30000);
+
+  const cleanup = () => {
+    closed = true;
+    for (const [type, fn] of Object.entries(listeners)) {
+      events.off(type, fn);
+    }
     clearInterval(keepAlive);
-  });
+  };
+
+  req.on('close', cleanup);
+  res.on('close', cleanup);
 });
 
 if (env.NODE_ENV === 'production') {
   const publicDir = resolve(__dirname, '../public');
   if (existsSync(publicDir)) {
     app.use(express.static(publicDir, { maxAge: '1d', index: 'index.html' }));
-    app.get('/{*splat}', (req, res, next) => {
+    app.get('*splat', (req, res, next) => {
       if (req.path.startsWith('/api/') || req.path === '/events' || req.path === '/health') {
         return next();
       }

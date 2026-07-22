@@ -2,36 +2,93 @@ import { createServer } from 'http';
 import app from './app.js';
 import { env } from './config/env.js';
 import sequelize from './config/database.js';
-import { startControlEngine, stopControlEngine } from './services/controlEngine.js';
-import { startWebSocketServer, stopWebSocketServer, sendActuatorUpdate } from './services/webSocketServer.js';
-import { startMqttBridge, stopMqttBridge, publishActuatorCommand } from './services/mqttBridge.js';
-import { events } from './services/eventBus.js';
+import { getReadiness, markServiceStarted, markServiceFailed, markReady } from './config/readiness.js';
 import { installTimestampedConsole } from './services/logger.js';
-import { syncAllFromThingSpeak } from './services/thingSpeakSync.js';
-import { initBot as initTelegramBot, stopBot as stopTelegramBot, notifyDeviceAlarm, reconfigureBot } from './services/telegramService.js';
-import SystemSetting from './models/SystemSetting.js';
-import { startDataRetentionJob, stopDataRetentionJob } from './jobs/dataRetentionJob.js';
 
 installTimestampedConsole();
 
-const TS_CHECK_INTERVAL = 60000;
 let tsSyncHandle = null;
 
 async function start() {
   try {
     console.log(`[Process] Iniciando backend PID ${process.pid}`);
 
+    // ── Critical path: DB authenticate + HTTP listen ────────────────
     await sequelize.authenticate();
     console.log('[DB] Conexión establecida');
 
-    if (env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
-      console.log('[DB] Modelos sincronizados (alter sin drop)');
-    }
+    const httpServer = createServer(app);
 
+    httpServer.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`[FATAL] Puerto ${env.PORT} ya en uso. Otro proceso lo está ocupando.`);
+        console.error(`[FATAL] Para liberar el puerto:`);
+        console.error(`         netstat -ano | findstr :${env.PORT}`);
+        console.error(`         taskkill /PID <PID> /F`);
+      } else {
+        console.error('[FATAL] Error en HTTP server:', err);
+      }
+      process.exit(1);
+    });
+
+    httpServer.listen(env.PORT, () => {
+      console.log(`[Server] Mush2 backend en puerto ${env.PORT}`);
+      console.log('[Server] HTTP listen antes de servicios secundarios (TTFR optimizado)');
+
+      // Sync + secondary services run AFTER listen — server is reachable immediately
+      initSecondaryServices(httpServer);
+    });
+  } catch (err) {
+    console.error('[FATAL] Error al iniciar:', err);
+    process.exit(1);
+  }
+}
+
+// ── Secondary services (non-blocking) ─────────────────────────────
+async function initSecondaryServices(httpServer) {
+  const TS_CHECK_INTERVAL = 60000;
+
+  // Schema sync removed from startup — use `npm run db:sync` when schema changes are needed.
+  // Running sync({ alter: true }) on every startup adds 5-10 minutes to boot and saturates the DB pool.
+  markServiceStarted('dbSync');
+
+  // WebSocket Server (needs httpServer reference)
+  try {
+    const { startWebSocketServer } = await import('./services/webSocketServer.js');
+    startWebSocketServer(httpServer);
+    markServiceStarted('webSocket');
+    console.log('[Services] WebSocket Server started');
+  } catch (err) {
+    markServiceFailed('webSocket', err);
+    console.error(`[Services] WebSocket Server failed: ${err.message}`);
+  }
+
+  // Control Engine
+  try {
+    const { startControlEngine } = await import('./services/controlEngine.js');
     startControlEngine();
-    startMqttBridge();
+    markServiceStarted('controlEngine');
+    console.log('[Services] Control Engine started');
+  } catch (err) {
+    markServiceFailed('controlEngine', err);
+    console.error(`[Services] Control Engine failed: ${err.message}`);
+  }
 
+  // MQTT Bridge
+  try {
+    const { startMqttBridge } = await import('./services/mqttBridge.js');
+    startMqttBridge();
+    markServiceStarted('mqttBridge');
+    console.log('[Services] MQTT Bridge started');
+  } catch (err) {
+    markServiceFailed('mqttBridge', err);
+    console.error(`[Services] MQTT Bridge failed: ${err.message}`);
+  }
+
+  // Telegram Bot
+  try {
+    const { initBot } = await import('./services/telegramService.js');
+    const SystemSetting = (await import('./models/SystemSetting.js')).default;
     const [tgToken, tgUsername] = await Promise.all([
       SystemSetting.findOne({ where: { key: 'telegram_bot_token' } }),
       SystemSetting.findOne({ where: { key: 'telegram_bot_username' } }),
@@ -39,27 +96,25 @@ async function start() {
     const botToken = tgToken?.value || env.TELEGRAM_BOT_TOKEN;
     const botUsername = tgUsername?.value || env.TELEGRAM_BOT_USERNAME;
     if (botToken) {
-      try { await initTelegramBot(botToken, botUsername); } catch (e) {
-        console.error(`[TELEGRAM] Bot init failed: ${e.message}`);
-      }
+      await initBot(botToken, botUsername);
+      markServiceStarted('telegram');
+      console.log('[Services] Telegram Bot started');
     } else {
-      console.log('[TELEGRAM] No token configured — bot disabled. Configure via System Settings.');
+      markServiceStarted('telegram');
+      console.log('[TELEGRAM] No token configured — bot disabled');
     }
+  } catch (err) {
+    markServiceFailed('telegram', err);
+    console.error(`[Services] Telegram Bot failed: ${err.message}`);
+  }
 
-    const httpServer = createServer(app);
-    startWebSocketServer(httpServer);
+  // Wire up event bus listeners
+  try {
+    const { events } = await import('./services/eventBus.js');
+    const { sendActuatorUpdate } = await import('./services/webSocketServer.js');
+    const { publishActuatorCommand } = await import('./services/mqttBridge.js');
 
-    httpServer.listen(env.PORT, () => {
-      console.log(`[Server] Mush2 backend en puerto ${env.PORT}`);
-
-      syncAllFromThingSpeak().catch(() => {});
-      tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
-      console.log(`[ThingSpeak] Sync check cada ${TS_CHECK_INTERVAL / 1000}s (intervalos por dispositivo)`);
-
-      startDataRetentionJob();
-    });
-
-    const publishActuators = (data) => {
+    events.on('control_eval', (data) => {
       if (!data.deviceId || !data.actuatorCommands) return;
       const cmds = data.actuatorCommands.map(c => ({ channel: c.channel, state: c.command, mode: 'REMOTE' }));
       sendActuatorUpdate(data.deviceId, cmds);
@@ -76,31 +131,73 @@ async function start() {
       }
       if (data.readings) config.readings = data.readings;
       publishActuatorCommand(data.deviceId, cmds, Object.keys(config).length > 0 ? config : null);
-    };
+    });
 
-    events.on('control_eval', publishActuators);
-
-    events.on('alarm', (alarm) => {
+    events.on('alarm', async (alarm) => {
       if (alarm.deviceId && !alarm.resolvedAt) {
-        notifyDeviceAlarm(alarm.deviceId, alarm);
+        try {
+          const { notifyDeviceAlarm } = await import('./services/telegramService.js');
+          notifyDeviceAlarm(alarm.deviceId, alarm);
+        } catch { /* telegram may not be configured */ }
       }
     });
+
+    markServiceStarted('eventBus');
+    console.log('[Services] Event bus listeners wired');
   } catch (err) {
-    console.error('[FATAL] Error al iniciar:', err);
-    process.exit(1);
+    markServiceFailed('eventBus', err);
+    console.error(`[Services] Event bus wiring failed: ${err.message}`);
   }
+
+  // ThingSpeak Sync
+  try {
+    const { syncAllFromThingSpeak } = await import('./services/thingSpeakSync.js');
+    syncAllFromThingSpeak().catch(() => {});
+    tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
+    markServiceStarted('thingSpeak');
+    console.log(`[ThingSpeak] Sync check cada ${TS_CHECK_INTERVAL / 1000}s`);
+  } catch (err) {
+    markServiceFailed('thingSpeak', err);
+    console.error(`[Services] ThingSpeak Sync failed: ${err.message}`);
+  }
+
+  // Background Jobs
+  try {
+    const { startDataRetentionJob } = await import('./jobs/dataRetentionJob.js');
+    const { startOfflineWatchdog } = await import('./jobs/offlineWatchdog.js');
+    startDataRetentionJob();
+    startOfflineWatchdog();
+    markServiceStarted('backgroundJobs');
+    console.log('[Services] Background jobs started');
+  } catch (err) {
+    markServiceFailed('backgroundJobs', err);
+    console.error(`[Services] Background jobs failed: ${err.message}`);
+  }
+
+  // All secondary services attempted — mark ready (may be degraded)
+  markReady();
+  const readiness = getReadiness();
+  console.log(`[Server] Estado: ${readiness.status} — servicios: ${Object.keys(readiness.services).join(', ')}`);
 }
 
 start();
 
+// ── Shutdown ──────────────────────────────────────────────────────
 function shutdown(signal) {
   return async () => {
     console.log(`[Process] ${signal} — cerrando conexiones...`);
     try {
       if (tsSyncHandle) clearInterval(tsSyncHandle);
+      const { stopControlEngine } = await import('./services/controlEngine.js');
+      const { stopDataRetentionJob } = await import('./jobs/dataRetentionJob.js');
+      const { stopOfflineWatchdog } = await import('./jobs/offlineWatchdog.js');
+      const { stopBot } = await import('./services/telegramService.js');
+      const { stopMqttBridge } = await import('./services/mqttBridge.js');
+      const { stopWebSocketServer } = await import('./services/webSocketServer.js');
       stopControlEngine();
       stopDataRetentionJob();
-      stopTelegramBot();
+      stopOfflineWatchdog();
+      stopBot();
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();
