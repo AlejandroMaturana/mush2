@@ -2,6 +2,7 @@
 node_modules/
 .agents/
 .example/
+cache/
 dist/
 build/
 backend/mush2_backup_20260630_113545.dump
