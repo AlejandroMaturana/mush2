@@ -1,5 +1,24 @@
 # Changelog — Mush2
 
+## 2026-07-24
+
+### Backend — Domain-First refactoring (arquitectura hexagonal / DDD) — v1.1.0
+
+- Implementado **Shared Kernel** con `Result<T, E>`, `DomainError`, `Clock`, `UUID`, `EventBus` y `Logger`
+- Nueva **Domain Layer** pura: Entities (`Run`, `Chamber`, `Recipe`, `Telemetry`, `Alarm`), Value Objects y Policies
+- **Application Layer** con use cases granulares (`StartRun`, `AbortRun`, `ReceiveTelemetry`, `RaiseAlarms`, `ComputeActuators`, etc.)
+- **Control Engine** como orquestador principal con `SafetyRule` y guards de seguridad
+- **Persistence Layer** con mappers bidireccionales y repositorios Sequelize
+- Migración de `cultivation_cycles` → `runs`
+- Suite completa de tests (77 tests passing)
+- Barrel exports por capa y configuración actualizada de Vitest
+- Actualización de documentación de arquitectura y roadmap (Fase 9 iniciada)
+
+### Docs — v0.1.3
+
+- Actualizado engineering-architecture.md
+- Roadmap y Milestone actualizados con estado de Fase 9
+
 ## 2026-07-22
 
 ### Backend — major refactoring and new health monitoring system — v1.0.0
