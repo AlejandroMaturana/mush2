@@ -30,19 +30,81 @@
 #define TS_API_KEY "your_ts_api_key"
 #endif
 
+// ---- Environment ----
+#define ENV_DEVELOPMENT 0
+#define ENV_STAGING     1
+#define ENV_PRODUCTION  2
+
+#ifndef MUSH_ENV
+#define MUSH_ENV ENV_DEVELOPMENT
+#endif
+
 // ---- MQTT ----
 #ifndef MQTT_BROKER
-#define MQTT_BROKER "test.mosquitto.org"
+  #if MUSH_ENV == ENV_PRODUCTION
+    #define MQTT_BROKER "mqtt.your-domain.tld"
+  #elif MUSH_ENV == ENV_STAGING
+    #define MQTT_BROKER "mqtt-staging.your-domain.tld"
+  #else
+    #define MQTT_BROKER "test.mosquitto.org"
+  #endif
 #endif
+
 #ifndef MQTT_PORT
-#define MQTT_PORT 1883
+  #if MUSH_ENV == ENV_DEVELOPMENT
+    #define MQTT_PORT 1883
+  #else
+    #define MQTT_PORT 8883
+  #endif
 #endif
-#ifndef MQTT_BROKER_FALLBACK
-#define MQTT_BROKER_FALLBACK "broker.hivemq.com"
+
+#ifndef MQTT_USER
+#define MQTT_USER "device_001"
 #endif
-#ifndef MQTT_PORT_FALLBACK
-#define MQTT_PORT_FALLBACK 1883
+
+#ifndef MQTT_PASS
+#define MQTT_PASS "change_me"
 #endif
+
+#ifndef MQTT_USE_TLS
+  #if MUSH_ENV == ENV_DEVELOPMENT
+    #define MQTT_USE_TLS 0
+  #else
+    #define MQTT_USE_TLS 1
+  #endif
+#endif
+
+// ---- MQTT Reconnection ----
+#ifndef MQTT_RECONNECT_INITIAL_MS
+#define MQTT_RECONNECT_INITIAL_MS 5000UL
+#endif
+#ifndef MQTT_RECONNECT_MAX_MS
+#define MQTT_RECONNECT_MAX_MS 300000UL
+#endif
+#ifndef MQTT_HANDSHAKE_TIMEOUT_MS
+#define MQTT_HANDSHAKE_TIMEOUT_MS 5000UL
+#endif
+
+// ---- MQTT TLS CA Root Certificate ----
+// ISRG Root X1 (Let's Encrypt) — valido hasta 2035
+// https://letsencrypt.org/certificates/
+static const char MQTT_CA_ROOT[] PROGMEM = R"(
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6
+UA5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+s
+WT8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qy
+HB5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4xKK4gNk7T1dEWQI2Z
+AgMBAAGjggEzMIIBLzAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAd
+BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
+-----END CERTIFICATE-----
+)";
 
 // ---- NTP ----
 #ifndef NTP_SERVER

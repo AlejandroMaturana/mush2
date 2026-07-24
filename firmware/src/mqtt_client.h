@@ -5,6 +5,10 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+#if MQTT_USE_TLS == 1
+  #include <WiFiClientSecure.h>
+#endif
+
 struct ActuatorCommand {
   uint8_t channel;
   uint8_t state;
@@ -43,21 +47,24 @@ public:
   void setOtaCallback(void (*cb)(const char* url, const char* version, const char* hash));
   void setActuatorCallback(void (*cb)(const MqttActuatorMessage* msg));
 
-  bool isFallbackActive() { return _usingFallback; }
-
 private:
-  WiFiClient _tcpClient;
+  #if MQTT_USE_TLS == 1
+    WiFiClientSecure _tcpClient;
+  #else
+    WiFiClient _tcpClient;
+  #endif
   PubSubClient _client;
   char _deviceId[32];
   char _topicBase[48];
   unsigned long _lastReconnect;
-  unsigned long _fallbackRetry;
-  bool _usingFallback;
+  unsigned long _reconnectDelay;
+  bool _wasConnected;
 
   void (*_otaCb)(const char* url, const char* version, const char* hash);
   void (*_actuatorCb)(const MqttActuatorMessage* msg);
 
   void _connect();
+  void _publishOnline();
   void _onMessage(char* topic, uint8_t* payload, unsigned int len);
   static void _staticCallback(char* topic, uint8_t* payload, unsigned int len);
   static MQTTClient* _instance;
