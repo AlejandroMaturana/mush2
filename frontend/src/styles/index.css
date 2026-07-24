@@ -503,9 +503,20 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
   color: var(--on-surface-variant);
 }
 
+.status-footer-center {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+}
+
 .status-footer-right {
-  display: flex;
-  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
 }
 
 .status-footer-link {
@@ -576,6 +587,7 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
   .app-content { margin-left: 64px; padding: var(--space-gutter); }
   .status-footer { left: 64px; }
   .status-footer-left { font-size: 10px; }
+  .status-footer-center { font-size: 10px; }
   .status-footer-right { display: none; }
 }
 
@@ -586,6 +598,7 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
   .app-content { margin-left: 0; margin-bottom: 64px; padding: var(--space-gutter); }
   .status-footer { left: 0; bottom: 64px; }
   .status-footer-left { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status-footer-center { display: none; }
   .status-footer-right { display: none; }
 }
 
