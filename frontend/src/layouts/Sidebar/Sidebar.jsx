@@ -110,7 +110,7 @@ function Sidebar() {
         marginTop: '8px',
       }}>
         <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--spore-green)', opacity: 0.6 }}>grain</span>
-        <span className="form-label">{manifest ? `v${manifest.system.version}` : ''}</span>
+        <span className="form-label">{manifest ? `OS v${manifest.system.version}` : ''}</span>
       </div>
     </aside>
   )
