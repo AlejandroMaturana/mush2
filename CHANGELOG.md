@@ -4,15 +4,49 @@
 
 ### Backend — v1.2.0
 
-- f
+- **refactor(backend)**: Simplificación de `mqttBridge` a un único broker con credenciales por entorno
+- **feat(docker)**: Configuración completa de Mosquitto con TLS (puerto 8883), autenticación y ACLs estrictas
+- **test(backend)**: Nuevos tests de conexión segura, resiliencia ante broker caído y backward compatibility (total: 135 tests passing)
 
 ### Frontend — v1.12.0
 
-- f
+- **feat(frontend)**: Añadido hook `useVersionManifest` compartido
+  - Fetch con cache a nivel de módulo
+  - Eliminación de versiones hardcodeadas
+- **refactor(frontend)**: Actualización de `Sidebar` y `StatusFooter`
+  - Sidebar ahora usa versión dinámica del manifest
+  - StatusFooter muestra versiones de Frontend, Backend y Firmware
+  - Mejoras en diseño responsive
+- **style(frontend)**: Nuevos estilos para `.status-footer-center` con soporte responsive
+
+### Firmware — v0.21.0
+
+- **feat(firmware)**: Implementación de conexión MQTT segura
+  - `WiFiClientSecure` + Root CA (ISRG Root X1)
+  - Last Will and Testament (LWT) para detección rápida de desconexiones
+  - Backoff exponencial y manejo de entornos (DEVELOPMENT/STAGING/PRODUCTION)
+  - Separación de `MQTT_USER` y `DEVICE_ID`
 
 ### Docs — v0.1.4
 
-- f
+- **docs(adr)**: Creación de ADR-023 (Infraestructura MQTT Segura) y ADR-024 (Estrategia de Despliegue HTTPS)
+- **docs(rfc)**: Actualización profunda de RFC-0001 con decisiones clave de TLS
+- **docs(adr)**: Actualización del README de ADRs y renumeración/migración
+- **docs(governance)**: Actualización de Definition of Done con verificaciones de Fase 10 (memory footprint, compatibilidad)
+
+### Scripts & Tooling
+
+- **feat(scripts)**: Implementar agregación centralizada de versiones
+  - Nueva función `collectVersions()` como fuente única de verdad
+  - `generateVersionManifest()` genera `.changeset/version-manifest.json` y copia al frontend
+  - Generación automática de script de release (`release.bat`)
+  - Refactor del flujo principal para mayor reutilización
+
+- **chore(scripts)**: Nuevo script `verify-memory-footprint.sh` para enforzar límites de memoria (< 80KB y freeHeap > 30KB)
+
+**Resultado**
+- Fase 10 completada — Infraestructura MQTT segura con TLS, autenticación, LWT y documentación sólida para guiar las siguientes fases.
+- Versionado consistente y mantenible en toda la aplicación mediante un manifest centralizado.
 
 ## 2026-07-24
 
