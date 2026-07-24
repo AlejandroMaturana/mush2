@@ -10,13 +10,7 @@ function Sidebar() {
   const location = useLocation()
   const manifest = useVersionManifest()
 
-  const [expanded, setExpanded] = useState(() => {
-    const initial = {}
-    NAV_SECTIONS.forEach((s) => {
-      if (s.collapsible) initial[s.id] = false
-    })
-    return initial
-  })
+  const [openSection, setOpenSection] = useState(null)
 
   useEffect(() => {
     NAV_SECTIONS.forEach((section) => {
@@ -24,23 +18,23 @@ function Sidebar() {
       const match = section.items.some(
         (item) => location.pathname === item.to || location.pathname.startsWith(item.to + '/')
       )
-      if (match) setExpanded((prev) => ({ ...prev, [section.id]: true }))
+      if (match) setOpenSection(section.id)
     })
   }, [location.pathname])
 
   function toggleSection(id) {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+    setOpenSection((prev) => (prev === id ? null : id))
   }
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand" style={{ marginBottom: '8px' }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--spore-green)' }}>grain</span>
-        <span className="topbar-brand" style={{ fontSize: '16px' }}>Mush2</span>
+      <div className="sidebar-brand">
+        <span className="material-symbols-outlined sidebar-brand-icon">grain</span>
+        <span className="sidebar-brand-name">Mush2</span>
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_SECTIONS.map((section, idx) => {
+        {NAV_SECTIONS.map((section) => {
           if (section.standalone) {
             return (
               <div key={section.id} className="sidebar-section">
@@ -58,7 +52,7 @@ function Sidebar() {
             )
           }
 
-          const isExpanded = expanded[section.id]
+          const isExpanded = openSection === section.id
 
           return (
             <div key={section.id} className="sidebar-section">
@@ -67,17 +61,17 @@ function Sidebar() {
                 onClick={() => toggleSection(section.id)}
                 aria-expanded={isExpanded}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', opacity: 0.7 }}>{section.icon}</span>
-                  <span className="sidebar-section-label">{section.label}</span>
+                <div className="sidebar-section-header-content">
+                  <span className="material-symbols-outlined sidebar-section-icon">{section.icon}</span>
+                  <span>{section.label}</span>
                 </div>
-                <span className={`material-symbols-outlined sidebar-chevron${isExpanded ? ' expanded' : ''}`} style={{ fontSize: '14px' }}>
+                <span className={`material-symbols-outlined sidebar-chevron${isExpanded ? ' expanded' : ''}`}>
                   expand_more
                 </span>
               </button>
 
               <div className={`sidebar-section-items${isExpanded ? ' open' : ''}`}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingTop: '4px' }}>
+                <div className="sidebar-section-items-inner">
                   {section.items.map((item) => (
                     <NavLink
                       key={item.to}
@@ -100,17 +94,9 @@ function Sidebar() {
         })}
       </nav>
 
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '8px 0',
-        borderTop: '1px solid var(--outline-variant)',
-        marginTop: '8px',
-      }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--spore-green)', opacity: 0.6 }}>grain</span>
-        <span className="form-label">{manifest ? `OS v${manifest.system.version}` : ''}</span>
+      <div className="sidebar-footer">
+        <span className="material-symbols-outlined sidebar-footer-icon">grain</span>
+        <span className="sidebar-footer-version">{manifest ? `MUSH2 OS v${manifest.system.version}` : ''}</span>
       </div>
     </aside>
   )
