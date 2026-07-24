@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAlarms } from '../../app/providers/AlarmProvider'
 import { NAV_SECTIONS } from '../../shared/constants/navigation'
+import { useVersionManifest } from '../../shared/hooks/useVersionManifest'
 
 function Sidebar() {
   const stats = useAlarms()
   const activeCount = stats?.total || 0
   const location = useLocation()
+  const manifest = useVersionManifest()
 
   const [expanded, setExpanded] = useState(() => {
     const initial = {}
@@ -108,7 +110,7 @@ function Sidebar() {
         marginTop: '8px',
       }}>
         <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--spore-green)', opacity: 0.6 }}>grain</span>
-        <span className="form-label">v2.0.0</span>
+        <span className="form-label">{manifest ? `v${manifest.system.version}` : ''}</span>
       </div>
     </aside>
   )
