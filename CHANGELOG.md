@@ -2,6 +2,20 @@
 
 ## 2026-07-24
 
+### Backend — v1.2.0
+
+- f
+
+### Frontend — v1.12.0
+
+- f
+
+### Docs — v0.1.4
+
+- f
+
+## 2026-07-24
+
 ### Backend — Domain-First refactoring (arquitectura hexagonal / DDD) — v1.1.0
 
 - Implementado **Shared Kernel** con `Result<T, E>`, `DomainError`, `Clock`, `UUID`, `EventBus` y `Logger`
