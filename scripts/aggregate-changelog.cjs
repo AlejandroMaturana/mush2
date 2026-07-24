@@ -19,6 +19,23 @@ function getPkgVersion(dir) {
   } catch { return '?'; }
 }
 
+function collectVersions() {
+  const rootPkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'package.json'), 'utf8'));
+  const components = {};
+  for (const dir of PACKAGE_DIRS) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, dir, 'package.json'), 'utf8'));
+      components[dir] = { name: pkg.name, version: pkg.version };
+    } catch {
+      components[dir] = { name: dir, version: '?' };
+    }
+  }
+  return {
+    system: { name: rootPkg.name, version: rootPkg.version },
+    components,
+  };
+}
+
 function readRootChangelog() {
   try { return fs.readFileSync(ROOT_CHANGELOG, 'utf8') || ''; } catch { return ''; }
 }
@@ -88,6 +105,49 @@ function syncPlatformIO(version) {
   }
 }
 
+function generateVersionManifest(versions) {
+  const manifest = {
+    system: versions.system,
+    components: {},
+  };
+  for (const [dir, info] of Object.entries(versions.components)) {
+    manifest.components[dir] = info.version;
+  }
+  const json = JSON.stringify(manifest, null, 2) + '\n';
+  const manifestPath = path.join(PROJECT_ROOT, '.changeset', 'version-manifest.json');
+  fs.writeFileSync(manifestPath, json, 'utf8');
+  console.log(`  .changeset/version-manifest.json → ${versions.system.version}`);
+  const frontendCopy = path.join(PROJECT_ROOT, 'frontend', 'public', 'version-manifest.json');
+  fs.writeFileSync(frontendCopy, json, 'utf8');
+  console.log(`  frontend/public/version-manifest.json → copied`);
+}
+
+function generateReleaseScript(versions) {
+  const sys = versions.system;
+  const c = versions.components;
+  const content = [
+    '@echo off',
+    `echo === Release ${sys.name} v${sys.version} ===`,
+    'echo.',
+    'git add VERSION package.json CHANGELOG.md .changeset/version-manifest.json',
+    'git add frontend/VERSION frontend/package.json',
+    'git add backend/VERSION backend/package.json',
+    'git add firmware/VERSION firmware/package.json firmware/platformio.ini',
+    'git add docs/VERSION docs/package.json',
+    'echo.',
+    `git commit -m "chore(release): ${sys.name} v${sys.version}" -m "`,
+    `- frontend → v${c.frontend.version}`,
+    `- backend → v${c.backend.version}`,
+    `- firmware → v${c.firmware.version}`,
+    `- docs → v${c.docs.version}"`,
+    'echo.',
+    `echo === Release ${sys.name} v${sys.version} complete ===`,
+  ].join('\n');
+  const batPath = path.join(PROJECT_ROOT, 'scripts', 'release.bat');
+  fs.writeFileSync(batPath, content + '\n', 'utf8');
+  console.log(`  scripts/release.bat → generated`);
+}
+
 function bumpRootPatch() {
   const rootPkgPath = path.join(PROJECT_ROOT, 'package.json');
   const rootVersionPath = path.join(PROJECT_ROOT, 'VERSION');
@@ -106,6 +166,8 @@ function bumpRootPatch() {
 }
 
 function main() {
+  const versions = collectVersions();
+
   // Find per-package CHANGELOG.md files
   const entries = [];
 
@@ -116,22 +178,20 @@ function main() {
     const entry = extractLatestEntry(changelogPath);
     if (!entry) continue;
 
-    const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, dir, 'package.json'), 'utf8'));
-    const label = LABELS[pkg.name] || pkg.name;
-    const version = pkg.version;
+    const comp = versions.components[dir];
+    const label = LABELS[comp.name] || comp.name;
 
-    entries.push({ label, version, content: entry.content });
+    entries.push({ label, version: comp.version, content: entry.content });
   }
 
   // Sync VERSION files from package.json versions (even if no changelog was found)
   for (const dir of PACKAGE_DIRS) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, dir, 'package.json'), 'utf8'));
-      syncVersionFile(dir, pkg.version);
-      if (dir === 'firmware') {
-        syncPlatformIO(pkg.version);
-      }
-    } catch {}
+    const comp = versions.components[dir];
+    if (!comp || comp.version === '?') continue;
+    syncVersionFile(dir, comp.version);
+    if (dir === 'firmware') {
+      syncPlatformIO(comp.version);
+    }
   }
 
   if (entries.length === 0) {
@@ -141,6 +201,11 @@ function main() {
 
   // Bump root OS version (patch) for every sub-package change
   bumpRootPatch();
+  versions.system.version = fs.readFileSync(path.join(PROJECT_ROOT, 'VERSION'), 'utf8').trim();
+
+  // Generate version manifest and release script
+  generateVersionManifest(versions);
+  generateReleaseScript(versions);
 
   const now = new Date().toISOString().split('T')[0];
   const newSectionLines = [`## ${now}\n`];
