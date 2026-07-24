@@ -2,7 +2,7 @@
 echo === Release mush2 v1.7.21 ===
 echo.
 git add VERSION package.json CHANGELOG.md .changeset/version-manifest.json
-git add frontend/VERSION frontend/package.json .frontend/public/version-manifest.json
+git add frontend/VERSION frontend/package.json frontend/public/version-manifest.json
 git add backend/VERSION backend/package.json
 git add firmware/VERSION firmware/package.json firmware/platformio.ini
 git add docs/VERSION docs/package.json scripts/release.bat
