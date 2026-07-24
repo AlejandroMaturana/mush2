@@ -48,7 +48,9 @@ docs/ADR/
 ├── ADR-019-domain-first.md
 ├── ADR-020-run-replaces-cultivationcycle.md
 ├── ADR-021-control-engine-as-orchestrator.md
-└── ADR-022-history-as-active-service.md
+├── ADR-022-history-as-active-service.md
+├── ADR-023-Secure-MQTT-Infrastructure.md
+└── ADR-024-HTTPS-Deployment-Strategy.md
 ```
 
 ## Índice de documentos
@@ -77,6 +79,8 @@ docs/ADR/
 | [ADR-020](ADR-020-run-replaces-cultivationcycle.md)       | Run reemplaza CultivationCycle       | Evolución del modelo de dominio.                                    |
 | [ADR-021](ADR-021-control-engine-as-orchestrator.md)      | Control Engine como Orquestador      | Centralización de la lógica de control.                             |
 | [ADR-022](ADR-022-history-as-active-service.md)           | History como Servicio Activo         | Evolución del servicio de historial y trazabilidad.                 |
+| [ADR-023](ADR-023-Secure-MQTT-Infrastructure.md)          | Infraestructura MQTT Segura          | TLS, autenticación y ACLs para MQTT.                                |
+| [ADR-024](ADR-024-HTTPS-Deployment-Strategy.md)           | Estrategia de Despliegue HTTPS       | Terminación TLS en la infraestructura, no en Express.               |
 
 ## Numeración
 
