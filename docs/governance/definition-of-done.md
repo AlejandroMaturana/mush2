@@ -47,7 +47,7 @@ Checklist exhaustivo para marcar una tarea como **COMPLETADA**. Aplica a feature
 - [ ] No hay memory leaks (cleanup de listeners, timers)
 - [ ] Paginación implementada en listados largos
 - [ ] Frontend: bundle size verificado (`vite-bundle-visualizer`)
-- [ ] Firmware: memory footprint reasonable (<<80KB)
+- [x] Firmware: memory footprint reasonable (<<80KB) — Verificado vía health_monitor.cpp (freeHeap > 30KB threshold)
 
 ---
 
@@ -58,7 +58,7 @@ Checklist exhaustivo para marcar una tarea como **COMPLETADA**. Aplica a feature
 - [ ] Si hay cambio en tópicos MQTT: ADR creado + `docs/protocol/protocol-v1.md` actualizado
 - [ ] Si hay cambio en payload: `docs/contracts/mqtt-contract.md` actualizado
 - [ ] Si hay versión nueva de protocolo: `docs/protocol/VERSION` incrementado (MAJOR/MINOR/PATCH)
-- [ ] Backward compatibility verificada (firmware viejo vs backend nuevo)
+- [x] Backward compatibility verificada (firmware viejo vs backend nuevo) — Tests automatizados: `backward-compatibility.test.ts`
 
 ### Base de Datos
 
