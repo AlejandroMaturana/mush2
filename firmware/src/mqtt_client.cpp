@@ -6,8 +6,8 @@
 MQTTClient* MQTTClient::_instance = nullptr;
 
 MQTTClient::MQTTClient()
-  : _client(_tcpClient), _lastReconnect(0), _fallbackRetry(0),
-    _usingFallback(false), _otaCb(nullptr), _actuatorCb(nullptr) {
+  : _client(_tcpClient), _lastReconnect(0), _reconnectDelay(MQTT_RECONNECT_INITIAL_MS),
+    _wasConnected(false), _otaCb(nullptr), _actuatorCb(nullptr) {
   _deviceId[0] = '\0';
   _topicBase[0] = '\0';
 }
@@ -15,6 +15,13 @@ MQTTClient::MQTTClient()
 void MQTTClient::init(const char* deviceId) {
   snprintf(_deviceId, sizeof(_deviceId), "%s", deviceId);
   snprintf(_topicBase, sizeof(_topicBase), "mush2/%s", deviceId);
+
+  #if MQTT_USE_TLS == 1
+    _tcpClient.setCACert(MQTT_CA_ROOT);
+    _tcpClient.setHandshakeTimeout(MQTT_HANDSHAKE_TIMEOUT_MS);
+    Serial.printf("[MQTT] TLS habilitado, handshake timeout %lu ms\n", MQTT_HANDSHAKE_TIMEOUT_MS);
+  #endif
+
   _client.setServer(MQTT_BROKER, MQTT_PORT);
   _client.setCallback(_staticCallback);
   _instance = this;
@@ -32,25 +39,14 @@ void MQTTClient::loop() {
   if (!_client.connected()) {
     unsigned long now = millis();
 
-    if (!_usingFallback) {
-      if (now - _lastReconnect > 10000) {
-        _lastReconnect = now;
-        _connect();
-      }
-    } else {
-      if (now - _fallbackRetry > 300000) {
-        _fallbackRetry = now;
-        _usingFallback = false;
-        _client.setServer(MQTT_BROKER, MQTT_PORT);
-        _lastReconnect = 0;
-      }
-      if (now - _lastReconnect > 30000) {
-        _lastReconnect = now;
-        _connect();
-      }
+    if (now - _lastReconnect > _reconnectDelay) {
+      _lastReconnect = now;
+      _reconnectDelay = min(_reconnectDelay * 2, MQTT_RECONNECT_MAX_MS);
+      _connect();
     }
     return;
   }
+
   _client.loop();
 }
 
@@ -132,19 +128,28 @@ bool MQTTClient::publishMaintenance(const char* component, uint8_t health, uint3
 void MQTTClient::_connect() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  const char* brokerLabel = _usingFallback ? "FALLBACK" : "PRIMARY";
-  const char* brokerHost = _usingFallback ? MQTT_BROKER_FALLBACK : MQTT_BROKER;
-  uint16_t brokerPort = _usingFallback ? MQTT_PORT_FALLBACK : MQTT_PORT;
+  #if MQTT_USE_TLS == 1
+    const char* scheme = "MQTTS";
+  #else
+    const char* scheme = "MQTT";
+  #endif
 
   char clientId[40];
   snprintf(clientId, sizeof(clientId), "%s_%lu", _deviceId, millis() % 100000);
 
-  Serial.printf("[MQTT] Conectando a %s (%s:%d)...\n", brokerLabel, brokerHost, brokerPort);
+  Serial.printf("[MQTT] Conectando a %s %s:%d como %s...\n", scheme, MQTT_BROKER, MQTT_PORT, clientId);
 
-  _client.setServer(brokerHost, brokerPort);
+  char lwtTopic[96];
+  snprintf(lwtTopic, sizeof(lwtTopic), "%s/status", _topicBase);
+  const char* lwtPayload = "{\"state\":\"offline\",\"ts\":0}";
 
-  if (_client.connect(clientId)) {
-    Serial.printf("[MQTT] Conectado como %s via %s\n", clientId, brokerLabel);
+  if (_client.connect(clientId, MQTT_USER, MQTT_PASS, lwtTopic, 1, true, lwtPayload)) {
+    Serial.printf("[MQTT] Conectado via %s\n", scheme);
+
+    _reconnectDelay = MQTT_RECONNECT_INITIAL_MS;
+    _wasConnected = true;
+
+    _publishOnline();
 
     char otaTopic[96];
     snprintf(otaTopic, sizeof(otaTopic), "%s/ota/command", _topicBase);
@@ -158,16 +163,20 @@ void MQTTClient::_connect() {
 
     publishStatus(sm.getStateName(), "", WiFi.RSSI(), sharedMac, sharedFwVer, sharedHwRev);
   } else {
-    Serial.printf("[MQTT] Fallo conexion %s, rc=%d\n", brokerLabel, _client.state());
-
-    if (!_usingFallback) {
-#ifdef MQTT_BROKER_FALLBACK
-      _usingFallback = true;
-      _fallbackRetry = millis();
-      Serial.println("[MQTT] Cambiando a broker FALLBACK");
-#endif
-    }
+    Serial.printf("[MQTT] Fallo conexion %s, rc=%d\n", scheme, _client.state());
   }
+}
+
+void MQTTClient::_publishOnline() {
+  char onlineTopic[96];
+  snprintf(onlineTopic, sizeof(onlineTopic), "%s/status", _topicBase);
+
+  char onlinePayload[128];
+  snprintf(onlinePayload, sizeof(onlinePayload),
+    "{\"state\":\"online\",\"mode\":\"%s\",\"rssi\":%d,\"mac\":\"%s\",\"fwVer\":\"%s\",\"hwRev\":\"%s\",\"ts\":%lu}",
+    sm.getStateName(), WiFi.RSSI(), sharedMac, sharedFwVer, sharedHwRev, (unsigned long)getTimestamp());
+
+  _client.publish(onlineTopic, onlinePayload, true);
 }
 
 void MQTTClient::_staticCallback(char* topic, uint8_t* payload, unsigned int len) {

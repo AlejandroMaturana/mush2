@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # ── MQTT Broker ────────────────────────────────────────────────
+  # Puerto 8883 (MQTTS) expuesto al host para firmware.
+  # Puerto 1883 (MQTT) solo accesible dentro de la red Docker.
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mush2-mosquitto
+    restart: unless-stopped
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./docker/mosquitto/config:/mosquitto/config:ro
+      - ./docker/mosquitto/certs:/mosquitto/certs:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    networks:
+      - mush2-internal
+
+  # ── PostgreSQL ─────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mush2-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mush2
+      POSTGRES_USER: mush2
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - mush2-internal
+
+  # ── Backend ────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mush2-backend
+    restart: unless-stopped
+    ports:
+      - "3797:3797"
+    environment:
+      NODE_ENV: production
+      PORT: 3797
+      DATABASE_URL: postgresql://mush2:${DB_PASSWORD}@postgres:5432/mush2
+      MQTT_BROKER_URL: mqtt://mosquitto:1883
+      MQTT_BROKER_USER: ${MQTT_BACKEND_USER:-backend_bridge}
+      MQTT_BROKER_PASS: ${MQTT_BACKEND_PASS:?Set MQTT_BACKEND_PASS in .env}
+    depends_on:
+      - mosquitto
+      - postgres
+    networks:
+      - mush2-internal
+
+networks:
+  mush2-internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  mosquitto-data:
+  mosquitto-log:

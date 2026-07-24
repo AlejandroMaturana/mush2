@@ -6,38 +6,30 @@ import { recordEvent, getStatusFromDevice } from './deviceHealthService.js';
 
 const TOPIC_PREFIX = 'mush2';
 
-// Broker configuration
-const BROKERS = [
-  {
-    url: process.env.MQTT_BROKER || 'mqtt://test.mosquitto.org:1883',
-    label: 'Mosquitto (primary)',
-  },
-];
+// Single broker configuration (no fallback)
+const broker = {
+  url: process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883',
+  username: process.env.MQTT_BROKER_USER || 'backend_bridge',
+  password: process.env.MQTT_BROKER_PASS || '',
+  label: 'Mosquitto',
+};
 
-if (process.env.MQTT_BROKER_FALLBACK) {
-  BROKERS.push({
-    url: process.env.MQTT_BROKER_FALLBACK,
-    label: 'HiveMQ (fallback)',
-  });
-}
-
-let primaryClient = null;
-let fallbackClient = null;
-let activeLabel = null;
+let client = null;
 const connectedDevices = new Set();
 
-function createClient(broker, isFallback) {
-  const clientId = `mush2_backend_${isFallback ? 'fb_' : ''}${Date.now()}`;
+function createClient() {
+  const clientId = `mush2_backend_${Date.now()}`;
   const c = mqtt.connect(broker.url, {
     clientId,
     clean: true,
-    reconnectPeriod: 8000,
+    username: broker.username,
+    password: broker.password,
+    reconnectPeriod: 5000,
     connectTimeout: 10000,
   });
 
   c.on('connect', () => {
     console.log(`[MQTT] Conectado a ${broker.label} (${broker.url})`);
-    if (!activeLabel) activeLabel = broker.label;
     c.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
@@ -110,26 +102,15 @@ function createClient(broker, isFallback) {
 
   c.on('close', () => {
     console.log(`[MQTT] ${broker.label} — desconectado`);
-    if (isFallback) {
-      fallbackClient = null;
-    }
   });
 
   return c;
 }
 
 export function startMqttBridge() {
-  // Always try the primary broker
-  primaryClient = createClient(BROKERS[0], false);
-
-  // If a fallback is configured, also connect it
-  if (BROKERS.length > 1) {
-    fallbackClient = createClient(BROKERS[1], true);
-  }
-
-  const brokerList = BROKERS.map(b => b.label).join(', ');
-  console.log(`[MQTT] Bridge iniciado — brokers: ${brokerList}`);
-  return primaryClient;
+  client = createClient();
+  console.log(`[MQTT] Bridge iniciado — broker: ${broker.label}`);
+  return client;
 }
 
 export function publishActuatorCommand(deviceId, commands, config = null) {
@@ -147,38 +128,27 @@ export function publishActuatorCommand(deviceId, commands, config = null) {
   });
   const opts = { qos: 1, retain: false };
 
-  let published = false;
-  if (primaryClient && primaryClient.connected) {
-    primaryClient.publish(topic, payload, opts);
-    published = true;
+  if (client && client.connected) {
+    client.publish(topic, payload, opts);
+    return true;
   }
-  if (fallbackClient && fallbackClient.connected) {
-    fallbackClient.publish(topic, payload, opts);
-    published = true;
-  }
-  return published;
+  return false;
 }
 
 export function getMqttStatus() {
   return {
-    brokers: BROKERS.map(b => b.label),
-    primaryConnected: primaryClient ? primaryClient.connected : false,
-    fallbackConnected: fallbackClient ? fallbackClient.connected : false,
-    active: activeLabel,
+    broker: broker.label,
+    url: broker.url,
+    connected: client ? client.connected : false,
     connectedDevices: connectedDevices.size,
   };
 }
 
 export function stopMqttBridge() {
-  if (primaryClient) {
-    primaryClient.end(true);
-    primaryClient = null;
+  if (client) {
+    client.end(true);
+    client = null;
   }
-  if (fallbackClient) {
-    fallbackClient.end(true);
-    fallbackClient = null;
-  }
-  activeLabel = null;
 }
 
 async function handleTelemetry(deviceId, data) {
