@@ -116,7 +116,6 @@ function DeviceConnectivityPanel({ deviceId }) {
     </div>
   )
 }
-}
 
 function MetricBox({ label, value, color }) {
   return (

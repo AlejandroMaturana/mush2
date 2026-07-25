@@ -437,6 +437,5 @@ function DeviceDetail() {
     </div>
   )
 }
-}
 
 export default DeviceDetail
