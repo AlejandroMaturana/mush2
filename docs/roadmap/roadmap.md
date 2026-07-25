@@ -294,12 +294,12 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ### Entregables
 - [x] Firmware: ADR-010-Mecanismo-Fail-Safe-Overheat implementado (override de emergencia + detección de fallo de sensor)
-- [ ] Backend: logging estructurado con Pino (reemplazar `console.log` disperso)
-- [ ] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
-- [ ] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
-- [ ] Backend: health check por nodo (última telemetría, estado MQTT, watchdog)
-- [ ] Frontend: página `/monitoring` con estado de salud del sistema
-- [ ] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
+- [x] Backend: logging estructurado con Pino (reemplazar `console.log` disperso)
+- [x] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
+- [x] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
+- [x] Backend: health check por nodo (última telemetría, estado MQTT, watchdog)
+- [x] Frontend: página `/monitoring` con estado de salud del sistema
+- [x] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
 
 ### Capacidades futuras del Fail-Safe
 - [ ] Firmware: Power-On Sequence (T=0→T=30s) — purga de gases y calentamiento de sensores
