@@ -184,35 +184,33 @@ Bundle minificado es 500KB, no incluye chart library (Chart.js +200KB). Muy lent
 
 ---
 
-### [HIGH] Issue #006 — Firmware tiene potencial memory leak en MQTT handler (Firmware)
+### [HIGH] Issue #006 — Memory leak en MQTT handler (Backend) ✅ RESUELTO
 
 **Severidad:** High  
-**Componente:** Firmware  
+**Componente:** Backend  
 **Estimación:** 1d  
-**Estado:** In Progress  
-**Assignee:** @[nombre]
+**Estado:** Done  
+**Assignee:** @manuel
 
 **Descripción:**
-`mqttService.connectMQTT()` puede no limpiar listeners en caso de error, causando acumulación de event listeners.
+`mqttBridge.createClient()` acumulaba event listeners sin cleanup en reconnect/error, y `stopMqttBridge()` no removía listeners antes de `end()`.
 
 **Impacto:**
-- Stability: gradual memory exhaustion
-- Uptime: reboot necesario cada 7 días
+- Memory leak gradual por listeners huérfanos en reconnectiones
+- `connectedDevices` Set nunca se limpiaba
+- Sin límite de reconnect → reconexión infinita a broker muerto
 
-**Solución propuesta:**
-Ensure cleanup en desconexión:
+**Solución aplicada:**
+1. `cleanupClient()` — `removeAllListeners()` + `end(true)` + `connectedDevices.clear()`
+2. Guard en `startMqttBridge()` — previene doble inicio
+3. Listeners `offline` y `reconnect` — observabilidad de reconexiones
+4. Límite de 20 reconnect attempts — `cleanupClient()` si se excede
+5. `reconnectAttempts` se resetea en cada `connect` exitoso
 
-```cpp
-if (client) {
-  client.disconnect(true);  // force=true
-  delete client;
-  client = nullptr;
-  listenerCount = 0;  // reset
-}
-```
+**Archivos:** `backend/src/services/mqttBridge.js`
 
 **Bloqueadores:** Ninguno  
-**Notas:** Verificar con memory profiler
+**Notas:** —
 
 ---
 
@@ -371,7 +369,7 @@ Estos 3 son bloqueadores de producción.
 
 - [ ] Issue #004 — Índices DB
 - [ ] Issue #005 — Bundle size frontend
-- [ ] Issue #006 — Memory leak firmware
+- [x] Issue #006 — Memory leak MQTT handler (resuelto: cleanup, guard, reconnect limit)
 
 **Pendiente de:**  
 Iteración 1 completada + Sprint planning
@@ -388,9 +386,9 @@ Iteración 1 completada + Sprint planning
 
 ## Revisión Última
 
-**Fecha:** 2026-06-13  
-**Revisor:** @[maintainer]  
-**Cambios:** Creación inicial del registro
+**Fecha:** 2026-07-25  
+**Revisor:** @manuel  
+**Cambios:** Issue #006 resuelto — memory leak MQTT handler
 
 ---
 
