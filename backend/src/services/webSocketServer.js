@@ -1,8 +1,10 @@
 import { WebSocketServer } from 'ws';
 import { Device, Actuator } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
 
 const clients = new Map();
 let wssInstance = null;
+const log = createChildLogger('WS');
 
 export function startWebSocketServer(httpServer) {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -16,7 +18,7 @@ export function startWebSocketServer(httpServer) {
       return;
     }
 
-    console.log(`[WS] Conectado: ${deviceId} desde ${req.socket.remoteAddress}`);
+    log.info({ event: 'CONNECTED', deviceId }, `Conectado: ${deviceId} desde ${req.socket.remoteAddress}`);
     clients.set(deviceId, ws);
 
     ws.on('message', (raw) => {
@@ -26,25 +28,25 @@ export function startWebSocketServer(httpServer) {
           ws.send(JSON.stringify({ type: 'pong' }));
         }
       } catch (e) {
-        console.error(`[WS] Mensaje inválido de ${deviceId}:`, e.message);
+        log.error({ module: 'WS', event: 'INVALID_MESSAGE', error: e.message, deviceId }, `Mensaje inválido de ${deviceId}`);
       }
     });
 
     ws.on('close', () => {
-      console.log(`[WS] Desconectado: ${deviceId}`);
+      log.info({ event: 'DISCONNECTED', deviceId }, `Desconectado: ${deviceId}`);
       if (clients.get(deviceId) === ws) {
         clients.delete(deviceId);
       }
     });
 
     ws.on('error', (err) => {
-      console.error(`[WS] Error ${deviceId}:`, err.message);
+      log.error({ module: 'WS', event: 'ERROR', error: err.message, deviceId }, `Error ${deviceId}`);
     });
 
     sendCurrentState(deviceId, ws);
   });
 
-  console.log(`[WS] WebSocket server listo en /ws`);
+  log.info({ event: 'SERVER_READY' }, 'WebSocket server listo en /ws');
   return wss;
 }
 
@@ -72,7 +74,7 @@ export function stopWebSocketServer() {
     wssInstance.close();
     wssInstance = null;
   }
-  console.log('[WS] WebSocket server cerrado');
+  log.info({ event: 'SERVER_CLOSED' }, 'WebSocket server cerrado');
 }
 
 async function sendCurrentState(deviceId, ws) {
@@ -93,6 +95,6 @@ async function sendCurrentState(deviceId, ws) {
       })),
     }));
   } catch (err) {
-    console.error(`[WS] Error sendCurrentState ${deviceId}:`, err.message);
+    log.error({ module: 'WS', event: 'SEND_STATE_ERROR', error: err.message, deviceId }, `Error sendCurrentState ${deviceId}`);
   }
 }

@@ -5,7 +5,9 @@ import { logAudit } from '../services/auditService.js';
 import { getCorrelation, getEnvironmentSummary } from '../services/bioactiveAnalyzer.js';
 import { getPhaseThresholds } from '../services/controlEngine.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
+import { createChildLogger } from '../config/pino.js';
 
+const logger = createChildLogger('CYCLE');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -207,7 +209,7 @@ router.post('/:id/abort', async (req, res) => {
             const [act] = await Actuator.findOrCreate({ where: { deviceId: device.id, channel: ch }, defaults: { deviceId: device.id, channel: ch } });
             await act.update({ state: 'OFF', mode: 'REMOTE', lastSeen: new Date() });
           } catch (e) {
-            console.error(`[CYCLE] Error turning off ch${ch}:`, e.message);
+            logger.error({ error: e.message, channel: ch }, 'Error turning off actuator channel');
           }
         }
       }

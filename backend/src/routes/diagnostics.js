@@ -3,7 +3,9 @@ import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { getMqttStatus, publishActuatorCommand } from '../services/mqttBridge.js';
 import { Device, Actuator } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('DIAG');
 const router = Router();
 
 router.get('/mqtt', authenticate, async (req, res) => {
@@ -31,7 +33,7 @@ router.get('/mqtt', authenticate, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[DIAG] Error reading MQTT status:', err.message);
+    log.error({ module: 'DIAG', event: 'MQTT_STATUS_ERROR', error: err.message }, 'Error reading MQTT status');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -47,7 +49,7 @@ router.post('/mqtt/publish', authenticate, requireMinRole('ADMIN'), async (req, 
       message: published ? 'Mensaje publicado' : 'No hay broker MQTT conectado',
     });
   } catch (err) {
-    console.error('[DIAG] Error publishing MQTT:', err.message);
+    log.error({ module: 'DIAG', event: 'MQTT_PUBLISH_ERROR', error: err.message }, 'Error publishing MQTT');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

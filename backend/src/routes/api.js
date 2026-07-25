@@ -6,7 +6,9 @@ import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen } from '../services/deviceHealthService.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('API');
 const router = express.Router();
 
 router.get('/devices', async (req, res) => {
@@ -27,7 +29,7 @@ router.get('/devices', async (req, res) => {
     });
     res.json({ data: enriched });
   } catch (err) {
-    console.error('[DEVICES] Error:', err);
+    log.error({ module: 'DEVICES', event: 'LIST_ERROR', error: err.message }, 'Error listing devices');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -107,10 +109,10 @@ router.post('/devices/register', async (req, res) => {
       await device.update(updates);
     }
 
-    console.log(`[REGISTER] Dispositivo ${created ? 'registrado' : 'actualizado'}: ${deviceId}`);
+    log.info({ event: 'DEVICE_REGISTERED', deviceId, created }, `Dispositivo ${created ? 'registrado' : 'actualizado'}: ${deviceId}`);
     res.status(created ? 201 : 200).json({ data: device });
   } catch (err) {
-    console.error('[REGISTER] Error:', err.message);
+    log.error({ module: 'REGISTER', event: 'REGISTER_ERROR', error: err.message }, 'Error registering device');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -211,7 +213,7 @@ router.get('/devices/:id/cycle', checkDeviceAccess, async (req, res) => {
     });
     res.json({ data: cycle });
   } catch (err) {
-    console.error('[DEVICES] Error fetching cycle:', err);
+    log.error({ module: 'DEVICES', event: 'CYCLE_FETCH_ERROR', error: err.message }, 'Error fetching cycle');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -388,7 +390,7 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
 
     res.json(actuator);
   } catch (err) {
-    console.error('[ACTUATOR] Error:', err.message);
+    log.error({ module: 'ACTUATOR', event: 'COMMAND_ERROR', error: err.message }, 'Error sending actuator command');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

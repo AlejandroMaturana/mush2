@@ -7,7 +7,9 @@ import { seedSystemSettings } from '../config/systemSettingsDefaults.js';
 import sequelize from '../config/database.js';
 import telegramRouter from './telegram.js';
 import apiKeysRouter from './apiKeys.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('SETTINGS');
 const router = express.Router();
 
 router.get('/profile', authenticate, async (req, res) => {
@@ -24,7 +26,7 @@ router.get('/profile', authenticate, async (req, res) => {
 
     res.json({ data: { user, preferences: prefs } });
   } catch (err) {
-    console.error('[SETTINGS] Error reading profile:', err.message);
+    log.error({ module: 'SETTINGS', event: 'READ_PROFILE_ERROR', error: err.message }, 'Error reading profile');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -61,7 +63,7 @@ router.patch('/profile', authenticate, async (req, res) => {
 
     res.json({ data: { user, preferences: prefs } });
   } catch (err) {
-    console.error('[SETTINGS] Error updating profile:', err.message);
+    log.error({ module: 'SETTINGS', event: 'UPDATE_PROFILE_ERROR', error: err.message }, 'Error updating profile');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -82,7 +84,7 @@ router.post('/change-password', authenticate, async (req, res) => {
 
     res.json({ message: 'Contraseña actualizada' });
   } catch (err) {
-    console.error('[SETTINGS] Error changing password:', err.message);
+    log.error({ module: 'SETTINGS', event: 'CHANGE_PASSWORD_ERROR', error: err.message }, 'Error changing password');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -92,7 +94,7 @@ router.get('/system', authenticate, requireMinRole('SUPER_ADMIN'), async (req, r
     const settings = await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
     res.json({ data: settings });
   } catch (err) {
-    console.error('[SETTINGS] Error reading system settings:', err.message);
+    log.error({ module: 'SETTINGS', event: 'READ_SYSTEM_ERROR', error: err.message }, 'Error reading system settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -109,7 +111,7 @@ router.patch('/system', authenticate, requireMinRole('SUPER_ADMIN'), async (req,
     const updated = await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
     res.json({ data: updated, message: 'Configuración actualizada' });
   } catch (err) {
-    console.error('[SETTINGS] Error updating system settings:', err.message);
+    log.error({ module: 'SETTINGS', event: 'UPDATE_SYSTEM_ERROR', error: err.message }, 'Error updating system settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -120,7 +122,7 @@ router.post('/system/seed', authenticate, requireMinRole('SUPER_ADMIN'), async (
     const settings = await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
     res.json({ data: settings, message: 'Defaults sembrados' });
   } catch (err) {
-    console.error('[SETTINGS] Error seeding system settings:', err.message);
+    log.error({ module: 'SETTINGS', event: 'SEED_SYSTEM_ERROR', error: err.message }, 'Error seeding system settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -133,7 +135,7 @@ router.get('/system/public', async (req, res) => {
     });
     res.json({ data: settings });
   } catch (err) {
-    console.error('[SETTINGS] Error reading public settings:', err.message);
+    log.error({ module: 'SETTINGS', event: 'READ_PUBLIC_ERROR', error: err.message }, 'Error reading public settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

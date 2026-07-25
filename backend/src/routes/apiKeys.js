@@ -3,7 +3,9 @@ import { Op } from 'sequelize';
 import { ApiKey } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('APIKEYS');
 const router = express.Router();
 
 router.get('/', authenticate, requireMinRole('ADMIN'), async (req, res) => {
@@ -26,7 +28,7 @@ router.get('/', authenticate, requireMinRole('ADMIN'), async (req, res) => {
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
-    console.error('[APIKEYS] Error listing:', err.message);
+    log.error({ module: 'APIKEYS', event: 'LIST_ERROR', error: err.message }, 'Error listing API keys');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -52,7 +54,7 @@ router.post('/', authenticate, requireMinRole('ADMIN'), async (req, res) => {
       message: 'Guarda la API key ahora. No se mostrará de nuevo.',
     });
   } catch (err) {
-    console.error('[APIKEYS] Error creating:', err.message);
+    log.error({ module: 'APIKEYS', event: 'CREATE_ERROR', error: err.message }, 'Error creating API key');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -73,7 +75,7 @@ router.patch('/:id', authenticate, requireMinRole('ADMIN'), async (req, res) => 
     await key.update(updates);
     res.json({ data: key });
   } catch (err) {
-    console.error('[APIKEYS] Error updating:', err.message);
+    log.error({ module: 'APIKEYS', event: 'UPDATE_ERROR', error: err.message }, 'Error updating API key');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -88,7 +90,7 @@ router.delete('/:id', authenticate, requireMinRole('ADMIN'), async (req, res) =>
     await key.update({ isActive: false });
     res.json({ message: 'API key revocada' });
   } catch (err) {
-    console.error('[APIKEYS] Error deleting:', err.message);
+    log.error({ module: 'APIKEYS', event: 'DELETE_ERROR', error: err.message }, 'Error deleting API key');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -109,7 +111,7 @@ router.post('/:id/rotate', authenticate, requireMinRole('ADMIN'), async (req, re
       message: 'Key rotada. Guarda la nueva key ahora. No se mostrará de nuevo.',
     });
   } catch (err) {
-    console.error('[APIKEYS] Error rotating:', err.message);
+    log.error({ module: 'APIKEYS', event: 'ROTATE_ERROR', error: err.message }, 'Error rotating API key');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

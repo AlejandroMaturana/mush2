@@ -4,7 +4,9 @@ import { Device, Actuator, CultivationCycle, Recipe } from '../models/index.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getPhaseThresholds } from '../services/controlEngine.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('ACTUATORS');
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
 
 const router = express.Router();
@@ -61,7 +63,7 @@ router.get('/', async (req, res) => {
       actuators: actuatorList,
     });
   } catch (err) {
-    console.error('[ACTUATORS] Error:', err);
+    log.error({ module: 'ACTUATORS', event: 'LIST_ERROR', error: err.message }, 'Error listing actuators');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -113,7 +115,7 @@ router.patch('/:channel', async (req, res) => {
       mode: actuator.mode,
     });
   } catch (err) {
-    console.error('[ACTUATOR] Error:', err.message);
+    log.error({ module: 'ACTUATOR', event: 'COMMAND_ERROR', error: err.message }, 'Error sending actuator command');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

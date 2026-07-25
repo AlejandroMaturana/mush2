@@ -1,5 +1,8 @@
 import { Op } from 'sequelize';
 import { Subscription, AuditLog, Telemetry, Alarm } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('DATA_RETENTION');
 
 const INTERVAL = 60 * 60 * 1000;
 let handle = null;
@@ -8,7 +11,7 @@ export function startDataRetentionJob() {
   if (handle) return;
   runPurge().catch(() => {});
   handle = setInterval(() => runPurge().catch(() => {}), INTERVAL);
-  console.log(`[DATA_RETENTION] Job iniciado cada ${INTERVAL / 60000}min`);
+  log.info({ intervalMin: INTERVAL / 60000 }, 'Job started');
 }
 
 export function stopDataRetentionJob() {
@@ -25,7 +28,7 @@ async function runPurge() {
   });
 
   if (subs.length === 0) {
-    console.log('[DATA_RETENTION] No hay suscripciones activas — saltando purge');
+    log.info('No active subscriptions — skipping purge');
     return;
   }
 
@@ -58,6 +61,6 @@ async function runPurge() {
   });
 
   if (deletedAudit > 0 || deletedTelemetry > 0 || deletedAlarms > 0) {
-    console.log(`[DATA_RETENTION] Purge completado: audit=${deletedAudit}, telemetry=${deletedTelemetry}, alarms=${deletedAlarms} (minRetention=${minRetention}d)`);
+    log.info({ deletedAudit, deletedTelemetry, deletedAlarms, minRetention }, 'Purge completed');
   }
 }

@@ -3,7 +3,9 @@ import { Chamber, Device, CultivationCycle } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { migrateChambers } from '../scripts/migrate-chambers.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('CHAMBERS');
 const router = Router();
 
 router.get('/', authenticate, async (req, res) => {
@@ -14,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
     });
     res.json({ data: chambers });
   } catch (err) {
-    console.error('[CHAMBERS] Error listing:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'LIST_ERROR', error: err.message }, 'Error listing chambers');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -27,7 +29,7 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!chamber) return res.status(404).json({ error: 'NOT_FOUND' });
     res.json({ data: chamber });
   } catch (err) {
-    console.error('[CHAMBERS] Error getting:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'GET_ERROR', error: err.message }, 'Error getting chamber');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -47,7 +49,7 @@ router.post('/', authenticate, async (req, res) => {
 
     res.status(201).json({ data: chamber });
   } catch (err) {
-    console.error('[CHAMBERS] Error creating:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'CREATE_ERROR', error: err.message }, 'Error creating chamber');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -67,7 +69,7 @@ router.patch('/:id', authenticate, async (req, res) => {
     await chamber.update(updates);
     res.json({ data: chamber });
   } catch (err) {
-    console.error('[CHAMBERS] Error updating:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'UPDATE_ERROR', error: err.message }, 'Error updating chamber');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -90,7 +92,7 @@ router.delete('/:id', authenticate, requireMinRole('ADMIN'), async (req, res) =>
     await chamber.destroy();
     res.json({ message: 'Chamber eliminada' });
   } catch (err) {
-    console.error('[CHAMBERS] Error deleting:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'DELETE_ERROR', error: err.message }, 'Error deleting chamber');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -100,7 +102,7 @@ router.post('/migrate', authenticate, requireMinRole('ADMIN'), async (req, res) 
     const chambers = await migrateChambers();
     res.json({ data: chambers, message: 'Migración completada' });
   } catch (err) {
-    console.error('[CHAMBERS] Error migrating:', err.message);
+    log.error({ module: 'CHAMBERS', event: 'MIGRATE_ERROR', error: err.message }, 'Error migrating chambers');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

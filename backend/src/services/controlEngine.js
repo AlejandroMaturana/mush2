@@ -3,9 +3,11 @@ import { Device, Telemetry, Recipe, CultivationCycle, CycleState, Actuator, Alar
 import SystemSetting from '../models/SystemSetting.js';
 import { events } from './eventBus.js';
 import { evaluatePhaseTransition, executePhaseTransition } from './phaseEvaluator.js';
+import { createChildLogger } from '../config/pino.js';
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
 const EVAL_INTERVAL = 60000;
+const log = createChildLogger('CONTROL');
 let TEMP_CRITICAL = 32.0;
 let TEMP_RECOVERY = 28.0;
 
@@ -143,7 +145,7 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
       commands.push({ channel: 1, command: 'ON', reason: 'OVERHEAT' });
       commands.push({ channel: 2, command: 'OFF', reason: 'OVERHEAT' });
       commands.push({ channel: 3, command: 'OFF', reason: 'OVERHEAT' });
-      console.log(`[CONTROL] ${deviceId} OVERHEAT — vent ON, heat/humid OFF`);
+      log.info({ event: 'OVERHEAT', deviceId }, `${deviceId} OVERHEAT — vent ON, heat/humid OFF`);
     }
     return commands;
   }
@@ -151,7 +153,7 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
   if (state.overheat && temp < TEMP_RECOVERY) {
     state.overheat = false;
     state.ventOn = false;
-    console.log(`[CONTROL] ${deviceId} Overheat cleared`);
+    log.info({ event: 'OVERHEAT_CLEARED', deviceId }, `${deviceId} Overheat cleared`);
   }
 
   if (state.overheat) return commands;
@@ -360,12 +362,12 @@ async function evaluateCycle(cycle) {
           mode: 'REMOTE',
         });
       } catch (err) {
-        console.error(`[CONTROL] Error updating actuator ${cmd.channel}:`, err.message);
+        log.error({ module: 'CONTROL', event: 'ACTUATOR_ERROR', error: err.message }, `Error updating actuator ${cmd.channel}`);
       }
     }
 
     if (filteredCommands.length > 0) {
-      console.log(`[CONTROL] ${device.deviceId} → ${filteredCommands.map(c => `CH${c.channel}=${c.command}(${c.reason})`).join(' | ')}`);
+      log.info({ event: 'CONTROL_EVAL', deviceId: device.deviceId }, `${device.deviceId} → ${filteredCommands.map(c => `CH${c.channel}=${c.command}(${c.reason})`).join(' | ')}`);
     }
 
     const evalEvent = {
@@ -388,7 +390,7 @@ async function evaluateCycle(cycle) {
           const prevPhase = cycle.currentPhase;
           const nextPhase = PHASE_SEQUENCE[currentIdx + 1];
           await cycle.update({ currentPhase: nextPhase, phaseStartedAt: new Date() });
-          console.log(`[CONTROL] Cycle ${cycle.id} avanzó a fase ${nextPhase}`);
+          log.info({ event: 'PHASE_TRANSITION', deviceId: device.deviceId, cycleId: cycle.id }, `Cycle ${cycle.id} avanzó a fase ${nextPhase}`);
 
           const configCmd = {
             target: 'config',
@@ -399,7 +401,7 @@ async function evaluateCycle(cycle) {
             co2Max: recipe[`${nextPhase.toLowerCase()}Co2Max`],
             mode: 'LOCAL',
           };
-          console.log(`[CONTROL] Phase transition config updated in DB:`, configCmd);
+          log.info({ event: 'CONFIG_UPDATE', deviceId: device.deviceId }, `Phase transition config updated in DB: ${JSON.stringify(configCmd)}`);
 
           events.emit('control_eval', {
             deviceId: device.deviceId,
@@ -428,7 +430,7 @@ async function evaluateCycle(cycle) {
                 const [act] = await Actuator.findOrCreate({ where: { deviceId: device.id, channel: ch }, defaults: { deviceId: device.id, channel: ch } });
                 await act.update({ state: 'OFF', mode: 'REMOTE', lastSeen: new Date() });
               } catch (e) {
-                console.error(`[CONTROL] Error turning off ch${ch}:`, e.message);
+                log.error({ module: 'CONTROL', event: 'TURN_OFF_ERROR', error: e.message }, `Error turning off ch${ch}`);
               }
             }
           }
@@ -441,7 +443,7 @@ async function evaluateCycle(cycle) {
       await executePhaseTransition(cycle, transitionResult);
     }
   } catch (err) {
-    console.error(`[CONTROL] Error evaluating cycle ${cycle.id}:`, err.message);
+    log.error({ module: 'CONTROL', event: 'ERROR_EVALUATING_CYCLE', error: err.message, cycleId: cycle.id }, `Error evaluating cycle ${cycle.id}`);
   }
 }
 
@@ -461,15 +463,15 @@ export async function evaluateAllCycles() {
     }
 
     if (activeCycles.length > 0) {
-      console.log(`[CONTROL] Evaluated ${activeCycles.length} active cycles`);
+      log.info({ event: 'EVALUATED_CYCLES', count: activeCycles.length }, `Evaluated ${activeCycles.length} active cycles`);
     }
   } catch (err) {
-    console.error('[CONTROL] Error evaluating cycles:', err.message);
+    log.error({ module: 'CONTROL', event: 'ERROR_EVALUATING', error: err.message }, 'Error evaluating cycles');
   }
 }
 
 export function startControlEngine() {
-  console.log('[CONTROL] Engine started');
+    log.info({ event: 'STARTED' }, 'Engine started');
   evaluateAllCycles();
   intervalHandle = setInterval(evaluateAllCycles, EVAL_INTERVAL);
 }
@@ -479,5 +481,5 @@ export function stopControlEngine() {
     clearInterval(intervalHandle);
     intervalHandle = null;
   }
-  console.log('[CONTROL] Engine stopped');
+  log.info({ event: 'STOPPED' }, 'Engine stopped');
 }
