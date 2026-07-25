@@ -44,8 +44,7 @@ const timestampParts = (date, timeZone) => {
 
 export function formatLogPrefix(date = new Date(), timeZone = defaultTimeZone()) {
   const parts = timestampParts(date, timeZone);
-  const tz = timeZoneAbbr(date, timeZone);
-  return `[${parts.day}-${parts.month}-${parts.year}_${parts.hour}:${parts.minute}:${parts.second}_${tz}]`;
+  return `[${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${timeZone}]`;
 }
 
 function appendToFile(line) {
