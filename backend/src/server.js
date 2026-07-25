@@ -3,43 +3,42 @@ import app from './app.js';
 import { env } from './config/env.js';
 import sequelize from './config/database.js';
 import { getReadiness, markServiceStarted, markServiceFailed, markReady } from './config/readiness.js';
-import { installTimestampedConsole } from './services/logger.js';
+import logger, { createChildLogger } from './config/pino.js';
 
-installTimestampedConsole();
+const log = createChildLogger('SERVER');
 
 let tsSyncHandle = null;
 
 async function start() {
   try {
-    console.log(`[Process] Iniciando backend PID ${process.pid}`);
+    log.info({ event: 'STARTING', pid: process.pid }, 'Iniciando backend');
 
     // ── Critical path: DB authenticate + HTTP listen ────────────────
     await sequelize.authenticate();
-    console.log('[DB] Conexión establecida');
+    log.info({ module: 'DB', event: 'CONNECTED' }, 'Conexión establecida');
 
     const httpServer = createServer(app);
 
     httpServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`[FATAL] Puerto ${env.PORT} ya en uso. Otro proceso lo está ocupando.`);
-        console.error(`[FATAL] Para liberar el puerto:`);
-        console.error(`         netstat -ano | findstr :${env.PORT}`);
-        console.error(`         taskkill /PID <PID> /F`);
+        log.fatal({ event: 'PORT_IN_USE', port: env.PORT }, `Puerto ${env.PORT} ya en uso`);
+        log.fatal({ event: 'PORT_IN_USE_HINT' }, `netstat -ano | findstr :${env.PORT}`);
+        log.fatal({ event: 'PORT_IN_USE_HINT' }, `taskkill /PID <PID> /F`);
       } else {
-        console.error('[FATAL] Error en HTTP server:', err);
+        log.fatal({ event: 'HTTP_ERROR', error: err.message }, 'Error en HTTP server');
       }
       process.exit(1);
     });
 
     httpServer.listen(env.PORT, () => {
-      console.log(`[Server] Mush2 backend en puerto ${env.PORT}`);
-      console.log('[Server] HTTP listen antes de servicios secundarios (TTFR optimizado)');
+      log.info({ event: 'LISTENING', port: env.PORT }, `Mush2 backend en puerto ${env.PORT}`);
+      log.info({ event: 'LISTENING', detail: 'HTTP listen antes de servicios secundarios (TTFR optimizado)' });
 
       // Sync + secondary services run AFTER listen — server is reachable immediately
       initSecondaryServices(httpServer);
     });
   } catch (err) {
-    console.error('[FATAL] Error al iniciar:', err);
+    log.fatal({ event: 'STARTUP_ERROR', error: err.message }, 'Error al iniciar');
     process.exit(1);
   }
 }
@@ -57,10 +56,10 @@ async function initSecondaryServices(httpServer) {
     const { startWebSocketServer } = await import('./services/webSocketServer.js');
     startWebSocketServer(httpServer);
     markServiceStarted('webSocket');
-    console.log('[Services] WebSocket Server started');
+    log.info({ module: 'WS', event: 'STARTED' }, 'WebSocket Server started');
   } catch (err) {
     markServiceFailed('webSocket', err);
-    console.error(`[Services] WebSocket Server failed: ${err.message}`);
+    log.error({ module: 'WS', event: 'FAILED', error: err.message }, 'WebSocket Server failed');
   }
 
   // Control Engine
@@ -68,10 +67,10 @@ async function initSecondaryServices(httpServer) {
     const { startControlEngine } = await import('./services/controlEngine.js');
     startControlEngine();
     markServiceStarted('controlEngine');
-    console.log('[Services] Control Engine started');
+    log.info({ module: 'CONTROL', event: 'STARTED' }, 'Control Engine started');
   } catch (err) {
     markServiceFailed('controlEngine', err);
-    console.error(`[Services] Control Engine failed: ${err.message}`);
+    log.error({ module: 'CONTROL', event: 'FAILED', error: err.message }, 'Control Engine failed');
   }
 
   // MQTT Bridge
@@ -79,10 +78,10 @@ async function initSecondaryServices(httpServer) {
     const { startMqttBridge } = await import('./services/mqttBridge.js');
     startMqttBridge();
     markServiceStarted('mqttBridge');
-    console.log('[Services] MQTT Bridge started');
+    log.info({ module: 'MQTT', event: 'STARTED' }, 'MQTT Bridge started');
   } catch (err) {
     markServiceFailed('mqttBridge', err);
-    console.error(`[Services] MQTT Bridge failed: ${err.message}`);
+    log.error({ module: 'MQTT', event: 'FAILED', error: err.message }, 'MQTT Bridge failed');
   }
 
   // Telegram Bot
@@ -98,14 +97,14 @@ async function initSecondaryServices(httpServer) {
     if (botToken) {
       await initBot(botToken, botUsername);
       markServiceStarted('telegram');
-      console.log('[Services] Telegram Bot started');
+      log.info({ module: 'TELEGRAM', event: 'STARTED' }, 'Telegram Bot started');
     } else {
       markServiceStarted('telegram');
-      console.log('[TELEGRAM] No token configured — bot disabled');
+      log.info({ module: 'TELEGRAM', event: 'DISABLED' }, 'No token configured — bot disabled');
     }
   } catch (err) {
     markServiceFailed('telegram', err);
-    console.error(`[Services] Telegram Bot failed: ${err.message}`);
+    log.error({ module: 'TELEGRAM', event: 'FAILED', error: err.message }, 'Telegram Bot failed');
   }
 
   // Wire up event bus listeners
@@ -136,17 +135,28 @@ async function initSecondaryServices(httpServer) {
     events.on('alarm', async (alarm) => {
       if (alarm.deviceId && !alarm.resolvedAt) {
         try {
-          const { notifyDeviceAlarm } = await import('./services/telegramService.js');
-          notifyDeviceAlarm(alarm.deviceId, alarm);
-        } catch { /* telegram may not be configured */ }
+          const { notifyAlarm } = await import('./services/notifications/notificationService.js');
+          await notifyAlarm(alarm);
+        } catch { /* notification may not be configured */ }
       }
     });
 
+    const { broadcastMonitoringEvent } = await import('./routes/monitoring.js');
+    events.on('telemetry', (data) => {
+      broadcastMonitoringEvent({ type: 'telemetry', deviceId: data.deviceId, ts: Date.now() });
+    });
+    events.on('health', (data) => {
+      broadcastMonitoringEvent({ type: 'health', deviceId: data.deviceId, ts: Date.now() });
+    });
+    events.on('alarm', (alarm) => {
+      broadcastMonitoringEvent({ type: 'alarm', deviceId: alarm.deviceId, ts: Date.now() });
+    });
+
     markServiceStarted('eventBus');
-    console.log('[Services] Event bus listeners wired');
+    log.info({ module: 'EVENTBUS', event: 'WIRED' }, 'Event bus listeners wired');
   } catch (err) {
     markServiceFailed('eventBus', err);
-    console.error(`[Services] Event bus wiring failed: ${err.message}`);
+    log.error({ module: 'EVENTBUS', event: 'FAILED', error: err.message }, 'Event bus wiring failed');
   }
 
   // ThingSpeak Sync
@@ -155,10 +165,10 @@ async function initSecondaryServices(httpServer) {
     syncAllFromThingSpeak().catch(() => {});
     tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
     markServiceStarted('thingSpeak');
-    console.log(`[ThingSpeak] Sync check cada ${TS_CHECK_INTERVAL / 1000}s`);
+    log.info({ module: 'TS', event: 'STARTED', interval: TS_CHECK_INTERVAL / 1000 }, 'ThingSpeak Sync check');
   } catch (err) {
     markServiceFailed('thingSpeak', err);
-    console.error(`[Services] ThingSpeak Sync failed: ${err.message}`);
+    log.error({ module: 'TS', event: 'FAILED', error: err.message }, 'ThingSpeak Sync failed');
   }
 
   // Background Jobs
@@ -168,16 +178,16 @@ async function initSecondaryServices(httpServer) {
     startDataRetentionJob();
     startOfflineWatchdog();
     markServiceStarted('backgroundJobs');
-    console.log('[Services] Background jobs started');
+    log.info({ module: 'JOBS', event: 'STARTED' }, 'Background jobs started');
   } catch (err) {
     markServiceFailed('backgroundJobs', err);
-    console.error(`[Services] Background jobs failed: ${err.message}`);
+    log.error({ module: 'JOBS', event: 'FAILED', error: err.message }, 'Background jobs failed');
   }
 
   // All secondary services attempted — mark ready (may be degraded)
   markReady();
   const readiness = getReadiness();
-  console.log(`[Server] Estado: ${readiness.status} — servicios: ${Object.keys(readiness.services).join(', ')}`);
+  log.info({ event: 'READY', status: readiness.status, services: Object.keys(readiness.services) }, 'Estado final');
 }
 
 start();
@@ -185,7 +195,7 @@ start();
 // ── Shutdown ──────────────────────────────────────────────────────
 function shutdown(signal) {
   return async () => {
-    console.log(`[Process] ${signal} — cerrando conexiones...`);
+    log.info({ event: 'SHUTDOWN', signal }, 'Cerrando conexiones');
     try {
       if (tsSyncHandle) clearInterval(tsSyncHandle);
       const { stopControlEngine } = await import('./services/controlEngine.js');
@@ -201,17 +211,17 @@ function shutdown(signal) {
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();
-      console.log('[DB] Conexión cerrada');
+      log.info({ module: 'DB', event: 'CLOSED' }, 'Conexión cerrada');
     } catch { /* ignore */ }
     process.exit(0);
   };
 }
 
 process.on('unhandledRejection', (reason) => {
-  console.error('[FATAL] Unhandled Rejection:', reason);
+  log.fatal({ event: 'UNHANDLED_REJECTION', error: String(reason) }, 'Unhandled Rejection');
 });
 process.on('uncaughtException', (err) => {
-  console.error('[FATAL] Uncaught Exception:', err);
+  log.fatal({ event: 'UNCAUGHT_EXCEPTION', error: err.message, stack: err.stack }, 'Uncaught Exception');
   shutdown('uncaughtException')();
 });
 

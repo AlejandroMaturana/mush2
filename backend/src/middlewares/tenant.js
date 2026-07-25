@@ -1,4 +1,7 @@
 import { Device } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('TENANT');
 
 export async function tenantScope(req, res, next) {
   if (!req.user) {
@@ -52,7 +55,7 @@ export async function checkDeviceAccess(req, res, next) {
     req.device = device;
     next();
   } catch (err) {
-    console.error('[TENANT] checkDeviceAccess error:', err.message);
+    log.error({ module: 'TENANT', event: 'DEVICE_ACCESS_ERROR', error: err.message }, 'checkDeviceAccess error');
     res.status(500).json({ error: 'Error al verificar acceso al dispositivo' });
   }
 }

@@ -7,7 +7,9 @@ import Subscription from '../models/Subscription.js';
 import { env } from '../config/env.js';
 import { authenticate } from '../middlewares/auth.js';
 import { logAudit } from '../services/auditService.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('AUTH');
 const router = Router();
 
 router.post('/register', async (req, res) => {
@@ -46,7 +48,7 @@ router.post('/register', async (req, res) => {
       user: { id: user.id, username: user.username, role: user.role, email: user.email },
     });
   } catch (err) {
-    console.error('[AUTH] Register error:', err);
+    log.error({ module: 'AUTH', event: 'REGISTER_ERROR', error: err.message }, 'Register error');
     res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -86,7 +88,7 @@ router.post('/login', async (req, res) => {
       user: { id: user.id, username: user.username, role: user.role, email: user.email },
     });
   } catch (err) {
-    console.error('[AUTH] Login error:', err);
+    log.error({ module: 'AUTH', event: 'LOGIN_ERROR', error: err.message }, 'Login error');
     res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -121,7 +123,7 @@ router.post('/refresh', async (req, res) => {
       token: { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 3600 },
     });
   } catch (err) {
-    console.error('[AUTH] Refresh error:', err);
+    log.error({ module: 'AUTH', event: 'REFRESH_ERROR', error: err.message }, 'Refresh error');
     res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -140,7 +142,7 @@ router.post('/logout', authenticate, async (req, res) => {
 
     res.json({ message: 'Sesión cerrada' });
   } catch (err) {
-    console.error('[AUTH] Logout error:', err);
+    log.error({ module: 'AUTH', event: 'LOGOUT_ERROR', error: err.message }, 'Logout error');
     res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -153,7 +155,7 @@ router.get('/me', authenticate, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(user);
   } catch (err) {
-    console.error('[AUTH] /me error:', err.message);
+    log.error({ module: 'AUTH', event: 'ME_ERROR', error: err.message }, '/me error');
     res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -186,7 +188,7 @@ router.patch('/me', authenticate, async (req, res) => {
 
     res.json({ id: user.id, username: user.username, email: user.email, role: user.role });
   } catch (err) {
-    console.error('[AUTH] Update error:', err);
+    log.error({ module: 'AUTH', event: 'UPDATE_ERROR', error: err.message }, 'Update error');
     res.status(500).json({ error: 'Error interno' });
   }
 });

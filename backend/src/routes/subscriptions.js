@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { Subscription, User } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('SUBSCRIPTION');
 const router = Router();
 
 router.get('/mine', authenticate, async (req, res) => {
@@ -13,7 +15,7 @@ router.get('/mine', authenticate, async (req, res) => {
     }
     res.json({ data: sub });
   } catch (err) {
-    console.error('[SUBSCRIPTION] Error reading:', err.message);
+    log.error({ module: 'SUBSCRIPTION', event: 'READ_ERROR', error: err.message }, 'Error reading subscription');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -37,7 +39,7 @@ router.get('/mine/usage', authenticate, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[SUBSCRIPTION] Error reading usage:', err.message);
+    log.error({ module: 'SUBSCRIPTION', event: 'READ_USAGE_ERROR', error: err.message }, 'Error reading subscription usage');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -73,7 +75,7 @@ router.patch('/mine/upgrade', authenticate, async (req, res) => {
 
     res.json({ data: sub, message: `Plan actualizado a ${plan}` });
   } catch (err) {
-    console.error('[SUBSCRIPTION] Error upgrading:', err.message);
+    log.error({ module: 'SUBSCRIPTION', event: 'UPGRADE_ERROR', error: err.message }, 'Error upgrading subscription');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -88,7 +90,7 @@ router.patch('/mine/cancel', authenticate, async (req, res) => {
     await sub.update({ status: 'CANCELED', canceledAt: new Date() });
     res.json({ data: sub, message: 'Suscripción cancelada' });
   } catch (err) {
-    console.error('[SUBSCRIPTION] Error canceling:', err.message);
+    log.error({ module: 'SUBSCRIPTION', event: 'CANCEL_ERROR', error: err.message }, 'Error canceling subscription');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -108,7 +110,7 @@ router.get('/', authenticate, requireMinRole('ADMIN'), async (req, res) => {
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
-    console.error('[SUBSCRIPTION] Error listing:', err.message);
+    log.error({ module: 'SUBSCRIPTION', event: 'LIST_ERROR', error: err.message }, 'Error listing subscriptions');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

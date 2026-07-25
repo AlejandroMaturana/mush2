@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
@@ -9,11 +10,21 @@ import { env } from './config/env.js';
 import { getReadiness } from './config/readiness.js';
 import { events } from './services/eventBus.js';
 import router from './routes/index.js';
+import logger from './config/pino.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+const httpLogger = pinoHttp({
+  logger,
+  autoLogging: {
+    ignore: (req) => req.url === '/health' || req.url === '/api/v1/monitoring/logs',
+  },
+});
+
+app.use(httpLogger);
 
 app.use(helmet({
   contentSecurityPolicy: {

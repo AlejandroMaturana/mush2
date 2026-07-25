@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { Op } from 'sequelize';
 import { authenticate, optionalAuth } from '../middlewares/auth.js';
 import { Event, Device } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
 
+const logger = createChildLogger('EVENTS');
 const router = Router();
 
 router.get('/', optionalAuth, async (req, res) => {
@@ -29,7 +31,7 @@ router.get('/', optionalAuth, async (req, res) => {
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
-    console.error('[EVENTS] Error listing:', err.message);
+    logger.error({ error: err.message }, 'Error listing events');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -57,7 +59,7 @@ router.get('/device/:deviceId', optionalAuth, async (req, res) => {
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
-    console.error('[EVENTS] Error listing for device:', err.message);
+    logger.error({ error: err.message }, 'Error listing events for device');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

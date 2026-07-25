@@ -1,4 +1,7 @@
 import { evaluateAllDevices } from '../services/deviceHealthService.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('HEALTH_WATCHDOG');
 
 const CHECK_INTERVAL = 30_000;
 let handle = null;
@@ -7,11 +10,10 @@ async function checkDevices() {
   try {
     const transitions = await evaluateAllDevices();
     if (transitions.length > 0) {
-      console.log(`[HEALTH_WATCHDOG] ${transitions.length} device(s) transitioned:`,
-        transitions.map(t => `${t.deviceId} ${t.from}→${t.to}`).join(', '));
+      log.info({ count: transitions.length, transitions }, 'Devices transitioned');
     }
   } catch (err) {
-    console.error('[HEALTH_WATCHDOG] Error evaluating devices:', err.message);
+    log.error({ error: err.message }, 'Error evaluating devices');
   }
 }
 
@@ -19,7 +21,7 @@ export function startOfflineWatchdog() {
   if (handle) return;
   checkDevices();
   handle = setInterval(checkDevices, CHECK_INTERVAL);
-  console.log(`[HEALTH_WATCHDOG] Watchdog started (check every ${CHECK_INTERVAL / 1000}s)`);
+  log.info({ checkIntervalSec: CHECK_INTERVAL / 1000 }, 'Watchdog started');
 }
 
 export function stopOfflineWatchdog() {

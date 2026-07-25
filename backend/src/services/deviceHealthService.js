@@ -1,5 +1,8 @@
 import { Device } from '../models/index.js';
 import { events } from './eventBus.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('HEALTH');
 
 const HEALTH_STATES = {
   PROVISIONING: 'PROVISIONING',

@@ -1,5 +1,6 @@
 import { env } from '../config/env.js';
 import { Device, Telemetry, Sensor, IntegrationCredentials } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
 
 const SENSOR_MAP = {
   field1: { type: 'TEMPERATURE', unit: '°C' },
@@ -7,6 +8,7 @@ const SENSOR_MAP = {
   field3: { type: 'CO2', unit: 'ppm' },
   field4: { type: 'VOC', unit: 'ppb' },
 };
+const log = createChildLogger('TS');
 
 const lastSyncTimes = new Map();
 
@@ -21,7 +23,7 @@ export async function syncDeviceFromThingSpeak(deviceId) {
   try {
     const device = await Device.findByPk(deviceId);
     if (!device) {
-      console.log(`[TS] Device ${deviceId} not found, skipping`);
+      log.info({ event: 'DEVICE_NOT_FOUND', deviceId }, `Device ${deviceId} not found, skipping`);
       return;
     }
 
@@ -49,13 +51,13 @@ export async function syncDeviceFromThingSpeak(deviceId) {
     }
 
     if (!channelId || !apiKey) {
-      console.log(`[TS] No ThingSpeak keys for device ${deviceId}`);
+      log.info({ event: 'NO_KEYS', deviceId }, `No ThingSpeak keys for device ${deviceId}`);
       return;
     }
 
     const feed = await fetchChannel(channelId, apiKey);
     if (!feed || feed.channel_id == null) {
-      console.log(`[TS] Empty response for channel ${channelId}`);
+      log.info({ event: 'EMPTY_RESPONSE', channelId }, `Empty response for channel ${channelId}`);
       return;
     }
 
@@ -86,12 +88,12 @@ export async function syncDeviceFromThingSpeak(deviceId) {
 
     await device.update({ lastSeen: new Date() });
     lastSyncTimes.set(device.id, now);
-    console.log(`[TS] Synced ${deviceId} from ThingSpeak (entry ${entryId})`);
+    log.info({ event: 'SYNCED', deviceId }, `Synced ${deviceId} from ThingSpeak (entry ${entryId})`);
   } catch (err) {
     if (err.name === 'TimeoutError') {
-      console.error(`[TS] Timeout syncing device ${deviceId}`);
+      log.error({ module: 'TS', event: 'TIMEOUT', deviceId }, `Timeout syncing device ${deviceId}`);
     } else {
-      console.error(`[TS] Error syncing device ${deviceId}:`, err.message);
+      log.error({ module: 'TS', event: 'ERROR_SYNCING', error: err.message, deviceId }, `Error syncing device ${deviceId}`);
     }
   }
 }

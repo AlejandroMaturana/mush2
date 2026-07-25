@@ -1,5 +1,8 @@
 import { Subscription } from '../models/index.js';
 import { env } from '../config/env.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('RATE_LIMIT');
 
 export async function checkApiRateLimit(req, res, next) {
   if (!req.user) return next();
@@ -39,7 +42,7 @@ export async function checkApiRateLimit(req, res, next) {
     await sub.increment('apiCallsUsedThisMonth');
     next();
   } catch (err) {
-    console.error('[RATE_LIMIT] Error:', err.message);
+    log.error({ module: 'RATE_LIMIT', event: 'CHECK_ERROR', error: err.message }, 'Error checking rate limit');
     next();
   }
 }

@@ -7,6 +7,7 @@ import { Device, Telemetry, Event, User, CultivationCycle, AuditLog } from '../m
 import sequelize from '../config/database.js';
 import { getReadiness } from '../config/readiness.js';
 import { getStatusFromDevice } from '../services/deviceHealthService.js';
+import { readLogs } from '../services/logReaderService.js';
 import os from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -76,4 +77,46 @@ router.get('/health/db', async (req, res) => {
     res.status(503).json({ status: 'error', db: 'disconnected' });
   }
 });
+
+router.get('/logs', async (req, res) => {
+  try {
+    const { level, module, limit, offset } = req.query;
+    const logs = await readLogs({
+      level,
+      module,
+      limit: parseInt(limit) || 100,
+      offset: parseInt(offset) || 0,
+    });
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const sseClients = new Set();
+
+router.get('/stream', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  res.write('data: {"type":"connected"}\n\n');
+
+  sseClients.add(res);
+
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
+});
+
+export function broadcastMonitoringEvent(event) {
+  const payload = `data: ${JSON.stringify(event)}\n\n`;
+  for (const client of sseClients) {
+    client.write(payload);
+  }
+}
+
+export { sseClients };
+
 export default router;

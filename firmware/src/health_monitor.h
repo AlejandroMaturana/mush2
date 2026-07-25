@@ -36,6 +36,7 @@ struct HealthMetrics {
   uint8_t nvsWriteErrors;
   uint32_t uptime;
   uint8_t rebootCount;
+  uint8_t resetReason;
   bool heartbeatsHealthy;
   uint8_t staleTaskMask;
   uint32_t i2cFailureCount;

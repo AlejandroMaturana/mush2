@@ -4,7 +4,9 @@ import { UserPreference, TelegramDeviceConfig, Device, UserChamberAccess, System
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { reconfigureBot, getBotStatus } from '../services/telegramService.js';
+import { createChildLogger } from '../config/pino.js';
 
+const logger = createChildLogger('TELEGRAM');
 const router = Router();
 
 router.post('/link', authenticate, async (req, res) => {
@@ -28,7 +30,7 @@ router.post('/link', authenticate, async (req, res) => {
 
     res.json({ data: { linked: false, code, expiresAt: expires.toISOString() } });
   } catch (err) {
-    console.error('[TELEGRAM] Error generating link:', err.message);
+    logger.error({ error: err.message }, 'Error generating link');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -48,7 +50,7 @@ router.get('/link', authenticate, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[TELEGRAM] Error checking link:', err.message);
+    logger.error({ error: err.message }, 'Error checking link');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -66,7 +68,7 @@ router.post('/unlink', authenticate, async (req, res) => {
     }
     res.json({ data: { linked: false } });
   } catch (err) {
-    console.error('[TELEGRAM] Error unlinking:', err.message);
+    logger.error({ error: err.message }, 'Error unlinking');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -94,7 +96,7 @@ router.get('/device/:deviceId', authenticate, async (req, res) => {
 
     res.json({ data: config });
   } catch (err) {
-    console.error('[TELEGRAM] Error getting device config:', err.message);
+    logger.error({ error: err.message }, 'Error getting device config');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -118,7 +120,7 @@ router.patch('/device/:deviceId', authenticate, async (req, res) => {
 
     res.json({ data: config });
   } catch (err) {
-    console.error('[TELEGRAM] Error updating device config:', err.message);
+    logger.error({ error: err.message }, 'Error updating device config');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -149,7 +151,7 @@ router.post('/configure', authenticate, requireMinRole('ADMIN'), async (req, res
     const status = getBotStatus();
     res.json({ data: { configured: true, running: status.running, username: status.username, lastError: status.lastError } });
   } catch (err) {
-    console.error('[TELEGRAM] Error configuring bot:', err.message);
+    logger.error({ error: err.message }, 'Error configuring bot');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -168,7 +170,7 @@ router.get('/bot-status', authenticate, requireMinRole('ADMIN'), async (req, res
       },
     });
   } catch (err) {
-    console.error('[TELEGRAM] Error getting bot status:', err.message);
+    logger.error({ error: err.message }, 'Error getting bot status');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

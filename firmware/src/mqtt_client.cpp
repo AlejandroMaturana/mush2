@@ -89,6 +89,7 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
                                uint16_t stackMQTT, uint16_t stackOTA, uint16_t stackTelemetry,
                                uint16_t stackButton, bool i2cHealthy, bool sensorAht21, bool sensorEns160,
                                uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount,
+                               uint8_t resetReason,
                                bool bootTestPassed, const char* bootTestFailReason) {
   char payload[640];
   snprintf(payload, sizeof(payload),
@@ -99,7 +100,7 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
     "},"
     "\"i2cHealthy\":%s,\"sensorAht21\":%s,\"sensorEns160\":%s,"
     "\"staleTaskMask\":%u,\"heartbeatsHealthy\":%s,"
-    "\"uptime\":%lu,\"rebootCount\":%u,"
+    "\"uptime\":%lu,\"rebootCount\":%u,\"resetReason\":%u,"
     "\"bootTestPassed\":%s,\"bootTestFailReason\":\"%s\","
     "\"ts\":%lu}",
     freeHeap, minFreeHeap, maxAllocHeap,
@@ -110,7 +111,7 @@ bool MQTTClient::publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t
     sensorEns160 ? "true" : "false",
     staleTaskMask,
     heartbeatsHealthy ? "true" : "false",
-    uptime, rebootCount,
+    uptime, rebootCount, resetReason,
     bootTestPassed ? "true" : "false",
     bootTestFailReason ? bootTestFailReason : "",
     (unsigned long)getTimestamp());

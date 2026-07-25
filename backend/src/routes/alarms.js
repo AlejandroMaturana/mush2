@@ -3,7 +3,9 @@ import { Op } from 'sequelize';
 import { Alarm, Device } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { createChildLogger } from '../config/pino.js';
 
+const log = createChildLogger('ALARMS');
 const router = express.Router();
 
 router.get('/', authenticate, async (req, res) => {
@@ -45,7 +47,7 @@ router.get('/', authenticate, async (req, res) => {
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
-    console.error('[ALARMS] Error listing:', err.message);
+    log.error({ module: 'ALARMS', event: 'LIST_ERROR', error: err.message }, 'Error listing alarms');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -76,7 +78,7 @@ router.get('/stats', authenticate, async (req, res) => {
 
     res.json({ data: { critical, high, medium, low, total: critical + high + medium + low } });
   } catch (err) {
-    console.error('[ALARMS] Error stats:', err.message);
+    log.error({ module: 'ALARMS', event: 'STATS_ERROR', error: err.message }, 'Error fetching alarm stats');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -99,7 +101,7 @@ router.patch('/:id/acknowledge', authenticate, async (req, res) => {
 
     res.json({ data: alarm });
   } catch (err) {
-    console.error('[ALARMS] Error acknowledge:', err.message);
+    log.error({ module: 'ALARMS', event: 'ACKNOWLEDGE_ERROR', error: err.message }, 'Error acknowledging alarm');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -121,7 +123,7 @@ router.patch('/:id/resolve', authenticate, async (req, res) => {
 
     res.json({ data: alarm });
   } catch (err) {
-    console.error('[ALARMS] Error resolve:', err.message);
+    log.error({ module: 'ALARMS', event: 'RESOLVE_ERROR', error: err.message }, 'Error resolving alarm');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

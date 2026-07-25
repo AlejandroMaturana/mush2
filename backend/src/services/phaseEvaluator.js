@@ -1,5 +1,8 @@
 import { PhaseTransition, CultivationCycle, Recipe } from '../models/index.js';
 import { events } from './eventBus.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('PHASE');
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
 
@@ -277,7 +280,7 @@ export async function executePhaseTransition(cycle, transitionResult) {
       phaseStartedAt: new Date(),
     });
 
-    console.log(`[PHASE] Cycle ${cycle.id}: ${transition.fromPhase} → ${transition.toPhase} (${transition.triggerType})`);
+    log.info({ cycleId: cycle.id, fromPhase: transition.fromPhase, toPhase: transition.toPhase, triggerType: transition.triggerType }, 'Phase transition executed');
 
     events.emit('phase_transition', {
       cycleId: cycle.id,
@@ -288,7 +291,7 @@ export async function executePhaseTransition(cycle, transitionResult) {
       transitionId: transition.id,
     });
   } else {
-    console.log(`[PHASE] Cycle ${cycle.id}: Sugerencia de transición ${transition.fromPhase} → ${transition.toPhase} (pendiente aprobación)`);
+    log.info({ cycleId: cycle.id, fromPhase: transition.fromPhase, toPhase: transition.toPhase }, 'Phase transition suggested — pending approval');
   }
 
   return transition;

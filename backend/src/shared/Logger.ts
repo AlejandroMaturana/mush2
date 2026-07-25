@@ -1,3 +1,5 @@
+import { createChildLogger } from '../config/pino.js';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogEntry {
@@ -16,39 +18,25 @@ export interface Logger {
 }
 
 export class ConsoleLogger implements Logger {
+  private logger;
+
+  constructor(context?: string) {
+    this.logger = createChildLogger(context || 'APP');
+  }
+
   debug(message: string, context?: string, data?: Record<string, unknown>): void {
-    this.log('debug', message, context, data);
+    this.logger.debug({ module: context, ...data }, message);
   }
 
   info(message: string, context?: string, data?: Record<string, unknown>): void {
-    this.log('info', message, context, data);
+    this.logger.info({ module: context, ...data }, message);
   }
 
   warn(message: string, context?: string, data?: Record<string, unknown>): void {
-    this.log('warn', message, context, data);
+    this.logger.warn({ module: context, ...data }, message);
   }
 
   error(message: string, context?: string, data?: Record<string, unknown>): void {
-    this.log('error', message, context, data);
-  }
-
-  private log(level: LogLevel, message: string, context?: string, data?: Record<string, unknown>): void {
-    const entry: LogEntry = {
-      level,
-      message,
-      context,
-      timestamp: new Date(),
-      data,
-    };
-
-    const prefix = `[${entry.timestamp.toISOString()}] [${level.toUpperCase()}]`;
-    const contextStr = context ? ` [${context}]` : '';
-    const line = `${prefix}${contextStr} ${message}`;
-
-    if (data) {
-      console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](line, data);
-    } else {
-      console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](line);
-    }
+    this.logger.error({ module: context, ...data }, message);
   }
 }

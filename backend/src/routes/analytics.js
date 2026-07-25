@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { Op } from 'sequelize';
 import { authenticate, optionalAuth } from '../middlewares/auth.js';
 import { Device, Telemetry, CultivationCycle, CycleState, Actuator } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
+
+const log = createChildLogger('ANALYTICS');
 
 function calcVPD(temp, rh) {
   if (temp == null || rh == null) return null;
@@ -113,7 +116,7 @@ router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[ANALYTICS] Error:', err.message);
+    log.error({ module: 'ANALYTICS', event: 'FETCH_ERROR', error: err.message }, 'Error fetching analytics');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });

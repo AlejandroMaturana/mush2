@@ -21,6 +21,8 @@ const DeviceHealth = sequelize.define('DeviceHealth', {
   heartbeatsHealthy: { type: DataTypes.BOOLEAN },
   uptime: { type: DataTypes.INTEGER },
   rebootCount: { type: DataTypes.INTEGER },
+  resetReason: { type: DataTypes.INTEGER },
+  resetReasonLabel: { type: DataTypes.STRING(50) },
   bootTestPassed: { type: DataTypes.BOOLEAN },
   bootTestFailReason: { type: DataTypes.STRING(100) },
   timestamp: { type: DataTypes.DATE, allowNull: false },

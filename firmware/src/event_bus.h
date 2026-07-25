@@ -69,6 +69,7 @@ struct HealthUpdatePayload {
   uint16_t taskStackButton;
   bool i2cHealthy;
   uint8_t rebootCount;
+  uint8_t resetReason;
 };
 
 struct LogPayload {
