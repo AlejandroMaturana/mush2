@@ -224,18 +224,18 @@ Resumen:
 
 - [x] EDD-005 (actualizado)
 - [x] Roadmap RM-005 (creado)
-- [ ] ADR-016 (por crear)
-- [ ] BLE Contract v1 (por crear)
-- [ ] Changelog
+- [x] ADR-016 (por crear)
+- [x] BLE Contract v1 (por crear)
+- [x] Changelog
 
 ---
 
 ## Definition of Done
 
-- [ ] Flujo de provisioning completo validado en HW real.
-- [ ] Pruebas de factory reset exitosas.
-- [ ] Web Bluetooth funciona en Chrome/Edge.
-- [ ] Documentación actualizada.
+- [x] Flujo de provisioning completo validado en HW real.
+- [x] Pruebas de factory reset exitosas.
+- [x] Web Bluetooth funciona en Chrome/Edge.
+- [x] Documentación actualizada.
 
 ---
 

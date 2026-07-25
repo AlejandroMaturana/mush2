@@ -1,209 +1,192 @@
-# ADR-NNN: [Título de la Decisión]
+# ADR-NNN: [Título de la decisión]
 
-**Estado:** [Propuesto | Aceptado | Rechazado | Deprecado | Sustituido]  
-**Fecha:** YYYY-MM-DD  
-**Decisión:** [Resumen breve de la decisión tomada]
+**Estado:** Propuesto | Aceptado | Reemplazado | Obsoleto | Rechazado
 
----
+**Fecha:** YYYY-MM-DD
 
-## Contexto
+**Autores:** ...
 
-> Describe la situación que origina la necesidad de tomar esta decisión.
->
-> Incluye:
-> - Problema técnico o de negocio
-> - Restricciones existentes
-> - Estado actual del sistema
-> - Motivaciones
-> - Riesgos identificados
+**Decisores:** ...
 
 ---
 
-## Decisión
+# Resumen
 
-> Describe la solución elegida y cómo será aplicada.
+Una descripción de tres o cuatro líneas que permita entender la decisión sin leer el resto del documento.
 
-### 1. [Área principal de decisión]
+---
 
-Descripción de la decisión.
+# Contexto
+
+Describe el problema que obliga a tomar una decisión.
+
+Debe responder preguntas como:
+
+- ¿Qué ocurre actualmente?
+- ¿Qué limitaciones existen?
+- ¿Qué requisitos deben cumplirse?
+- ¿Qué riesgos existen si no se hace nada?
+
+No debe contener todavía la solución.
+
+---
+
+# Decisión
+
+Describe exactamente qué se decidió.
+
+Debe escribirse en presente.
 
 Ejemplo:
 
-```
+> El firmware implementará un gestor centralizado de Fail-Safe independiente del controlador climático.
 
-Componente
-├── Elemento A
-├── Elemento B
-└── Elemento C
+Si existen varias decisiones relacionadas, dividirlas.
 
-```
+## 1. ...
 
----
+## 2. ...
 
-### 2. [Reglas, políticas o comportamiento]
-
-| Elemento | Definición | Prioridad |
-|----------|------------|-----------|
-| [Elemento] | [Descripción] | [Alta/Media/Baja] |
+## 3. ...
 
 ---
 
-### 3. [Detalles de implementación]
+# Justificación
 
-Descripción técnica de la implementación.
+Explica por qué esta solución fue elegida.
+
+Debe responder:
+
+- ¿Qué ventajas aporta?
+- ¿Qué problemas resuelve?
+- ¿Qué trade-offs acepta?
+
+Aquí vive el razonamiento arquitectónico.
+
+---
+
+# Alternativas consideradas
+
+## Alternativa A
+
+Descripción.
+
+### Ventajas
+
+-
+
+### Desventajas
+
+-
+
+### Motivo del descarte
+
+...
+
+---
+
+## Alternativa B
+
+...
+
+---
+
+# Consecuencias
+
+## Positivas
+
+-
+
+-
+
+## Negativas
+
+-
+
+-
+
+## Riesgos
+
+-
+
+-
+
+---
+
+# Impacto en la arquitectura
+
+Indica qué partes del sistema quedan afectadas.
+
+| Componente | Impacto |
+|------------|---------|
+| Firmware | ... |
+| Backend | ... |
+| Frontend | ... |
+| API | ... |
+| Hardware | ... |
+
+---
+
+# Reglas derivadas
+
+Las reglas que el resto del proyecto deberá respetar.
+
+Ejemplo
+
+| ID | Regla |
+|----|--------|
+| ADR-024-01 | Ningún controlador puede ignorar un Fail-Safe activo. |
+| ADR-024-02 | Toda decisión sobre actuadores deberá consultar el estado global de seguridad. |
+
+---
+
+# Implementación (Opcional)
+
+Esta sección únicamente aparece cuando la decisión requiere aclaraciones técnicas.
+
+No debe describir código.
+
+Puede incluir:
+
+- nuevos módulos
+- nuevas interfaces
+- contratos
+- eventos
+- protocolos
+
+Nunca rutas de archivos.
+
+---
+
+# Validación
+
+¿Cómo sabemos que la decisión está correctamente implementada?
 
 Ejemplo:
 
-- Interfaces afectadas
-- Componentes modificados
-- Flujo de datos
-- Comunicación entre módulos
-- Configuraciones relevantes
+- Simular pérdida del sensor.
+- Simular temperatura crítica.
+- Verificar prioridad sobre modo manual.
+- Verificar recuperación.
 
 ---
 
-## Alternativas Consideradas
+# ADR relacionados
 
-### Alternativa 1: [Nombre]
-
-**Descripción:**
-
-[Explicación]
-
-**Motivo de descarte:**
-
-[Razón]
+- ADR-009
+- ADR-012
+- ADR-031
 
 ---
 
-### Alternativa 2: [Nombre]
+# Referencias
 
-**Descripción:**
-
-[Explicación]
-
-**Motivo de descarte:**
-
-[Razón]
+Normas, documentación, papers, datasheets, RFC, etc.
 
 ---
 
-## Consecuencias
+# Historial
 
-### Positivas
-
-- [Beneficio obtenido]
-- [Mejora técnica]
-- [Impacto positivo]
-
-### Negativas
-
-- [Costo agregado]
-- [Complejidad introducida]
-- [Limitaciones]
-
----
-
-## Implementación
-
-Componentes relacionados:
-
-| Archivo / Módulo | Cambio |
-|------------------|--------|
-| `[ruta/al/archivo]` | [Descripción] |
-
----
-
-## Roadmap / Plan de Migración
-
-```
-
-Fase 1: [Nombre]
-├── [Tarea]
-├── [Tarea]
-
-Fase 2: [Nombre]
-├── [Tarea]
-└── [Tarea]
-
-````
-
----
-
-## Diagramas
-
-```mermaid
-flowchart TD
-    A[Estado Inicial] --> B[Decisión]
-    B --> C[Estado Final]
-````
-
----
-
-## Reglas de Diseño
-
-| ID           | Regla         | Severidad |
-| ------------ | ------------- | --------- |
-| ADR-RULE-001 | [Descripción] | HIGH      |
-
----
-
-## Referencias
-
-* `[archivo o módulo]` — Descripción
-* `ADR-NNN` — Documento relacionado
-* `docs/[ruta]` — Referencia adicional
-
----
-
-## Historial de Cambios
-
-| Versión | Fecha      | Autor   | Cambios                |
-| ------- | ---------- | ------- | ---------------------- |
-| 1.0     | YYYY-MM-DD | [Autor] | Creación del documento |
-
----
-
-*Documento generado como parte del proceso de Architecture Decision Records de Mush2.*
-
-```
-
-### Cambios respecto al template DDD
-
-| DDD | ADR |
-|-|-|
-| Define conocimiento del dominio | Define decisiones técnicas |
-| Reglas de negocio | Trade-offs arquitectónicos |
-| Modelo conceptual | Contexto → Decisión → Consecuencia |
-| Diagramas de dominio | Diagramas de arquitectura/flujos |
-| Referencias DDD-* | ADR relacionados |
-
-También agregaría una convención que veo implícita en tus documentos:
-
-```
-
-ADR-NNN-NombreCorto.md
-
-```
-
-Ejemplos:
-
-```
-
-ADR-009-Hysteresis-Control.md
-ADR-012-FreeRTOS-Architecture.md
-ADR-017-Event-Bus.md
-
-```
-
-Esto evita terminar con una carpeta:
-
-```
-
-docs/
-└── ADR/
-├── ADR-009.md
-├── ADR-012.md
-└── ADR-017.md
-
-```
+| Versión | Fecha | Cambio |
+|----------|---------|--------|
+|1.0|...|Creación|

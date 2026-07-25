@@ -107,4 +107,4 @@ Ante un cambio de fase en el ciclo:
 
 ## Referencias
 
-- `docs/roadmap.md` — Fase 4: Automatización, Fase 13: Automatización Adaptativa
+- `docs/roadmap/roadmap.md` — Fase 4: Automatización, Fase 13: Automatización Adaptativa

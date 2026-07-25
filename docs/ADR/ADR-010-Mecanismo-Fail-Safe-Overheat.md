@@ -1,88 +1,57 @@
-# ADR-010: Mecanismo Fail-Safe Overheat y Seguridad Térmica
+# ADR-010: Mecanismo Fail-Safe de Sobretemperatura
 
 **Estado:** Aceptado  
 **Fecha:** 2026-06-21  
-**Decisión:** Implementar un sistema de seguridad térmica con override total, detección de fallo de sensores, secuencia de arranque controlada y gestión térmica del SSR.
+**Última actualización:** 2026-07-24
 
 ## Contexto
 
-El sistema opera con 4 SSRs de 2A que controlan cargas de AC (ventilador, manta térmica, humidificadores). Sin mecanismos de seguridad ante:
-
-- **Fallo de sensor**: Si el AHT21 se desconecta, las lecturas pueden ser inválidas y el control opera a ciegas
-- **Sobrecalentamiento**: Si la manta térmica falla en ON, la temperatura puede superar 40°C en minutos
-- **Fallo de SSR**: Un SSR en cortocircuito mantiene el actuador encendido permanentemente
-- **Condensación en ENS160**: Humedad >95% puede descalibrar el sensor de CO₂
-- **Arranque en caliente**: Tras un reinicio, el ENS160 da lecturas falsas de CO₂ durante 3 minutos
-
-Se requiere un mecanismo fail-safe que actúe independientemente del control normal y priorice la integridad del cultivo y el hardware.
+El sistema controla cargas de AC mediante relés de estado sólido (SSR). La temperatura del cultivo es una variable crítica: si supera un umbral de seguridad, la estructura del micelio sufre daños irreversibles. No existe actualmente un mecanismo que actúe de forma independiente del bucle de control normal para garantizar la integridad térmica ante fallos de sensor, control o hardware.
 
 ## Decisión
 
-### 1. Overheat Fail-Safe (Override de Emergencia)
+### 1. Override de Emergencia por Sobretemperatura
 
-El fail-safe overheat tiene la **máxima prioridad** sobre cualquier otro control:
+El sistema implementa un mecanismo de interrupción con **máxima prioridad** que se evalúa antes del bucle de control normal:
 
-- **Umbral crítico**: `TEMP_CRITICAL = 32.0°C`
-- **Acción**: Apagar TODOS los actuadores, forzar ventilador ON al 100%
-- **Recuperación**: Cuando temp baje de `28.0°C`, desactivar override y retornar al control normal
-- **Frecuencia de evaluación**: Cada ciclo de sensor (10s), antes de la evaluación de histéresis
+- **Detección:** Existe un umbral de activación configurable. La evaluación se realiza periódicamente en el mismo ciclo de lectura de sensores.
+- **Acción al activar:** Todos los actuadores se apagan inmediatamente. El ventilador se fuerza al 100% de capacidad para disipar calor acumulado.
+- **Recuperación:** Existe un umbral de recuperación diferencial (histéresis) que evita oscilaciones entre activación y desactivación. La recuperación es automática sin intervención externa.
+- **Prioridad:** El override tiene precedencia sobre cualquier estado del bucle de control, modos de operación o comandos remotos.
 
-### 2. Modo Seguro por Fallo de Sensores
+### 2. Alarma de Sobretemperatura
 
-| Escenario | Detección | Acción |
-|-----------|-----------|--------|
-| AHT21 falla 3 lecturas consecutivas | `reading.valid == false` × 3 | Apagar TODOS los actuadores. Ventilador en ciclo 2min ON / 10min OFF. Usar última lectura válida como fallback (5 min de gracia) |
-| ENS160 da CO₂ < 400 ppm (anómalo) | 3 lecturas consecutivas | Asumir 800 ppm como valor seguro. Activar alarma |
-| ENS160 no responde | Timeout I2C | Ignorar CO₂, operar solo con T/H. Ventilador en ciclo forzado 5min ON / 10min OFF |
-| I2C bus lock | 3 fallos consecutivos de AHT21 | `Wire.end(); delay(100); Wire.begin();` para resetear bus sin reiniciar micro |
+Cuando se activa el override, el sistema genera una alarma de sobretemperatura para su consumo por capas superiores. La alarma es un evento independiente del mecanismo de transporte: puede ser consultada por cualquier componente del sistema que requiera conocer el estado de seguridad del dispositivo.
 
-### 3. Secuencia de Arranque (Power-On Sequence)
+### 3. Detección de Fallo del Sensor de Temperatura
 
-Tras cualquier reinicio del microcontrolador:
+El sistema detecta fallos del sensor de temperatura principal mediante la observación de lecturas inválidas consecutivas:
 
-| Tiempo | Acción |
-|--------|--------|
-| T=0s | Inicializar solo AHT21 y ENS160 (warm-up) |
-| T=5s | Leer baseline de T y HR del ambiente |
-| T=10s | Ventilador al 100% durante 10s para purgar gases acumulados |
-| T=30s | Habilitar control automático completo |
+- **Criterio de fallo:** Tres lecturas consecutivas marcadas como inválidas activan el estado de fallo.
+- **Acción al detectar fallo:** Todos los apagadores se desactivan. El sistema transita a un estado seguro donde no se permite el control automático.
+- **Recuperación:** La recuperación del estado de fallo requiere que el sensor proporcione lecturas válidas de nuevo.
 
-**Razón**: El ENS160 da lecturas erráticas de CO₂ (hasta 2000 ppm falsos) durante los primeros 3 minutos.
+### 4. Transición de Estado de Seguridad
 
-### 4. Gestión Térmica del SSR
+El sistema distingue entre dos estados operacionales:
 
-- Los SSRs disipan ~1.5W por canal. No montar los 4 juntos sin separación de 15mm.
-- Si la temperatura del disipador (NTC) supera 55°C:
-  - Reducir ciclo de trabajo al 50% (alternar ON/OFF en periodos de 30s)
-  - Activar ventilador de 12V dedicado al panel de SSR
+- **Normal:** El control de histéresis opera con lecturas válidas de temperatura.
+- **Error:** El sensor ha fallado. Se suspende el control automático y se mantienen los actuadores apagados.
 
-### 5. Protección contra Overshoot Térmico
-
-La manta térmica tiene inercia: cuando el sensor marca 24°C, la superficie de la manta ya está a 70°C.
-
-- **Apagado anticipado**: Cuando la temperatura esté a 1.0°C del setpoint (`temp >= tempMax - 1.0`), apagar la manta y dejar que la inercia complete el ciclo.
-- Esto aplica solo en modo LOCAL; en REMOTE el usuario controla directamente.
+La transición de normal a error ocurre tras múltiples fallos consecutivos. La transición de error a normal ocurre cuando el sensor se recupera. Esta máquina de estados garantiza que un sensor intermitente no provoque ciclos de activación/desactivación inestables.
 
 ## Consecuencias
 
 ### Positivas
-- El cultivo nunca supera los 32°C aunque fallen todos los controles
-- El sistema se recupera automáticamente de fallos de sensores sin intervención
-- La secuencia de arranque evita falsas alarmas de CO₂ post-reinicio
-- Protección contra burnout del SSR por sobrecalentamiento
+- El cultivo nunca supera el umbral crítico aunque fallen todos los controles normales
+- El sistema se recupera automáticamente de fallos del sensor sin intervención externa
+- La alarma permite a capas superiores notificar al operador
 
 ### Negativas
-- El override fail-safe puede causar ciclos de temperatura si el sensor falla intermitentemente
-- La purga de 10s al arranque puede estresar primordios si ocurre durante el día
-- La reducción de ciclo de trabajo por temperatura SSR puede afectar el control fino
-
-## Implementación
-
-- `hysteresis_controller.cpp`: Métodos `checkOverheat()`, `checkSensorHealth()` en `main.ino`
-- `main.ino`: Bucle principal verifica fail-safe ANTES de evaluar histéresis
-- `config.h`: `TEMP_CRITICAL` (32.0°C) y `TEMP_RECOVERY` (28.0°C)
-- `ssr_controller.cpp`: `setAll(0)` para apagado de emergencia
+- El override puede causar ciclos de temperatura si el sensor falla de forma intermitente
+- La acción de apagado total interrumpe control que podría estar operando correctamente
 
 ## Referencias
 
-- `docs/roadmap.md` — Fase 11 (Observabilidad): Fail-Safe Overheat
+- `docs/roadmap/roadmap.md` — Fase 11 (Observabilidad): Fail-Safe Overheat
+- Capacidades futuras:Power-On Sequence, gestión térmica del SSR, protección contra overshoot — documentadas en el roadmap

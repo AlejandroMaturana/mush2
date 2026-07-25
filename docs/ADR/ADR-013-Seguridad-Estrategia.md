@@ -272,4 +272,4 @@ Fase 5 (futuro): Madurez — continuo
 - `docs/ADR/ADR-008-HTTP-Command-Protocol.md` — Protocolo HTTP polling (contradice MQTT activo)
 - `docs/ADR/ADR-006-Logs-Monitoreo-estrategia.md` — Estrategia de logs (sin auditoría de seguridad)
 - `docs/architecture/backend.md` — Documentación de arquitectura del backend
-- `docs/roadmap.md` — Fase 5 (Hardening), Fase 11 (Observabilidad)
+- `docs/roadmap/roadmap.md` — Fase 5 (Hardening), Fase 11 (Observabilidad)

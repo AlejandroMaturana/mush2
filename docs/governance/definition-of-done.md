@@ -117,7 +117,7 @@ Checklist exhaustivo para marcar una tarea como **COMPLETADA**. Aplica a feature
 
 ### Roadmap
 
-- [ ] `docs/roadmap.md` actualizado si objetivo/timeline cambia
+- [ ] `docs/roadmap/roadmap.md` actualizado si objetivo/timeline cambia
 - [ ] Historias relacionadas linkadas
 
 ---

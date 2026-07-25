@@ -1,6 +1,6 @@
 # Detalle Milestone
 
-> Vinculado a `docs/roadmap.md` — Fases 0-9 completadas, Fase 10 (MQTT Propio + TLS) pendiente, al 2026-07-23
+> Vinculado a `docs/roadmap/roadmap.md` — Fases 0-9 completadas, Fase 10 (MQTT Propio + TLS) pendiente, al 2026-07-24
 
 Cada milestone agrupa una fase del roadmap en entregables verificables, con criterios de aceptación, issues de referencia y retrospectiva de riesgos encontrados.
 

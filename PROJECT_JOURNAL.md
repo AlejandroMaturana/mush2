@@ -29,7 +29,7 @@
 - `docs/requirements.md` — Requerimientos
 - `docs/deployment.md` — Estrategia de despliegue
 - `docs/database.md` — Esquema de base de datos
-- `docs/roadmap.md` — Roadmap actualizado
+- `docs/roadmap/roadmap.md` — Roadmap actualizado
 - `docs/governance/versioning.md` — Estrategia de versionado
 - `docs/ADR/ADR-001-thingspeak.md` — Decisión ThingSpeak
 

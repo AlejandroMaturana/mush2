@@ -87,7 +87,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ---
 
-## FASE 7b — Resiliencia del Firmware (COMPLETADA ✅)
+### FASE 7b — Resiliencia del Firmware (COMPLETADA ✅)
 
 **Objetivo**: Convertir el firmware en un dispositivo embebido resiliente capaz de auto-recuperación, actualizaciones remotas y operación continua sin intervención. Reducir el acoplamiento entre módulos y agregar observabilidad interna.
 
@@ -116,7 +116,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ---
 
-## FASE 7c — Debt Técnico / Quick Wins (COMPLETADA ✅)
+### FASE 7c — Debt Técnico / Quick Wins (COMPLETADA ✅)
 
 **Objetivo**: Corregir bugs bloqueantes, eliminar código duplicado, agregar NTP, y mejorar la robustez del firmware con cambios de bajo riesgo y alto impacto.
 
@@ -136,7 +136,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ---
 
-## FASE 7d — Robustez del Firmware (COMPLETADA ✅)
+### FASE 7d — Robustez del Firmware (COMPLETADA ✅)
 
 **Objetivo**: Endurecer el firmware con mecanismos de auto-recuperación, monitoreo por tarea, y prevención de fallos silenciosos. Cada tarea reporta salud, el bus I2C se recupera automáticamente, y las ventanas de tiempo evitan wraparound.
 
@@ -154,7 +154,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ---
 
-## FASE 7e — Estabilización Funcional (COMPLETADA ✅)
+### FASE 7e — Estabilización Funcional (COMPLETADA ✅)
 
 **Objetivo**: Eliminar inconsistencias entre firmware, backend, base de datos y frontend. Garantizar que la información operacional represente fielmente el estado real del hardware.
 
@@ -277,13 +277,21 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 **Skills**: `observability-engineer`, `backend-engineer`
 
 ### Entregables
+- [x] Firmware: ADR-010-Mecanismo-Fail-Safe-Overheat implementado (override de emergencia + detección de fallo de sensor)
 - [ ] Backend: logging estructurado con Pino (reemplazar `console.log` disperso)
 - [ ] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
 - [ ] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
 - [ ] Backend: health check por nodo (última telemetría, estado MQTT, watchdog)
-- [ ] Firmware: ADR-024-Mecanismo-Fail-Safe-Overheat redactado e implementado
 - [ ] Frontend: página `/monitoring` con estado de salud del sistema
 - [ ] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
+
+### Capacidades futuras del Fail-Safe
+- [ ] Firmware: Power-On Sequence (T=0→T=30s) — purga de gases y calentamiento de sensores
+- [ ] Firmware: Gestión térmica del SSR — monitoreo NTC y reducción de ciclo de trabajo
+- [ ] Firmware: Overshoot protection — apagado anticipado de manta térmica a 1.0°C del setpoint
+- [ ] Firmware: Recuperación automática del bus I2C — reseteo sin reinicio del microcontrolador
+- [ ] Firmware: Operación degradada con ENS160 — ignorar CO₂ y operar solo con T/H
+- [ ] Firmware: Ciclo de ventilador post-sensor-failure — 2min ON / 10min OFF
 
 ### Criterios de aceptación
 - [ ] Una alarma CRITICAL se notifica por email en < 60s

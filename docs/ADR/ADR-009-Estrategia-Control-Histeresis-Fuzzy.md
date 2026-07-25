@@ -80,4 +80,4 @@ Los umbrales de histéresis se ajustan según la fase del ciclo:
 
 ## Referencias
 
-- `docs/roadmap.md` — Fase 13 (Automatización Adaptativa): Histéresis
+- `docs/roadmap/roadmap.md` — Fase 13 (Automatización Adaptativa): Histéresis

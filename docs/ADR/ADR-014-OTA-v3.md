@@ -20,7 +20,7 @@ Se requiere una arquitectura OTA que garantice seguridad, resiliencia y visibili
 
 ## Decisión
 
-Implementar el sistema OTA v3 definido en `docs/roadmap.md` (Fase 7) con los siguientes pilares arquitectónicos:
+Implementar el sistema OTA v3 definido en `docs/roadmap/roadmap.md` (Fase 7) con los siguientes pilares arquitectónicos:
 
 ### P1: Partición flash OTA dual con otadata
 
@@ -131,7 +131,7 @@ La descarga OTA corre en una tarea separada en Core 0 (red), con stack dimension
 
 ## Referencias
 
-- Roadmap: `docs/roadmap.md` — Fase 7 (Producción)
+- Roadmap: `docs/roadmap/roadmap.md` — Fase 7 (Producción)
 - Issues OTA v3: `docs/issues/ota-v3/`
 - ADR-001: Migración ESP32-S3 (definición de hardware target)
 - ADR-012: FreeRTOS (arquitectura de tareas y watchdog)

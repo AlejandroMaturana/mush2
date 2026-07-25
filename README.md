@@ -105,7 +105,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 - `docs/ADR/` — 14 Architecture Decision Records (ADR-001 a ADR-014)
 - `docs/architecture/` — Arquitectura por componente
 - `docs/contracts/` — Contratos (API REST, MQTT)
-- `docs/roadmap.md` — Roadmap de desarrollo (18 fases)
+- `docs/roadmap/roadmap.md` — Roadmap de desarrollo (18 fases)
 - `docs/requirements.md` — Requerimientos funcionales
 
 ### ADRs destacados (v0.9.1)

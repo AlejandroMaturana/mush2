@@ -52,4 +52,4 @@ Implementar una **fase de estabilización funcional** (Milestone 7e) que elimine
 
 - Auditoría de integridad funcional: 28 hallazgos documentados
 - `docs/roadmap/milestone.md` — M7e
-- `docs/roadmap.md` — Fase 7e
+- `docs/roadmap/roadmap.md` — Fase 7e
