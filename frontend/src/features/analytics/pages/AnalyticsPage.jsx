@@ -5,8 +5,8 @@ import RiskBar from '../components/RiskBar.jsx'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 
 const METRIC_CONFIG = {
-  temperature: { label: 'TEMPERATURE', icon: 'thermostat', color: 'var(--spore-green)' },
-  humidity: { label: 'HUMIDITY', icon: 'water_drop', color: 'var(--accent-blue, #60a5fa)' },
+  temperature: { label: 'TEMPERATURA', icon: 'thermostat', color: 'var(--spore-green)' },
+  humidity: { label: 'HUMEDAD', icon: 'water_drop', color: 'var(--accent-blue, #60a5fa)' },
   co2: { label: 'CO₂', icon: 'co2', color: 'var(--accent-purple, #a78bfa)' },
 }
 
@@ -24,7 +24,7 @@ function Analytics() {
       if (!selectedId && devs[0]) setSelectedId(devs[0].id)
       setError(null)
     } catch (err) {
-      setError(err.message || 'Error loading devices')
+      setError(err.message || 'Error al cargar los dispositivos')
     } finally {
       setLoading(false)
     }
@@ -37,7 +37,7 @@ function Analytics() {
       setAnalytics(result.data)
       setError(null)
     } catch (err) {
-      setError(err.message || 'Error loading analytics')
+      setError(err.message || 'Error al cargar los datos analíticos')
     }
   }
 
@@ -50,7 +50,7 @@ function Analytics() {
     }
   }, [selectedId]))
 
-  if (loading) return <LoadingState message="Loading analytics..." icon="analytics" />
+  if (loading) return <LoadingState message="Cargando datos analíticos..." icon="analytics" />
 
   const { telemetry, vpd, risks, cycle, chamber, efficiency } = analytics || {}
   const vpdColor = vpd?.vpd > 1.5 ? 'var(--error-red)' : 'var(--spore-green)'
@@ -61,9 +61,9 @@ function Analytics() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Chamber Analytics</h1>
+          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Análisis de cámara</h1>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>
-            VPD, biological risks and live metrics
+            VPD, riesgos biológicos y métricas en tiempo real
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -144,11 +144,11 @@ function Analytics() {
                 <div className="glass-card" style={{ padding: '20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--error-red)' }}>warning</span>
-                    <span className="section-label">Biological Risks</span>
+                    <span className="section-label">Riesgos biológicos</span>
                   </div>
-                  <RiskBar label="Condensation / Botrytis" value={risks.condensation || 0} icon="water_drop" />
-                  <RiskBar label="Heat Stress" value={risks.heatStress || 0} icon="thermostat" />
-                  <RiskBar label="Water Stress" value={risks.waterStress || 0} icon="humidity_high" />
+                  <RiskBar label="Condensación / Botrytis" value={risks.condensation || 0} icon="water_drop" />
+                  <RiskBar label="Estrés térmico" value={risks.heatStress || 0} icon="thermostat" />
+                  <RiskBar label="Estrés hídrico" value={risks.waterStress || 0} icon="humidity_high" />
                 </div>
               )}
 
@@ -156,18 +156,18 @@ function Analytics() {
               <div className="glass-card" style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--accent-blue, #60a5fa)' }}>insights</span>
-                  <span className="section-label">Environmental Insights</span>
+                  <span className="section-label">Condiciones ambientales</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div style={{ padding: '12px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
-                    <span className="form-label">Saturation Deficit</span>
+                    <span className="form-label">Déficit de saturación</span>
                     <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--on-surface)' }}>{vpd?.saturationDeficit ?? '—'}</span>
                     <span style={{ fontSize: '10px', color: 'var(--outline)', display: 'block' }}>{vpd?.unit}</span>
                   </div>
                   <div style={{ padding: '12px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
-                    <span className="form-label">Efficiency</span>
+                    <span className="form-label">Eficiencia</span>
                     <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--on-surface)' }}>{efficiency?.totalDevices ?? '—'}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--outline)', display: 'block' }}>devices · FAE: {efficiency?.faeEnabled ? 'ON' : 'OFF'}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--outline)', display: 'block' }}>dispositivos · FAE: {efficiency?.faeEnabled ? 'ACTIVO' : 'INACTIVO'}</span>
                   </div>
                 </div>
               </div>
@@ -179,14 +179,14 @@ function Analytics() {
               <div className="glass-card" style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>cyclone</span>
-                  <span className="section-label">Active Cycle</span>
+                  <span className="section-label">Ciclo activo</span>
                 </div>
                 {cycle ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
-                      { label: 'Species', value: cycle.species || '—' },
-                      { label: 'Status', value: cycle.status, color: 'var(--spore-green)' },
-                      { label: 'Phase', value: cycle.currentPhase || '—' },
+                      { label: 'Especie', value: cycle.species || '—' },
+                      { label: 'Estado', value: cycle.status, color: 'var(--spore-green)' },
+                      { label: 'Fase', value: cycle.currentPhase || '—' },
                     ].map((item, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
                         <span className="form-label">{item.label}</span>
@@ -194,12 +194,12 @@ function Analytics() {
                       </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
-                      <span className="form-label">Days Elapsed</span>
+                      <span className="form-label">Días transcurridos</span>
                       <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--spore-green)' }}>{cycle.daysElapsed ?? '—'}</span>
                     </div>
                   </div>
                 ) : (
-                  <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>No active cycle</p>
+                  <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>Sin ciclo activo</p>
                 )}
               </div>
 
@@ -212,13 +212,13 @@ function Analytics() {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span className="material-symbols-outlined pulse-error" style={{ fontSize: '18px', color: 'var(--error-red)' }}>priority_high</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--error-red)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Alert</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--error-red)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Alerta</span>
                   </div>
                   <p style={{ fontSize: '13px', color: 'var(--on-surface)', lineHeight: 1.6 }}>
-                    {risks.condensation > 75 && 'High condensation risk — check ventilation. '}
-                    {risks.heatStress > 75 && 'Critical heat stress — reduce temperature. '}
-                    {risks.waterStress > 75 && 'Severe water stress — increase humidity. '}
-                    {risks.condensation <= 75 && risks.heatStress <= 75 && risks.waterStress <= 75 && 'Elevated risk levels — monitor closely.'}
+                    {risks.condensation > 75 && 'Riesgo de condensación elevado — revisar ventilación. '}
+                    {risks.heatStress > 75 && 'Estrés térmico crítico — reducir temperatura. '}
+                    {risks.waterStress > 75 && 'Estrés hídrico severo — aumentar humedad. '}
+                    {risks.condensation <= 75 && risks.heatStress <= 75 && risks.waterStress <= 75 && 'Niveles de riesgo elevados — monitorear con atención.'}
                   </p>
                 </div>
               )}
@@ -228,8 +228,8 @@ function Analytics() {
       ) : (
         <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--outline)', marginBottom: '16px', display: 'block' }}>analytics</span>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>No Chamber Selected</h3>
-          <p style={{ fontSize: '13px', color: 'var(--outline)' }}>Select a chamber to view analytics.</p>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Sin cámara seleccionada</h3>
+          <p style={{ fontSize: '13px', color: 'var(--outline)' }}>Seleccione una cámara para ver los datos analíticos.</p>
         </div>
       )}
     </div>

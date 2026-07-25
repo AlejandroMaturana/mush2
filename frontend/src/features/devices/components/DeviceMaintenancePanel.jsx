@@ -40,11 +40,11 @@ function DeviceMaintenancePanel({ deviceId }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-18px">home_repair_service</span>
-          <span className="chart-panel-label">MAINTENANCE LOG</span>
+          <span className="chart-panel-label">REGISTRO DE MANTENIMIENTO</span>
         </div>
         <button className="btn btn-sm btn-outline" onClick={() => setShowForm(!showForm)}>
           <span className="material-symbols-outlined text-12px">{showForm ? 'close' : 'add'}</span>
-          {showForm ? 'Cancel' : 'Add'}
+          {showForm ? 'Cancelar' : 'Agregar'}
         </button>
       </div>
 
@@ -58,18 +58,18 @@ function DeviceMaintenancePanel({ deviceId }) {
           <input
             type="text"
             className="input w-full"
-            placeholder="Notes..."
+            placeholder="Notas del mantenimiento..."
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
           />
-          <button type="submit" className="btn btn-primary btn-sm w-full">Save</button>
+          <button type="submit" className="btn btn-primary btn-sm w-full">Guardar</button>
         </form>
       )}
 
       {loading ? (
-        <div className="text-body-sm text-on-surface-variant">Loading...</div>
+        <div className="text-body-sm text-on-surface-variant">Cargando...</div>
       ) : maintenance.length === 0 ? (
-        <div className="text-body-sm text-on-surface-variant text-center py-4">No maintenance records</div>
+        <div className="text-body-sm text-on-surface-variant text-center py-4">Sin registros de mantenimiento</div>
       ) : (
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {maintenance.map(m => {

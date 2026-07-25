@@ -3,8 +3,8 @@ import { getDevices, getLatestTelemetry, getRecipes, getCycles } from '../../../
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 
 const ENV_PARAMS = [
-  { key: 'temperature', label: 'TEMPERATURE', unit: '°C', icon: 'thermostat', min: 18, max: 32 },
-  { key: 'humidity', label: 'HUMIDITY', unit: '%', icon: 'water_drop', min: 60, max: 100 },
+  { key: 'temperature', label: 'TEMPERATURA', unit: '°C', icon: 'thermostat', min: 18, max: 32 },
+  { key: 'humidity', label: 'HUMEDAD', unit: '%', icon: 'water_drop', min: 60, max: 100 },
 ]
 
 function CultivationSettings() {
@@ -21,19 +21,19 @@ function CultivationSettings() {
       setDevices(devs); setRecipes(rec); setCycles(cyc)
       if (devs[0]) { const tel = await getLatestTelemetry(devs[0].id).catch(() => null); setTelemetry(tel) }
       setError(null)
-    } catch (err) { setError(err.message || 'Connection error') }
+    } catch (err) { setError(err.message || 'Error de conexión') }
     finally { setLoading(false) }
   }
 
   useEffect(() => { loadData() }, [])
 
-  if (loading) return <LoadingState message="Loading cultivation configuration..." icon="potted_plant" />
+  if (loading) return <LoadingState message="Cargando configuración de cultivo..." icon="potted_plant" />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Cultivation Configuration</h1>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Environmental parameters, connection status, recipes and cycles</p>
+        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Configuración de cultivo</h1>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Parámetros ambientales, estado de conexión, recetas y ciclos</p>
       </div>
 
       {error && (
@@ -48,7 +48,7 @@ function CultivationSettings() {
         <div className="glass-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>settings_input_composite</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Environment Parameters</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Parámetros ambientales</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {ENV_PARAMS.map(param => {
@@ -79,15 +79,15 @@ function CultivationSettings() {
         <div className="glass-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--accent-purple, #a78bfa)' }}>restaurant_menu</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Recipes</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Recetas</span>
           </div>
           {recipes.length === 0 ? (
-            <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '32px 0' }}>No recipes defined</p>
+            <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '32px 0' }}>No hay recetas definidas</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
               {recipes.map(r => (
                 <div key={r.id} style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--surface-container)', borderLeft: '3px solid var(--spore-green)' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--spore-green)' }}>{r.name || `Recipe #${r.id}`}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--spore-green)' }}>{r.name || `Receta #${r.id}`}</span>
                   {r.species && <span style={{ fontSize: '10px', color: 'var(--outline)', display: 'block', marginTop: '2px' }}>{r.species}</span>}
                 </div>
               ))}
@@ -100,10 +100,10 @@ function CultivationSettings() {
       <div className="glass-card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>cyclone</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Active Cycles</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Ciclos activos</span>
         </div>
         {cycles.length === 0 ? (
-          <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>No active cultivation cycles</p>
+          <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>No hay ciclos de cultivo activos</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
             {cycles.map(c => (

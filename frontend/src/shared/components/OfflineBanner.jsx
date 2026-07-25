@@ -20,7 +20,7 @@ function OfflineBanner() {
   return (
     <div className="flex items-center justify-center gap-2 px-4 py-2 bg-error/90 text-on-error">
       <span className="material-symbols-outlined text-sm">cloud_off</span>
-      <span className="font-label-caps text-label-caps">CONNECTION LOST — Data may be stale</span>
+      <span className="font-label-caps text-label-caps">CONEXIÓN INTERRUMPIDA — Los datos pueden no estar actualizados</span>
     </div>
   )
 }

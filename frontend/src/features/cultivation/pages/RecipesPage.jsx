@@ -26,7 +26,7 @@ function PhaseTimeline({ incubationDays, fruitingDays }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)' }}>
         <span>Inc {incubationDays || 0}d</span>
-        <span>Frt {fruitingDays || 0}d</span>
+        <span>Fru {fruitingDays || 0}d</span>
         <span style={{ fontWeight: 600, color: 'var(--on-surface)' }}>{total}d</span>
       </div>
     </div>
@@ -44,25 +44,25 @@ function PhaseSection({ title, icon, data, onChange }) {
         <div>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Temp °C</label>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <input type="number" step="0.5" value={data.tempMin} onChange={e => onChange({ ...data, tempMin: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Min" />
-            <input type="number" step="0.5" value={data.tempMax} onChange={e => onChange({ ...data, tempMax: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Max" />
+            <input type="number" step="0.5" value={data.tempMin} onChange={e => onChange({ ...data, tempMin: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Mín" />
+            <input type="number" step="0.5" value={data.tempMax} onChange={e => onChange({ ...data, tempMax: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Máx" />
           </div>
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Humidity %</label>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Humedad %</label>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <input type="number" step="0.5" value={data.humMin} onChange={e => onChange({ ...data, humMin: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Min" />
-            <input type="number" step="0.5" value={data.humMax} onChange={e => onChange({ ...data, humMax: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Max" />
+            <input type="number" step="0.5" value={data.humMin} onChange={e => onChange({ ...data, humMin: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Mín" />
+            <input type="number" step="0.5" value={data.humMax} onChange={e => onChange({ ...data, humMax: e.target.value })} className="form-input" style={{ width: '50%', textAlign: 'center', fontSize: '12px' }} placeholder="Máx" />
           </div>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>CO₂ Max</label>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>CO₂ Máx</label>
           <input type="number" value={data.co2Max} onChange={e => onChange({ ...data, co2Max: e.target.value })} className="form-input" style={{ textAlign: 'center', fontSize: '12px' }} />
         </div>
         <div>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Days</label>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Días</label>
           <input type="number" value={data.days} onChange={e => onChange({ ...data, days: e.target.value })} className="form-input" style={{ textAlign: 'center', fontSize: '12px' }} />
         </div>
       </div>
@@ -91,7 +91,7 @@ function Recipes() {
       const data = await getRecipes()
       setRecipes(data)
     } catch (err) {
-      setError(err.message || 'Error loading recipes')
+      setError(err.message || 'Error al cargar las recetas')
     } finally {
       setLoading(false)
     }
@@ -165,30 +165,30 @@ function Recipes() {
       resetForm()
       await load()
     } catch (err) {
-      setError(err.message || `Error ${editingRecipe ? 'updating' : 'creating'} recipe`)
+      setError(err.message || `Error al ${editingRecipe ? 'actualizar' : 'crear'} la receta`)
     } finally {
       setSubmitting(false)
     }
   }
 
-  if (loading) return <LoadingState message="Loading recipes..." icon="science" />
+  if (loading) return <LoadingState message="Cargando recetas de cultivo..." icon="science" />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Recipes"
-        subtitle={`${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`}
+        title="Recetas de cultivo"
+        subtitle={`${recipes.length} receta${recipes.length !== 1 ? 's' : ''}`}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>
             {recipes.length >= 2 && (
               <Link to="/cultivation/recipes/compare" className="btn btn-secondary" style={{ fontSize: '11px' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>compare</span>
-                COMPARE
+                COMPARAR
               </Link>
             )}
             <button onClick={() => { resetForm(); setShowForm(true) }} className="btn btn-glow" style={{ fontSize: '11px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
-              NEW RECIPE
+              NUEVA RECETA
             </button>
           </div>
         }
@@ -204,9 +204,9 @@ function Recipes() {
       {recipes.length === 0 ? (
         <EmptyState
           icon="science"
-          title="No recipes yet"
-          message="Create your first recipe to define cultivation parameters."
-          action={{ label: 'NEW RECIPE', onClick: () => { resetForm(); setShowForm(true) } }}
+          title="Sin recetas registradas"
+          message="Cree su primera receta para definir los parámetros del ambiente de cultivo."
+          action={{ label: 'NUEVA RECETA', onClick: () => { resetForm(); setShowForm(true) } }}
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
@@ -235,8 +235,8 @@ function Recipes() {
                     { icon: 'thermostat', color: '#60a5fa', text: `Frut: ${r.fruitingTempMin || '?'}–${r.fruitingTempMax || '?'}°C` },
                     { icon: 'water_drop', color: '#22d3ee', text: `Inc: ${r.incubationHumMin || '?'}–${r.incubationHumMax || '?'}%` },
                     { icon: 'water_drop', color: '#22d3ee', text: `Frut: ${r.fruitingHumMin || '?'}–${r.fruitingHumMax || '?'}%` },
-                    { icon: 'air', color: '#4ade80', text: `FAE: ${r.faeIntervalMinutes || '?'}min` },
-                    { icon: 'light_mode', color: '#fbbf24', text: `Light: ${r.lightCycleHours || 12}h` },
+                    { icon: 'air', color: '#4ade80', text: `Ventilación: ${r.faeIntervalMinutes || '?'}min` },
+                    { icon: 'light_mode', color: '#fbbf24', text: `Luz: ${r.lightCycleHours || 12}h` },
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '12px', color: item.color }}>{item.icon}</span>
@@ -254,14 +254,14 @@ function Recipes() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>{editingRecipe ? 'Edit Recipe' : 'New Recipe'}</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>{editingRecipe ? 'Editar receta' : 'Nueva receta'}</h2>
               <button onClick={() => setShowForm(false)} className="btn btn-ghost btn-sm">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
               </button>
             </div>
             <form onSubmit={handleCreate} style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Quick Start — Species Preset</h3>
+                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Plantillas de especies</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                   {SPECIES_PRESETS.map(p => (
                     <button key={p.id} type="button" onClick={() => applyPreset(p)} style={{
@@ -278,59 +278,59 @@ function Recipes() {
               </div>
 
               <div>
-                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Identity</h3>
+                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Identificación</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Name</label>
-                    <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="form-input" placeholder="e.g. Lion's Mane Standard" />
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Nombre</label>
+                    <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="form-input" placeholder="Ej: Melena de León Estándar" />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Species</label>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Especie</label>
                     <input value={form.species} onChange={e => setForm({ ...form, species: e.target.value })} required className="form-input" style={{ fontStyle: 'italic' }} placeholder="Hericium erinaceus" />
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <PhaseSection title="Incubation" icon="science" data={form.incubation} onChange={d => setForm({ ...form, incubation: d })} />
-                <PhaseSection title="Fruiting" icon="grass" data={form.fruiting} onChange={d => setForm({ ...form, fruiting: d })} />
+                <PhaseSection title="Incubación" icon="science" data={form.incubation} onChange={d => setForm({ ...form, incubation: d })} />
+                <PhaseSection title="Fructificación" icon="grass" data={form.fruiting} onChange={d => setForm({ ...form, fruiting: d })} />
               </div>
 
               <div>
-                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Environment</h3>
+                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Parámetros ambientales</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>FAE (min)</label>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Ventilación (min)</label>
                     <input type="number" value={form.faeInterval} onChange={e => setForm({ ...form, faeInterval: e.target.value })} className="form-input" style={{ textAlign: 'center', fontSize: '12px' }} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Ventilation</label>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Estrategia</label>
                     <select value={form.ventilationStrategy} onChange={e => setForm({ ...form, ventilationStrategy: e.target.value })} className="form-select" style={{ fontSize: '12px' }}>
-                      <option value="TIMER">Timer</option>
+                      <option value="TIMER">Temporizador</option>
                       <option value="CO2_TRIGGER">CO₂</option>
-                      <option value="HYBRID">Hybrid</option>
+                      <option value="HYBRID">Híbrido</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>FAE Level</label>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Nivel de flujo</label>
                     <select value={form.faeLevel} onChange={e => setForm({ ...form, faeLevel: e.target.value })} className="form-select" style={{ fontSize: '12px' }}>
-                      <option value="LOW">Low</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="HIGH">High</option>
+                      <option value="LOW">Bajo</option>
+                      <option value="MEDIUM">Medio</option>
+                      <option value="HIGH">Alto</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Light (h)</label>
+                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Luz (h)</label>
                     <input type="number" min="0" max="24" value={form.lightCycle} onChange={e => setForm({ ...form, lightCycle: e.target.value })} className="form-input" style={{ textAlign: 'center', fontSize: '12px' }} />
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--outline-variant)' }}>
-                <button type="button" onClick={resetForm} style={{ fontSize: '12px', color: 'var(--outline)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
+                <button type="button" onClick={resetForm} style={{ fontSize: '12px', color: 'var(--outline)', background: 'none', border: 'none', cursor: 'pointer' }}>Restablecer</button>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ fontSize: '11px' }}>Cancel</button>
-                  <button type="submit" disabled={submitting} className="btn btn-glow" style={{ fontSize: '11px' }}>{submitting ? '...' : editingRecipe ? 'Save' : 'Create'}</button>
+                  <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ fontSize: '11px' }}>Cancelar</button>
+                  <button type="submit" disabled={submitting} className="btn btn-glow" style={{ fontSize: '11px' }}>{submitting ? '...' : editingRecipe ? 'Guardar' : 'Crear'}</button>
                 </div>
               </div>
             </form>

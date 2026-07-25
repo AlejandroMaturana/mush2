@@ -7,8 +7,8 @@ import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 import Panel from '../../../shared/components/Panel.jsx'
 import DashboardGrid from '../../../shared/components/DashboardGrid.jsx'
 
-const STATUS_LABELS = { PLANNED: 'Planned', ACTIVE: 'Active', COMPLETED: 'Completed', ABORTED: 'Aborted' }
-const PHASE_LABELS = { INCUBATION: 'Incubation', FRUITING: 'Fruiting', MAINTENANCE: 'Maintenance', COMPLETED: 'Completed' }
+const STATUS_LABELS = { PLANNED: 'Planificado', ACTIVE: 'Activo', COMPLETED: 'Completado', ABORTED: 'Cancelado' }
+const PHASE_LABELS = { INCUBATION: 'Incubación', FRUITING: 'Fructificación', MAINTENANCE: 'Mantenimiento', COMPLETED: 'Completado' }
 
 function CycleCard({ cycle, onUpdate }) {
   const { status, currentPhase, species, strain, startDate, endDate, Recipe } = cycle
@@ -39,14 +39,14 @@ function CycleCard({ cycle, onUpdate }) {
           </div>
           <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '2px' }}>
             <Link to={`/cultivation/cycles/${cycle.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-              {strain || species || 'Unknown'}
+              {strain || species || 'Sin identificar'}
             </Link>
           </h2>
           <p style={{ fontSize: '12px', color: 'var(--outline)' }}>{species}</p>
         </div>
         {startDate && (
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>START DATE</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>INICIO</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--on-surface)' }}>{new Date(startDate).toLocaleDateString()}</span>
           </div>
         )}
@@ -54,37 +54,37 @@ function CycleCard({ cycle, onUpdate }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', paddingTop: '12px', borderTop: '1px solid var(--outline-variant)' }}>
         <div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>Recipe</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>Receta</span>
           <span style={{ fontSize: '13px', color: 'var(--on-surface)' }}>{Recipe?.name || '—'}</span>
         </div>
         <div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>End Date</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '2px' }}>Fin</span>
           <span style={{ fontSize: '13px', color: 'var(--on-surface)' }}>{endDate ? new Date(endDate).toLocaleDateString() : '—'}</span>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: '8px' }}>
         <Link to={`/cultivation/cycles/${cycle.id}`} className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '10px' }}>
-          DETAILS
+          DETALLES
         </Link>
         {(isActive || status === 'COMPLETED') && (
           <Link to={`/cultivation/cycles/${cycle.id}/bioactives`} className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '10px' }}>
-            BIOACTIVES
+            BIOACTIVOS
           </Link>
         )}
         {isActive && (
           <button onClick={() => handleUpdate({ status: 'COMPLETED' })} className="btn btn-glow" style={{ flex: 1, fontSize: '10px' }}>
-            COMPLETE
+            COMPLETAR
           </button>
         )}
         {isPlanned && (
           <button onClick={() => handleUpdate({ status: 'ACTIVE' })} className="btn btn-glow" style={{ flex: 1, fontSize: '10px' }}>
-            START
+            INICIAR
           </button>
         )}
         {(isActive || isPlanned) && (
           <button onClick={() => handleUpdate({ status: 'ABORTED' })} className="btn btn-danger" style={{ flex: 1, fontSize: '10px' }}>
-            ABORT
+            CANCELAR
           </button>
         )}
       </div>
@@ -110,7 +110,7 @@ function Cycles() {
       setRecipes(r)
       setDevices(d)
     } catch (err) {
-      setError(err.message || 'Error loading cycles')
+      setError(err.message || 'Error al cargar los ciclos')
     } finally {
       setLoading(false)
     }
@@ -130,7 +130,7 @@ function Cycles() {
       setForm({ recipeId: '', species: '', strain: '', startDate: '', deviceId: '' })
       await load()
     } catch (err) {
-      setError(err.message || 'Error creating cycle')
+      setError(err.message || 'Error al crear el ciclo')
     } finally {
       setSubmitting(false)
     }
@@ -139,17 +139,17 @@ function Cycles() {
   const active = cycles.filter(c => c.status === 'ACTIVE' || c.status === 'PLANNED')
   const historical = cycles.filter(c => c.status === 'COMPLETED' || c.status === 'ABORTED')
 
-  if (loading) return <LoadingState message="Loading cycles..." icon="cyclone" />
+  if (loading) return <LoadingState message="Cargando ciclos de cultivo..." icon="cyclone" />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Cultivation Cycles"
-        subtitle={`${cycles.length} cycle${cycles.length !== 1 ? 's' : ''} total`}
+        title="Ciclos de cultivo"
+        subtitle={`${cycles.length} ciclo${cycles.length !== 1 ? 's' : ''} en total`}
         actions={
           <button onClick={() => setShowForm(true)} className="btn btn-glow" style={{ fontSize: '11px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
-            NEW CYCLE
+            NUEVO CICLO
           </button>
         }
       />
@@ -163,7 +163,7 @@ function Cycles() {
 
       {active.length > 0 && (
         <section>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px' }}>Active</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px' }}>En curso</h2>
           <DashboardGrid columns="auto">
             {active.map(c => <CycleCard key={c.id} cycle={c} onUpdate={load} />)}
           </DashboardGrid>
@@ -173,24 +173,24 @@ function Cycles() {
       {cycles.length === 0 && !error && (
         <EmptyState
           icon="cyclone"
-          title="No Cycles"
-          message="No cultivation cycles yet. Start a new batch to begin tracking growth."
+          title="Sin ciclos registrados"
+          message="Aún no hay ciclos de cultivo. Inicie un nuevo lote para comenzar el seguimiento."
         />
       )}
 
       {historical.length > 0 && (
         <section>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px' }}>History</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '16px' }}>Historial</h3>
           <div className="glass-card" style={{ overflow: 'hidden' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Start</th>
-                  <th>Species</th>
-                  <th>Status</th>
-                  <th>Phase</th>
-                  <th>Recipe</th>
-                  <th>End Date</th>
+                  <th>Inicio</th>
+                  <th>Especie</th>
+                  <th>Estado</th>
+                  <th>Fase</th>
+                  <th>Receta</th>
+                  <th>Fin</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,8 +200,8 @@ function Cycles() {
                       {c.startDate ? new Date(c.startDate).toLocaleDateString() : '—'}
                     </td>
                     <td>
-                      <span style={{ fontSize: '13px', color: 'var(--on-surface)' }}>{c.species || 'Unknown'}</span>
-                      {c.strain && <span style={{ fontSize: '9px', color: 'var(--outline)', display: 'block' }}>Strain: {c.strain}</span>}
+                      <span style={{ fontSize: '13px', color: 'var(--on-surface)' }}>{c.species || 'Sin identificar'}</span>
+                      {c.strain && <span style={{ fontSize: '9px', color: 'var(--outline)', display: 'block' }}>Cepa: {c.strain}</span>}
                     </td>
                     <td>
                       <span style={{
@@ -232,45 +232,45 @@ function Cycles() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>New Cycle</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>Nuevo ciclo</h2>
               <button onClick={() => setShowForm(false)} className="btn btn-ghost btn-sm">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
               </button>
             </div>
             <form onSubmit={handleCreate} style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Recipe</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Receta</label>
                 <select value={form.recipeId} onChange={e => setForm({...form, recipeId: e.target.value})} required className="form-select">
-                  <option value="">— Select Recipe —</option>
+                  <option value="">— Seleccionar receta —</option>
                   {recipes.map(r => <option key={r.id} value={r.id}>{r.name} ({r.species})</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Device / Chamber</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Dispositivo / Cámara</label>
                 <select value={form.deviceId} onChange={e => setForm({...form, deviceId: e.target.value})} className="form-select">
-                  <option value="">— No device (manual) —</option>
+                  <option value="">— Sin dispositivo (manual) —</option>
                   {devices.map(d => (
                     <option key={d.id} value={d.id}>
-                      {d.chamberName || d.deviceId}{d.chamberId != null ? ` (Chamber ${d.chamberId})` : ''} {d.macAddress ? `· ${d.macAddress}` : ''}
+                      {d.chamberName || d.deviceId}{d.chamberId != null ? ` (Cámara ${d.chamberId})` : ''} {d.macAddress ? `· ${d.macAddress}` : ''}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Species</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Especie</label>
                 <input value={form.species} onChange={e => setForm({...form, species: e.target.value})} required className="form-input" />
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Strain</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Cepa</label>
                 <input value={form.strain} onChange={e => setForm({...form, strain: e.target.value})} className="form-input" />
               </div>
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Start Date</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Fecha de inicio</label>
                 <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} required className="form-input" />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--outline-variant)' }}>
-                <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ fontSize: '11px' }}>Cancel</button>
-                <button type="submit" disabled={submitting} className="btn btn-glow" style={{ fontSize: '11px' }}>{submitting ? 'Creating...' : 'Create Cycle'}</button>
+                <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ fontSize: '11px' }}>Cancelar</button>
+                <button type="submit" disabled={submitting} className="btn btn-glow" style={{ fontSize: '11px' }}>{submitting ? 'Creando...' : 'Crear ciclo'}</button>
               </div>
             </form>
           </div>

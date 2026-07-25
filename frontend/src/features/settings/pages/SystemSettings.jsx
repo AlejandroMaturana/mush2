@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getSystemSettings, updateSystemSettings, seedSystemSettings, configureTelegramBot, getTelegramBotStatus } from '../../../api/client.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 
-const CATEGORY_LABELS = { installation: 'Installation', timing: 'Timing', storage: 'Storage', environment: 'Environment', states: 'States', alarms: 'Alarms', integration: 'Integration', ota: 'OTA' }
+const CATEGORY_LABELS = { installation: 'Instalación', timing: 'Temporización', storage: 'Almacenamiento', environment: 'Entorno', states: 'Estados', alarms: 'Alarmas', integration: 'Integración', ota: 'OTA' }
 const CATEGORY_ORDER = ['installation', 'timing', 'storage', 'environment', 'states', 'alarms', 'integration', 'ota']
 
 function SystemSettings() {
@@ -20,7 +20,7 @@ function SystemSettings() {
 
   async function fetchSettings() {
     try { const data = await getSystemSettings(); setSettings(data); setError(null) }
-    catch (err) { setError(err.message || 'Error loading') }
+    catch (err) { setError(err.message || 'Error al cargar') }
     finally { setLoading(false) }
   }
 
@@ -42,7 +42,7 @@ function SystemSettings() {
     try {
       const result = await configureTelegramBot(tgToken, tgUsername)
       setTgStatus({ running: result.running, username: result.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: result.lastError })
-      setTgMsg({ type: result.running ? 'ok' : 'err', text: result.running ? 'Bot initialized successfully' : `Bot failed: ${result.lastError || 'unknown error'}` })
+      setTgMsg({ type: result.running ? 'ok' : 'err', text: result.running ? 'Bot inicializado correctamente' : `Bot falló: ${result.lastError || 'error desconocido'}` })
     } catch (err) { setTgMsg({ type: 'err', text: err.response?.data?.error || err.message }) }
     finally { setTgSaving(false) }
   }
@@ -51,18 +51,18 @@ function SystemSettings() {
 
   async function handleSave() {
     setSaving(true); setMsg(null)
-    try { await updateSystemSettings(settings.map(s => ({ key: s.key, value: s.value }))); setMsg({ type: 'ok', text: 'System settings saved' }) }
-    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Failed' }) }
+    try { await updateSystemSettings(settings.map(s => ({ key: s.key, value: s.value }))); setMsg({ type: 'ok', text: 'Configuración del sistema guardada' }) }
+    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
   async function handleSeed() {
-    if (!window.confirm('Restore default system settings?')) return; setSeedMsg(null)
-    try { await seedSystemSettings(); await fetchSettings(); setSeedMsg({ type: 'ok', text: 'Defaults seeded' }) }
-    catch (err) { setSeedMsg({ type: 'err', text: err.message || 'Failed' }) }
+    if (!window.confirm('¿Restaurar configuración del sistema predeterminada?')) return; setSeedMsg(null)
+    try { await seedSystemSettings(); await fetchSettings(); setSeedMsg({ type: 'ok', text: 'Valores predeterminados restaurados' }) }
+    catch (err) { setSeedMsg({ type: 'err', text: err.message || 'Falló' }) }
   }
 
-  if (loading) return <LoadingState message="Loading system settings..." icon="settings" />
+  if (loading) return <LoadingState message="Cargando configuración del sistema..." icon="settings" />
 
   const grouped = {}
   for (const s of settings) { const cat = s.category || 'other'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(s) }
@@ -72,12 +72,12 @@ function SystemSettings() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>System Settings</h1>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Global configuration parameters (SUPER_ADMIN only)</p>
+          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Configuración del sistema</h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Parámetros de configuración global (solo SUPER_ADMIN)</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-secondary" style={{ fontSize: '10px' }} onClick={handleSeed}>RESTORE DEFAULTS</button>
-          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSave} disabled={saving}>{saving ? 'SAVING...' : 'SAVE ALL'}</button>
+          <button className="btn btn-secondary" style={{ fontSize: '10px' }} onClick={handleSeed}>RESTABLECER VALORES</button>
+          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSave} disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR TODO'}</button>
         </div>
       </div>
 
@@ -90,9 +90,9 @@ function SystemSettings() {
       {settings.length === 0 ? (
         <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--outline)', marginBottom: '16px', display: 'block' }}>settings</span>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>No Settings</h3>
-          <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>Seed the system settings to get started.</p>
-          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSeed}>SEED DEFAULTS</button>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Sin configuración</h3>
+          <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>Inicializa la configuración del sistema para comenzar.</p>
+          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSeed}>INICIALIZAR VALORES</button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -140,7 +140,7 @@ function SystemSettings() {
           <div className={`alert-banner ${tgStatus.running ? 'alert-banner-success' : 'alert-banner-error'}`} style={{ marginBottom: '16px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: tgStatus.running ? 'var(--spore-green)' : 'var(--error-red)', boxShadow: tgStatus.running ? '0 0 8px var(--spore-green)' : 'none' }} />
             <div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{tgStatus.running ? 'Bot running' : 'Bot stopped'}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{tgStatus.running ? 'Bot en ejecución' : 'Bot detenido'}</span>
               {tgStatus.username && <span style={{ fontSize: '11px', color: 'var(--outline)', display: 'block' }}>@{tgStatus.username}</span>}
               {tgStatus.lastError && <span style={{ fontSize: '11px', color: 'var(--error-red)', display: 'block' }}>Error: {tgStatus.lastError}</span>}
             </div>

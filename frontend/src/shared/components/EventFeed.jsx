@@ -1,4 +1,4 @@
-function EventFeed({ events = [], maxItems = 50, onEventClick, emptyMessage = 'No events yet' }) {
+function EventFeed({ events = [], maxItems = 50, onEventClick, emptyMessage = 'Sin eventos registrados' }) {
   const displayEvents = events.slice(0, maxItems)
 
   if (displayEvents.length === 0) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function CommandPanel({ commands = [], onExecute, disabled = false, title = 'Quick Actions' }) {
+function CommandPanel({ commands = [], onExecute, disabled = false, title = 'Acciones rápidas' }) {
   const [loading, setLoading] = useState(null)
 
   const handleExecute = async (command) => {

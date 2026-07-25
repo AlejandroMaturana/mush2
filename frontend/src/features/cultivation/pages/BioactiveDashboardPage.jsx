@@ -53,52 +53,52 @@ export default function BioactiveDashboard() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-on-surface-variant">Loading bioactive data...</div>
+  if (loading) return <div className="p-8 text-center text-on-surface-variant">Cargando datos de bioactivos...</div>
   if (error) return <div className="p-8 text-center text-error">{error}</div>
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-headline-lg text-on-surface">Bioactive Compounds</h1>
+          <h1 className="text-headline-lg text-on-surface">Compuestos bioactivos</h1>
           <p className="text-body-md text-on-surface-variant">
-            {correlation?.species || 'Cycle'} — Cycle #{id}
+            {correlation?.species || 'Ciclo'} — Ciclo #{id}
           </p>
         </div>
         <button onClick={() => setShowAddForm(!showAddForm)} className="btn btn-primary">
-          {showAddForm ? 'CANCEL' : '+ ADD ANALYSIS'}
+          {showAddForm ? 'CANCELAR' : '+ AGREGAR ANÁLISIS'}
         </button>
       </div>
 
       {showAddForm && (
         <form onSubmit={handleAdd} className="bg-surface-container border border-outline-variant rounded-lg p-5 space-y-4">
-          <h3 className="text-title-md text-on-surface">New Bioactive Analysis</h3>
+          <h3 className="text-title-md text-on-surface">Nuevo análisis de bioactivos</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">COMPOUND NAME</label>
+              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">NOMBRE DEL COMPUESTO</label>
               <input
                 type="text"
                 value={formData.compoundName}
                 onChange={e => setFormData({ ...formData, compoundName: e.target.value })}
-                placeholder="e.g. beta_glucans"
+                placeholder="Ej: beta_glucanos"
                 className="input"
                 required
               />
             </div>
             <div>
-              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">CONCENTRATION</label>
+              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">CONCENTRACIÓN</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.concentration}
                 onChange={e => setFormData({ ...formData, concentration: e.target.value })}
-                placeholder="e.g. 32.5"
+                placeholder="Ej: 32.5"
                 className="input"
                 required
               />
             </div>
             <div>
-              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">UNIT</label>
+              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">UNIDAD</label>
               <input
                 type="text"
                 value={formData.unit}
@@ -107,18 +107,18 @@ export default function BioactiveDashboard() {
               />
             </div>
             <div>
-              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">LAB SOURCE</label>
+              <label className="font-label-caps text-9px text-on-surface-variant block mb-1">FUENTE DE LAB</label>
               <input
                 type="text"
                 value={formData.labSource}
                 onChange={e => setFormData({ ...formData, labSource: e.target.value })}
-                placeholder="e.g. HPLC"
+                placeholder="Ej: HPLC"
                 className="input"
               />
             </div>
           </div>
           <div>
-            <label className="font-label-caps text-9px text-on-surface-variant block mb-1">NOTES</label>
+            <label className="font-label-caps text-9px text-on-surface-variant block mb-1">NOTAS</label>
             <textarea
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -126,13 +126,13 @@ export default function BioactiveDashboard() {
               rows={2}
             />
           </div>
-          <button type="submit" className="btn btn-primary">SAVE ANALYSIS</button>
+          <button type="submit" className="btn btn-primary">GUARDAR ANÁLISIS</button>
         </form>
       )}
 
       {correlation?.compounds?.length > 0 && (
         <div className="bg-surface-container border border-outline-variant rounded-lg p-5">
-          <h2 className="text-title-md text-on-surface mb-4">Compound Summary</h2>
+          <h2 className="text-title-md text-on-surface mb-4">Resumen de compuestos</h2>
           <div className="space-y-3">
             {correlation.compounds.map(c => (
               <CompoundBar key={c.name} compound={c} />
@@ -143,7 +143,7 @@ export default function BioactiveDashboard() {
 
       {correlation?.environmentByPhase && Object.keys(correlation.environmentByPhase).length > 0 && (
         <div className="bg-surface-container border border-outline-variant rounded-lg p-5">
-          <h2 className="text-title-md text-on-surface mb-4">Environment by Phase</h2>
+          <h2 className="text-title-md text-on-surface mb-4">Ambiente por fase</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(correlation.environmentByPhase).map(([phase, env]) => (
               <div key={phase} className="bg-surface-container-low rounded-lg p-4">
@@ -154,7 +154,7 @@ export default function BioactiveDashboard() {
                     <span className="text-on-surface font-mono">{env.avgTemp}°C ({env.minTemp}–{env.maxTemp})</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-on-surface-variant">Humidity</span>
+                    <span className="text-on-surface-variant">Humedad</span>
                     <span className="text-on-surface font-mono">{env.avgHum}% ({env.minHum}–{env.maxHum})</span>
                   </div>
                   <div className="flex justify-between">
@@ -162,7 +162,7 @@ export default function BioactiveDashboard() {
                     <span className="text-on-surface font-mono">{env.avgCO2}ppm ({env.minCO2}–{env.maxCO2})</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-on-surface-variant">Snapshots</span>
+                    <span className="text-on-surface-variant">Instantáneas</span>
                     <span className="text-on-surface font-mono">{env.snapshots}</span>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export default function BioactiveDashboard() {
 
       {correlation?.insights?.length > 0 && (
         <div className="bg-surface-container border border-outline-variant rounded-lg p-5">
-          <h2 className="text-title-md text-on-surface mb-3">Insights</h2>
+          <h2 className="text-title-md text-on-surface mb-3">Perspectivas</h2>
           <ul className="space-y-2">
             {correlation.insights.map((insight, i) => (
               <li key={i} className="flex items-start gap-2 text-body-md">
@@ -188,16 +188,16 @@ export default function BioactiveDashboard() {
 
       {bioactives.length > 0 && (
         <div className="bg-surface-container border border-outline-variant rounded-lg p-5">
-          <h2 className="text-title-md text-on-surface mb-4">Analysis History</h2>
+          <h2 className="text-title-md text-on-surface mb-4">Historial de análisis</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-body-sm">
               <thead>
                 <tr className="border-b border-outline-variant/30">
-                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">COMPOUND</th>
-                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">CONCENTRATION</th>
-                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">SOURCE</th>
-                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">DATE</th>
-                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">NOTES</th>
+                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">COMPUESTO</th>
+                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">CONCENTRACIÓN</th>
+                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">FUENTE</th>
+                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">FECHA</th>
+                  <th className="text-left font-label-caps text-9px text-on-surface-variant py-2">NOTAS</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,8 +218,8 @@ export default function BioactiveDashboard() {
 
       {bioactives.length === 0 && !showAddForm && (
         <div className="bg-surface-container border border-outline-variant rounded-lg p-8 text-center">
-          <p className="text-on-surface-variant">No bioactive analyses recorded for this cycle yet.</p>
-          <p className="text-body-sm text-on-surface-variant mt-2">Click "+ ADD ANALYSIS" to record lab results.</p>
+          <p className="text-on-surface-variant">Sin análisis de bioactivos registrados para este ciclo.</p>
+          <p className="text-body-sm text-on-surface-variant mt-2">Haga clic en "+ AGREGAR ANÁLISIS" para registrar resultados de laboratorio.</p>
         </div>
       )}
     </div>

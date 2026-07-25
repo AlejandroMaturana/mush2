@@ -23,7 +23,7 @@ function Panel({ title, subtitle, collapsible = false, defaultCollapsed = false,
             <button
               className="btn-icon btn-sm"
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? 'Expand' : 'Collapse'}
+              aria-label={collapsed ? 'Expandir' : 'Contraer'}
             >
               <span className="material-symbols-outlined">
                 {collapsed ? 'expand_more' : 'expand_less'}

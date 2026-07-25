@@ -24,7 +24,7 @@ function DeviceSettings() {
 
   async function loadDevices() {
     try { const devs = await getDevices(); setDevices(devs); if (!selectedId && devs[0]) setSelectedId(devs[0].id); setError(null) }
-    catch (err) { setError(err.message || 'Connection error') }
+    catch (err) { setError(err.message || 'Error de conexión') }
     finally { setLoading(false) }
   }
 
@@ -35,7 +35,7 @@ function DeviceSettings() {
       setRenameValue(dev.chamberName || dev.deviceId || ''); setTsApiKey(''); setTsChannels([]); setTsSelectedChannel(null)
       setTsChannelId(dev.thingSpeakChannelId || ''); setTsReadKey(dev.thingSpeakReadKey || ''); setTsWriteKey(dev.thingSpeakWriteKey || '')
       setTsSyncInterval(dev.thingSpeakSyncInterval || 300000); setTsMsg(null); setError(null)
-    } catch (err) { setError(err.message || 'Connection error') }
+    } catch (err) { setError(err.message || 'Error de conexión') }
     finally { setLoadingDetail(false) }
   }
 
@@ -44,15 +44,15 @@ function DeviceSettings() {
 
   async function handleRename() {
     if (!device || !renameValue.trim()) return; setSaving(true); setRenameMsg(null)
-    try { await updateDevice(device.id, { chamberName: renameValue.trim() }); setDevice(p => ({ ...p, chamberName: renameValue.trim() })); setRenameMsg({ type: 'ok', text: 'Device name updated' }) }
-    catch (err) { setRenameMsg({ type: 'err', text: err.message || 'Failed' }) }
+    try { await updateDevice(device.id, { chamberName: renameValue.trim() }); setDevice(p => ({ ...p, chamberName: renameValue.trim() })); setRenameMsg({ type: 'ok', text: 'Nombre del dispositivo actualizado' }) }
+    catch (err) { setRenameMsg({ type: 'err', text: err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
   async function handleValidateThingSpeak() {
     if (!device || !tsApiKey.trim()) return; setTsValidating(true); setTsMsg(null); setTsChannels([]); setTsSelectedChannel(null)
-    try { const r = await validateThingSpeak(device.id, tsApiKey.trim()); if (r.valid) { setTsChannels(r.channels); setTsMsg({ type: 'ok', text: `Key valid — ${r.channels.length} channel(s) found` }) } }
-    catch (err) { setTsMsg({ type: 'err', text: err.response?.data?.error || 'Invalid API key' }) }
+    try { const r = await validateThingSpeak(device.id, tsApiKey.trim()); if (r.valid) { setTsChannels(r.channels); setTsMsg({ type: 'ok', text: `Clave válida — ${r.channels.length} canal(es) encontrado(s)` }) } }
+    catch (err) { setTsMsg({ type: 'err', text: err.response?.data?.error || 'Clave de API inválida' }) }
     finally { setTsValidating(false) }
   }
 
@@ -63,8 +63,8 @@ function DeviceSettings() {
     try {
       const enabled = !!tsChannelId
       const payload = { thingSpeakEnabled: enabled, thingSpeakChannelId: enabled ? tsChannelId : null, thingSpeakReadKey: enabled ? tsReadKey : null, thingSpeakWriteKey: enabled ? tsWriteKey : null, thingSpeakSyncInterval: parseInt(tsSyncInterval, 10) || 300000 }
-      await updateDevice(device.id, payload); setDevice(p => ({ ...p, ...payload })); setTsMsg({ type: 'ok', text: enabled ? 'ThingSpeak enabled and saved' : 'ThingSpeak disabled' })
-    } catch (err) { setTsMsg({ type: 'err', text: err.message || 'Failed' }) }
+      await updateDevice(device.id, payload); setDevice(p => ({ ...p, ...payload })); setTsMsg({ type: 'ok', text: enabled ? 'ThingSpeak habilitado y guardado' : 'ThingSpeak deshabilitado' })
+    } catch (err) { setTsMsg({ type: 'err', text: err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
@@ -74,12 +74,12 @@ function DeviceSettings() {
       await updateDevice(device.id, { thingSpeakEnabled: false, thingSpeakChannelId: null, thingSpeakReadKey: null, thingSpeakWriteKey: null })
       setDevice(p => ({ ...p, thingSpeakEnabled: false, thingSpeakChannelId: null, thingSpeakReadKey: null, thingSpeakWriteKey: null }))
       setTsApiKey(''); setTsChannels([]); setTsSelectedChannel(null); setTsChannelId(''); setTsReadKey(''); setTsWriteKey('')
-      setTsMsg({ type: 'ok', text: 'ThingSpeak disconnected' })
-    } catch (err) { setTsMsg({ type: 'err', text: err.message || 'Failed' }) }
+      setTsMsg({ type: 'ok', text: 'ThingSpeak desconectado' })
+    } catch (err) { setTsMsg({ type: 'err', text: err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
-  if (loading) return <LoadingState message="Loading device configuration..." icon="developer_board" />
+  if (loading) return <LoadingState message="Cargando configuración del dispositivo..." icon="developer_board" />
 
   const InfoRow = ({ label, value }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
@@ -93,8 +93,8 @@ function DeviceSettings() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Device Configuration</h1>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Identity and hardware parameters</p>
+          <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Configuración del dispositivo</h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Identidad y parámetros de hardware</p>
         </div>
         {devices.length > 0 && (
           <select value={selectedId || ''} onChange={e => setSelectedId(Number(e.target.value))} className="form-select" style={{ fontSize: '11px', minWidth: '180px' }}>
@@ -111,22 +111,22 @@ function DeviceSettings() {
       )}
 
       {loadingDetail ? (
-        <LoadingState message="Loading device details..." />
+        <LoadingState message="Cargando detalles del dispositivo..." />
       ) : device ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
           {/* Identity */}
           <div className="glass-card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>badge</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Identity</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Identidad</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <InfoRow label="Device ID" value={device.deviceId} />
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Chamber Name</label>
+                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Nombre de cámara</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input className="form-input" style={{ flex: 1, fontSize: '11px' }} value={renameValue} onChange={e => setRenameValue(e.target.value)} placeholder="Enter name..." />
-                  <button onClick={handleRename} disabled={saving || !renameValue.trim()} className="btn btn-glow" style={{ fontSize: '10px', padding: '6px 12px' }}>{saving ? '...' : 'SAVE'}</button>
+                  <input className="form-input" style={{ flex: 1, fontSize: '11px' }} value={renameValue} onChange={e => setRenameValue(e.target.value)} placeholder="Ingresar nombre..." />
+                  <button onClick={handleRename} disabled={saving || !renameValue.trim()} className="btn btn-glow" style={{ fontSize: '10px', padding: '6px 12px' }}>{saving ? '...' : 'GUARDAR'}</button>
                 </div>
                 {renameMsg && <p style={{ fontSize: '10px', marginTop: '4px', color: renameMsg.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)' }}>{renameMsg.text}</p>}
               </div>
@@ -149,10 +149,10 @@ function DeviceSettings() {
               <InfoRow label="MAC Address" value={device.macAddress} />
               <InfoRow label="Firmware" value={device.firmwareVersion} />
               <InfoRow label="HW Revision" value={device.hwRevision} />
-              <InfoRow label="Chamber ID" value={device.chamberId != null ? device.chamberId : null} />
-              <InfoRow label="Location" value={device.chamberLocation} />
-              <InfoRow label="SSR Mode" value={device.ssrActiveLow ? 'Active Low' : 'Active High'} />
-              <InfoRow label="Last Seen" value={device.lastSeen ? new Date(device.lastSeen).toLocaleString() : null} />
+              <InfoRow label="ID de cámara" value={device.chamberId != null ? device.chamberId : null} />
+              <InfoRow label="Ubicación" value={device.chamberLocation} />
+              <InfoRow label="Modo SSR" value={device.ssrActiveLow ? 'Activo bajo' : 'Activo alto'} />
+              <InfoRow label="Última conexión" value={device.lastSeen ? new Date(device.lastSeen).toLocaleString() : null} />
             </div>
           </div>
 
@@ -167,23 +167,23 @@ function DeviceSettings() {
                 color: device.thingSpeakEnabled ? 'var(--spore-green)' : 'var(--outline)',
                 border: `1px solid ${device.thingSpeakEnabled ? 'rgba(var(--spore-green-rgb), 0.3)' : 'rgba(153, 153, 153, 0.3)'}`,
               }}>
-                {device.thingSpeakEnabled ? 'ENABLED' : 'DISABLED'}
+                {device.thingSpeakEnabled ? 'HABILITADO' : 'DESHABILITADO'}
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>API Key</label>
-                  <input type="password" className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsApiKey} onChange={e => setTsApiKey(e.target.value)} placeholder={device.thingSpeakChannelId ? '••••••••••••••••' : 'Enter your TS API key'} />
+                   <input type="password" className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsApiKey} onChange={e => setTsApiKey(e.target.value)} placeholder={device.thingSpeakChannelId ? '••••••••••••••••' : 'Ingresa tu clave de API de TS'} />
                 </div>
-                <button onClick={handleValidateThingSpeak} disabled={tsValidating || !tsApiKey.trim()} className="btn btn-secondary" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>{tsValidating ? '...' : 'VALIDATE'}</button>
+                <button onClick={handleValidateThingSpeak} disabled={tsValidating || !tsApiKey.trim()} className="btn btn-secondary" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>{tsValidating ? '...' : 'VALIDAR'}</button>
               </div>
 
               {tsChannels.length > 0 && (
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Select Channel</label>
-                  <select className="form-select" style={{ fontSize: '11px' }} value={tsSelectedChannel?.id || tsChannelId || ''} onChange={e => { const ch = tsChannels.find(c => String(c.id) === e.target.value); if (ch) handleSelectChannel(ch) }}>
-                    <option value="">Select a channel...</option>
+                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Seleccionar canal</label>
+                   <select className="form-select" style={{ fontSize: '11px' }} value={tsSelectedChannel?.id || tsChannelId || ''} onChange={e => { const ch = tsChannels.find(c => String(c.id) === e.target.value); if (ch) handleSelectChannel(ch) }}>
+                     <option value="">Seleccionar un canal...</option>
                     {tsChannels.map(ch => <option key={ch.id} value={ch.id}>{ch.name || ch.id}</option>)}
                   </select>
                 </div>
@@ -194,23 +194,23 @@ function DeviceSettings() {
                   <InfoRow label="Channel ID" value={tsChannelId} />
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Read Key</label>
-                      <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsReadKey} onChange={e => setTsReadKey(e.target.value)} placeholder="Read API key" />
-                    </div>
-                    <div>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Write Key</label>
-                      <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsWriteKey} onChange={e => setTsWriteKey(e.target.value)} placeholder="Write API key" />
+                       <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Clave de lectura</label>
+                       <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsReadKey} onChange={e => setTsReadKey(e.target.value)} placeholder="Clave de API de lectura" />
+                     </div>
+                     <div>
+                       <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Clave de escritura</label>
+                       <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={tsWriteKey} onChange={e => setTsWriteKey(e.target.value)} placeholder="Clave de API de escritura" />
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                     <div style={{ flex: 1 }}>
-                      <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Sync Interval (ms)</label>
+                       <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Intervalo de sincronización (ms)</label>
                       <input type="number" className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} min="60000" step="60000" value={tsSyncInterval} onChange={e => setTsSyncInterval(e.target.value)} />
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--outline-variant)' }}>
-                    <button onClick={handleDisconnectThingSpeak} disabled={saving} className="btn btn-danger" style={{ fontSize: '10px' }}>DISCONNECT</button>
-                    <button onClick={handleSaveThingSpeak} disabled={saving || !tsChannelId.trim()} className="btn btn-glow" style={{ fontSize: '10px' }}>{saving ? '...' : 'SAVE'}</button>
+                     <button onClick={handleDisconnectThingSpeak} disabled={saving} className="btn btn-danger" style={{ fontSize: '10px' }}>DESCONECTAR</button>
+                     <button onClick={handleSaveThingSpeak} disabled={saving || !tsChannelId.trim()} className="btn btn-glow" style={{ fontSize: '10px' }}>{saving ? '...' : 'GUARDAR'}</button>
                   </div>
                 </>
               )}
@@ -222,8 +222,8 @@ function DeviceSettings() {
       ) : (
         <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--outline)', marginBottom: '16px', display: 'block' }}>developer_board</span>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>No Devices</h3>
-          <p style={{ fontSize: '13px', color: 'var(--outline)' }}>Connect a device to configure hardware settings.</p>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Sin dispositivos</h3>
+          <p style={{ fontSize: '13px', color: 'var(--outline)' }}>Conecta un dispositivo para configurar los ajustes de hardware.</p>
         </div>
       )}
     </div>

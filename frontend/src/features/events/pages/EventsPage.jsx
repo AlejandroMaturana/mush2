@@ -6,15 +6,15 @@ import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 
 const EVENT_TYPES = [
-  { value: '', label: 'All types' },
+  { value: '', label: 'Todos los tipos' },
   { value: 'ack', label: 'ACK' },
-  { value: 'state', label: 'State' },
-  { value: 'telemetry', label: 'Telemetry' },
-  { value: 'alarm', label: 'Alarm' },
-  { value: 'control_eval', label: 'Control Eval' },
-  { value: 'health', label: 'Health' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'phase_transition', label: 'Phase Transition' },
+  { value: 'state', label: 'Estado' },
+  { value: 'telemetry', label: 'Telemetría' },
+  { value: 'alarm', label: 'Alarma' },
+  { value: 'control_eval', label: 'Eval. de control' },
+  { value: 'health', label: 'Salud' },
+  { value: 'maintenance', label: 'Mantenimiento' },
+  { value: 'phase_transition', label: 'Transición de fase' },
 ]
 
 const EVENT_TYPE_COLORS = {
@@ -57,7 +57,7 @@ function Events() {
         setDevices(devs)
       }
     } catch (err) {
-      setError(err.message || 'Error loading events')
+      setError(err.message || 'Error al cargar los eventos')
     } finally {
       setLoading(false)
     }
@@ -65,13 +65,13 @@ function Events() {
 
   useEffect(() => { load(1) }, [typeFilter, deviceFilter])
 
-  if (loading) return <LoadingState message="Loading events..." icon="history" />
+  if (loading) return <LoadingState message="Cargando eventos..." icon="history" />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="System Events"
-        subtitle={`${pagination.total} event${pagination.total !== 1 ? 's' : ''}`}
+        title="Eventos del sistema"
+        subtitle={`${pagination.total} evento${pagination.total !== 1 ? 's' : ''}`}
       />
 
       {error && (
@@ -86,7 +86,7 @@ function Events() {
           {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
         <select value={deviceFilter} onChange={e => setDeviceFilter(e.target.value)} className="form-select" style={{ fontSize: '11px' }}>
-          <option value="">All devices</option>
+          <option value="">Todos los dispositivos</option>
           {devices.map(d => <option key={d.id} value={d.deviceId}>{d.chamberName || d.deviceId}</option>)}
         </select>
       </div>
@@ -94,18 +94,18 @@ function Events() {
       {events.length === 0 ? (
         <EmptyState
           icon="history"
-          title="No events"
-          message="No system events match your filters."
+          title="Sin eventos"
+          message="Ningún evento del sistema coincide con los filtros."
         />
       ) : (
         <div className="glass-card" style={{ overflow: 'hidden' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Type</th>
-                <th>Device</th>
-                <th>Message</th>
+                <th>Marca de tiempo</th>
+                <th>Tipo</th>
+                <th>Dispositivo</th>
+                <th>Mensaje</th>
               </tr>
             </thead>
             <tbody>
@@ -139,13 +139,13 @@ function Events() {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => load(pagination.page - 1)} disabled={pagination.page <= 1} className="btn btn-secondary" style={{ fontSize: '11px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_left</span>
-            Prev
+            Ant
           </button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--on-surface-variant)' }}>
-            Page {pagination.page} of {pagination.pages}
+            Página {pagination.page} de {pagination.pages}
           </span>
           <button onClick={() => load(pagination.page + 1)} disabled={pagination.page >= pagination.pages} className="btn btn-secondary" style={{ fontSize: '11px' }}>
-            Next
+            Sig
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chevron_right</span>
           </button>
         </div>

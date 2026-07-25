@@ -20,7 +20,7 @@ function UpgradeModal({ currentPlan, onClose, onUpgrade }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>Upgrade Plan</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)' }}>Mejorar plan</h2>
           <button onClick={onClose} className="btn btn-ghost btn-sm"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span></button>
         </div>
         <div style={{ padding: '20px' }}>
@@ -137,7 +137,7 @@ function SubscriptionSettings() {
         {usage && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--on-surface-variant)', marginBottom: '6px' }}>
-              <span>{usage.apiCallsUsedThisMonth.toLocaleString()} / {usage.apiCallsPerMonth.toLocaleString()} calls</span>
+              <span>{usage.apiCallsUsedThisMonth.toLocaleString()} / {usage.apiCallsPerMonth.toLocaleString()} llamadas</span>
               <span style={{ fontWeight: 600, color: barColor }}>{pct}%</span>
             </div>
             <div style={{ height: '8px', background: 'rgba(var(--surface-dim-rgb, 28, 27, 31), 0.6)', borderRadius: '9999px', overflow: 'hidden', border: '1px solid var(--outline-variant)' }}>

@@ -28,7 +28,7 @@ function Diagnostics() {
       }
       setError(null)
     } catch (err) {
-      setError(err.message || 'Error loading diagnostics')
+      setError(err.message || 'Error al cargar diagnósticos')
     } finally {
       setLoading(false)
     }
@@ -50,7 +50,7 @@ function Diagnostics() {
     }
   }
 
-  if (loading) return <LoadingState message="Loading diagnostics..." icon="diagnosis" />
+  if (loading) return <LoadingState message="Cargando diagnósticos..." icon="diagnosis" />
 
   const { mqtt, ssrChannels, chamberControlMode } = data || {}
   const uniqueDevices = ssrChannels?.length > 0
@@ -60,8 +60,8 @@ function Diagnostics() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Diagnostics"
-        subtitle="MQTT connection status and system diagnostics"
+        title="Diagnósticos"
+        subtitle="Estado de conexión MQTT y diagnósticos del sistema"
       />
 
       {error && (
@@ -72,7 +72,7 @@ function Diagnostics() {
       )}
 
       <DashboardGrid columns={2}>
-        <Panel title="MQTT Broker Status" subtitle="Connection status">
+        <Panel title="Estado del broker MQTT" subtitle="Estado de conexión">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {BROKER_FIELDS.map(({ key, label, statusKey }) => {
               const connected = mqtt?.[statusKey]
@@ -81,19 +81,19 @@ function Diagnostics() {
                   key={key}
                   status={connected ? 'online' : 'offline'}
                   title={label}
-                  subtitle={connected ? 'Connected' : (connected === false ? 'Disconnected' : 'Not configured')}
+                  subtitle={connected ? 'Conectado' : (connected === false ? 'Desconectado' : 'No configurado')}
                 />
               )
             })}
             <StatusCard
               status="online"
-              title="Connected Devices"
+              title="Dispositivos conectados"
               metric={mqtt?.connectedDevices ?? '—'}
             />
           </div>
         </Panel>
 
-        <Panel title="Chamber Control Mode" subtitle="Per-device control">
+        <Panel title="Modo de control de cámara" subtitle="Control por dispositivo">
           {chamberControlMode && Object.keys(chamberControlMode).length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {Object.entries(chamberControlMode).map(([deviceId, mode]) => (
@@ -101,26 +101,26 @@ function Diagnostics() {
                   key={deviceId}
                   status={mode === 'AUTO' ? 'online' : 'offline'}
                   title={deviceId}
-                  subtitle={`Mode: ${mode}`}
+                  subtitle={`Modo: ${mode}`}
                 />
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '32px 0' }}>No devices registered</p>
+            <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '32px 0' }}>Sin dispositivos registrados</p>
           )}
         </Panel>
       </DashboardGrid>
 
-      <Panel title="SSR Channels" subtitle="Active relay states">
+      <Panel title="Canales SSR" subtitle="Estados de relé activos">
         {ssrChannels && ssrChannels.length > 0 ? (
           <div style={{ overflow: 'hidden' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Device</th>
-                  <th>Channel</th>
-                  <th>State</th>
-                  <th>Mode</th>
+                  <th>Dispositivo</th>
+                  <th>Canal</th>
+                  <th>Estado</th>
+                  <th>Modo</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,14 +152,14 @@ function Diagnostics() {
             </table>
           </div>
         ) : (
-          <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>No SSR channels</p>
+          <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', padding: '24px 0' }}>Sin canales SSR</p>
         )}
       </Panel>
 
-      <Panel title="MQTT Publish Test" subtitle="Send test payload to device">
+      <Panel title="Prueba de publicación MQTT" subtitle="Enviar payload de prueba al dispositivo">
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Device</label>
+            <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Dispositivo</label>
             <select className="form-select" style={{ fontSize: '11px' }} value={selectedDevice} onChange={e => setSelectedDevice(e.target.value)}>
               {uniqueDevices.map(id => (
                 <option key={id} value={id}>{id}</option>
@@ -173,7 +173,7 @@ function Diagnostics() {
             disabled={publishing || !selectedDevice}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>send</span>
-            {publishing ? 'PUBLISHING...' : 'PUBLISH TEST'}
+            {publishing ? 'PUBLICANDO...' : 'PUBLICAR PRUEBA'}
           </button>
         </div>
         {pubMsg && (

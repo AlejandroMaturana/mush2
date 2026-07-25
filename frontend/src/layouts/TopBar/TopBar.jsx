@@ -4,17 +4,18 @@ import { useAlarms } from '../../app/providers/AlarmProvider'
 import { useTheme } from '../../app/providers/ThemeProvider'
 
 const PAGE_TITLES = {
-  '/overview': 'Overview',
-  '/fleet/provision': 'Provisioning',
-  '/cultivation/recipes': 'Recipes',
-  '/cultivation/recipes/compare': 'Recipe Comparator',
-  '/cultivation/species': 'Species Library',
-  '/cultivation/cycles': 'Cycles',
-  '/operations/analytics': 'Analytics',
-  '/operations/alarms': 'Alarms',
-  '/operations/logs': 'Audit Log',
-  '/operations/diagnostics': 'Diagnostics',
-  '/system/settings': 'Settings',
+  '/overview': 'Panel de control',
+  '/fleet/devices': 'Cámaras de cultivo',
+  '/fleet/provision': 'Aprovisionamiento',
+  '/cultivation/recipes': 'Recetas de cultivo',
+  '/cultivation/recipes/compare': 'Comparador de recetas',
+  '/cultivation/species': 'Biblioteca de especies',
+  '/cultivation/cycles': 'Ciclos de cultivo',
+  '/operations/analytics': 'Analítica',
+  '/operations/alarms': 'Alertas',
+  '/operations/logs': 'Registro de auditoría',
+  '/operations/diagnostics': 'Diagnóstico',
+  '/system/settings': 'Configuración',
 }
 
 function TopBar() {
@@ -57,13 +58,13 @@ function TopBar() {
             }}>{activeCount > 99 ? '99+' : activeCount}</span>
           </button>
         )}
-        <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+        <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
           <span className="material-symbols-outlined text-16px">{isDark ? 'light_mode' : 'dark_mode'}</span>
         </button>
         {user && (
           <div className="topbar-user">
             <span className="user-avatar">{user.username?.charAt(0).toUpperCase()}</span>
-            <button className="btn btn-ghost btn-sm" onClick={logout}>
+            <button className="btn btn-ghost btn-sm" onClick={logout} title="Cerrar sesión">
               <span className="material-symbols-outlined text-16px">logout</span>
             </button>
           </div>

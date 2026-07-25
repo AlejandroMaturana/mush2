@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react'
 import { getDeviceConnectivity, setMaintenanceMode } from '../../../api/client'
 
 const STATUS_CONFIG = {
-  ONLINE: { color: 'var(--spore-green)', bg: 'rgba(var(--spore-green-rgb),0.1)', border: 'rgba(var(--spore-green-rgb),0.3)', icon: 'wifi', label: 'Online' },
-  DEGRADED: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'wifi_off', label: 'Degraded' },
-  STALE: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'schedule', label: 'Stale' },
-  OFFLINE: { color: 'var(--error-red)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', icon: 'wifi_off', label: 'Offline' },
-  MAINTENANCE: { color: 'var(--info)', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.3)', icon: 'build', label: 'Maintenance' },
-  PROVISIONING: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'bluetooth', label: 'Provisioning' },
-  RETIRED: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'power_off', label: 'Retired' },
+  ONLINE: { color: 'var(--spore-green)', bg: 'rgba(var(--spore-green-rgb),0.1)', border: 'rgba(var(--spore-green-rgb),0.3)', icon: 'wifi', label: 'En línea' },
+  DEGRADED: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'wifi_off', label: 'Degradado' },
+  STALE: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'schedule', label: 'Sin actualizar' },
+  OFFLINE: { color: 'var(--error-red)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', icon: 'wifi_off', label: 'Fuera de línea' },
+  MAINTENANCE: { color: 'var(--info)', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.3)', icon: 'build', label: 'Mantenimiento' },
+  PROVISIONING: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'bluetooth', label: 'Aprovisionando' },
+  RETIRED: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'power_off', label: 'Retirado' },
 }
 
 function formatTimeAgo(seconds) {
-  if (seconds == null) return 'Never'
-  if (seconds < 5) return 'Just now'
-  if (seconds < 60) return `${seconds}s ago`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s ago`
+  if (seconds == null) return 'Nunca'
+  if (seconds < 5) return 'Hace un momento'
+  if (seconds < 60) return `Hace ${seconds}s`
+  if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m ${seconds % 60}s`
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return `${h}h ${m}m ago`
+  return `Hace ${h}h ${m}m`
 }
 
 function DeviceConnectivityPanel({ deviceId }) {
@@ -50,7 +50,7 @@ function DeviceConnectivityPanel({ deviceId }) {
     setToggling(false)
   }
 
-  if (loading) return <div style={{ padding: '16px', fontSize: '12px', color: 'var(--outline)' }}>Loading connectivity...</div>
+  if (loading) return <div style={{ padding: '16px', fontSize: '12px', color: 'var(--outline)' }}>Cargando conectividad...</div>
   if (!health) return null
 
   const cfg = STATUS_CONFIG[health.status] || STATUS_CONFIG.OFFLINE
@@ -65,7 +65,7 @@ function DeviceConnectivityPanel({ deviceId }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px', color: cfg.color }}>{cfg.icon}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>CONNECTIVITY</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>CONECTIVIDAD</span>
         </div>
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -78,19 +78,19 @@ function DeviceConnectivityPanel({ deviceId }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-        <MetricBox label="Last Seen" value={formatTimeAgo(health.secondsSinceLastSeen)} color={cfg.color} />
-        <MetricBox label="Heartbeat" value={`${health.heartbeatInterval}s`} color="var(--on-surface)" />
-        <MetricBox label="Last Telemetry" value={health.lastTelemetryAt ? formatTimeAgo(Math.floor((Date.now() - new Date(health.lastTelemetryAt).getTime()) / 1000)) : '—'} color="var(--on-surface-variant)" />
-        <MetricBox label="Last ACK" value={health.lastAckAt ? formatTimeAgo(Math.floor((Date.now() - new Date(health.lastAckAt).getTime()) / 1000)) : '—'} color="var(--on-surface-variant)" />
+        <MetricBox label="Última transmisión" value={formatTimeAgo(health.secondsSinceLastSeen)} color={cfg.color} />
+        <MetricBox label="Intervalo Heartbeat" value={`${health.heartbeatInterval}s`} color="var(--on-surface)" />
+        <MetricBox label="Última telemetría" value={health.lastTelemetryAt ? formatTimeAgo(Math.floor((Date.now() - new Date(health.lastTelemetryAt).getTime()) / 1000)) : '—'} color="var(--on-surface-variant)" />
+        <MetricBox label="Último ACK" value={health.lastAckAt ? formatTimeAgo(Math.floor((Date.now() - new Date(health.lastAckAt).getTime()) / 1000)) : '—'} color="var(--on-surface-variant)" />
       </div>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <div style={{ flex: 1, padding: '8px 12px', background: 'var(--surface-container-high)', borderRadius: '8px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Stale after</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Inactivo tras</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface)', fontWeight: 600 }}>{health.staleThreshold}s</div>
         </div>
         <div style={{ flex: 1, padding: '8px 12px', background: 'var(--surface-container-high)', borderRadius: '8px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Offline after</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Desconectado tras</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface)', fontWeight: 600 }}>{health.offlineThreshold}s</div>
         </div>
       </div>
@@ -111,10 +111,11 @@ function DeviceConnectivityPanel({ deviceId }) {
         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
           {health.maintenanceMode ? 'build' : 'build'}
         </span>
-        {health.maintenanceMode ? 'EXIT MAINTENANCE' : 'ENTER MAINTENANCE'}
+        {health.maintenanceMode ? 'SALIR DE MANTENIMIENTO' : 'INGRESAR A MANTENIMIENTO'}
       </button>
     </div>
   )
+}
 }
 
 function MetricBox({ label, value, color }) {

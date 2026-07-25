@@ -18,21 +18,21 @@ function DeviceHealthPanel({ deviceId }) {
     return () => clearInterval(interval)
   }, [deviceId])
 
-  if (loading) return <div className="text-body-sm text-on-surface-variant p-4">Loading health data...</div>
+  if (loading) return <div className="text-body-sm text-on-surface-variant p-4">Cargando estado de salud del dispositivo...</div>
   if (!health) return null
 
   const metrics = [
     { label: 'CPU', value: health.cpuUsage, unit: '%', max: 100, color: 'var(--spore-green)' },
-    { label: 'Memory', value: health.memoryUsage, unit: '%', max: 100, color: 'var(--teal)' },
-    { label: 'Uptime', value: health.uptime, unit: 's', display: formatUptime(health.uptime), color: 'var(--amber)' },
-    { label: 'Free Heap', value: health.freeHeap, unit: 'B', display: formatBytes(health.freeHeap), color: 'var(--info)' },
+    { label: 'Memoria', value: health.memoryUsage, unit: '%', max: 100, color: 'var(--teal)' },
+    { label: 'Tiempo activo', value: health.uptime, unit: 's', display: formatUptime(health.uptime), color: 'var(--amber)' },
+    { label: 'Heap libre', value: health.freeHeap, unit: 'B', display: formatBytes(health.freeHeap), color: 'var(--info)' },
   ]
 
   return (
     <div className="glass-card rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="material-symbols-outlined text-primary text-18px">monitor_heart</span>
-        <span className="chart-panel-label">DEVICE HEALTH</span>
+        <span className="chart-panel-label">SALUD DEL DISPOSITIVO</span>
       </div>
       <div className="grid grid-cols-4 gap-3">
         {metrics.map(m => (
@@ -51,7 +51,7 @@ function DeviceHealthPanel({ deviceId }) {
       </div>
       {health.lastError && (
         <div className="mt-3 p-2 bg-error/10 border border-error/20 rounded text-8px text-error font-mono">
-          LAST ERROR: {health.lastError}
+          ÚLTIMO ERROR: {health.lastError}
         </div>
       )}
     </div>
