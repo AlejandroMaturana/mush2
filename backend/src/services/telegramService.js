@@ -1,11 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { Op } from 'sequelize';
 import { UserPreference, Device, TelegramDeviceConfig, User } from '../models/index.js';
+import { createChildLogger } from '../config/pino.js';
 
 let bot = null;
 let isReady = false;
 let currentUsername = '';
 let lastError = null;
+const log = createChildLogger('TELEGRAM');
 
 export function isBotReady() {
   return isReady;
@@ -27,7 +29,7 @@ export async function reconfigureBot(token, botUsername) {
 
 export async function initBot(token, botUsername) {
   if (!token) {
-    console.log('[TELEGRAM] No token configured — bot disabled');
+    log.info({ event: 'NO_TOKEN' }, 'No token configured — bot disabled');
     return null;
   }
 
@@ -37,12 +39,12 @@ export async function initBot(token, botUsername) {
     isReady = true;
     currentUsername = me.username || botUsername || 'unknown';
     lastError = null;
-    console.log(`[TELEGRAM] Bot @${currentUsername} verified — starting polling`);
+    log.info({ event: 'BOT_VERIFIED', username: currentUsername }, `Bot @${currentUsername} verified — starting polling`);
 
     bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
       const text = `🤖 *Mush2 Bot*\n\nComandos disponibles:\n• \`/link CODIGO\` — Vincular tu cuenta de Telegram\n• \`/status\` — Ver estado de vinculación\n• \`/unlink\` — Desvincular Telegram`;
-      bot.sendMessage(chatId, text, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+      bot.sendMessage(chatId, text, { parse_mode: 'Markdown' }).catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
     });
 
     bot.onText(/\/link (.+)/, async (msg, match) => {
@@ -58,7 +60,7 @@ export async function initBot(token, botUsername) {
         });
 
         if (!prefs) {
-          return bot.sendMessage(chatId, '❌ Código inválido o expirado. Genera uno nuevo desde Mush2.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+          return bot.sendMessage(chatId, '❌ Código inválido o expirado. Genera uno nuevo desde Mush2.').catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
         }
 
         await prefs.update({
@@ -68,11 +70,11 @@ export async function initBot(token, botUsername) {
           telegramLinkTokenExpires: null,
         });
 
-        bot.sendMessage(chatId, `✅ *¡Cuenta vinculada con éxito!*\n\nAhora recibirás alertas de tus dispositivos Mush2.`, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
-        console.log(`[TELEGRAM] User ${prefs.userId} linked chat ${chatId}`);
+        bot.sendMessage(chatId, `✅ *¡Cuenta vinculada con éxito!*\n\nAhora recibirás alertas de tus dispositivos Mush2.`, { parse_mode: 'Markdown' }).catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
+        log.info({ event: 'USER_LINKED', userId: prefs.userId, chatId }, `User ${prefs.userId} linked chat ${chatId}`);
       } catch (err) {
-        console.error('[TELEGRAM] Error en /link:', err.message);
-        bot.sendMessage(chatId, '❌ Error al vincular. Intenta de nuevo.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+        log.error({ module: 'TELEGRAM', event: 'LINK_ERROR', error: err.message }, 'Error en /link');
+        bot.sendMessage(chatId, '❌ Error al vincular. Intenta de nuevo.').catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
       }
     });
 
@@ -82,12 +84,12 @@ export async function initBot(token, botUsername) {
         const prefs = await UserPreference.findOne({ where: { telegramChatId: String(chatId) } });
         if (prefs) {
           const user = await User.findByPk(prefs.userId, { attributes: ['username'] });
-          bot.sendMessage(chatId, `✅ *Vinculado*\n\nUsuario: \`${user?.username || '—'}\`\nChat ID: \`${chatId}\``, { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+          bot.sendMessage(chatId, `✅ *Vinculado*\n\nUsuario: \`${user?.username || '—'}\`\nChat ID: \`${chatId}\``, { parse_mode: 'Markdown' }).catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
         } else {
-          bot.sendMessage(chatId, '❌ No estás vinculado. Usa `/link CODIGO` con el código generado en Mush2.', { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+          bot.sendMessage(chatId, '❌ No estás vinculado. Usa `/link CODIGO` con el código generado en Mush2.', { parse_mode: 'Markdown' }).catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
         }
       } catch (err) {
-        console.error('[TELEGRAM] Error en /status:', err.message);
+        log.error({ module: 'TELEGRAM', event: 'STATUS_ERROR', error: err.message }, 'Error en /status');
       }
     });
 
@@ -97,12 +99,12 @@ export async function initBot(token, botUsername) {
         const prefs = await UserPreference.findOne({ where: { telegramChatId: String(chatId) } });
         if (prefs) {
           await prefs.update({ telegramChatId: null, telegramEnabled: false });
-          bot.sendMessage(chatId, '✅ *Telegram desvinculado.*\n\nYa no recibirás alertas.', { parse_mode: 'Markdown' }).catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+          bot.sendMessage(chatId, '✅ *Telegram desvinculado.*\n\nYa no recibirás alertas.', { parse_mode: 'Markdown' }).catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
         } else {
-          bot.sendMessage(chatId, '❌ No estás vinculado.').catch(err => console.error('[TELEGRAM] sendMessage error:', err.message));
+          bot.sendMessage(chatId, '❌ No estás vinculado.').catch(err => log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'sendMessage error'));
         }
       } catch (err) {
-        console.error('[TELEGRAM] Error en /unlink:', err.message);
+        log.error({ module: 'TELEGRAM', event: 'UNLINK_ERROR', error: err.message }, 'Error en /unlink');
       }
     });
 
@@ -110,12 +112,12 @@ export async function initBot(token, botUsername) {
       const msg = err?.response?.body?.description || err?.message || String(err);
       lastError = msg;
       isReady = false;
-      console.error('[TELEGRAM] Polling error:', msg);
+      log.error({ module: 'TELEGRAM', event: 'POLLING_ERROR', error: msg }, 'Polling error');
     });
 
     return bot;
   } catch (err) {
-    console.error('[TELEGRAM] Error initializing bot:', err.message);
+    log.error({ module: 'TELEGRAM', event: 'INIT_ERROR', error: err.message }, 'Error initializing bot');
     return null;
   }
 }
@@ -127,7 +129,7 @@ export function stopBot() {
     isReady = false;
     currentUsername = '';
     lastError = null;
-    console.log('[TELEGRAM] Bot stopped');
+    log.info({ event: 'BOT_STOPPED' }, 'Bot stopped');
   }
 }
 
@@ -137,7 +139,7 @@ export async function sendMessage(chatId, text, parseMode = 'Markdown') {
     await bot.sendMessage(chatId, text, { parse_mode: parseMode });
     return true;
   } catch (err) {
-    console.error('[TELEGRAM] Error sending message:', err.message);
+    log.error({ module: 'TELEGRAM', event: 'SEND_MESSAGE_ERROR', error: err.message }, 'Error sending message');
     return false;
   }
 }
@@ -195,6 +197,6 @@ export async function notifyDeviceAlarm(deviceId, alarm) {
       await sendAlarm(prefs.telegramChatId, alarm, device);
     }
   } catch (err) {
-    console.error('[TELEGRAM] Error in notifyDeviceAlarm:', err.message);
+    log.error({ module: 'TELEGRAM', event: 'NOTIFY_ERROR', error: err.message }, 'Error in notifyDeviceAlarm');
   }
 }
