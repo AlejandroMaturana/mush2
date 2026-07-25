@@ -7,6 +7,7 @@ import { createChildLogger } from '../config/pino.js';
 import { RESET_REASON_MAP } from '../config/resetReasons.js';
 
 const TOPIC_PREFIX = 'mush2';
+const MAX_RECONNECT_ATTEMPTS = 20;
 const log = createChildLogger('MQTT');
 
 // Single broker configuration (no fallback)
@@ -18,7 +19,17 @@ const broker = {
 };
 
 let client = null;
+let reconnectAttempts = 0;
 const connectedDevices = new Set();
+
+function cleanupClient() {
+  if (!client) return;
+  client.removeAllListeners();
+  client.end(true);
+  client = null;
+  connectedDevices.clear();
+  reconnectAttempts = 0;
+}
 
 function createClient() {
   const clientId = `mush2_backend_${Date.now()}`;
@@ -32,6 +43,7 @@ function createClient() {
   });
 
   c.on('connect', () => {
+    reconnectAttempts = 0;
     log.info({ event: 'CONNECTED' }, `Conectado a ${broker.label} (${broker.url})`);
     c.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
@@ -107,10 +119,28 @@ function createClient() {
     log.info({ event: 'DISCONNECTED' }, `${broker.label} — desconectado`);
   });
 
+  c.on('offline', () => {
+    log.warn({ event: 'OFFLINE' }, `${broker.label} — offline`);
+  });
+
+  c.on('reconnect', () => {
+    reconnectAttempts++;
+    if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+      log.fatal({ event: 'RECONNECT_EXHAUSTED', attempts: reconnectAttempts }, `Max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached — giving up`);
+      cleanupClient();
+      return;
+    }
+    log.warn({ event: 'RECONNECTING', attempt: reconnectAttempts, max: MAX_RECONNECT_ATTEMPTS }, `Reconnecting a ${broker.label}...`);
+  });
+
   return c;
 }
 
 export function startMqttBridge() {
+  if (client) {
+    log.warn({ event: 'ALREADY_STARTED' }, 'MQTT bridge already running — ignoring duplicate start');
+    return client;
+  }
   client = createClient();
   log.info({ event: 'STARTED' }, `Bridge iniciado — broker: ${broker.label}`);
   return client;
@@ -148,10 +178,8 @@ export function getMqttStatus() {
 }
 
 export function stopMqttBridge() {
-  if (client) {
-    client.end(true);
-    client = null;
-  }
+  cleanupClient();
+  log.info({ event: 'STOPPED' }, 'MQTT bridge stopped');
 }
 
 async function handleTelemetry(deviceId, data) {

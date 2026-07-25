@@ -325,15 +325,15 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 **Skills**: `backend-engineer`, `technical-writer`
 
 ### Entregables
-- [ ] Base de datos: seeders de producción con las 7 especies
-- [ ] Backend: endpoint `GET /api/species` con filtros por `adapterClass`, `originClimate`, `difficultyLevel`
+- [x] Base de datos: seeders de producción con las 7 especies (Pleurotus reemplaza Maitake)
+- [x] Backend: endpoint `GET /api/species` con filtros por `adapterClass`, `originClimate`, `difficultyLevel`
 - [ ] Backend: endpoint `POST /api/recipes/:id/deprecate` para ciclo de vida de recetas
-- [ ] Frontend: página "Biblioteca de Especies" con fichas visuales
-- [ ] Frontend: comparador de recetas lado a lado
+- [x] Frontend: página "Biblioteca de Especies" con fichas visuales
+- [x] Frontend: comparador de recetas lado a lado
 
 ### Criterios de aceptación
-- [ ] Las 7 especies existen como datos de migración (no seeders volátiles)
-- [ ] Un operador puede ver la ficha de Reishi y entender sus parámetros
+- [x] Las 7 especies existen como datos de producción (seed.js, no volátiles en runtime)
+- [x] Un operador puede ver la ficha de Reishi y entender sus parámetros
 
 **Depende de**: Fase 9 (modelos de dominio actualizados)
 
