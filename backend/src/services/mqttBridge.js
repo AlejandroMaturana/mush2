@@ -3,8 +3,11 @@ import { Device, Telemetry, Actuator, DeviceHealth, DeviceMaintenance } from '..
 import { events } from './eventBus.js';
 import { sendActuatorUpdate } from './webSocketServer.js';
 import { recordEvent, getStatusFromDevice } from './deviceHealthService.js';
+import { createChildLogger } from '../config/pino.js';
+import { RESET_REASON_MAP } from '../config/resetReasons.js';
 
 const TOPIC_PREFIX = 'mush2';
+const log = createChildLogger('MQTT');
 
 // Single broker configuration (no fallback)
 const broker = {
@@ -29,7 +32,7 @@ function createClient() {
   });
 
   c.on('connect', () => {
-    console.log(`[MQTT] Conectado a ${broker.label} (${broker.url})`);
+    log.info({ event: 'CONNECTED' }, `Conectado a ${broker.label} (${broker.url})`);
     c.subscribe(`${TOPIC_PREFIX}/+/telemetry`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/status`, { qos: 1 });
     c.subscribe(`${TOPIC_PREFIX}/+/alarm`, { qos: 1 });
@@ -92,16 +95,16 @@ function createClient() {
         });
       }
     } catch (err) {
-      console.error(`[MQTT] Error parsing from ${topic}:`, err.message);
+      log.error({ module: 'MQTT', event: 'PARSE_ERROR', error: err.message }, `Error parsing from ${topic}`);
     }
   });
 
   c.on('error', (err) => {
-    console.error(`[MQTT] Error en ${broker.label}: ${err.message}`);
+    log.error({ module: 'MQTT', event: 'ERROR', error: err.message }, `Error en ${broker.label}`);
   });
 
   c.on('close', () => {
-    console.log(`[MQTT] ${broker.label} — desconectado`);
+    log.info({ event: 'DISCONNECTED' }, `${broker.label} — desconectado`);
   });
 
   return c;
@@ -109,7 +112,7 @@ function createClient() {
 
 export function startMqttBridge() {
   client = createClient();
-  console.log(`[MQTT] Bridge iniciado — broker: ${broker.label}`);
+  log.info({ event: 'STARTED' }, `Bridge iniciado — broker: ${broker.label}`);
   return client;
 }
 
@@ -192,7 +195,7 @@ async function handleTelemetry(deviceId, data) {
       },
     });
   } catch (err) {
-    console.error(`[MQTT] Error handling telemetry from ${deviceId}:`, err.message);
+    log.error({ module: 'MQTT', event: 'TELEMETRY_ERROR', error: err.message }, `Error handling telemetry from ${deviceId}`);
   }
 }
 
@@ -226,6 +229,8 @@ async function handleHealth(deviceId, data) {
       bootTestFailReason: data.bootTestFailReason,
       uptime: data.uptime,
       rebootCount: data.rebootCount,
+      resetReason: data.resetReason,
+      resetReasonLabel: RESET_REASON_MAP[data.resetReason] || 'UNKNOWN',
       timestamp: ts,
     });
 
@@ -233,7 +238,7 @@ async function handleHealth(deviceId, data) {
 
     events.emit('health', { deviceId, ...data });
   } catch (err) {
-    console.error(`[MQTT] Error handling health from ${deviceId}:`, err.message);
+    log.error({ module: 'MQTT', event: 'HEALTH_ERROR', error: err.message }, `Error handling health from ${deviceId}`);
   }
 }
 
@@ -259,6 +264,6 @@ async function handleMaintenance(deviceId, data) {
 
     events.emit('maintenance', { deviceId, ...data });
   } catch (err) {
-    console.error(`[MQTT] Error handling maintenance from ${deviceId}:`, err.message);
+    log.error({ module: 'MQTT', event: 'MAINTENANCE_ERROR', error: err.message }, `Error handling maintenance from ${deviceId}`);
   }
 }

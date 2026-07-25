@@ -6,6 +6,7 @@
 #include "boot_test.h"
 #include "tasks.h"
 #include <Wire.h>
+#include <esp_system.h>
 #include <esp_task_wdt.h>
 
 extern MQTTClient mqtt;
@@ -168,6 +169,7 @@ void HealthMonitor::_checkSensors() {
 void HealthMonitor::_publishMetrics() {
   _metrics.uptime = millis() / 1000;
   _metrics.rebootCount = sm.getRebootCount();
+  _metrics.resetReason = (uint8_t)esp_reset_reason();
 
   if (_bus) {
     Event event;
@@ -182,6 +184,7 @@ void HealthMonitor::_publishMetrics() {
     event.payload.healthUpdate.taskStackOTA = _metrics.stackOTA;
     event.payload.healthUpdate.taskStackTelemetry = _metrics.stackTelemetry;
     event.payload.healthUpdate.i2cHealthy = _metrics.i2cBusHealthy;
+    event.payload.healthUpdate.resetReason = _metrics.resetReason;
     _bus->publish(event);
   }
 
@@ -194,7 +197,7 @@ void HealthMonitor::_publishMetrics() {
       _metrics.stackButton, _metrics.i2cBusHealthy,
       _metrics.sensorAht21, _metrics.sensorEns160,
       _metrics.staleTaskMask, _metrics.heartbeatsHealthy,
-      _metrics.uptime, _metrics.rebootCount,
+      _metrics.uptime, _metrics.rebootCount, _metrics.resetReason,
       _metrics.bootTestPassed, _metrics.bootTestFailReason
     );
   }
