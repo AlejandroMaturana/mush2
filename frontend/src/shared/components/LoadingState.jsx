@@ -1,4 +1,4 @@
-function LoadingState({ message = 'Loading...', icon = 'sync' }) {
+function LoadingState({ message = 'Cargando datos...', icon = 'sync' }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center">

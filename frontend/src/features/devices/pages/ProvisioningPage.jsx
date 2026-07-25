@@ -11,7 +11,7 @@ const PROV_CHAR_STATUS = 'a7c3d6e5-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 const PROV_CHAR_SSR_MODE = 'a7c3d6e6-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 
 const STEPS = { SCAN: 0, CONFIG: 1, PROVISIONING: 2, DONE: 3, ERROR: -1 }
-const STEP_LABELS = ['SCAN', 'CONFIG', 'SEND', 'DONE']
+const STEP_LABELS = ['ESCANEO', 'CONFIGURACIÓN', 'ENVIAR', 'LISTO']
 
 function Provisioning() {
   const navigate = useNavigate()
@@ -57,7 +57,7 @@ function Provisioning() {
       })
       await new Promise(resolve => setTimeout(resolve, 500))
     } catch (err) {
-      if (err.name === 'NotFoundError') setError('No se encontró ningún dispositivo Mush2. Asegúrate de que esté en modo provisioning.')
+      if (err.name === 'NotFoundError') setError('No se encontró ningún dispositivo Mush2. Asegúrate de que esté en modo aprovisionamiento.')
       else setError(err.message || 'Error al conectar')
       setStep(STEPS.ERROR)
     }
@@ -80,12 +80,12 @@ function Provisioning() {
   }, [ssid, password, ssrActiveLow])
 
   const handleFactoryReset = useCallback(async () => {
-    if (!confirm('¿Resetear el dispositivo? Se borrarán todas las credenciales.')) return
+    if (!confirm('¿Restablecer el dispositivo? Se borrarán todas las credenciales.')) return
     try {
       const cmdChar = await serviceRef.current.getCharacteristic(PROV_CHAR_CMD)
       await cmdChar.writeValue(new TextEncoder().encode('factory_reset'))
-      setStatusMsg('Factory reset ejecutado. El dispositivo se reiniciará en modo provisioning.')
-    } catch (err) { setError(err.message || 'Error al ejecutar factory reset') }
+      setStatusMsg('Restablecimiento de fábrica ejecutado. El dispositivo se reiniciará en modo aprovisionamiento.')
+    } catch (err) { setError(err.message || 'Error al ejecutar restablecimiento de fábrica') }
   }, [])
 
   const handleDisconnect = useCallback(async () => {
@@ -103,7 +103,7 @@ function Provisioning() {
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '80px' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
-        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Provisioning</h1>
+        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Aprovisionamiento</h1>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>
           Configura dispositivos Mush2 nuevos mediante Bluetooth
         </p>
@@ -144,10 +144,10 @@ function Provisioning() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0' }}>
           <div style={{ marginBottom: '32px', textAlign: 'center' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '64px', color: 'var(--spore-green)', marginBottom: '16px', display: 'block' }}>bluetooth_searching</span>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>BLE Device Provisioning</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Aprovisionamiento de dispositivo BLE</h2>
             <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', maxWidth: '400px', margin: '0 auto', lineHeight: 1.6 }}>
               Escanea dispositivos Mush2 cercanos para configurar su conexión Wi-Fi.
-              Asegúrate de que el dispositivo esté encendido y en modo provisioning.
+              Asegúrate de que el dispositivo esté encendido y en modo aprovisionamiento.
             </p>
           </div>
 
@@ -181,9 +181,9 @@ function Provisioning() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 {[
-                  { label: 'Device ID', value: deviceInfo.deviceId || selectedDevice.name },
+                  { label: 'ID Dispositivo', value: deviceInfo.deviceId || selectedDevice.name },
                   { label: 'Firmware', value: deviceInfo.fwVer || '—' },
-                  { label: 'HW Rev', value: deviceInfo.hwRev || '—' },
+                  { label: 'Rev. Hardware', value: deviceInfo.hwRev || '—' },
                 ].map((item, i) => (
                   <div key={i} style={{ padding: '10px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>{item.label}</span>
@@ -222,7 +222,7 @@ function Provisioning() {
               <div>
                 <p style={{ fontSize: '13px', color: 'var(--on-surface)', marginBottom: '2px' }}>SSR Active Low</p>
                 <p style={{ fontSize: '11px', color: 'var(--outline)' }}>
-                  {ssrActiveLow ? 'HIGH=OFF, LOW=ON (low-level)' : 'HIGH=ON, LOW=OFF (high-level)'}
+                  {ssrActiveLow ? 'ALTO=APAGADO, BAJO=ENCENDIDO (nivel bajo)' : 'ALTO=ENCENDIDO, BAJO=APAGADO (nivel alto)'}
                 </p>
               </div>
               <button type="button" role="switch" aria-checked={ssrActiveLow} onClick={() => setSsrActiveLow(v => !v)} style={{
@@ -241,9 +241,9 @@ function Provisioning() {
           <div style={{ display: 'flex', gap: '12px' }}>
             <button onClick={handleProvision} className="btn btn-glow" style={{ flex: 1, fontSize: '12px', padding: '12px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings_ethernet</span>
-              Provisionar dispositivo
+              Aprovisionar dispositivo
             </button>
-            <button onClick={handleFactoryReset} className="btn btn-secondary" style={{ padding: '12px 16px' }} title="Factory Reset">
+            <button onClick={handleFactoryReset} className="btn btn-secondary" style={{ padding: '12px 16px' }} title="Restablecimiento de fábrica">
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restart_alt</span>
             </button>
           </div>
@@ -257,7 +257,7 @@ function Provisioning() {
             width: '64px', height: '64px', borderRadius: '50%', border: '3px solid var(--spore-green)', borderTopColor: 'transparent',
             animation: 'spin 1s linear infinite', marginBottom: '24px',
           }} />
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Provisionando...</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Aprovisionando...</h2>
           <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)' }}>{statusMsg || 'Enviando configuración al dispositivo'}</p>
         </div>
       )}
@@ -271,12 +271,12 @@ function Provisioning() {
           <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Dispositivo configurado</h2>
           <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', maxWidth: '400px', textAlign: 'center', marginBottom: '24px', lineHeight: 1.6 }}>
             Las credenciales Wi-Fi han sido enviadas al dispositivo.
-            Se reiniciará automáticamente y debería aparecer en tu dashboard en breve.
+            Se reiniciará automáticamente y debería aparecer en su panel de control en breve.
           </p>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button onClick={() => navigate('/overview')} className="btn btn-glow" style={{ fontSize: '12px', padding: '12px 24px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>dashboard</span>
-              Ir al Dashboard
+              Ir al panel de control
             </button>
             <button onClick={handleDisconnect} className="btn btn-secondary" style={{ fontSize: '12px', padding: '12px 24px' }}>Configurar otro dispositivo</button>
           </div>
@@ -289,7 +289,7 @@ function Provisioning() {
           <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--error-red)' }}>error</span>
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Error en provisioning</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Error en aprovisionamiento</h2>
           <p style={{ fontSize: '13px', color: 'var(--on-surface-variant)', maxWidth: '400px', textAlign: 'center', marginBottom: '8px' }}>{error}</p>
           {statusMsg && <p style={{ fontSize: '11px', color: 'var(--outline)', maxWidth: '400px', textAlign: 'center', marginBottom: '24px' }}>{statusMsg}</p>}
           <button onClick={handleDisconnect} className="btn btn-glow" style={{ fontSize: '12px', padding: '12px 24px' }}>

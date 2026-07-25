@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const MOBILE_ITEMS = [
-  { to: '/overview', icon: 'dashboard', label: 'Overview' },
-  { to: '/cultivation/recipes', icon: 'potted_plant', label: 'Cultivation' },
-  { to: '/operations/alarms', icon: 'warning', label: 'Alarms' },
-  { to: '/system/settings', icon: 'settings', label: 'System' },
+  { to: '/overview', icon: 'dashboard', label: 'Panel' },
+  { to: '/cultivation/recipes', icon: 'potted_plant', label: 'Cultivo' },
+  { to: '/operations/alarms', icon: 'warning', label: 'Alertas' },
+  { to: '/system/settings', icon: 'settings', label: 'Sistema' },
 ]
 
 function BottomNav() {

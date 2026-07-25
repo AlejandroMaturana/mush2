@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-function SystemAlert({ message = 'Biometric telemetry streams have been interrupted.', onReconnect, onViewLogs }) {
+function SystemAlert({ message = 'Los flujos de telemetría biométrica han sido interrumpidos.', onReconnect, onViewLogs }) {
   const [countdown, setCountdown] = useState(8)
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function SystemAlert({ message = 'Biometric telemetry streams have been interrup
         <div className="flex items-center gap-stack-md py-4 px-6 bg-error-container/20 rounded border border-error/30">
           <div className="flex flex-col items-start">
             <span className="font-label-caps text-label-caps text-error opacity-70">RETRY_PROTOCOL</span>
-            <span className="text-display-data-mobile text-error" id="countdown">AUTO-RETRY IN {String(countdown).padStart(2, '0')}s</span>
+            <span className="text-display-data-mobile text-error" id="countdown">AUTO-REINTENTO EN {String(countdown).padStart(2, '0')}s</span>
           </div>
           <div className="w-12 h-12 flex items-center justify-center">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
@@ -60,14 +60,14 @@ function SystemAlert({ message = 'Biometric telemetry streams have been interrup
             style={{ border: 'none', cursor: 'pointer' }}
           >
             <span className="material-symbols-outlined text-sm">refresh</span>
-            FORCE RECONNECT
+            FORZAR RECONECCIÓN
           </button>
           <button
             onClick={() => { if (onViewLogs) onViewLogs() }}
             className="border border-outline text-on-surface-variant font-label-caps text-label-caps py-3 px-8 rounded hover:bg-surface-container-higher active:scale-95 transition-all"
             style={{ cursor: 'pointer' }}
           >
-            VIEW SYSTEM LOGS
+            VER REGISTROS DEL SISTEMA
           </button>
         </div>
         <div className="absolute top-2 left-2 w-4 h-4" style={{ borderTop: '2px solid rgba(255,180,171,0.5)', borderLeft: '2px solid rgba(255,180,171,0.5)' }} />

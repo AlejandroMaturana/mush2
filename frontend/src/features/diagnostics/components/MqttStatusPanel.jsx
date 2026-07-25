@@ -4,7 +4,7 @@ function MqttStatusPanel({ data }) {
   if (!data) return null
 
   const statusColor = data.connected ? 'var(--spore-green)' : 'var(--error)'
-  const statusLabel = data.connected ? 'Connected' : 'Disconnected'
+  const statusLabel = data.connected ? 'Conectado' : 'Desconectado'
 
   return (
     <div className="glass-card rounded-lg p-4">
@@ -14,7 +14,7 @@ function MqttStatusPanel({ data }) {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <div className="text-8px font-label-caps text-on-surface-variant mb-1">STATUS</div>
+          <div className="text-8px font-label-caps text-on-surface-variant mb-1">ESTADO</div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full" style={{ background: statusColor }} />
             <span className="text-body-sm text-on-surface">{statusLabel}</span>
@@ -25,7 +25,7 @@ function MqttStatusPanel({ data }) {
           <span className="text-body-sm text-on-surface font-mono">{data.broker || '—'}</span>
         </div>
         <div>
-          <div className="text-8px font-label-caps text-on-surface-variant mb-1">MESSAGES</div>
+          <div className="text-8px font-label-caps text-on-surface-variant mb-1">MENSAJES</div>
           <span className="text-body-sm text-on-surface font-mono">{data.messagesReceived ?? 0}</span>
         </div>
       </div>

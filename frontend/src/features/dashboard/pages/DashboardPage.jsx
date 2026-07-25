@@ -136,7 +136,7 @@ function Dashboard() {
     }
   }, [devices]))
 
-  if (loading) return <LoadingState message="Connecting to system..." icon="settings_ethernet" />
+  if (loading) return <LoadingState message="Conectando con el sistema..." icon="settings_ethernet" />
   if (error && devices.length === 0) {
     return <ErrorState message={error} onRetry={fetchData} />
   }
@@ -147,22 +147,22 @@ function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Devices"
-        subtitle={`${devices.length} device${devices.length !== 1 ? 's' : ''} registered${onlineCount > 0 ? ` · ${onlineCount} online` : ''}`}
+        title="Dispositivos de cultivo"
+        subtitle={`${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} registrado${devices.length !== 1 ? 's' : ''}${onlineCount > 0 ? ` · ${onlineCount} en línea` : ''}`}
         actions={
           <button onClick={() => navigate('/fleet/provision')} className="btn btn-glow" style={{ padding: '8px 16px', fontSize: '11px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
-            ADD DEVICE
+            REGISTRAR DISPOSITIVO
           </button>
         }
       />
 
       {devices.length > 0 && (
         <DashboardGrid columns={4}>
-          <SummaryCard label="Total Devices" value={devices.length} icon="devices" iconClass="blue" />
-          <SummaryCard label="Online" value={onlineCount} icon="wifi" iconClass="green" />
-          <SummaryCard label="Offline" value={offlineCount} icon="wifi_off" iconClass="red" />
-          <SummaryCard label="Avg Temperature" value={devices.length > 0 ? (Object.values(telemetryMap).filter(t => t?.temperature != null).reduce((sum, t) => sum + t.temperature, 0) / Math.max(Object.values(telemetryMap).filter(t => t?.temperature != null).length, 1)).toFixed(1) : '--'} icon="thermostat" iconClass="amber" />
+          <SummaryCard label="Total dispositivos" value={devices.length} icon="devices" iconClass="blue" />
+          <SummaryCard label="En línea" value={onlineCount} icon="wifi" iconClass="green" />
+          <SummaryCard label="Fuera de línea" value={offlineCount} icon="wifi_off" iconClass="red" />
+          <SummaryCard label="Temp. promedio" value={devices.length > 0 ? (Object.values(telemetryMap).filter(t => t?.temperature != null).reduce((sum, t) => sum + t.temperature, 0) / Math.max(Object.values(telemetryMap).filter(t => t?.temperature != null).length, 1)).toFixed(1) : '--'} icon="thermostat" iconClass="amber" />
         </DashboardGrid>
       )}
 
@@ -171,10 +171,10 @@ function Dashboard() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Device</th>
-                <th>Status</th>
-                <th>Temperature</th>
-                <th>Humidity</th>
+                <th>Dispositivo</th>
+                <th>Estado</th>
+                <th>Temperatura</th>
+                <th>Humedad</th>
                 <th>CO₂</th>
                 <th>VOC</th>
                 <th style={{ width: '40px' }} />
@@ -190,9 +190,9 @@ function Dashboard() {
       ) : (
         <EmptyState
           icon="sensors_off"
-          title="No devices registered"
-          message="Connect your first Mush2 chamber to start monitoring and controlling your cultivation environment."
-          action={{ label: 'Retry Connection', onClick: fetchData }}
+          title="Sin dispositivos registrados"
+          message="Conecte su primera cámara Mush2 para comenzar la supervisión y control del ambiente de cultivo."
+          action={{ label: 'Reintentar conexión', onClick: fetchData }}
         />
       )}
     </div>

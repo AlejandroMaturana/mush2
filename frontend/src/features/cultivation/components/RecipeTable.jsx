@@ -6,11 +6,11 @@ function RecipeTable({ recipes = [], onSelect, selectedId }) {
       <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr className="border-b border-outline-variant text-label-caps text-9px text-on-surface-variant">
-            <th className="p-3 font-weight-normal">Name</th>
-            <th className="p-3 font-weight-normal">Species</th>
-            <th className="p-3 font-weight-normal">Phases</th>
-            <th className="p-3 font-weight-normal">Difficulty</th>
-            <th className="p-3 font-weight-normal">Yield</th>
+            <th className="p-3 font-weight-normal">Nombre</th>
+            <th className="p-3 font-weight-normal">Especie</th>
+            <th className="p-3 font-weight-normal">Fases</th>
+            <th className="p-3 font-weight-normal">Dificultad</th>
+            <th className="p-3 font-weight-normal">Rendimiento</th>
           </tr>
         </thead>
         <tbody>
@@ -24,7 +24,7 @@ function RecipeTable({ recipes = [], onSelect, selectedId }) {
             >
               <td className="p-3 text-body-sm text-on-surface">{recipe.name}</td>
               <td className="p-3 text-body-sm text-on-surface-variant">{recipe.Species?.commonName || '—'}</td>
-              <td className="p-3 text-body-sm text-on-surface-variant">{recipe.phases?.length || 0} phases</td>
+              <td className="p-3 text-body-sm text-on-surface-variant">{recipe.phases?.length || 0} fases</td>
               <td className="p-3 text-body-sm text-on-surface-variant">{recipe.difficulty || '—'}</td>
               <td className="p-3 text-body-sm text-on-surface-variant">{recipe.expectedYield ? `${recipe.expectedYield}g` : '—'}</td>
             </tr>

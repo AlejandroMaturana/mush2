@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import StatusBadge from '../../../shared/components/StatusBadge'
 
 const PHASE_LABELS = {
-  INCUBATION: 'Incubation',
-  FRUITING: 'Fruiting',
-  MAINTENANCE: 'Maintenance',
-  COMPLETED: 'Completed',
+  INCUBATION: 'Incubación',
+  FRUITING: 'Fructificación',
+  MAINTENANCE: 'Mantenimiento',
+  COMPLETED: 'Completado',
 }
 
 function CycleCard({ cycle }) {
@@ -19,7 +19,7 @@ function CycleCard({ cycle }) {
         <StatusBadge status={cycle.status?.toLowerCase()} label={cycle.status} />
       </div>
       <div className="text-8px text-on-surface-variant mb-2">
-        {cycle.Recipe?.name || 'No recipe'} · {PHASE_LABELS[cycle.currentPhase] || cycle.currentPhase}
+        {cycle.Recipe?.name || 'Sin receta'} · {PHASE_LABELS[cycle.currentPhase] || cycle.currentPhase}
       </div>
       {isActive && (
         <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
@@ -27,8 +27,8 @@ function CycleCard({ cycle }) {
         </div>
       )}
       <div className="flex items-center justify-between mt-2 text-8px text-on-surface-variant">
-        <span>{cycle.startDate ? new Date(cycle.startDate).toLocaleDateString() : 'Not started'}</span>
-        {cycle.endDate && <span>End: {new Date(cycle.endDate).toLocaleDateString()}</span>}
+        <span>{cycle.startDate ? new Date(cycle.startDate).toLocaleDateString() : 'Sin iniciar'}</span>
+        {cycle.endDate && <span>Fin: {new Date(cycle.endDate).toLocaleDateString()}</span>}
       </div>
     </Link>
   )

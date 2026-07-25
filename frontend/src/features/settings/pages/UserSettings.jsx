@@ -34,7 +34,7 @@ function UserSettings() {
       setPrefs(data.preferences)
       setError(null)
     } catch (err) {
-      setError(err.message || 'Error loading profile')
+      setError(err.message || 'Error al cargar perfil')
     } finally {
       setLoading(false)
     }
@@ -56,23 +56,23 @@ function UserSettings() {
     setTelegramLoading(true); setTelegramMsg(null)
     try {
       const result = await linkTelegram()
-      if (result.linked) { setTelegramStatus(result); setTelegramMsg({ type: 'ok', text: 'Already linked' }) }
-      else { setTelegramCode(result.code); setTelegramStatus({ linked: false }); setTelegramMsg({ type: 'ok', text: `Send /link ${result.code} to @Mush2Bot on Telegram` }) }
+      if (result.linked) { setTelegramStatus(result); setTelegramMsg({ type: 'ok', text: 'Ya vinculado' }) }
+      else { setTelegramCode(result.code); setTelegramStatus({ linked: false }); setTelegramMsg({ type: 'ok', text: `Envía /link ${result.code} a @Mush2Bot en Telegram` }) }
     } catch (err) { setTelegramMsg({ type: 'err', text: err.response?.data?.error || err.message }) }
     finally { setTelegramLoading(false) }
   }
 
   async function handleUnlinkTelegram() {
     setTelegramLoading(true)
-    try { await unlinkTelegram(); setTelegramStatus({ linked: false }); setTelegramCode(null); setTelegramMsg({ type: 'ok', text: 'Telegram unlinked' }) }
+    try { await unlinkTelegram(); setTelegramStatus({ linked: false }); setTelegramCode(null); setTelegramMsg({ type: 'ok', text: 'Telegram desvinculado' }) }
     catch (err) { setTelegramMsg({ type: 'err', text: err.response?.data?.error || err.message }) }
     finally { setTelegramLoading(false) }
   }
 
   async function handleSaveProfile(e) {
     e.preventDefault(); setSaving(true); setMsg(null)
-    try { await updateProfileSettings({ username, email }); setMsg({ type: 'ok', text: 'Profile updated' }); sessionStorage.setItem('mush2_user', JSON.stringify({ user: { username, email } })) }
-    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Failed' }) }
+    try { await updateProfileSettings({ username, email }); setMsg({ type: 'ok', text: 'Perfil actualizado' }); sessionStorage.setItem('mush2_user', JSON.stringify({ user: { username, email } })) }
+    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
@@ -80,22 +80,22 @@ function UserSettings() {
 
   async function handleSavePreferences() {
     setSaving(true); setMsg(null)
-    try { await updateProfileSettings({ preferences: prefs }); setMsg({ type: 'ok', text: 'Preferences saved' }); if (prefs.theme) setThemeMode(prefs.theme) }
-    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Failed' }) }
+    try { await updateProfileSettings({ preferences: prefs }); setMsg({ type: 'ok', text: 'Preferencias guardadas' }); if (prefs.theme) setThemeMode(prefs.theme) }
+    catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
   async function handleChangePassword(e) {
     e.preventDefault()
-    if (newPassword !== confirmPassword) { setPwMsg({ type: 'err', text: 'Passwords do not match' }); return }
-    if (newPassword.length < 6) { setPwMsg({ type: 'err', text: 'Password must be at least 6 characters' }); return }
+    if (newPassword !== confirmPassword) { setPwMsg({ type: 'err', text: 'Las contraseñas no coinciden' }); return }
+    if (newPassword.length < 6) { setPwMsg({ type: 'err', text: 'La contraseña debe tener al menos 6 caracteres' }); return }
     setPwSaving(true); setPwMsg(null)
-    try { await changePassword(currentPassword, newPassword); setPwMsg({ type: 'ok', text: 'Password changed successfully' }); setCurrentPassword(''); setNewPassword(''); setConfirmPassword('') }
-    catch (err) { setPwMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Failed' }) }
+    try { await changePassword(currentPassword, newPassword); setPwMsg({ type: 'ok', text: 'Contraseña cambiada correctamente' }); setCurrentPassword(''); setNewPassword(''); setConfirmPassword('') }
+    catch (err) { setPwMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setPwSaving(false) }
   }
 
-  if (loading) return <LoadingState message="Loading profile..." icon="fingerprint" />
+  if (loading) return <LoadingState message="Cargando perfil..." icon="fingerprint" />
 
   const SectionHeader = ({ icon, title }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -108,7 +108,7 @@ function UserSettings() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '720px' }}>
       {/* Profile */}
       <div className="glass-card" style={{ padding: '24px' }}>
-        <SectionHeader icon="badge" title="Profile" />
+        <SectionHeader icon="badge" title="Perfil" />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ width: '72px', height: '72px', borderRadius: '12px', border: '2px solid rgba(var(--spore-green-rgb), 0.3)', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--spore-green)' }}>person</span>
@@ -117,30 +117,30 @@ function UserSettings() {
         </div>
         <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
           <div>
-            <label className="form-label">Username</label>
+            <label className="form-label">Nombre de usuario</label>
             <input className="form-input" value={username} onChange={e => setUsername(e.target.value)} />
           </div>
           <div>
-            <label className="form-label">Email</label>
+            <label className="form-label">Correo electrónico</label>
             <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           {msg && <p style={{ fontSize: '12px', color: msg.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)', fontWeight: 600 }}>{msg.text}</p>}
-          <button type="submit" disabled={saving} className="btn btn-glow" style={{ fontSize: '10px', alignSelf: 'flex-start' }}>{saving ? 'SAVING...' : 'SAVE PROFILE'}</button>
+          <button type="submit" disabled={saving} className="btn btn-glow" style={{ fontSize: '10px', alignSelf: 'flex-start' }}>{saving ? 'GUARDANDO...' : 'GUARDAR PERFIL'}</button>
         </form>
       </div>
 
       {/* Preferences */}
       {prefs && (
         <div className="glass-card" style={{ padding: '24px' }}>
-          <SectionHeader icon="tune" title="Preferences" />
+          <SectionHeader icon="tune" title="Preferencias" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', maxWidth: '560px' }}>
             {[
-              { label: 'Theme', key: 'theme', type: 'select', options: [{ v: 'dark', l: 'Dark' }, { v: 'light', l: 'Light' }] },
-              { label: 'Language', key: 'language', type: 'select', options: [{ v: 'es', l: 'Español' }, { v: 'en', l: 'English' }] },
-              { label: 'Date Format', key: 'dateFormat', type: 'select', options: [{ v: 'DD/MM/YYYY', l: 'DD/MM/YYYY' }, { v: 'MM/DD/YYYY', l: 'MM/DD/YYYY' }, { v: 'YYYY-MM-DD', l: 'YYYY-MM-DD' }] },
-              { label: 'Default Dashboard', key: 'defaultDashboard', type: 'select', options: [{ v: 'overview', l: 'Overview' }, { v: 'devices', l: 'Devices' }, { v: 'cycles', l: 'Cycles' }, { v: 'alarms', l: 'Alarms' }] },
-              { label: 'Refresh Frequency (ms)', key: 'refreshFrequency', type: 'number' },
-              { label: 'Min Alert Severity', key: 'minAlertSeverity', type: 'select', options: [{ v: 'info', l: 'Info' }, { v: 'warning', l: 'Warning' }, { v: 'critical', l: 'Critical only' }] },
+              { label: 'Tema', key: 'theme', type: 'select', options: [{ v: 'dark', l: 'Oscuro' }, { v: 'light', l: 'Claro' }] },
+              { label: 'Idioma', key: 'language', type: 'select', options: [{ v: 'es', l: 'Español' }, { v: 'en', l: 'English' }] },
+              { label: 'Formato de fecha', key: 'dateFormat', type: 'select', options: [{ v: 'DD/MM/YYYY', l: 'DD/MM/YYYY' }, { v: 'MM/DD/YYYY', l: 'MM/DD/YYYY' }, { v: 'YYYY-MM-DD', l: 'YYYY-MM-DD' }] },
+              { label: 'Panel predeterminado', key: 'defaultDashboard', type: 'select', options: [{ v: 'overview', l: 'Resumen' }, { v: 'devices', l: 'Dispositivos' }, { v: 'cycles', l: 'Ciclos' }, { v: 'alarms', l: 'Alarmas' }] },
+              { label: 'Frecuencia de actualización (ms)', key: 'refreshFrequency', type: 'number' },
+              { label: 'Severidad mínima de alerta', key: 'minAlertSeverity', type: 'select', options: [{ v: 'info', l: 'Info' }, { v: 'warning', l: 'Advertencia' }, { v: 'critical', l: 'Solo crítica' }] },
             ].map(field => (
               <div key={field.key}>
                 <label className="form-label">{field.label}</label>
@@ -154,9 +154,9 @@ function UserSettings() {
               </div>
             ))}
             {[
-              { label: 'Push Notifications', key: 'pushNotifications' },
-              { label: 'Alert Sounds', key: 'alertSounds' },
-              { label: 'Email Alerts', key: 'emailAlerts' },
+              { label: 'Notificaciones push', key: 'pushNotifications' },
+              { label: 'Sonidos de alerta', key: 'alertSounds' },
+              { label: 'Alertas por correo', key: 'emailAlerts' },
             ].map(toggle => (
               <div key={toggle.key} className="settings-row">
                 <span className="form-label">{toggle.label}</span>
@@ -164,12 +164,12 @@ function UserSettings() {
               </div>
             ))}
             <div style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">Webhook URL</label>
+              <label className="form-label">URL de Webhook</label>
               <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={prefs.webhookUrl || ''} onChange={e => handlePrefChange('webhookUrl', e.target.value)} placeholder="https://..." />
             </div>
           </div>
           <div style={{ marginTop: '16px' }}>
-            <button onClick={handleSavePreferences} disabled={saving} className="btn btn-glow" style={{ fontSize: '10px' }}>{saving ? 'SAVING...' : 'SAVE PREFERENCES'}</button>
+            <button onClick={handleSavePreferences} disabled={saving} className="btn btn-glow" style={{ fontSize: '10px' }}>{saving ? 'GUARDANDO...' : 'GUARDAR PREFERENCIAS'}</button>
           </div>
         </div>
       )}
@@ -183,24 +183,24 @@ function UserSettings() {
               <div className="alert-banner alert-banner-success" style={{ marginBottom: '16px' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>check_circle</span>
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>Linked to Telegram</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>Vinculado a Telegram</span>
                   <span style={{ fontSize: '11px', color: 'var(--outline)', display: 'block' }}>Chat ID: {telegramStatus.chatId}</span>
                 </div>
               </div>
-              <button onClick={handleUnlinkTelegram} disabled={telegramLoading} className="btn btn-danger" style={{ fontSize: '10px' }}>{telegramLoading ? 'PROCESSING...' : 'UNLINK TELEGRAM'}</button>
+              <button onClick={handleUnlinkTelegram} disabled={telegramLoading} className="btn btn-danger" style={{ fontSize: '10px' }}>{telegramLoading ? 'PROCESANDO...' : 'DESVINCULAR TELEGRAM'}</button>
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>Link your Telegram account to receive real-time alerts from your devices.</p>
+              <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>Vincula tu cuenta de Telegram para recibir alertas en tiempo real de tus dispositivos.</p>
               {telegramCode && (
                 <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface-container)', border: '1px solid var(--outline-variant)', marginBottom: '16px' }}>
-                  <span className="form-label">Send this code to @Mush2Bot</span>
+                  <span className="form-label">Envía este código a @Mush2Bot</span>
                   <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--spore-green)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>{telegramCode}</span>
-                  <p style={{ fontSize: '11px', color: 'var(--outline)', marginTop: '8px' }}>Send <code style={{ background: 'var(--surface-container-low)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>/link {telegramCode}</code> to @Mush2Bot on Telegram</p>
+                  <p style={{ fontSize: '11px', color: 'var(--outline)', marginTop: '8px' }}>Envía <code style={{ background: 'var(--surface-container-low)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'var(--font-mono)' }}>/link {telegramCode}</code> a @Mush2Bot en Telegram</p>
                 </div>
               )}
               {telegramMsg && <p style={{ fontSize: '12px', color: telegramMsg.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)', fontWeight: 600, marginBottom: '12px' }}>{telegramMsg.text}</p>}
-              <button onClick={handleLinkTelegram} disabled={telegramLoading} className="btn btn-glow" style={{ fontSize: '10px' }}>{telegramLoading ? 'PROCESSING...' : telegramCode ? 'REFRESH CODE' : 'LINK TELEGRAM'}</button>
+              <button onClick={handleLinkTelegram} disabled={telegramLoading} className="btn btn-glow" style={{ fontSize: '10px' }}>{telegramLoading ? 'PROCESANDO...' : telegramCode ? 'ACTUALIZAR CÓDIGO' : 'VINCULAR TELEGRAM'}</button>
             </div>
           )}
         </div>
@@ -208,22 +208,22 @@ function UserSettings() {
 
       {/* Password */}
       <div className="glass-card" style={{ padding: '24px' }}>
-        <SectionHeader icon="lock" title="Change Password" />
+        <SectionHeader icon="lock" title="Cambiar contraseña" />
         <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px' }}>
           <div>
-            <label className="form-label">Current Password</label>
+            <label className="form-label">Contraseña actual</label>
             <input type="password" className="form-input" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
           </div>
           <div>
-            <label className="form-label">New Password</label>
+            <label className="form-label">Nueva contraseña</label>
             <input type="password" className="form-input" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
           </div>
           <div>
-            <label className="form-label">Confirm New Password</label>
+            <label className="form-label">Confirmar nueva contraseña</label>
             <input type="password" className="form-input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
           </div>
           {pwMsg && <p style={{ fontSize: '12px', color: pwMsg.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)', fontWeight: 600 }}>{pwMsg.text}</p>}
-          <button type="submit" disabled={pwSaving || !currentPassword || !newPassword || !confirmPassword} className="btn btn-glow" style={{ fontSize: '10px', alignSelf: 'flex-start' }}>{pwSaving ? 'CHANGING...' : 'CHANGE PASSWORD'}</button>
+          <button type="submit" disabled={pwSaving || !currentPassword || !newPassword || !confirmPassword} className="btn btn-glow" style={{ fontSize: '10px', alignSelf: 'flex-start' }}>{pwSaving ? 'CAMBIANDO...' : 'CAMBIAR CONTRASEÑA'}</button>
         </form>
       </div>
     </div>

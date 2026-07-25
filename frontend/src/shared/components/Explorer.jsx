@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Explorer({ title, count, searchValue, onSearchChange, searchPlaceholder = 'Search...', filters, children, actions }) {
+function Explorer({ title, count, searchValue, onSearchChange, searchPlaceholder = 'Buscar...', filters, children, actions }) {
   return (
     <div className="explorer">
       <div className="explorer-header">
@@ -26,7 +26,7 @@ function Explorer({ title, count, searchValue, onSearchChange, searchPlaceholder
                 <button
                   className="explorer-search-clear"
                   onClick={() => onSearchChange('')}
-                  aria-label="Clear search"
+                  aria-label="Limpiar búsqueda"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>

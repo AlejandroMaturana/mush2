@@ -20,11 +20,11 @@ function AuditLogTable({ logs = [] }) {
       <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr className="border-b border-outline-variant text-label-caps text-9px text-on-surface-variant">
-            <th className="p-3 font-weight-normal">Time</th>
-            <th className="p-3 font-weight-normal">User</th>
-            <th className="p-3 font-weight-normal">Action</th>
-            <th className="p-3 font-weight-normal">Resource</th>
-            <th className="p-3 font-weight-normal">Details</th>
+            <th className="p-3 font-weight-normal">Tiempo</th>
+            <th className="p-3 font-weight-normal">Usuario</th>
+            <th className="p-3 font-weight-normal">Acción</th>
+            <th className="p-3 font-weight-normal">Recurso</th>
+            <th className="p-3 font-weight-normal">Detalles</th>
           </tr>
         </thead>
         <tbody>
@@ -47,7 +47,7 @@ function AuditLogTable({ logs = [] }) {
                     <span className="material-symbols-outlined text-10px">
                       {expandedId === log.id ? 'expand_less' : 'expand_more'}
                     </span>
-                    {expandedId === log.id ? 'Hide' : 'Show'}
+                    {expandedId === log.id ? 'Ocultar' : 'Mostrar'}
                   </button>
                 ) : '—'}
               </td>

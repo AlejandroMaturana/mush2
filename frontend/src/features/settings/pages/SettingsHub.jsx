@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 
 const HUB_CARDS = [
-  { to: '/system/settings/user', icon: 'fingerprint', title: 'User', subtitle: 'Profile, security & access', color: 'var(--spore-green)' },
-  { to: '/system/settings/device', icon: 'developer_board', title: 'Device', subtitle: 'Hardware & calibration', color: 'var(--accent-blue, #60a5fa)' },
-  { to: '/system/settings/cultivation', icon: 'potted_plant', title: 'Cultivation', subtitle: 'Parameters, recipes & cycles', color: 'var(--accent-purple, #a78bfa)' },
-  { to: '/system/settings/api-keys', icon: 'vpn_key', title: 'API Keys', subtitle: 'Manage programmatic access & integration', color: 'var(--spore-green)' },
-  { to: '/system/settings/subscription', icon: 'workspace_premium', title: 'Subscription', subtitle: 'Plan, API limits & data retention', color: 'var(--accent-blue, #60a5fa)' },
-  { to: '/system/settings/system', icon: 'settings', title: 'System', subtitle: 'Global configuration & parameters', color: 'var(--accent-purple, #a78bfa)' },
+  { to: '/system/settings/user', icon: 'fingerprint', title: 'Usuario', subtitle: 'Perfil, seguridad y acceso', color: 'var(--spore-green)' },
+  { to: '/system/settings/device', icon: 'developer_board', title: 'Dispositivo', subtitle: 'Hardware y calibración', color: 'var(--accent-blue, #60a5fa)' },
+  { to: '/system/settings/cultivation', icon: 'potted_plant', title: 'Cultivo', subtitle: 'Parámetros, recetas y ciclos', color: 'var(--accent-purple, #a78bfa)' },
+  { to: '/system/settings/api-keys', icon: 'vpn_key', title: 'Claves de API', subtitle: 'Gestionar acceso programático e integración', color: 'var(--spore-green)' },
+  { to: '/system/settings/subscription', icon: 'workspace_premium', title: 'Suscripción', subtitle: 'Plan, límites de API y retención de datos', color: 'var(--accent-blue, #60a5fa)' },
+  { to: '/system/settings/system', icon: 'settings', title: 'Sistema', subtitle: 'Configuración global y parámetros', color: 'var(--accent-purple, #a78bfa)' },
 ]
 
 function SettingsHub() {
@@ -15,9 +15,9 @@ function SettingsHub() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '32px' }}>
-        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Settings</h1>
+        <h1 className="gradient-title" style={{ fontSize: '28px', marginBottom: '4px' }}>Configuración</h1>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>
-          System configuration and preferences
+          Configuración del sistema y preferencias
         </p>
       </div>
 

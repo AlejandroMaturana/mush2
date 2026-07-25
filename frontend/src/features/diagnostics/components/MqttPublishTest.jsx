@@ -11,9 +11,9 @@ function MqttPublishTest({ onPublish }) {
     setLoading(true)
     try {
       await onPublish(topic, JSON.parse(payload))
-      setResult({ success: true, message: 'Published successfully' })
+      setResult({ success: true, message: 'Publicado correctamente' })
     } catch (err) {
-      setResult({ success: false, message: err.message || 'Failed to publish' })
+      setResult({ success: false, message: err.message || 'Error al publicar' })
     }
     setLoading(false)
   }
@@ -34,7 +34,7 @@ function MqttPublishTest({ onPublish }) {
           <textarea className="input w-full font-mono text-10px" rows={3} value={payload} onChange={e => setPayload(e.target.value)} />
         </div>
         <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
-          {loading ? 'Publishing...' : 'Publish'}
+          {loading ? 'Publicando...' : 'Publicar'}
         </button>
       </form>
       {result && (

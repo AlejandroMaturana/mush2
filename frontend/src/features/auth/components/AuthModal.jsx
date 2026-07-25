@@ -30,11 +30,11 @@ function AuthModal({ isOpen, onClose }) {
 
     if (mode === 'REGISTER') {
       if (password !== confirmPassword) {
-        setError('Las contrase├▒as no coinciden')
+        setError('Las contraseñas no coinciden')
         return
       }
       if (password.length < 6) {
-        setError('La contrase├▒a debe tener al menos 6 caracteres')
+        setError('La contraseña debe tener al menos 6 caracteres')
         return
       }
     }
@@ -47,7 +47,7 @@ function AuthModal({ isOpen, onClose }) {
       authLogin(result.user, result.token.accessToken, result.token.refreshToken)
       onClose()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error de conexi├│n')
+      setError(err.response?.data?.error || 'Error de conexión')
     } finally {
       setLoading(false)
     }
@@ -256,7 +256,7 @@ function AuthModal({ isOpen, onClose }) {
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  placeholder="tu-usuario"
+                  placeholder="ingresa tu usuario"
                   required
                   autoComplete="username"
                   className="form-input"
@@ -312,7 +312,7 @@ function AuthModal({ isOpen, onClose }) {
                 marginBottom: '4px',
                 display: 'block',
                 paddingLeft: '4px',
-              }}>CONTRASE├æA</label>
+              }}>CONTRASEÑA</label>
               <div style={{ position: 'relative' }}>
                 <span className="material-symbols-outlined" style={{
                   position: 'absolute',
@@ -326,7 +326,7 @@ function AuthModal({ isOpen, onClose }) {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                  placeholder="ingresa-tu-contraseña"
                   required
                   autoComplete={mode === 'LOGIN' ? 'current-password' : 'new-password'}
                   className="form-input"
@@ -370,7 +370,7 @@ function AuthModal({ isOpen, onClose }) {
                   marginBottom: '4px',
                   display: 'block',
                   paddingLeft: '4px',
-                }}>CONFIRMAR CONTRASE├æA</label>
+                }}>CONFIRMAR CONTRASEÑA</label>
                 <div style={{ position: 'relative' }}>
                   <span className="material-symbols-outlined" style={{
                     position: 'absolute',
@@ -384,12 +384,35 @@ function AuthModal({ isOpen, onClose }) {
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                    placeholder="ingresa-tu-contraseña"
                     required
                     autoComplete="new-password"
                     className="form-input"
                     style={{ paddingLeft: '40px' }}
                   />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Ocultar' : 'Mostrar'}
+                  onClick={() => setShowPassword(prev => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '8px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--on-surface-variant)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{showPassword ? 'visibility_off' : 'visibility'}</span>
+                </button>
                 </div>
               </div>
             )}
@@ -429,7 +452,7 @@ function AuthModal({ isOpen, onClose }) {
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
                   {loading ? 'sync' : mode === 'LOGIN' ? 'login' : 'person_add'}
                 </span>
-                {loading ? 'PROCESANDO...' : mode === 'LOGIN' ? 'INICIAR SESI├ôN' : 'CREAR CUENTA'}
+                {loading ? 'PROCESANDO...' : mode === 'LOGIN' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
               </button>
             </div>
           </form>
@@ -442,7 +465,7 @@ function AuthModal({ isOpen, onClose }) {
             textAlign: 'center',
           }}>
             <span style={{ fontSize: '12px', color: 'var(--on-surface-variant)' }}>
-              {mode === 'LOGIN' ? '┬┐No tienes cuenta?' : '┬┐Ya tienes cuenta?'}
+              {mode === 'LOGIN' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
             </span>
             <button
               type="button"
@@ -461,7 +484,7 @@ function AuthModal({ isOpen, onClose }) {
                 transition: 'all 0.2s',
               }}
             >
-              {mode === 'LOGIN' ? 'REGISTRARSE' : 'INICIAR SESI├ôN'}
+              {mode === 'LOGIN' ? 'REGISTRARSE' : 'INICIAR SESIÓN'}
             </button>
           </div>
         </div>

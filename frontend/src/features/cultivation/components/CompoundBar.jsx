@@ -14,7 +14,7 @@ function CompoundBar({ compounds = [] }) {
 
   return (
     <div>
-      <div className="chart-panel-label mb-2">COMPOUND PROFILE</div>
+      <div className="chart-panel-label mb-2">PERFIL DE COMPUESTOS</div>
       <div className="h-3 rounded-full overflow-hidden flex bg-surface-container-highest">
         {compounds.map((c, i) => (
           <div

@@ -7,10 +7,10 @@ import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 import Panel from '../../../shared/components/Panel.jsx'
 
 const SEVERITY = {
-  CRITICAL: { label: 'Critical', color: 'var(--error-red)', icon: 'error', bg: 'rgba(239, 68, 68, 0.1)' },
-  HIGH: { label: 'High', color: 'var(--amber)', icon: 'warning', bg: 'rgba(245, 158, 11, 0.1)' },
-  MEDIUM: { label: 'Medium', color: 'var(--accent-blue, #60a5fa)', icon: 'info', bg: 'rgba(96, 165, 250, 0.1)' },
-  LOW: { label: 'Low', color: 'var(--outline)', icon: 'info', bg: 'rgba(153, 153, 153, 0.1)' },
+  CRITICAL: { label: 'Crítico', color: 'var(--error-red)', icon: 'error', bg: 'rgba(239, 68, 68, 0.1)' },
+  HIGH: { label: 'Alto', color: 'var(--amber)', icon: 'warning', bg: 'rgba(245, 158, 11, 0.1)' },
+  MEDIUM: { label: 'Medio', color: 'var(--accent-blue, #60a5fa)', icon: 'info', bg: 'rgba(96, 165, 250, 0.1)' },
+  LOW: { label: 'Bajo', color: 'var(--outline)', icon: 'info', bg: 'rgba(153, 153, 153, 0.1)' },
 }
 
 function AlarmRow({ alarm, onAcknowledge, onResolve }) {
@@ -68,7 +68,7 @@ function AlarmRow({ alarm, onAcknowledge, onResolve }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--spore-green)' }}>check_circle</span>
             <span style={{ fontSize: '9px', color: 'var(--outline)' }}>
-              Resolved {new Date(alarm.resolvedAt).toLocaleDateString()}
+              Resuelta el {new Date(alarm.resolvedAt).toLocaleDateString()}
             </span>
           </div>
         )}
@@ -132,15 +132,15 @@ function Alarms() {
     }
   }
 
-  if (loading && alarms.length === 0) return <LoadingState message="Loading alarms..." icon="warning" />
+  if (loading && alarms.length === 0) return <LoadingState message="Cargando alarmas..." icon="warning" />
 
   const activeCount = alarms.filter(a => !a.resolvedAt).length
 
   return (
     <div className="alarms-page">
       <EntityHeader
-        title="Alarms"
-        subtitle={`${activeCount} active · ${pagination?.total || alarms.length} total`}
+        title="Alarmas"
+        subtitle={`${activeCount} activa${activeCount !== 1 ? 's' : ''} · ${pagination?.total || alarms.length} en total`}
       />
 
       {error && (
@@ -150,40 +150,40 @@ function Alarms() {
         </div>
       )}
 
-      <Panel title="Filters" subtitle={`${activeCount} active alarms`}>
+      <Panel title="Filtros" subtitle={`${activeCount} alarma${activeCount !== 1 ? 's' : ''} activa${activeCount !== 1 ? 's' : ''}`}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label className="form-label">Severity</label>
+            <label className="form-label">Severidad</label>
             <select
               value={filter.severity}
               onChange={e => { setFilter(f => ({ ...f, severity: e.target.value })); setPage(1) }}
               className="form-select"
               style={{ fontSize: '11px' }}
             >
-              <option value="">All Severities</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
+              <option value="">Todas las severidades</option>
+              <option value="CRITICAL">Crítico</option>
+              <option value="HIGH">Alto</option>
+              <option value="MEDIUM">Medio</option>
+              <option value="LOW">Bajo</option>
             </select>
           </div>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label className="form-label">Status</label>
+            <label className="form-label">Estado</label>
             <select
               value={filter.status}
               onChange={e => { setFilter(f => ({ ...f, status: e.target.value })); setPage(1) }}
               className="form-select"
               style={{ fontSize: '11px' }}
             >
-              <option value="active">Active</option>
-              <option value="resolved">Resolved</option>
-              <option value="">All</option>
+              <option value="active">Activas</option>
+              <option value="resolved">Resueltas</option>
+              <option value="">Todas</option>
             </select>
           </div>
           {activeCount > 0 && (
             <div className="alert-banner alert-banner-error" style={{ padding: '4px 10px' }}>
               <span className="material-symbols-outlined pulse-error" style={{ fontSize: '14px', color: 'var(--error-red)' }}>warning</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--error-red)' }}>{activeCount} active</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--error-red)' }}>{activeCount} activa{activeCount !== 1 ? 's' : ''}</span>
             </div>
           )}
         </div>
@@ -194,12 +194,12 @@ function Alarms() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Severity</th>
-                <th>Type</th>
-                <th>Message</th>
-                <th>Device</th>
-                <th>Time</th>
-                <th>Actions</th>
+                <th>Severidad</th>
+                <th>Tipo</th>
+                <th>Mensaje</th>
+                <th>Dispositivo</th>
+                <th>Hora</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -217,8 +217,8 @@ function Alarms() {
       ) : (
         <EmptyState
           icon="check_circle"
-          title="No Alarms"
-          message={filter.status === 'resolved' ? 'No resolved alarms found.' : filter.severity ? `No ${filter.severity.toLowerCase()} severity alarms.` : 'All systems running smoothly.'}
+          title="Sin alarmas"
+          message={filter.status === 'resolved' ? 'No se encontraron alarmas resueltas.' : filter.severity ? `Sin alarmas de severidad ${filter.severity.toLowerCase()}.` : 'Todos los sistemas funcionan correctamente.'}
         />
       )}
 
@@ -231,10 +231,10 @@ function Alarms() {
             onClick={() => setPage(p => p - 1)}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chevron_left</span>
-            PREV
+            ANT
           </button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--outline)' }}>
-            Page {pagination.page} of {pagination.pages}
+            Página {pagination.page} de {pagination.pages}
           </span>
           <button
             className="btn btn-secondary"
@@ -242,7 +242,7 @@ function Alarms() {
             disabled={page >= pagination.pages}
             onClick={() => setPage(p => p + 1)}
           >
-            NEXT
+            SIG
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chevron_right</span>
           </button>
         </div>

@@ -9,7 +9,7 @@ function Pagination({ page, totalPages, onPageChange }) {
         onClick={() => onPageChange(page - 1)}
       >
         <span className="material-symbols-outlined text-14px">chevron_left</span>
-        PREV
+        Anterior
       </button>
       <span className="pagination-info">
         {page} / {totalPages}
@@ -19,7 +19,7 @@ function Pagination({ page, totalPages, onPageChange }) {
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >
-        NEXT
+        Siguiente
         <span className="material-symbols-outlined text-14px">chevron_right</span>
       </button>
     </div>

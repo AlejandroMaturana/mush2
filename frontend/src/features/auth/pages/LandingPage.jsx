@@ -101,7 +101,7 @@ function Landing() {
               letterSpacing: '0.15em',
               textTransform: 'uppercase',
               marginTop: '2px',
-            }}>Autonomous Biosphere</p>
+            }}>Biosfera autónoma</p>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ function Landing() {
             color: 'var(--spore-green)',
           }}
         >
-          ENTER CONSOLE
+          ENTRAR A LA CONSOLA
         </button>
       </header>
 
@@ -178,7 +178,7 @@ function Landing() {
               color: 'var(--outline)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-            }}>NEXT-GEN HOME MYCOLOGY STATION</span>
+            }}>ESTACIÓN DE MICología HOGAR DE NUEVA GENERACIÓN</span>
           </div>
 
           {/* Heading */}
@@ -190,10 +190,10 @@ function Landing() {
             lineHeight: 1.1,
             color: 'var(--on-surface)',
           }}>
-            Cultivate Mycelium with
+            Cultiva micelio con
             <br />
             <span className="gradient-title" style={{ fontSize: 'inherit' }}>
-              Autonomous Intelligence.
+              inteligencia autónoma.
             </span>
           </h1>
 
@@ -217,7 +217,7 @@ function Landing() {
               className="btn btn-glow"
               style={{ padding: '12px 24px', fontSize: '13px' }}
             >
-              <span>Initialize Grow Console</span>
+              <span>Iniciar consola de cultivo</span>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_forward</span>
             </button>
             <button
@@ -226,7 +226,7 @@ function Landing() {
               style={{ padding: '12px 24px', fontSize: '13px' }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bluetooth</span>
-              <span>Connect My Hardware</span>
+              <span>Conectar mi hardware</span>
             </button>
           </div>
 
@@ -489,10 +489,10 @@ function Landing() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--spore-green)' }}>verified</span>
-            <span>Mush2 Mycelium Smart Platform Active & Fully Certified</span>
+            <span>Mush2 Mycelium Smart Platform activa y certificada</span>
           </div>
           <div>
-            <span>© 2026 Mush2 Corp. Designed for Organic Enthusiasts.</span>
+            <span>© 2026 Mush2 Corp. Diseñado para entusiastas del cultivo orgánico.</span>
           </div>
         </div>
       </footer>

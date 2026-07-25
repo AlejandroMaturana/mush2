@@ -1,15 +1,15 @@
 export const STATUS_LABELS = {
-  ONLINE: 'Online',
-  OFFLINE: 'Offline',
-  MAINTENANCE: 'Maintenance',
+  ONLINE: 'En línea',
+  OFFLINE: 'Fuera de línea',
+  MAINTENANCE: 'Mantenimiento',
   ERROR: 'Error',
 }
 
 export const SEVERITY_LABELS = {
-  CRITICAL: 'Critical',
-  HIGH: 'High',
-  MEDIUM: 'Medium',
-  LOW: 'Low',
+  CRITICAL: 'Crítica',
+  HIGH: 'Alta',
+  MEDIUM: 'Media',
+  LOW: 'Baja',
 }
 
 export const SEVERITY_COLORS = {
@@ -20,17 +20,17 @@ export const SEVERITY_COLORS = {
 }
 
 export const PHASE_LABELS = {
-  INCUBATION: 'Incubation',
-  FRUITING: 'Fruiting',
-  MAINTENANCE: 'Maintenance',
-  COMPLETED: 'Completed',
+  INCUBATION: 'Incubación',
+  FRUITING: 'Fructificación',
+  MAINTENANCE: 'Mantenimiento',
+  COMPLETED: 'Completada',
 }
 
 export const CYCLE_STATUS_LABELS = {
-  PLANNED: 'Planned',
-  ACTIVE: 'Active',
-  COMPLETED: 'Completed',
-  ABORTED: 'Aborted',
+  PLANNED: 'Planificado',
+  ACTIVE: 'Activo',
+  COMPLETED: 'Completado',
+  ABORTED: 'Cancelado',
 }
 
 export const DIFFICULTY_LABELS = {
@@ -46,8 +46,8 @@ export const ADAPTER_CLASS_LABELS = {
 }
 
 export const ROLE_LABELS = {
-  SUPER_ADMIN: { label: 'Super Admin', color: 'text-purple-400' },
-  ADMIN: { label: 'Admin', color: 'text-blue-400' },
-  OPERATOR: { label: 'Operator', color: 'text-green-400' },
-  VIEWER: { label: 'Viewer', color: 'text-gray-400' },
+  SUPER_ADMIN: { label: 'Administrador Principal', color: 'text-purple-400' },
+  ADMIN: { label: 'Administrador', color: 'text-blue-400' },
+  OPERATOR: { label: 'Operador', color: 'text-green-400' },
+  VIEWER: { label: 'Observador', color: 'text-gray-400' },
 }

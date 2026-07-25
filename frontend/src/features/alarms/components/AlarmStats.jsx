@@ -4,10 +4,10 @@ function AlarmStats() {
   const stats = useAlarms()
 
   const items = [
-    { label: 'CRITICAL', value: stats.critical, color: 'var(--error)' },
-    { label: 'HIGH', value: stats.high, color: 'var(--amber)' },
-    { label: 'MEDIUM', value: stats.medium, color: 'var(--info)' },
-    { label: 'LOW', value: stats.low, color: 'var(--on-surface-variant)' },
+    { label: 'CRÍTICA', value: stats.critical, color: 'var(--error)' },
+    { label: 'ALTA', value: stats.high, color: 'var(--amber)' },
+    { label: 'MEDIA', value: stats.medium, color: 'var(--info)' },
+    { label: 'BAJA', value: stats.low, color: 'var(--on-surface-variant)' },
   ]
 
   return (

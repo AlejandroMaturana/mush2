@@ -2,13 +2,13 @@ function TerminalLog({ entries = [], onExtract }) {
   return (
     <div className="terminal-log rounded-card flex flex-col">
       <div className="terminal-header">
-        <span className="text-label-caps text-on-surface">SYS.LOG.TERMINAL</span>
+        <span className="text-label-caps text-on-surface">REGISTRO DEL SISTEMA</span>
         <span className="material-symbols-outlined text-12px text-on-surface-variant">terminal</span>
       </div>
       <div className="terminal-body flex-1 overflow-y-auto min-h-[80px]">
         {entries.length === 0 ? (
           <div className="terminal-entry">
-            <span className="msg-info">[--:--:--] Waiting for data...</span>
+            <span className="msg-info">[--:--:--] Esperando datos...</span>
           </div>
         ) : (
           entries.map((entry, i) => (
@@ -21,7 +21,7 @@ function TerminalLog({ entries = [], onExtract }) {
       </div>
       {onExtract && (
         <button className="bg-surface-container-high text-on-surface-variant font-label-caps text-8px py-1 border-t border-outline-variant hover:text-primary" onClick={onExtract}>
-          FULL_EXTRACT.SH
+          EXPORTAR REGISTRO COMPLETO
         </button>
       )}
     </div>

@@ -6,29 +6,29 @@ const ACTIONS = ['', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'USER_ROLE
 function LogFilters({ filters, onChange }) {
   return (
     <FilterBar>
-      <FilterBar.Field label="Search">
+      <FilterBar.Field label="Buscar">
         <input
           type="text"
           className="input"
-          placeholder="Search logs..."
+          placeholder="Buscar registros..."
           value={filters.search || ''}
           onChange={e => onChange({ ...filters, search: e.target.value })}
         />
       </FilterBar.Field>
-      <FilterBar.Field label="Resource">
+      <FilterBar.Field label="Recurso">
         <select className="select" value={filters.resource || ''} onChange={e => onChange({ ...filters, resource: e.target.value })}>
-          {RESOURCES.map(r => <option key={r} value={r}>{r || 'All Resources'}</option>)}
+          {RESOURCES.map(r => <option key={r} value={r}>{r || 'Todos los recursos'}</option>)}
         </select>
       </FilterBar.Field>
-      <FilterBar.Field label="Action">
+      <FilterBar.Field label="Acción">
         <select className="select" value={filters.action || ''} onChange={e => onChange({ ...filters, action: e.target.value })}>
-          {ACTIONS.map(a => <option key={a} value={a}>{a || 'All Actions'}</option>)}
+          {ACTIONS.map(a => <option key={a} value={a}>{a || 'Todas las acciones'}</option>)}
         </select>
       </FilterBar.Field>
-      <FilterBar.Field label="From">
+      <FilterBar.Field label="Desde">
         <input type="date" className="input" value={filters.from || ''} onChange={e => onChange({ ...filters, from: e.target.value })} />
       </FilterBar.Field>
-      <FilterBar.Field label="To">
+      <FilterBar.Field label="Hasta">
         <input type="date" className="input" value={filters.to || ''} onChange={e => onChange({ ...filters, to: e.target.value })} />
       </FilterBar.Field>
     </FilterBar>

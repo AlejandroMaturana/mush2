@@ -17,13 +17,13 @@ const STATUS_COLORS = {
 }
 
 function formatTimeAgo(seconds) {
-  if (seconds == null) return 'Never'
-  if (seconds < 5) return 'Just now'
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+  if (seconds == null) return 'Nunca'
+  if (seconds < 5) return 'Hace un momento'
+  if (seconds < 60) return `Hace ${seconds}s`
+  if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m`
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return `${h}h ${m}m`
+  return `Hace ${h}h ${m}m`
 }
 
 function DeviceList() {
@@ -42,7 +42,7 @@ function DeviceList() {
       const data = await getDevices()
       setDevices(data)
     } catch (err) {
-      setError(err.message || 'Error loading devices')
+      setError(err.message || 'Error al cargar los dispositivos')
     } finally {
       setLoading(false)
     }
@@ -58,7 +58,7 @@ function DeviceList() {
       setShowDeleteModal(null)
       await load()
     } catch (err) {
-      setError(err.message || 'Error deleting device')
+      setError(err.message || 'Error al eliminar el dispositivo')
     } finally {
       setDeleting(false)
     }
@@ -81,17 +81,17 @@ function DeviceList() {
   const staleCount = devices.filter(d => d.status === 'STALE' || d.status === 'DEGRADED').length
   const offlineCount = devices.filter(d => d.status === 'OFFLINE').length
 
-  if (loading) return <LoadingState message="Loading devices..." icon="devices" />
+  if (loading) return <LoadingState message="Cargando dispositivos..." icon="devices" />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Device Fleet"
-        subtitle={`${devices.length} device${devices.length !== 1 ? 's' : ''} · ${onlineCount} online${staleCount > 0 ? ` · ${staleCount} stale` : ''}${offlineCount > 0 ? ` · ${offlineCount} offline` : ''}`}
+        title="Flota de dispositivos"
+        subtitle={`${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} · ${onlineCount} en línea${staleCount > 0 ? ` · ${staleCount} sin actualizar` : ''}${offlineCount > 0 ? ` · ${offlineCount} fuera de línea` : ''}`}
         actions={
           <Link to="/fleet/provision" className="btn btn-glow" style={{ fontSize: '11px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bluetooth</span>
-            PROVISION
+            APROVISIONAR
           </Link>
         }
       />
@@ -107,49 +107,59 @@ function DeviceList() {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search by ID, name, or MAC..."
+          placeholder="Buscar por ID, nombre o dirección MAC..."
           className="form-input"
           style={{ flex: 1, minWidth: '200px', fontSize: '12px' }}
         />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="form-select" style={{ fontSize: '11px' }}>
-          <option value="">All statuses</option>
-          <option value="ONLINE">Online</option>
-          <option value="DEGRADED">Degraded</option>
-          <option value="STALE">Stale</option>
-          <option value="OFFLINE">Offline</option>
-          <option value="MAINTENANCE">Maintenance</option>
+          <option value="">Todos los estados</option>
+          <option value="ONLINE">En línea</option>
+          <option value="DEGRADED">Degradado</option>
+          <option value="STALE">Sin actualizar</option>
+          <option value="OFFLINE">Fuera de línea</option>
+          <option value="MAINTENANCE">Mantenimiento</option>
         </select>
       </div>
 
       {devices.length === 0 ? (
         <EmptyState
           icon="devices"
-          title="No devices"
-          message="No devices registered yet. Start by provisioning a new device."
-          action={{ label: 'PROVISION DEVICE', onClick: () => navigate('/fleet/provision') }}
+          title="Sin dispositivos"
+          message="No hay dispositivos registrados. Comience aprovisionando uno nuevo."
+          action={{ label: 'APROVISIONAR DISPOSITIVO', onClick: () => navigate('/fleet/provision') }}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon="search_off"
-          title="No matches"
-          message="No devices match your search criteria."
+          title="Sin coincidencias"
+          message="Ningún dispositivo coincide con los criterios de búsqueda."
         />
       ) : (
         <div className="glass-card" style={{ overflow: 'hidden' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Device ID</th>
-                <th>Chamber</th>
-                <th>Status</th>
+                <th>ID Dispositivo</th>
+                <th>Cámara</th>
+                <th>Estado</th>
                 <th>Firmware</th>
-                <th>Last Seen</th>
-                <th>Actions</th>
+                <th>Última conexión</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(d => {
                 const st = STATUS_COLORS[d.status] || STATUS_COLORS.OFFLINE
+                const statusTextMap = {
+                  ONLINE: 'EN LÍNEA',
+                  DEGRADED: 'DEGRADADO',
+                  STALE: 'SIN ACTUALIZAR',
+                  OFFLINE: 'FUERA DE LÍNEA',
+                  MAINTENANCE: 'MANTENIMIENTO',
+                  PROVISIONING: 'APROVISIONANDO',
+                  RETIRED: 'RETIRADO',
+                  ERROR: 'ERROR',
+                }
                 return (
                   <tr key={d.id}>
                     <td>
@@ -168,14 +178,14 @@ function DeviceList() {
                         color: st.color,
                       }}>
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: st.color }} />
-                        {d.status || 'UNKNOWN'}
+                        {statusTextMap[d.status] || d.status || 'DESCONOCIDO'}
                       </span>
                     </td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)' }}>
                       {d.firmwareVersion || '—'}
                     </td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)' }}>
-                      <span title={d.lastSeen ? new Date(d.lastSeen).toLocaleString() : 'Never'}>
+                      <span title={d.lastSeen ? new Date(d.lastSeen).toLocaleString() : 'Nunca'}>
                         {formatTimeAgo(d.secondsSinceLastSeen)}
                       </span>
                     </td>
@@ -202,15 +212,15 @@ function DeviceList() {
           <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--error-red)' }}>warning</span>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', textAlign: 'center' }}>Delete Device</h2>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', textAlign: 'center' }}>Eliminar dispositivo</h2>
               <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', lineHeight: 1.5 }}>
-                Are you sure you want to delete <strong style={{ color: 'var(--on-surface)' }}>{showDeleteModal.chamberName || showDeleteModal.deviceId}</strong>?
-                This will remove all associated data including cycles, telemetry, and actuator history.
+                ¿Está seguro de que desea eliminar <strong style={{ color: 'var(--on-surface)' }}>{showDeleteModal.chamberName || showDeleteModal.deviceId}</strong>?
+                Esta acción eliminará todos los datos asociados, incluyendo ciclos, telemetría e historial de actuadores.
               </p>
               <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
-                <button onClick={() => setShowDeleteModal(null)} disabled={deleting} className="btn btn-secondary" style={{ flex: 1, fontSize: '12px' }}>Cancel</button>
+                <button onClick={() => setShowDeleteModal(null)} disabled={deleting} className="btn btn-secondary" style={{ flex: 1, fontSize: '12px' }}>Cancelar</button>
                 <button onClick={handleDelete} disabled={deleting} className="btn btn-danger" style={{ flex: 1, fontSize: '12px' }}>
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {deleting ? 'Eliminando...' : 'Eliminar'}
                 </button>
               </div>
             </div>
