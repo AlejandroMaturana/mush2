@@ -26,6 +26,7 @@ const ApiKeysSettings = lazy(() => import('../features/settings/pages/ApiKeysSet
 const SystemSettings = lazy(() => import('../features/settings/pages/SystemSettings.jsx'))
 const SubscriptionSettings = lazy(() => import('../features/settings/pages/SubscriptionSettings.jsx'))
 const Provisioning = lazy(() => import('../features/devices/pages/ProvisioningPage.jsx'))
+const Monitoring = lazy(() => import('../features/monitoring/pages/MonitoringPage.jsx'))
 
 export const publicRoutes = [
   { path: '*', element: Landing },
@@ -51,6 +52,7 @@ export const protectedRoutes = [
   { path: '/operations/events', element: Events },
   { path: '/operations/logs', element: Logs },
   { path: '/operations/diagnostics', element: Diagnostics },
+  { path: '/operations/monitoring', element: Monitoring },
 
   {
     path: '/system/settings',
@@ -76,6 +78,7 @@ export const protectedRoutes = [
   { path: '/alarms', element: () => <Navigate to="/operations/alarms" replace /> },
   { path: '/logs', element: () => <Navigate to="/operations/logs" replace /> },
   { path: '/diagnostics', element: () => <Navigate to="/operations/diagnostics" replace /> },
+  { path: '/monitoring', element: () => <Navigate to="/operations/monitoring" replace /> },
   { path: '/settings', element: () => <Navigate to="/system/settings" replace /> },
   { path: '/settings/*', element: () => <Navigate to="/system/settings" replace /> },
   { path: '/provisioning', element: () => <Navigate to="/fleet/provision" replace /> },
