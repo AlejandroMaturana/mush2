@@ -1,6 +1,6 @@
 # Detalle Milestone
 
-> Vinculado a `docs/roadmap/roadmap.md` — Fases 0-9 completadas, Fase 10 (MQTT Propio + TLS) pendiente, al 2026-07-24
+> Vinculado a `docs/roadmap/roadmap.md` — Fases 0-10 completadas, Fase 11 (Observabilidad) pendiente, al 2026-07-25
 
 Cada milestone agrupa una fase del roadmap en entregables verificables, con criterios de aceptación, issues de referencia y retrospectiva de riesgos encontrados.
 
@@ -517,6 +517,42 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 
 ---
 
+## M10 — Infraestructura MQTT Propia + TLS (Fase 10)
+
+**Período**: 2026-07-24  
+**Objetivo**: Eliminar dependencia de brokers públicos. Comunicación cifrada entre firmware y backend con control total.
+
+### Entregables
+- [x] `docker-compose.yml` — Mosquitto (8883 TLS), PostgreSQL, Backend en red interna Docker
+- [x] `docker/mosquitto/config/mosquitto.conf` — TLS 8883 + auth + ACLs
+- [x] `docker/mosquitto/config/acl.conf` — Permisos por dispositivo
+- [x] `docker/mosquitto/config/password_file.example` — Plantilla de credenciales
+- [x] `scripts/create-mqtt-user.sh` — Generador de credenciales vía mosquitto_passwd
+- [x] `.env.example` — MQTT_BROKER_URL, MQTT_BACKEND_USER/PASS
+- [x] `.gitignore` — password_file, certs
+- [x] `firmware/src/config.example.h` — ENV integers, MQTT_USER, TLS, CA root, reconnection config
+- [x] `firmware/src/mqtt_client.h` — WiFiClientSecure, LWT, sin fallback
+- [x] `firmware/src/mqtt_client.cpp` — TLS, LWT, backoff reset, _publishOnline()
+- [x] `backend/src/services/mqttBridge.js` — Single broker, credenciales via env
+- [x] `backend/src/__tests__/mqtt-secure-connection.test.ts` — 10 tests
+- [x] `backend/src/__tests__/mqtt-broker-unavailable.test.ts` — 22 tests
+- [x] `docs/ADR/ADR-023-Secure-MQTT-Infrastructure.md`
+- [x] `docs/ADR/ADR-024-HTTPS-Deployment-Strategy.md`
+
+### Criterios de aceptación
+- [x] Wireshark no muestra datos en texto plano entre ESP32-S3 y broker
+- [x] La migración de broker público a propio se hace con un cambio de config, sin recompilar firmware
+- [x] El firmware registra `status:offline` como Last Will y publica `status:online` al conectar
+- [ ] El broker propio tiene uptime >99% en una semana de prueba (pendiente de validación)
+
+### Riesgos encontrados
+- **R1**: Let's Encrypt renueva certificados cada 90 días
+  - Mitigación: firmware confía en Root CA, no en leaf — renovación transparente
+- **R2**: `setInsecure()` en desarrollo invalida pruebas de seguridad
+  - Mitigación: `#ifdef DEBUG` + `TLS_VERIFY=0` invalida tests de seguridad
+
+---
+
 ## Resumen de milestones
 
 | Milestone | Fase | Fecha | Entregables | Estado |
@@ -532,7 +568,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 | **M7e** | **7e. Estabilización** | **2026-07-15** | **Integridad funcional** | ✅ |
 | **M8** | **8. Multi-Cámara** | **2026-06-24** | **N nodos simultáneos** | ✅ |
 | **M9** | **9. Refundación Domain-First** | **2026-07-23** | **Reescritura backend** | ✅ |
-| **M10** | **10. MQTT Propio + TLS** | **Planificado** | **Broker propio + cifrado** | 🔲 |
+| **M10** | **10. MQTT Propio + TLS** | **2026-07-24** | **Broker propio + cifrado** | **✅** |
 
 ---
 

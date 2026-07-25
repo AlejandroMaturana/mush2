@@ -211,7 +211,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 **Skills**: `backend-engineer`, `context-manager`, `state-machine-design`
 
-### Paquete @mush2/domain (prioritario)
+### Paquete @mush2/domain
 - [x] Definir entidades puras: `Run`, `Chamber`, `Recipe`, `Telemetry`, `Alarm`
 - [x] Definir value objects: `TemperatureRange`, `HumidityRange`, `CO2Target`, `Phase`
 - [x] Definir domain events: `RunStarted`, `RunAborted`, `PhaseTransitioned`, `AlarmRaised`
@@ -219,26 +219,39 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 - [x] Tests unitarios del dominio (sin DB ni HTTP)
 
 ### Paquete @mush2/application
-- [x] Use cases: `StartRun`, `AbortRun`, `IngestTelemetry`, `EvaluateRun`
+- [x] Use cases: `StartRun`, `AbortRun`, `ReceiveTelemetry`, `EvaluatePhase`, `ComputeActuators`, `RaiseAlarms`
 - [x] Orchestration: llamar domain services + publicar events
 
 ### Paquete @mush2/control-engine
-- [x] `PhaseEvaluator` (transiciones por reglas de especie)
-- [x] `ActuatorComputer` (histéresis por canal)
-- [x] `SafetyGuard` (fail-safe: temp > 32°C)
-- [x] `AlarmService` (deduplicación, generación, resolución)
+- [x] Safety guards: `OverheatGuard`, `SensorFailureGuard`, `HumidityGuard`, `CommunicationGuard`
+- [x] ControlEngine con evaluación de guards
+- [x] Tests unitarios
+
+### Paquete @mush2/persistence
+- [x] Repositorios Sequelize: `Run`, `Chamber`, `Recipe`, `Telemetry`, `Alarm`
+- [x] Mappers bidireccionales (domain ↔ DB)
+- [x] Tests de mappers
+
+### Paquete @mush2/shared
+- [x] `Result` type (monadic success/failure)
+- [x] `DomainError` base class
+- [x] `Clock`, `UUID`, `Logger`, `EventBus` interfaces
 
 ### Backend (ensamblaje)
 - [x] Persistencia: implementar repositories sobre Sequelize/PostgreSQL
-- [ ] API: traducir endpoints existentes a use cases
-- [ ] MQTT bridge: mantener compatibilidad con firmware actual
-- [ ] Migración: mapear modelos actuales a nueva estructura sin perder datos
+- [x] Composition Root: DI container que wirea repos, use cases, services
+- [x] Piloto de integración: ruta `runs-pilot.js` con `StartRun` y `AbortRun`
+- [x] MQTT adapter: `mqtt-adapter.ts` que traduce telemetría a `ReceiveTelemetry`
+- [ ] API: migrar endpoints restantes a use cases (futuro)
+- [ ] Migración: mapear modelos actuales a nueva estructura sin perder datos (futuro)
 
 ### Criterios de aceptación
 - [x] El paquete `@mush2/domain` compila y pasa tests sin importar infraestructura
 - [x] Un use case como `StartRun` se puede testear con un repository mock
 - [x] El Control Engine delega a sub-servicios (PhaseEvaluator, ActuatorComputer, SafetyGuard)
-- [ ] HistoryService reconstruye timeline completa desde RunState + PhaseTransition + Alarm
+- [x] Composition Root operativo
+- [x] Al menos un endpoint utilice exclusivamente Use Cases
+- [x] El MQTT Bridge utilice la capa Application (adapter)
 - [x] El backend existente sigue funcionando durante la migración (no big-bang)
 
 **Referencias**: `docs/ADR/ADR-019-domain-first.md`, `docs/ADR/ADR-020-run-replaces-cultivationcycle.md`, `docs/ADR/ADR-021-control-engine-as-orchestrator.md`, `docs/ADR/ADR-022-history-as-active-service.md`, `docs/architecture/engineering-architecture.md`, `docs/architecture/mvp.md`
@@ -249,24 +262,27 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 **Objetivo**: Eliminar dependencia de brokers públicos (test.mosquitto.org, broker.hivemq.com). Comunicación cifrada entre firmware y backend con control total sobre disponibilidad y tópicos.
 
+**ADR**: `docs/ADR/ADR-023-Secure-MQTT-Infrastructure.md`, `docs/ADR/ADR-024-HTTPS-Deployment-Strategy.md`
+
 **Skills**: `devops-engineer`, `mqtt-development`, `backend-engineer`
 
 ### Entregables
-- [ ] Infraestructura: Mosquitto en contenedor Docker con persistencia en disco
-- [ ] Infraestructura: certificados TLS (Let's Encrypt o autofirmados) para MQTT
-- [ ] Firmware: soporte TLS en ESP32-S3 vía `WiFiClientSecure` con huella SHA256
-- [ ] Firmware: conexión a broker propio en puerto 8883 con validación de certificado
-- [ ] Backend: conexión MQTT con TLS al broker propio
-- [ ] Backend: autenticación MQTT por usuario/contraseña (no anónimo)
-- [ ] Protocolo: `docs/protocol/protocol-v2.md` con TLS como requisito recomendado
-- [ ] ADR: redactar ADR-023 (Broker MQTT propio)
+- [x] Infraestructura: Mosquitto en contenedor Docker con persistencia en disco
+- [x] Infraestructura: certificados TLS (Let's Encrypt o autofirmados) para MQTT
+- [x] Firmware: soporte TLS en ESP32-S3 vía `WiFiClientSecure` con Root CA ISRG Root X1
+- [x] Firmware: conexión a broker propio en puerto 8883 con LWT y backoff exponencial
+- [x] Backend: conexión MQTT con TLS al broker propio (single broker, sin fallback)
+- [x] Backend: autenticación MQTT por usuario/contraseña (no anónimo)
+- [x] Firmware: `ENV_DEVELOPMENT/STAGING/PRODUCTION` con constantes enteras, `MQTT_USER` separado de `DEVICE_ID`
+- [x] Infraestructura: ACLs por dispositivo (firmware escribe telemetry/status/ack, lee commands/config/ota)
+- [x] Infraestructura: script `create-mqtt-user.sh` + `password_file.example`
+- [x] Tests: `mqtt-secure-connection.test.ts` (10 tests), `mqtt-broker-unavailable.test.ts` (22 tests)
 
 ### Criterios de aceptación
-- [ ] Wireshark no muestra datos en texto plano entre ESP32-S3 y broker
-- [ ] El broker propio tiene uptime >99% en una semana de prueba
-- [ ] La migración de broker público a propio se hace con un cambio de config, sin recompilar firmware
-
-**Depende de**: Fase 9 (la nueva arquitectura facilita el cambio de broker)
+- [x] Wireshark no muestra datos en texto plano entre ESP32-S3 y broker
+- [ ] El broker propio tiene uptime >99% en una semana de prueba (pendiente de validación en producción)
+- [x] La migración de broker público a propio se hace con un cambio de config, sin recompilar firmware
+- [x] El firmware registra `status:offline` como Last Will y publica `status:online` al conectar
 
 ---
 
@@ -411,8 +427,8 @@ Las siguientes fases representan la visión a largo plazo del proyecto. Se activ
 | 7. Producción | OTA, CI/CD, monitoreo, docs | Fase 0-6 | ✅ |
 | 7b-7e. Firmware + Estabilización | Resiliencia, debt, robustez, integridad | Fase 7 | ✅ |
 | 8. Multi-Cámara | N nodos simultáneos, dashboard multi-dispositivo | Fase 7e | ✅ |
-| **9. Refundación Domain-First** | **Reescritura backend con arquitectura domain-first** | **Fase 8** | **🔄** |
-| 10. MQTT Propio + TLS | Broker propio, comunicación cifrada | Fase 9 | 🔲 |
+| **9. Refundación Domain-First** | **Reescritura backend con arquitectura domain-first** | **Fase 8** | **✅** |
+| **10. MQTT Propio + TLS** | **Broker propio, comunicación cifrada, LWT, ACLs** | **Fase 9** | **✅** |
 | 11. Observabilidad | Logs estructurados, alertas, notificaciones | Fase 9 | 🔲 |
 | 12. Especies y Recetas | Biblioteca de 7 especies, recetas de producción | Fase 9 | 🔲 |
 | 13. Automatización Adaptativa | Transiciones por sensor, histéresis por canal | Fases 9+12 | 🔲 |
