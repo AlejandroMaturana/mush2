@@ -486,7 +486,7 @@ Los Value Objects son inmutables y se identifican por su valor, no por identidad
 | **FirmwareVersion** | `major: number`, `minor: number`, `patch: number` | Semántica de versiones | `FirmwareVersion(2, 1, 0)` |
 | **CultivationPhase** | `name: enum` | Solo valores válidos | `CultivationPhase('INCUBATION')` |
 | **CycleStatus** | `name: enum` | Solo valores válidos | `CycleStatus('ACTIVE')` |
-| **DeviceStatus** | `name: enum` | Solo valores válidos | `DeviceStatus('ONLINE')` |
+| **DeviceStatus** | `connectivity: enum`, `health: enum`, `lifecycle: enum` | Composed status — see DDD-008 | `DeviceStatus('ONLINE', 'NORMAL', 'ACTIVE')` |
 | **AlarmSeverity** | `level: enum` | Solo valores válidos | `AlarmSeverity('HIGH')` |
 | **AdaptationConfig** | `mode: enum`, `sensorBasedTrigger: boolean` | — | `AdaptationConfig('SEMI_AUTO', true)` |
 
