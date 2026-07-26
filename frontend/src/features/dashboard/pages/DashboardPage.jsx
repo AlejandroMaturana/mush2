@@ -8,6 +8,7 @@ import StatusBadge from '../../../shared/components/StatusBadge.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 import DashboardGrid from '../../../shared/components/DashboardGrid.jsx'
+import { getPrimaryStatus, getStatusCssClass } from '../../../shared/constants/deviceStatus.js'
 
 function SummaryCard({ label, value, icon, iconClass }) {
   return (
@@ -23,20 +24,10 @@ function SummaryCard({ label, value, icon, iconClass }) {
   )
 }
 
-const STATUS_DOT_COLORS = {
-  ONLINE: 'online',
-  DEGRADED: 'offline',
-  STALE: 'offline',
-  OFFLINE: 'offline',
-  MAINTENANCE: 'offline',
-  PROVISIONING: 'offline',
-  RETIRED: 'offline',
-  ERROR: 'offline',
-}
-
 function DeviceRow({ device, telemetry }) {
   const navigate = useNavigate()
-  const dotClass = STATUS_DOT_COLORS[device.status] || 'offline'
+  const primary = getPrimaryStatus(device.status)
+  const dotClass = primary.config.cssClass
   return (
     <tr
       className="card-clickable"
@@ -54,7 +45,7 @@ function DeviceRow({ device, telemetry }) {
         </div>
       </td>
       <td style={{ padding: '12px' }}>
-        <StatusBadge status={dotClass} label={device.status} />
+        <StatusBadge status={dotClass} label={primary.config.label} />
       </td>
       <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface-variant)' }}>
         {telemetry?.temperature != null ? (
@@ -133,6 +124,12 @@ function Dashboard() {
         }
         setTelemetryMap(prev => ({ ...prev, [dev.id]: { ...prev[dev.id], ...update } }))
       }
+    } else if (type === 'device_status_changed') {
+      setDevices(prev => prev.map(d =>
+        d.deviceId === data.deviceId
+          ? { ...d, status: data.status, lastSeen: data.timestamp }
+          : d
+      ))
     }
   }, [devices]))
 
@@ -141,8 +138,8 @@ function Dashboard() {
     return <ErrorState message={error} onRetry={fetchData} />
   }
 
-  const onlineCount = devices.filter(d => d.status === 'ONLINE').length
-  const offlineCount = devices.length - onlineCount
+  const onlineCount = devices.filter(d => d.status?.connectivity === 'ONLINE').length
+  const offlineCount = devices.filter(d => d.status?.connectivity === 'OFFLINE').length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

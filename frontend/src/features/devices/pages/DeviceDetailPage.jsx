@@ -220,9 +220,9 @@ function DeviceDetail() {
     />
   )
 
-  const isOnline = device.status === 'ONLINE'
-  const isStale = device.status === 'STALE' || device.status === 'DEGRADED'
-  const isMaintenance = device.status === 'MAINTENANCE'
+  const isOnline = device.status?.connectivity === 'ONLINE'
+  const isStale = device.status?.connectivity === 'DEGRADED'
+  const isMaintenance = device.status?.lifecycle === 'MAINTENANCE'
   const has = {
     temp: telemetry.temperature != null,
     hum: telemetry.humidity != null,
@@ -244,7 +244,7 @@ function DeviceDetail() {
       <EntityHeader
         title={device.chamberName || device.deviceId}
         subtitle={`${device.hwRevision ? `HW ${device.hwRevision} · ` : ''}Firmware ${device.firmwareVersion} · ${device.macAddress || 'MAC —'}${device.secondsSinceLastSeen != null ? ` · Última transmisión ${device.secondsSinceLastSeen < 5 ? 'hace un momento' : device.secondsSinceLastSeen < 60 ? `hace ${device.secondsSinceLastSeen}s` : `hace ${Math.floor(device.secondsSinceLastSeen / 60)}m`}` : ''}`}
-        badge={device.status}
+        badge={device.status?.lifecycle || 'ACTIVE'}
         badgeVariant={isOnline ? 'online' : isMaintenance ? 'info' : isStale ? 'warning' : 'critical'}
         actions={
           <button onClick={() => setShowDeleteModal(true)} className="btn btn-danger" style={{ fontSize: '11px' }}>
@@ -268,7 +268,7 @@ function DeviceDetail() {
         ]}
       />
 
-      <DeviceConnectivityPanel deviceId={device.deviceId} />
+      <DeviceConnectivityPanel deviceId={id} />
 
       {/* Telemetry + System Log */}
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>

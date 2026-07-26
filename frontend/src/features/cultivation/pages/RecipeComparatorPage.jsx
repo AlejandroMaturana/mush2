@@ -157,8 +157,6 @@ function RecipeComparator() {
       )}
     </div>
   )
-}</div>
-  )
 }
 
 export default RecipeComparator
