@@ -7,10 +7,14 @@ const Device = sequelize.define('Device', {
   deviceId: { type: DataTypes.STRING(50), unique: true, allowNull: false },
   firmwareVersion: { type: DataTypes.STRING(20), defaultValue: '0.0.0' },
   hwRevision: { type: DataTypes.STRING(10), defaultValue: '' },
-  status: {
-    type: DataTypes.ENUM('ONLINE', 'OFFLINE', 'MAINTENANCE', 'ERROR', 'STALE', 'DEGRADED', 'RETIRED'),
-    defaultValue: 'OFFLINE',
+
+  // ── Lifecycle (persisted — manually set) ──────────────────────────
+  // PROVISIONING is computed from lastSeen=null, not stored here.
+  lifecycle: {
+    type: DataTypes.ENUM('ACTIVE', 'MAINTENANCE', 'RETIRED'),
+    defaultValue: 'ACTIVE',
   },
+
   lastSeen: { type: DataTypes.DATE },
 
   // ── Connectivity evidence (written only by DeviceHealthService) ────
