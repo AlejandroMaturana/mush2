@@ -234,7 +234,8 @@ async function handleHealth(deviceId, data) {
       defaults: { deviceId },
     });
 
-    const ts = new Date(data.ts || Date.now());
+    const rawTs = data.ts || Date.now();
+    const ts = new Date(rawTs < 1e12 ? rawTs * 1000 : rawTs);
 
     await DeviceHealth.create({
       deviceId: device.id,
@@ -277,7 +278,8 @@ async function handleMaintenance(deviceId, data) {
       defaults: { deviceId },
     });
 
-    const ts = new Date(data.ts || Date.now());
+    const rawTs = data.ts || Date.now();
+    const ts = new Date(rawTs < 1e12 ? rawTs * 1000 : rawTs);
 
     await DeviceMaintenance.create({
       deviceId: device.id,
