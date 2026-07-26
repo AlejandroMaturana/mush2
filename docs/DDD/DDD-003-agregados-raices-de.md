@@ -255,6 +255,8 @@ SpeciesProfile (RAÍZ)
 
 ## 6. Agregado: Device
 
+> **Nota:** La definición de `DeviceStatus` en esta sección está obsoleta. Ver **DDD-008: Device Status Policy** para el modelo definitivo multidimensional (Connectivity × Health × Lifecycle) y **ADR-025** para la decisión arquitectónica.
+
 ### 6.1 Raíz de Agregado: `Device`
 
 **Contexto**: Hardware/Monitoreo  
@@ -274,7 +276,7 @@ Device (RAÍZ)
 │   ├── firmwareVersion: FirmwareVersion
 │   ├── hwRevision: string
 │   ├── ssrActiveLow: boolean
-│   └── status: DeviceStatus { ONLINE, OFFLINE, MAINTENANCE, ERROR }
+│   └── status: DeviceStatus { ONLINE, OFFLINE, MAINTENANCE, ERROR }  ← OBSOLETO
 │
 ├── Propiedades de Ubicación
 │   ├── userId: UUID (propietario)
@@ -506,6 +508,7 @@ User (RAÍZ)
 | Versión | Fecha | Autor | Cambios |
 |---------|-------|-------|---------|
 | 1.0 | 2026-07-14 | Equipo Mush2 | Creación del documento |
+| 1.1 | 2026-07-25 | Equipo Mush2 | §6 Device: DeviceStatus marcado como obsoleto, referencia a DDD-008 |
 
 ---
 

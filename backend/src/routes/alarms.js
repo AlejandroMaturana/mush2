@@ -35,7 +35,7 @@ router.get('/', authenticate, async (req, res) => {
     const { rows, count } = await Alarm.findAndCountAll({
       where,
       include: [
-        { model: Device, attributes: ['deviceId', 'chamberName', 'status'] },
+        { model: Device, attributes: ['deviceId', 'chamberName', 'lifecycle'] },
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),

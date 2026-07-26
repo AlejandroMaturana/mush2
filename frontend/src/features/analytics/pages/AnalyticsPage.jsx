@@ -3,6 +3,7 @@ import { getDevices, getChamberAnalytics } from '../../../api/client.js'
 import { useSSE } from '../../../api/useSSE.js'
 import RiskBar from '../components/RiskBar.jsx'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
+import { getPrimaryStatus } from '../../../shared/constants/deviceStatus.js'
 
 const METRIC_CONFIG = {
   temperature: { label: 'TEMPERATURA', icon: 'thermostat', color: 'var(--spore-green)' },
@@ -67,14 +68,17 @@ function Analytics() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {chamber && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: chamber.status === 'ONLINE' ? 'var(--spore-green)' : 'var(--outline)', boxShadow: chamber.status === 'ONLINE' ? '0 0 8px var(--spore-green)' : 'none' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: chamber.status === 'ONLINE' ? 'var(--spore-green)' : 'var(--outline)' }}>
-                {chamber.status || '—'}
-              </span>
-            </div>
-          )}
+          {chamber && (() => {
+            const primary = getPrimaryStatus(chamber.status)
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: primary.config.color, boxShadow: primary.config.cssClass === 'online' ? '0 0 8px var(--spore-green)' : 'none' }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: primary.config.color }}>
+                  {primary.config.label}
+                </span>
+              </div>
+            )
+          })()}
           {devices.length > 1 && (
             <select
               value={selectedId || ''}

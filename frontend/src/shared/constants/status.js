@@ -1,9 +1,11 @@
-export const STATUS_LABELS = {
-  ONLINE: 'En línea',
-  OFFLINE: 'Fuera de línea',
-  MAINTENANCE: 'Mantenimiento',
-  ERROR: 'Error',
-}
+/**
+ * Legacy re-exports + non-device status constants.
+ *
+ * For device status, import from './deviceStatus.js' instead.
+ */
+export { getPrimaryStatus, getStatusSummary, getStatusCssClass } from './deviceStatus.js';
+export { CONNECTIVITY, HEALTH_CONDITION, LIFECYCLE } from './deviceStatus.js';
+export { CONNECTIVITY_CONFIG, HEALTH_CONFIG, LIFECYCLE_CONFIG } from './deviceStatus.js';
 
 export const SEVERITY_LABELS = {
   CRITICAL: 'Crítica',

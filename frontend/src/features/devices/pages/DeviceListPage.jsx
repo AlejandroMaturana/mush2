@@ -1,20 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getDevices, deleteDevice } from '../../../api/client.js'
+import { useSSE } from '../../../api/useSSE.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
-
-const STATUS_COLORS = {
-  ONLINE: { color: 'var(--spore-green)', bg: 'rgba(var(--spore-green-rgb),0.1)', border: 'rgba(var(--spore-green-rgb),0.3)' },
-  DEGRADED: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
-  STALE: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
-  OFFLINE: { color: 'var(--error-red)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
-  MAINTENANCE: { color: 'var(--info)', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.3)' },
-  PROVISIONING: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
-  RETIRED: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
-  ERROR: { color: 'var(--error-red)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
-}
+import { getPrimaryStatus, CONNECTIVITY, LIFECYCLE } from '../../../shared/constants/deviceStatus.js'
 
 function formatTimeAgo(seconds) {
   if (seconds == null) return 'Nunca'
@@ -50,6 +41,16 @@ function DeviceList() {
 
   useEffect(() => { load() }, [])
 
+  useSSE(useCallback((type, data) => {
+    if (type === 'device_status_changed') {
+      setDevices(prev => prev.map(d =>
+        d.deviceId === data.deviceId
+          ? { ...d, status: data.status, lastSeen: data.timestamp }
+          : d
+      ))
+    }
+  }, []))
+
   async function handleDelete() {
     if (!showDeleteModal) return
     setDeleting(true)
@@ -65,7 +66,15 @@ function DeviceList() {
   }
 
   const filtered = devices.filter(d => {
-    if (statusFilter && d.status !== statusFilter) return false
+    if (statusFilter) {
+      const s = d.status
+      if (!s) return false
+      if (statusFilter === 'ONLINE' && s.connectivity !== 'ONLINE') return false
+      if (statusFilter === 'DEGRADED' && s.connectivity !== 'DEGRADED') return false
+      if (statusFilter === 'OFFLINE' && s.connectivity !== 'OFFLINE') return false
+      if (statusFilter === 'MAINTENANCE' && s.lifecycle !== 'MAINTENANCE') return false
+      if (statusFilter === 'ERROR' && s.health !== 'ERROR') return false
+    }
     if (search) {
       const q = search.toLowerCase()
       return (
@@ -77,9 +86,9 @@ function DeviceList() {
     return true
   })
 
-  const onlineCount = devices.filter(d => d.status === 'ONLINE').length
-  const staleCount = devices.filter(d => d.status === 'STALE' || d.status === 'DEGRADED').length
-  const offlineCount = devices.filter(d => d.status === 'OFFLINE').length
+  const onlineCount = devices.filter(d => d.status?.connectivity === 'ONLINE').length
+  const degradedCount = devices.filter(d => d.status?.connectivity === 'DEGRADED').length
+  const offlineCount = devices.filter(d => d.status?.connectivity === 'OFFLINE').length
 
   if (loading) return <LoadingState message="Cargando dispositivos..." icon="devices" />
 
@@ -87,7 +96,7 @@ function DeviceList() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
         title="Flota de dispositivos"
-        subtitle={`${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} · ${onlineCount} en línea${staleCount > 0 ? ` · ${staleCount} sin actualizar` : ''}${offlineCount > 0 ? ` · ${offlineCount} fuera de línea` : ''}`}
+        subtitle={`${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} · ${onlineCount} en línea${degradedCount > 0 ? ` · ${degradedCount} degradado${degradedCount !== 1 ? 's' : ''}` : ''}${offlineCount > 0 ? ` · ${offlineCount} fuera de línea` : ''}`}
         actions={
           <Link to="/fleet/provision" className="btn btn-glow" style={{ fontSize: '11px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bluetooth</span>
@@ -115,9 +124,9 @@ function DeviceList() {
           <option value="">Todos los estados</option>
           <option value="ONLINE">En línea</option>
           <option value="DEGRADED">Degradado</option>
-          <option value="STALE">Sin actualizar</option>
           <option value="OFFLINE">Fuera de línea</option>
           <option value="MAINTENANCE">Mantenimiento</option>
+          <option value="ERROR">Error de salud</option>
         </select>
       </div>
 
@@ -149,17 +158,8 @@ function DeviceList() {
             </thead>
             <tbody>
               {filtered.map(d => {
-                const st = STATUS_COLORS[d.status] || STATUS_COLORS.OFFLINE
-                const statusTextMap = {
-                  ONLINE: 'EN LÍNEA',
-                  DEGRADED: 'DEGRADADO',
-                  STALE: 'SIN ACTUALIZAR',
-                  OFFLINE: 'FUERA DE LÍNEA',
-                  MAINTENANCE: 'MANTENIMIENTO',
-                  PROVISIONING: 'APROVISIONANDO',
-                  RETIRED: 'RETIRADO',
-                  ERROR: 'ERROR',
-                }
+                const primary = getPrimaryStatus(d.status)
+                const st = primary.config
                 return (
                   <tr key={d.id}>
                     <td>
@@ -178,7 +178,7 @@ function DeviceList() {
                         color: st.color,
                       }}>
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: st.color }} />
-                        {statusTextMap[d.status] || d.status || 'DESCONOCIDO'}
+                        {st.label}
                       </span>
                     </td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)' }}>

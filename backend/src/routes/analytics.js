@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Op } from 'sequelize';
 import { authenticate, optionalAuth } from '../middlewares/auth.js';
 import { Device, Telemetry, CultivationCycle, CycleState, Actuator } from '../models/index.js';
+import { getStatusFromDevice, getLatestHealth } from '../services/deviceHealthService.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('ANALYTICS');
@@ -94,7 +95,7 @@ router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
           id: device.id,
           deviceId: device.deviceId,
           name: device.chamberName || device.deviceId,
-          status: device.status,
+          status: getStatusFromDevice(device),
           lastSeen: device.lastSeen,
         },
         telemetry: {

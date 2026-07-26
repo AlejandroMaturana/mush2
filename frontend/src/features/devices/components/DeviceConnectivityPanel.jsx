@@ -1,15 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getDeviceConnectivity, setMaintenanceMode } from '../../../api/client'
-
-const STATUS_CONFIG = {
-  ONLINE: { color: 'var(--spore-green)', bg: 'rgba(var(--spore-green-rgb),0.1)', border: 'rgba(var(--spore-green-rgb),0.3)', icon: 'wifi', label: 'En línea' },
-  DEGRADED: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'wifi_off', label: 'Degradado' },
-  STALE: { color: 'var(--amber)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'schedule', label: 'Sin actualizar' },
-  OFFLINE: { color: 'var(--error-red)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', icon: 'wifi_off', label: 'Fuera de línea' },
-  MAINTENANCE: { color: 'var(--info)', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.3)', icon: 'build', label: 'Mantenimiento' },
-  PROVISIONING: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'bluetooth', label: 'Aprovisionando' },
-  RETIRED: { color: 'var(--outline)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)', icon: 'power_off', label: 'Retirado' },
-}
+import { getPrimaryStatus, CONNECTIVITY_CONFIG, HEALTH_CONFIG, LIFECYCLE_CONFIG } from '../../../shared/constants/deviceStatus.js'
 
 function formatTimeAgo(seconds) {
   if (seconds == null) return 'Nunca'
@@ -28,16 +19,19 @@ function DeviceConnectivityPanel({ deviceId }) {
 
   useEffect(() => {
     let active = true
+    let intervalId = null
     async function fetch() {
       try {
         const data = await getDeviceConnectivity(deviceId)
         if (active) setHealth(data)
-      } catch {}
+      } catch {
+        if (active && intervalId) { clearInterval(intervalId); intervalId = null }
+      }
       if (active) setLoading(false)
     }
     fetch()
-    const interval = setInterval(fetch, 10000)
-    return () => { active = false; clearInterval(interval) }
+    intervalId = setInterval(fetch, 10000)
+    return () => { active = false; if (intervalId) clearInterval(intervalId) }
   }, [deviceId])
 
   async function handleToggleMaintenance() {
@@ -53,7 +47,11 @@ function DeviceConnectivityPanel({ deviceId }) {
   if (loading) return <div style={{ padding: '16px', fontSize: '12px', color: 'var(--outline)' }}>Cargando conectividad...</div>
   if (!health) return null
 
-  const cfg = STATUS_CONFIG[health.status] || STATUS_CONFIG.OFFLINE
+  const status = health.status
+  const primary = getPrimaryStatus(status)
+  const cfg = primary.config
+  const connCfg = status?.connectivity ? CONNECTIVITY_CONFIG[status.connectivity] : null
+  const healthCfg = status?.health ? HEALTH_CONFIG[status.health] : null
 
   return (
     <div style={{
@@ -65,7 +63,7 @@ function DeviceConnectivityPanel({ deviceId }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px', color: cfg.color }}>{cfg.icon}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>CONECTIVIDAD</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>ESTADO DEL DISPOSITIVO</span>
         </div>
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -77,6 +75,19 @@ function DeviceConnectivityPanel({ deviceId }) {
         </span>
       </div>
 
+      {/* Dimension breakdown */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {status?.lifecycle && (
+          <DimensionChip label="Ciclo de vida" value={LIFECYCLE_CONFIG[status.lifecycle]?.label || status.lifecycle} color={LIFECYCLE_CONFIG[status.lifecycle]?.color} />
+        )}
+        {connCfg && (
+          <DimensionChip label="Conectividad" value={connCfg.label} color={connCfg.color} />
+        )}
+        {healthCfg && (
+          <DimensionChip label="Salud" value={healthCfg.label} color={healthCfg.color} />
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
         <MetricBox label="Última transmisión" value={formatTimeAgo(health.secondsSinceLastSeen)} color={cfg.color} />
         <MetricBox label="Intervalo Heartbeat" value={`${health.heartbeatInterval}s`} color="var(--on-surface)" />
@@ -86,14 +97,33 @@ function DeviceConnectivityPanel({ deviceId }) {
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <div style={{ flex: 1, padding: '8px 12px', background: 'var(--surface-container-high)', borderRadius: '8px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Inactivo tras</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface)', fontWeight: 600 }}>{health.staleThreshold}s</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Degradado tras</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface)', fontWeight: 600 }}>{health.degradedThreshold}s</div>
         </div>
         <div style={{ flex: 1, padding: '8px 12px', background: 'var(--surface-container-high)', borderRadius: '8px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Desconectado tras</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface)', fontWeight: 600 }}>{health.offlineThreshold}s</div>
         </div>
       </div>
+
+      {/* Diagnostics */}
+      {health.diagnostics && (
+        <div style={{ marginBottom: '12px', padding: '10px 12px', background: 'var(--surface-container-high)', borderRadius: '8px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Diagnósticos</div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <DiagChip label="I2C" ok={health.diagnostics.i2c === 'OK'} />
+            <DiagChip label="AHT21" ok={health.diagnostics.sensorAht21 === 'OK'} />
+            <DiagChip label="ENS160" ok={health.diagnostics.sensorEns160 === 'OK'} />
+            <DiagChip label="Heartbeats" ok={health.diagnostics.heartbeatsHealthy} />
+            <DiagChip label="Boot Test" ok={health.diagnostics.bootTestPassed} />
+            {health.diagnostics.freeHeap != null && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--on-surface-variant)' }}>
+                Heap: {health.diagnostics.freeHeap}B
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <button
         onClick={handleToggleMaintenance}
@@ -108,11 +138,23 @@ function DeviceConnectivityPanel({ deviceId }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-          {health.maintenanceMode ? 'build' : 'build'}
-        </span>
+        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>build</span>
         {health.maintenanceMode ? 'SALIR DE MANTENIMIENTO' : 'INGRESAR A MANTENIMIENTO'}
       </button>
+    </div>
+  )
+}
+
+function DimensionChip({ label, value, color }) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: '4px 10px', borderRadius: '6px',
+      background: 'var(--surface-container-high)',
+      border: '1px solid var(--outline-variant)',
+    }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: color || 'var(--on-surface)' }}>{value}</span>
     </div>
   )
 }
@@ -123,6 +165,18 @@ function MetricBox({ label, value, color }) {
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>{label}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: color || 'var(--on-surface)', fontWeight: 600 }}>{value}</div>
     </div>
+  )
+}
+
+function DiagChip({ label, ok }) {
+  return (
+    <span style={{
+      fontFamily: 'var(--font-mono)', fontSize: '10px',
+      color: ok ? 'var(--spore-green)' : 'var(--error-red)',
+      fontWeight: 600,
+    }}>
+      {label}: {ok ? 'OK' : 'FAIL'}
+    </span>
   )
 }
 

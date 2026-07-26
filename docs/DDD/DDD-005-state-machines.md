@@ -193,7 +193,11 @@ stateDiagram-v2
 
 ## 5. Device - Estado del Dispositivo
 
-### 5.1 Diagrama
+> **OBSOLETO** — Esta sección ha sido reemplazada por **DDD-008: Device Status Policy**, que define un modelo multidimensional (Connectivity × Health × Lifecycle) en lugar del modelo plano de 4 estados aquí presentado.
+>
+> Ver también: **ADR-025** para la decisión arquitectónica.
+
+### 5.1 Modelo previo (obsoleto)
 
 ```mermaid
 stateDiagram-v2
@@ -249,7 +253,7 @@ stateDiagram-v2
     TERMINATED --> [*]
 ```
 
-### 5.2 Tabla de Transiciones
+### 5.2 Tabla de Transiciones (previa, obsoleta)
 
 | Estado Actual | Evento | Guarda | Estado Nuevo | Acciones |
 |---------------|--------|--------|--------------|----------|
@@ -265,25 +269,15 @@ stateDiagram-v2
 | MAINTENANCE | completarMantenimiento() | exito | ONLINE | Actualizar firmware |
 | MAINTENANCE | completarMantenimiento() | fallo | OFFLINE | Registrar error |
 
-### 5.3 Guardas
+### 5.3 Razón de obsolescencia
 
-| Guarda | Descripción |
-|--------|-------------|
-| `heartbeat` | Dispositivo envía heartbeat MQTT |
-| `timeout` | No se recibe heartbeat por >5 min |
-| `faultDetectado` | Sensor I2C falla o valor inválido |
-| `temp≥32°C` | Temperatura crítica alcanzada |
-| `exito` | Operación completada sin errores |
-| `reinicio` | Dispositivo se reinicia |
+El modelo de 4 estados (ONLINE, OFFLINE, MAINTENANCE, ERROR) no logra representar:
 
-### 5.4 Acciones
+- La distinción entre conectividad y salud del hardware
+- Los estados transitorios del firmware (DEGRADED, STALE, PROVISIONING, RETIRED)
+- La composición de múltiples dimensiones de condición del dispositivo
 
-| Acción | Descripción |
-|--------|-------------|
-| `lastSeen=now` | Actualiza timestamp de última conexión |
-| `ventilacionON` | Activa ventilador (canal 0) |
-| `calorOFF` | Desactiva calefactor (canal 1) |
-| `Registrar fault` | Guarda tipo de fault en DeviceHealth |
+Ver **DDD-008** para el modelo definitivo con tres dimensiones independientes.
 
 ---
 
@@ -604,7 +598,7 @@ function computeCommands(readings, recipe, phase) {
 |---------|---------|--------------|---------------------|
 | **CultivationCycle** | 4 (PLANNED, ACTIVE, COMPLETED, ABORTED) | 5 | sensoresCalibrados, criticalAlarm |
 | **CurrentPhase** | 4 (INCUBATION, FRUITING, MAINTENANCE, COMPLETED) | 4 | sensor/time/manual |
-| **Device** | 4 (ONLINE, OFFLINE, MAINTENANCE, ERROR) | 9 | heartbeat, timeout, fault |
+| **Device** | ~~4~~ → ver DDD-008 | ~~9~~ → ver DDD-008 | ~~heartbeat, timeout, fault~~ → ver DDD-008 |
 | **Alarm** | 3 (ACTIVE, ACKNOWLEDGED, RESOLVED) | 4 | operador, condicionNormaliza |
 | **PhaseTransition** | 4 (PENDING, APPROVED, EXECUTED, REJECTED) | 6 | supervisor, modo |
 | **Actuator** | 2 (REMOTE, LOCAL) | 3 | usuario, timeout |
@@ -617,6 +611,7 @@ function computeCommands(readings, recipe, phase) {
 | Versión | Fecha | Autor | Cambios |
 |---------|-------|-------|---------|
 | 1.0 | 2026-07-14 | Equipo Mush2 | Creación del documento |
+| 1.1 | 2026-07-25 | Equipo Mush2 | Sección 5 (Device) marcada como obsoleta, reemplazada por DDD-008 |
 
 ---
 

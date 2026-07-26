@@ -11,7 +11,7 @@ const router = Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const chambers = await Chamber.findAll({
-      include: [{ model: Device, attributes: ['id', 'deviceId', 'chamberName', 'status'] }],
+      include: [{ model: Device, attributes: ['id', 'deviceId', 'chamberName', 'lifecycle'] }],
       order: [['name', 'ASC']],
     });
     res.json({ data: chambers });
@@ -24,7 +24,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const chamber = await Chamber.findByPk(req.params.id, {
-      include: [{ model: Device, attributes: ['id', 'deviceId', 'chamberName', 'status', 'lastSeen'] }],
+      include: [{ model: Device, attributes: ['id', 'deviceId', 'chamberName', 'lifecycle', 'lastSeen'] }],
     });
     if (!chamber) return res.status(404).json({ error: 'NOT_FOUND' });
     res.json({ data: chamber });

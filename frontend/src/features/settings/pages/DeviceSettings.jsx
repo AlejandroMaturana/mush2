@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getDevices, getDevice, updateDevice, validateThingSpeak } from '../../../api/client.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
+import { getPrimaryStatus } from '../../../shared/constants/deviceStatus.js'
 
 function DeviceSettings() {
   const [devices, setDevices] = useState([])
@@ -141,10 +142,15 @@ function DeviceSettings() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <InfoRow label="Status" value={
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: device.status === 'ONLINE' ? 'var(--spore-green)' : 'var(--outline)' }} />
-                  {device.status}
-                </span>
+                (() => {
+                  const primary = getPrimaryStatus(device.status)
+                  return (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: primary.config.color }} />
+                      {primary.config.label}
+                    </span>
+                  )
+                })()
               } />
               <InfoRow label="MAC Address" value={device.macAddress} />
               <InfoRow label="Firmware" value={device.firmwareVersion} />

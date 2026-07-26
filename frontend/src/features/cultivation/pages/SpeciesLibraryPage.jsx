@@ -195,9 +195,12 @@ function SpeciesLibrary() {
             const diffInfo = DIFFICULTY_LABELS[sp.difficultyLevel] || {}
             const recipeCount = getRecipesForSpecies(sp.id).length
             return (
-              <button
+              <div
                 key={sp.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelect(sp)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleSelect(sp) }}
                 className="glass-card"
                 style={{
                   padding: '16px', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s',
@@ -244,7 +247,7 @@ function SpeciesLibrary() {
                   </span>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--outline)' }}>chevron_right</span>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>

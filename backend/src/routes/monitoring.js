@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { Device, Telemetry, Event, User, CultivationCycle, AuditLog } from '../models/index.js';
 import sequelize from '../config/database.js';
 import { getReadiness } from '../config/readiness.js';
-import { getStatusFromDevice } from '../services/deviceHealthService.js';
+import { getStatusFromDevice, getLatestHealth } from '../services/deviceHealthService.js';
 import { readLogs } from '../services/logReaderService.js';
 import os from 'os';
 
@@ -20,8 +20,13 @@ router.get('/metrics', async (req, res) => {
   try {
     const readiness = getReadiness();
     const deviceCount = await Device.count();
-    const devices = await Device.findAll({ attributes: ['status', 'lastSeen', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier', 'maintenanceMode'] });
-    const onlineDevices = devices.filter(d => getStatusFromDevice(d) === 'ONLINE').length;
+    const devices = await Device.findAll({ attributes: ['id', 'lifecycle', 'lastSeen', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier', 'maintenanceMode'] });
+    let onlineDevices = 0;
+    for (const d of devices) {
+      const latestHealth = await getLatestHealth(d.id);
+      const status = getStatusFromDevice(d, latestHealth);
+      if (status?.connectivity === 'ONLINE') onlineDevices++;
+    }
     const telemetryCount = await Telemetry.count();
     const eventCount = await Event.count();
     const activeCycles = await CultivationCycle.count({ where: { status: 'ACTIVE' } });
