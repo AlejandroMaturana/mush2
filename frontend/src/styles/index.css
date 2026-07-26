@@ -857,6 +857,9 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
 .status-dot.online { background: var(--spore-green); box-shadow: var(--glow-primary); }
 .status-dot.offline { background: var(--outline); }
 .status-dot.error { background: var(--error-red); box-shadow: var(--glow-error); }
+.status-dot.warning { background: var(--amber); }
+.status-dot.info { background: var(--teal); }
+.status-dot.default { background: var(--outline); }
 
 .status-badge {
   display: inline-flex;
@@ -873,6 +876,9 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
 .status-badge.online { background: rgba(107, 251, 154, 0.1); border: 1px solid rgba(107, 251, 154, 0.2); color: var(--spore-green); }
 .status-badge.offline { background: rgba(134, 148, 134, 0.1); border: 1px solid rgba(134, 148, 134, 0.2); color: var(--outline); }
 .status-badge.critical { background: rgba(255, 180, 171, 0.1); border: 1px solid rgba(255, 180, 171, 0.2); color: var(--error-red); }
+.status-badge.warning { background: rgba(255, 182, 87, 0.1); border: 1px solid rgba(255, 182, 87, 0.2); color: var(--amber); }
+.status-badge.info { background: rgba(68, 226, 205, 0.1); border: 1px solid rgba(68, 226, 205, 0.2); color: var(--teal); }
+.status-badge.default { background: rgba(134, 148, 134, 0.1); border: 1px solid rgba(134, 148, 134, 0.2); color: var(--outline); }
 
 .alarm-badge {
   display: inline-flex;
