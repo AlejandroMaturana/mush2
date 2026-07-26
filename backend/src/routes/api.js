@@ -5,7 +5,7 @@ import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
-import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen } from '../services/deviceHealthService.js';
+import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth } from '../services/deviceHealthService.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('API');
@@ -21,12 +21,13 @@ router.get('/devices', async (req, res) => {
       ];
     }
     const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']] });
-    const enriched = devices.map(d => {
+    const enriched = await Promise.all(devices.map(async d => {
       const json = d.toJSON();
-      json.status = getStatusFromDevice(d);
+      const latestHealth = await getLatestHealth(d.id);
+      json.status = getStatusFromDevice(d, latestHealth);
       json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
       return json;
-    });
+    }));
     res.json({ data: enriched });
   } catch (err) {
     log.error({ module: 'DEVICES', event: 'LIST_ERROR', error: err.message }, 'Error listing devices');
@@ -168,7 +169,8 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
     });
     if (!device) return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
     const json = device.toJSON();
-    json.status = getStatusFromDevice(device);
+    const latestHealth = await getLatestHealth(device.id);
+    json.status = getStatusFromDevice(device, latestHealth);
     json.secondsSinceLastSeen = getSecondsSinceLastSeen(device);
     res.json(json);
   } catch (err) {
@@ -424,7 +426,7 @@ router.patch('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => 
       });
     }
 
-    res.json({ data: { deviceId: device.deviceId, maintenanceMode: enabled, status: device.status } });
+    res.json({ data: { deviceId: device.deviceId, maintenanceMode: enabled, lifecycle: device.lifecycle } });
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
