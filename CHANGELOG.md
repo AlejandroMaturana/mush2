@@ -24,12 +24,17 @@
 - Limpieza de esp_task_wdt_reset + includes huérfanos en 4 drivers
 - ota_nvs usa FIRMWARE_VERSION (ya no hardcodea 0.9.1)
 
-### Docs — v0.1.5
+### Docs — v0.1.6
 
 - ADR-026: Contrato Temporal (Event/Reception/Persistence/Presentation)
 - ADR-027: Auditoría TWDT — solo SSR + Button
 - ADR-028: Identidad MQTT por dispositivo
-- Actualización de ADR-008 y mqtt-contract
+- Actualización de ADR-008 y mqtt-contract- Sincronización documental completa con el código v1.7.22
+- Índices ADR/DDD/RFC actualizados
+- Architecture, firmware, backend, database y frontend alineados (ESP32-S3, SSE, Pino, Device multidimensional)
+- mqtt-contract actualizado (topics por dispositivo, ACLs)
+- Diagramas migrados a Mermaid (Draw.io obsoletos eliminados)
+
 
 **otros - docker**
 - Configuración de password_file
