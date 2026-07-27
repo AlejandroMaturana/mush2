@@ -211,3 +211,32 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 - Docs: `docs/roadmap/milestone.md`, `otras-consideraciones.md`, roadmap.md extendido a 18 fases
 
 ---
+
+## 2026-07-27 — Sincronización Documental v1.7.22
+
+**Logro**: Auditoría completa de documentación vs código. 22 archivos Markdown sincronizados, 350 inserciones / 171 eliminaciones.
+
+**Cambios principales**:
+- **ADRs 025-028**: Estado actualizado de "Propuesto" a "Aceptado"
+- **Índices README**: ADR/README, DDD/README, RFC/README actualizados con 4 ADRs, 1 DDD y 3 RFCs nuevos
+- **Contrato MQTT**: ESP8266→ESP32-S3, topics reestructurados (`mush2/{deviceId}/...`), health/maintenance, ACLs por dispositivo
+- **architecture.md**: ESP32-S3, Pino logging, SSE unificado, 25 modelos de DB
+- **backend.md**: Reescritura completa — 17 servicios, 4 middlewares, controllers eliminados
+- **firmware.md**: MQTT directo documentado, taskButton, 8 tareas FreeRTOS, ADR-027/028
+- **database.md**: Modelo Device multidimensional (connectivity/health/lifecycle), +PhaseTransition, +DeviceHealth, +DeviceMaintenance
+- **monitoring.md**: Modelo multidimensional de estado reemplaza "7 estados"
+- **qos-policy.md / capability-catalog.md**: WebSocket→SSE
+- **coding-standards.md**: console.log→Pino, mqttService→mqttBridge
+- **PROJECT_CONTEXT.md / README.md**: Actualizados con 8 tareas, MQTT, SSE, 28 ADRs
+
+**Decisiones documentadas**:
+- `CultivationCycle` se mantiene como nombre en persistencia (código actual); `Run` es dirección futura (ADR-020)
+- SSE es el mecanismo de tiempo real unificado; WebSocket solo se menciona en "Future Considerations"
+- `notificationService` es el servicio público; `telegramService` es proveedor interno
+
+**Inconsistencias pendientes** (requieren decisión explícita):
+1. `webSocketServer.js` se llama así pero sirve SSE — ¿renombrar?
+2. `capability-catalog.md` marca `qos.telemetry.streaming` como 📋 pero ya está implementado
+3. `DDD-005` §5 Device state machine no tiene notice de obsolescencia
+
+---
