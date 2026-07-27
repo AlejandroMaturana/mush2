@@ -1,0 +1,246 @@
+---
+title: Modelo de Base de Datos — Mush2 (PostgreSQL 16)
+---
+erDiagram
+    User {
+        uuid id PK
+        varchar username UK
+        varchar email UK
+        varchar password
+        enum role "SUPER_ADMIN|ADMIN|OPERATOR|VIEWER"
+        boolean isActive
+        timestamp lastLoginAt
+    }
+
+    Chamber {
+        uuid id PK
+        varchar name
+        varchar location
+    }
+
+    Device {
+        uuid id PK
+        varchar deviceId UK
+        varchar macAddress
+        uuid userId FK
+        varchar chamberName
+        varchar chamberLocation
+        varchar firmwareVersion
+        varchar hardwareRevision
+        enum connectivity "ONLINE|DEGRADED|OFFLINE"
+        enum healthCondition "NORMAL|WARNING|CRITICAL"
+        enum lifecycle "INSTALLING|RUNNING|MAINTENANCE|DECOMMISSIONED"
+        timestamp lastSeen
+        timestamp lastTelemetryAt
+        varchar thingSpeakChannelId
+        text thingSpeakReadKey
+        varchar mqttUser
+        text mqttPass
+    }
+
+    Sensor {
+        uuid id PK
+        uuid deviceId FK
+        enum type "TEMPERATURE|HUMIDITY|CO2|VOC"
+    }
+
+    Actuator {
+        uuid id PK
+        uuid deviceId FK
+        integer channel
+        enum state "ON|OFF"
+        enum mode "LOCAL|REMOTE|OFF"
+        varchar lastCommand
+        timestamp lastSeen
+        varchar lastAck
+    }
+
+    Telemetry {
+        uuid id PK
+        uuid deviceId FK
+        uuid sensorId FK
+        decimal value
+        enum sensorType "TEMPERATURE|HUMIDITY|CO2|VOC"
+        varchar unit
+        timestamp timestamp
+    }
+
+    Event {
+        uuid id PK
+        uuid deviceId FK
+        varchar type
+        jsonb payload
+        timestamp timestamp
+    }
+
+    Alarm {
+        uuid id PK
+        uuid deviceId FK
+        varchar type
+        enum severity "CRITICAL|HIGH|MEDIUM|LOW"
+        text message
+        timestamp resolvedAt
+    }
+
+    Recipe {
+        uuid id PK
+        uuid userId FK
+        varchar name
+        varchar species
+        decimal incubationTempMin
+        decimal incubationTempMax
+        decimal incubationHumMin
+        decimal incubationHumMax
+        integer incubationCo2Max
+        integer incubationDuration
+        decimal fruitingTempMin
+        decimal fruitingTempMax
+        decimal fruitingHumMin
+        decimal fruitingHumMax
+        integer fruitingCo2Max
+        integer fruitingDuration
+        decimal maintenanceTempMin
+        decimal maintenanceTempMax
+        decimal maintenanceHumMin
+        decimal maintenanceHumMax
+        integer maintenanceCo2Max
+        integer faeInterval
+        enum faeLevel "LOW|MEDIUM|HIGH"
+        integer lightCycleHours
+    }
+
+    CultivationCycle {
+        uuid id PK
+        uuid userId FK
+        uuid recipeId FK
+        uuid deviceId FK
+        enum status "PLANNED|ACTIVE|COMPLETED|ABORTED"
+        enum currentPhase "INCUBATION|PRIMORDIA|FRUITING|HARVESTING"
+        date startDate
+        date estimatedEndDate
+    }
+
+    CycleState {
+        uuid id PK
+        uuid cycleId FK
+        enum phase
+        decimal temperature
+        decimal humidity
+        integer co2
+        varchar status
+        date snapshotDate
+    }
+
+    PhaseTransition {
+        uuid id PK
+        uuid cycleId FK
+        enum fromPhase
+        enum toPhase
+        varchar trigger
+        timestamp timestamp
+    }
+
+    DeviceHealth {
+        uuid id PK
+        uuid deviceId FK
+        integer freeHeap
+        integer minFreeHeap
+        integer maxAllocHeap
+        jsonb taskStackHighWater
+        varchar i2cStatus
+        jsonb sensorStatus
+        timestamp timestamp
+    }
+
+    DeviceMaintenance {
+        uuid id PK
+        uuid deviceId FK
+        varchar component
+        integer health
+        integer estimatedFailure
+        text reason
+        timestamp timestamp
+    }
+
+    Subscription {
+        integer id PK
+        uuid userId FK
+        enum plan "FREE|BASIC|PREMIUM"
+        enum status "ACTIVE|CANCELED|PAST_DUE"
+        integer apiCallsPerMonth
+        integer apiCallsUsedThisMonth
+        integer dataRetentionDays
+        date currentPeriodStart
+        date currentPeriodEnd
+        date canceledAt
+    }
+
+    ApiKey {
+        uuid id PK
+        uuid deviceId FK
+        varchar key
+        varchar prefix
+        boolean isActive
+        timestamp createdAt
+    }
+
+    UserPreference {
+        uuid id PK
+        uuid userId FK
+        boolean emailAlerts
+        boolean telegramEnabled
+        varchar telegramChatId
+        varchar minNotificationSeverity
+    }
+
+    AuditLog {
+        uuid id PK
+        uuid userId FK
+        varchar action
+        varchar resource
+        uuid resourceId
+        jsonb details
+        timestamp createdAt
+    }
+
+    UserChamberAccess {
+        uuid id PK
+        uuid userId FK
+        uuid deviceId FK
+        varchar role
+    }
+
+    IntegrationCredentials {
+        uuid id PK
+        uuid userId FK
+        varchar provider
+        text credentials
+    }
+
+    %% Relaciones
+    User ||--o{ Device : "owns"
+    User ||--o{ AuditLog : "generates"
+    User ||--o| Subscription : "has"
+    User ||--o| UserPreference : "has"
+    User ||--o{ Recipe : "creates"
+    User ||--o{ CultivationCycle : "creates"
+    User ||--o{ UserChamberAccess : "grants"
+
+    Device ||--o{ Sensor : "has"
+    Device ||--o{ Actuator : "has"
+    Device ||--o{ Telemetry : "generates"
+    Device ||--o{ Event : "emits"
+    Device ||--o{ Alarm : "triggers"
+    Device ||--o{ ApiKey : "has"
+    Device ||--o{ DeviceHealth : "reports"
+    Device ||--o{ DeviceMaintenance : "reports"
+    Device ||--o{ UserChamberAccess : "shared via"
+
+    Sensor ||--o{ Telemetry : "measures"
+
+    Recipe ||--o{ CultivationCycle : "defines"
+
+    CultivationCycle ||--o{ CycleState : "snapshots"
+    CultivationCycle ||--o{ PhaseTransition : "transitions"
+
+    UserChamberAccess }o--|| Device : "accesses"
