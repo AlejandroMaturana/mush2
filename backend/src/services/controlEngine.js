@@ -4,6 +4,7 @@ import SystemSetting from '../models/SystemSetting.js';
 import { events } from './eventBus.js';
 import { evaluatePhaseTransition, executePhaseTransition } from './phaseEvaluator.js';
 import { createChildLogger } from '../config/pino.js';
+import { recordOutgoing } from './deviceHealthService.js';
 
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
 const EVAL_INTERVAL = 60000;
@@ -368,6 +369,7 @@ async function evaluateCycle(cycle) {
 
     if (filteredCommands.length > 0) {
       log.info({ event: 'CONTROL_EVAL', deviceId: device.deviceId }, `${device.deviceId} → ${filteredCommands.map(c => `CH${c.channel}=${c.command}(${c.reason})`).join(' | ')}`);
+      recordOutgoing(device.deviceId).catch(() => {});
     }
 
     const evalEvent = {

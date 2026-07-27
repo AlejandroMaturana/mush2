@@ -38,4 +38,10 @@ export const env = {
     pass: process.env.SMTP_PASS || '',
     from: process.env.SMTP_FROM || '',
   },
+
+  MQTT_PROVISIONING: {
+    passwordFile: process.env.MOSQUITTO_PASSWORD_FILE || '',
+    container: process.env.MOSQUITTO_CONTAINER || 'mush2-mosquitto',
+    mosquittoPasswd: process.env.MOSQUITTO_PASSWD_PATH || 'mosquitto_passwd',
+  },
 };

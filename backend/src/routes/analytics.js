@@ -82,7 +82,7 @@ router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
       status: activeCycle.status,
       startedAt: activeCycle.startedAt,
       currentPhase: activeCycle.currentPhase,
-      daysElapsed: activeCycle.startedAt ? Math.floor((Date.now() - new Date(activeCycle.startedAt)) / 86400000) : null,
+      daysElapsed: activeCycle.startedAt ? Math.floor((Date.now() - new Date(activeCycle.startedAt).getTime()) / 86400000) : null,
       lastState: activeCycle.CycleStates?.[0] || null,
     } : null;
 
@@ -113,7 +113,7 @@ router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
           faeCount,
           actuatorCount: (device.Actuators || []).length,
         },
-        ts: Date.now(),
+        ts: new Date().toISOString(),
       },
     });
   } catch (err) {

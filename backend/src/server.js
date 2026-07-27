@@ -15,7 +15,7 @@ async function start() {
 
     // ── Critical path: DB authenticate + HTTP listen ────────────────
     await sequelize.authenticate();
-    log.info({ module: 'DB', event: 'CONNECTED' }, 'Conexión establecida');
+    log.info({ module: 'DB', event: 'CONNECTED' }, 'Conexion establecida');
 
     const httpServer = createServer(app);
 

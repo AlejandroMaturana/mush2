@@ -43,6 +43,10 @@ const Device = sequelize.define('Device', {
     defaultValue: 'AUTO',
   },
   lastFirmwareState: { type: DataTypes.STRING(30), allowNull: true },
+
+  // ── MQTT per-device credentials (ADR-028) ─────────────────────
+  mqttUser: { type: DataTypes.STRING(50), allowNull: true },
+  mqttPassword: { type: DataTypes.STRING(128), allowNull: true },
 }, {
   tableName: 'devices',
   timestamps: true,
