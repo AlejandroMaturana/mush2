@@ -123,15 +123,18 @@ Procedimientos de despliegue y operación del sistema.
 | [`deployment.md`](operations/deployment.md) | Entornos, instrucciones de despliegue, CI/CD |
 
 ### 📊 Diagramas (`docs/diagrams/`)
-Diagramas de arquitectura visual. **Contenido pendiente de definir/actualizar** — se completará en una iteración posterior.
+Diagramas de arquitectura visual. Los diagramas principales están en Mermaid (`.mmd`). La máquina de estados se conserva en Draw.io como diagrama maestro.
 
-| Diagrama | Contenido |
-|---|---|
-| `architecture.drawio` | 🔄 Pendiente — Diagrama de componentes del sistema (actualizar con capability model) |
-| `database.drawio` | 🔄 Pendiente — Esquema de base de datos con relaciones (incluir Subscription) |
-| `sequence.drawio` | 🔄 Pendiente — Diagramas de secuencia de flujos críticos (incluir flujo de autorización) |
-| `state_machine.drawio` | 🔄 Pendiente — Máquina de estados del firmware |
-| `exports/` | 🔄 Pendiente — Imágenes exportadas (PNG/SVG) para visualización en GitHub |
+| Diagrama | Formato | Contenido |
+|---|---|---|
+| `architecture.mmd` | Mermaid | Arquitectura del sistema: firmware, backend, DB, frontend, externos |
+| `database.mmd` | Mermaid | Modelo de base de datos: 25 entidades con relaciones |
+| `sequence-boot.mmd` | Mermaid | Boot del firmware: BOOT → INIT → WIFI → NORMAL |
+| `sequence-telemetry.mmd` | Mermaid | Flujo de telemetría: sensores → HTTP/MQTT → DB → SSE → Frontend |
+| `sequence-actuator.mmd` | Mermaid | Control de actuador: usuario → API → MQTT → firmware → ACK |
+| `sequence-failover.mmd` | Mermaid | Failover: broker caído → reconexión → modo degradado → safe mode |
+| `state_machine.drawio` | Draw.io | Máquina de estados del firmware (8 estados) — diagrama maestro |
+| `exports/` | — | Archivos Draw.io (solo state_machine.drawio) |
 
 ### 👤 Usuario (`docs/user/`)
 Documentación para operadores y cultivadores.

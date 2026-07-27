@@ -1,10 +1,10 @@
 # Arquitectura del Firmware — Mush2
 
 > **Plataforma**: ESP32-S3 (ESP32-S3-DevKitC-1)
-> **RTOS**: FreeRTOS (7 tareas en 2 núcleos)
+> **RTOS**: FreeRTOS (8 tareas en 2 núcleos)
 > **Framework**: Arduino Core for ESP32
 > **Board PlatformIO**: `esp32-s3-devkitc-1`
-> **Comunicación con backend**: HTTP Polling (REST API) — no MQTT directo
+> **Comunicación con backend**: HTTP Polling (REST API) + MQTT (health, maintenance, status)
 
 ---
 
@@ -86,7 +86,7 @@ firmware/
 | SSR | `ssr_controller.h/.cpp` | 4 canales active-LOW, timers minOn/maxOn |
 | Histéresis | `hysteresis_controller.h/.cpp` | Reglas locales T/H/CO₂, modos LOCAL/REMOTE/OFF, NVS setpoints |
 | State Machine | `state_machine.h/.cpp` | 9 estados + watchdog software + safe mode + NVS persistence |
-| MQTT Client | `mqtt_client.h/.cpp` | MQTT dual: HTTP command polling + OTA subscribe |
+| MQTT Client | `mqtt_client.h/.cpp` | MQTT publica telemetría/status/alarm/health/maintenance, suscribe actuator+ota |
 | OTA Decisor | `ota_decisor.h/.cpp` | OTA conditions FSM (battery, temp, sensors) |
 | OTA Executor | `ota_executor.h/.cpp` | OTA download, SHA-256 verify, flash |
 | OTA Shutdown | `ota_shutdown.h/.cpp` | Safe shutdown before OTA |
@@ -95,8 +95,9 @@ firmware/
 | Device Manager | `device_manager.h/.cpp` | Device ID desde MAC address |
 | Event Bus | `event_bus.h/.cpp` | In-memory pub/sub (FreeRTOS Queue), 10 event types |
 | Logger | `logger.h/.cpp` | Multi-sink (Serial, SPIFFS, MQTT), ring buffer 64 entries |
-| Health Monitor | `health_monitor.h/.cpp` | 7th task: heap, task stacks, I2C, sensor checks |
+| Health Monitor | `health_monitor.h/.cpp` | 8th task: heap, task stacks, I2C, sensor checks |
 | Telemetry Buffer | `telemetry_buffer.h/.cpp` | RAM ring (200 entries) + SPIFFS spill offline buffer |
+| SMFB Button | `tasks.cpp` (taskButton) | Multi-Function Button: short/long/double press, LED feedback |
 
 ---
 
@@ -111,14 +112,17 @@ firmware/
 | taskOTA | 0 | `configMAX_PRIORITIES-4` | 4096 | 100 | OTA updates |
 | taskTelemetry | 0 | `configMAX_PRIORITIES-4` | 4096 | 5000 | ThingSpeak + stats + offline replay |
 | taskMonitor | 0 | `configMAX_PRIORITIES-5` | 4096 | 60000/300000 | Health: heap, task stacks, I2C, sensor checks |
+| taskButton | 1 | 2 | 3072 | Event-driven | SMFB: short/long/double press, LED feedback |
 
 ---
 
 ## Watchdog Jerárquico
 
+> Ver `docs/ADR/ADR-027-esp32-task-watchdog-audit.md` para la auditoría del TWDT.
+
 | Nivel | Mecanismo | Timeout | Acción |
 |---|---|---|---|
-| 1 | TWDT (IDF Task WDT) | 12s | panic → abort → reboot |
+| 1 | TWDT (IDF Task WDT) — selectivo | 12s | panic → abort → reboot |
 | 2 | SWDT (StateMachine) | 30s | ESP.restart() + safe mode |
 | 3 | Health Check | 60s | DEGRADED + recovery |
 
@@ -165,7 +169,9 @@ BOOT → INIT → WIFI → NORMAL ↔ DEGRADED
 
 > Ver `docs/protocol/protocol-v1.md` y `docs/contracts/api-contract.md` para endpoints y formatos.
 
-El firmware **no usa MQTT directamente**. La comunicación con el backend es íntegramente HTTP REST:
+El firmware se comunica con el backend mediante **HTTP Polling** (comandos, telemetría) y **MQTT** (health, maintenance, status, alarm).
+
+### HTTP Polling
 
 | Endpoint | Método | Frecuencia | Propósito |
 |---|---|---|---|
@@ -173,7 +179,31 @@ El firmware **no usa MQTT directamente**. La comunicación con el backend es ín
 | `/api/v1/devices/:id/poll` | GET | Cada 500ms | Obtener comandos pendientes |
 | `/api/v1/devices/:id/ack` | POST | Por comando | Confirmar ejecución de comando |
 
-El broker MQTT es utilizado por el **backend** para enrutar comandos y eventos en tiempo real hacia el frontend.
+### MQTT (ADR-028)
+
+El firmware publica en tópicos `mush2/{deviceId}/` y se suscribe a comandos:
+
+**Publicaciones:**
+| Tópico | Contenido | Retain |
+|---|---|---|
+| `mush2/{deviceId}/telemetry` | Lecturas de sensores | No |
+| `mush2/{deviceId}/status` | Estado de conexión + modelo multidimensional | Sí |
+| `mush2/{deviceId}/alarm` | Alarmas del sistema | No |
+| `mush2/{deviceId}/health` | Métricas de salud (heap, stacks, I2C) | No |
+| `mush2/{deviceId}/maintenance` | Mantenimiento preventivo (componente, health, estimatedFailure) | No |
+| `mush2/{deviceId}/ota/status` | Estado de operación OTA | Sí |
+
+**Suscripciones:**
+| Tópico | Propósito |
+|---|---|
+| `mush2/{deviceId}/actuators` | Comandos de actuadores |
+| `mush2/{deviceId}/ota/command` | Comandos OTA |
+
+**Configuración MQTT (ADR-028):**
+- Credenciales provisionadas por backend durante registro HTTP
+- Persistidas en NVS (`mqtt_user` / `mqtt_pass`)
+- Fallback a `MQTT_USER`/`MQTT_PASS` de `config.h`
+- Username: `dev_{deviceId}`
 
 ---
 
@@ -257,8 +287,11 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 #define TS_PORT        80
 #define TS_API_KEY     "****"
 
-// MQTT (usado por backend, no por firmware directamente)
-#define DEVICE_ID      "esp32s3_001"
+// MQTT (ADR-028: preferir credenciales provisionadas en NVS)
+#define MQTT_USER     ""
+#define MQTT_PASS     ""
+#define MQTT_BROKER   "mqtt://broker.local"
+#define MQTT_PORT     1883
 
 // SSR (active-LOW)
 #define SSR1_PIN 11   // CH1 — Ventilación
@@ -285,3 +318,5 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 - `docs/ADR/ADR-014-OTA-v3.md` — Sistema OTA 4 capas
 - `docs/ADR/ADR-012-FreeRTOS.md` — Decisión FreeRTOS
 - `docs/ADR/ADR-010-Mecanismo-Fail-Safe-Overheat.md` — Fail-safe overheat
+- `docs/ADR/ADR-027-esp32-task-watchdog-audit.md` — Auditoría TWDT selectivo
+- `docs/ADR/ADR-028-Per-Device-MQTT-Identity.md` — Identidad MQTT por dispositivo

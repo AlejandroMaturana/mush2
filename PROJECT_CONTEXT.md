@@ -11,9 +11,9 @@ Proveer una plataforma integral (firmware + backend + frontend) que permita a pr
 | Componente | Tecnología | Función |
 |---|---|---|
 | **Firmware** | C++ (PlatformIO / ESP32-S3) | Lectura de sensores (AHT21, ENS160), control de actuadores (SSR), comunicaciones HTTP + MQTT + ThingSpeak, OTA v3 con 4-capas y rollback nativo |
-| **Backend** | Node.js + Express 5 + Sequelize 6 + PostgreSQL | API REST, autenticación JWT, motor de reglas, gestión de recetas/ciclos, WebSockets, bridge MQTT |
+| **Backend** | Node.js + Express 5 + Sequelize 6 + PostgreSQL | API REST, autenticación JWT, motor de reglas, gestión de recetas/ciclos, SSE, bridge MQTT |
 | **Frontend** | React (Vite) | Dashboard en tiempo real, configuración remota, visualización de históricos, alarmas |
-| **Comunicación** | HTTP Polling (REST API) + MQTT | Comunicación HTTP para telemetría y comandos; MQTT para comandos OTA y eventos en tiempo real |
+| **Comunicación** | HTTP Polling (REST API) + MQTT + SSE | HTTP para telemetría y comandos; MQTT para health/maintenance/status; SSE para eventos en tiempo real al frontend |
 
 ## ¿Cuáles son las reglas?
 
@@ -22,7 +22,7 @@ Proveer una plataforma integral (firmware + backend + frontend) que permita a pr
 3. **Seguridad**: JWT para API REST, contraseñas con bcrypt, secretos en `.env`, cifrado AES-256 para claves de ThingSpeak.
 4. **Calidad**: Toda tarea debe cumplir la Definition of Done (compila, documentado, testeado, changelog actualizado).
 5. **Persistencia**: La base de datos es PostgreSQL. Toda configuración de dispositivo debe persistirse para recuperación post-reinicio.
-6. **Telemetría**: Los sensores se leen cada 20-30s. Los datos se envían a ThingSpeak y al backend simultáneamente.
+6. **Telemetría**: Los sensores se leen cada 8s. Los datos se envían al backend por HTTP y a ThingSpeak como respaldo.
 
 ## ¿Qué NO debe hacer un agente?
 
@@ -31,5 +31,6 @@ Proveer una plataforma integral (firmware + backend + frontend) que permita a pr
 - Introducir dependencias sin evaluación de seguridad y mantenimiento.
 - Almacenar secretos en código fuente o commits.
 - Cambiar la estructura de endpoints HTTP sin actualizar la documentación de protocolo y contratos.
-- Ignorar la máquina de estados del dispositivo (boot → config → normal → error → recovery).
+- Ignorar la máquina de estados del dispositivo (boot → init → wifi → normal → degraded → error → recovery → safe).
+- Ignorar el modelo multidimensional de estado (connectivity/health/lifecycle — ADR-025).
 - Asumir disponibilidad permanente de red (el firmware debe operar en modo degradado).

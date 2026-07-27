@@ -1,6 +1,6 @@
 # ADR-025: Device Status Policy
 
-**Estado:** Propuesto
+**Estado:** Aceptado
 
 **Fecha:** 2026-07-25
 

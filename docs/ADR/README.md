@@ -50,7 +50,11 @@ docs/ADR/
 ├── ADR-021-control-engine-as-orchestrator.md
 ├── ADR-022-history-as-active-service.md
 ├── ADR-023-Secure-MQTT-Infrastructure.md
-└── ADR-024-HTTPS-Deployment-Strategy.md
+├── ADR-024-HTTPS-Deployment-Strategy.md
+├── ADR-025-device-status-policy.md
+├── ADR-026-temporal-contract.md
+├── ADR-027-esp32-task-watchdog-audit.md
+└── ADR-028-Per-Device-MQTT-Identity.md
 ```
 
 ## Índice de documentos
@@ -81,6 +85,10 @@ docs/ADR/
 | [ADR-022](ADR-022-history-as-active-service.md)           | History como Servicio Activo         | Evolución del servicio de historial y trazabilidad.                 |
 | [ADR-023](ADR-023-Secure-MQTT-Infrastructure.md)          | Infraestructura MQTT Segura          | TLS, autenticación y ACLs para MQTT.                                |
 | [ADR-024](ADR-024-HTTPS-Deployment-Strategy.md)           | Estrategia de Despliegue HTTPS       | Terminación TLS en la infraestructura, no en Express.               |
+| [ADR-025](ADR-025-device-status-policy.md)                | Device Status Policy                 | Modelo multidimensional de estado de dispositivo (Aceptado).        |
+| [ADR-026](ADR-026-temporal-contract.md)                   | Temporal Contract                    | Contrato temporal para eventos de dominio (Aceptado).               |
+| [ADR-027](ADR-027-esp32-task-watchdog-audit.md)           | Auditoría TWDT ESP32-S3              | Auditoría del Task Watchdog Timer en ESP32-S3 (Aceptado).           |
+| [ADR-028](ADR-028-Per-Device-MQTT-Identity.md)            | Identidad MQTT por Dispositivo       | Identidad MQTT por dispositivo con ACLs (Aceptado).                 |
 
 ## Numeración
 

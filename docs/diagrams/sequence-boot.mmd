@@ -1,0 +1,55 @@
+---
+title: Secuencia de Boot — Firmware ESP32-S3
+---
+sequenceDiagram
+    autonumber
+    participant FW as Firmware
+    participant I2C as Sensores I2C
+    participant WIFI as WiFi Manager
+    participant HTTP as Backend HTTP
+    participant MQTT as MQTT Broker
+    participant TS as ThingSpeak
+
+    Note over FW: Power On / Reset
+
+    rect rgb(232, 245, 233)
+        Note right of FW: T=0s — BOOT
+        FW->>FW: CPU init, GPIO, Serial
+        FW->>FW: NVS read (reboot counter, device ID)
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of FW: T=0-5s — INIT
+        FW->>I2C: aht.begin() + ens160.begin()
+        I2C-->>FW: I2C OK / NACK
+        alt I2C OK
+            FW->>FW: Watchdog config (TWDT 12s)
+        else I2C FAIL x3
+            FW->>FW: → DEGRADED mode
+        end
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of FW: T=5-15s — WIFI
+        FW->>WIFI: WiFi.begin(SSID_1)
+        alt Conectado
+            WIFI-->>FW: WL_CONNECTED
+        else Fallo
+            FW->>WIFI: WiFi.begin(SSID_2)
+            WIFI-->>FW: WL_CONNECTED / FAIL
+        end
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of FW: T=15s — NORMAL
+        FW->>HTTP: POST /api/v1/telemetry (boot)
+        HTTP-->>FW: 200 OK
+        FW->>MQTT: publish mush2/{id}/status (ONLINE, retain)
+        MQTT-->>FW: OK
+        FW->>MQTT: subscribe mush2/{id}/actuators
+        FW->>MQTT: subscribe mush2/{id}/ota/command
+        FW->>MQTT: publish mush2/{id}/health
+        FW->>TS: HTTP GET telemetry (cada 20s)
+    end
+
+    Note over FW: Operación normal: sensores cada 8s, HTTP poll cada 500ms

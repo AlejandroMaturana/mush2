@@ -19,7 +19,7 @@
 | Aspecto | Valor |
 |---------|-------|
 | **Dashboard refresh** | Polling cada 30 segundos |
-| **Telemetría en vivo** | Polling REST cada 30s (sin WebSocket) |
+| **Telemetría en vivo** | Polling REST cada 30s (sin SSE) |
 | **SSE events** | No disponible |
 | **Latencia máxima** | 30 segundos |
 | **Data retention** | 30 días |
@@ -30,7 +30,7 @@
 | Aspecto | Valor |
 |---------|-------|
 | **Dashboard refresh** | Polling cada 10 segundos |
-| **Telemetría en vivo** | WebSocket con updates cada 5s |
+| **Telemetría en vivo** | SSE con updates cada 5s |
 | **SSE events** | Disponible (filtrado por alarmas HIGH+) |
 | **Latencia máxima** | 5 segundos |
 | **Data retention** | 90 días |
@@ -40,8 +40,8 @@
 
 | Aspecto | Valor |
 |---------|-------|
-| **Dashboard refresh** | Streaming continuo vía WebSocket |
-| **Telemetría en vivo** | WebSocket con updates en tiempo real (< 1s) |
+| **Dashboard refresh** | Streaming continuo vía SSE |
+| **Telemetría en vivo** | SSE con updates en tiempo real (< 1s) |
 | **SSE events** | Disponible (todos los eventos) |
 | **Latencia máxima** | 1 segundo |
 | **Data retention** | 365 días |
@@ -54,8 +54,7 @@
 | Protocolo | Uso | QoS mínima requerida |
 |-----------|-----|---------------------|
 | **REST Polling** | Dashboard refresh, consultas under demanda | QoS 1 |
-| **WebSocket** | Telemetría en vivo, comandos de actuadores | QoS 2 |
-| **SSE** | Streaming de eventos (alarmas, cambios de estado) | QoS 2 |
+| **SSE** | Telemetría en vivo, streaming de eventos (alarmas, cambios de estado) | QoS 2 |
 | **MQTT (directo)** | Comunicación con el dispositivo (no depende del plan) | Siempre disponible |
 
 ---
@@ -65,10 +64,9 @@
 Cuando un usuario excede los límites de su plan, la plataforma aplica degradación en el siguiente orden:
 
 1. **Frecuencia de refresco**: Se reduce al nivel inmediato inferior (si es BASIC → FREE; si es FREE se mantiene).
-2. **WebSocket**: Se cierran conexiones WebSocket no esenciales, se fuerza a REST polling.
-3. **SSE**: Se filtran eventos de baja severidad (solo CRITICAL y HIGH).
-4. **Exportaciones**: Se bloquean hasta el próximo período.
-5. **API calls**: Se bloquean con `429` al exceder `apiCallsPerMonth`.
+2. **SSE**: Se filtran eventos de baja severidad (solo CRITICAL y HIGH).
+3. **Exportaciones**: Se bloquean hasta el próximo período.
+4. **API calls**: Se bloquean con `429` al exceder `apiCallsPerMonth`.
 
 ---
 
@@ -76,7 +74,7 @@ Cuando un usuario excede los límites de su plan, la plataforma aplica degradaci
 
 | Métrica | Instrumentación |
 |---------|----------------|
-| Latencia promedio de entrega | Logs de WebSocket/SSE |
+| Latencia promedio de entrega | Logs de SSE |
 | Tasa de refresco real vs contratada | Dashboard de administración |
-| Conexiones WebSocket activas | `monitoring/metrics` |
+| Conexiones SSE activas | `monitoring/metrics` |
 | Degradaciones aplicadas | AuditLog con acción `QOS_DEGRADE` |

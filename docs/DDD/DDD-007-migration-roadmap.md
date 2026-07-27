@@ -53,7 +53,7 @@ Este documento define el **plan de migración** desde la arquitectura actual (N-
 ┌─────────────────────────────────────────────────────────────┐
 │                    FIRMWARE                                  │
 │  ESP32-S3 + FreeRTOS (C++)                                  │
-│  MQTT + WebSocket                                           │
+│  MQTT + SSE                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -107,7 +107,7 @@ Este documento define el **plan de migración** desde la arquitectura actual (N-
 │  │  CAPA DE INFRAESTRUCTURA                             │   │
 │  │  - Repository Implementations (Sequelize)            │   │
 │  │  - MQTT Bridge                                       │   │
-│  │  - WebSocket Server                                  │   │
+│  │  - SSE Server                                       │   │
 │  │  - EventBus Implementation                          │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -193,7 +193,7 @@ backend/src/
 │   │   └── migrations/
 │   ├── messaging/
 │   │   ├── mqtt-bridge.ts
-│   │   ├── web-socket-server.ts
+│   │   ├── sse-server.ts
 │   │   └── event-bus.ts
 │   └── external/
 │       ├── telegram-service.ts

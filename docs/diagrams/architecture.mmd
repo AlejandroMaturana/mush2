@@ -1,0 +1,99 @@
+---
+title: Arquitectura del Sistema — Mush2
+---
+graph TB
+    subgraph Firmware["Firmware (ESP32-S3 / FreeRTOS)"]
+        direction TB
+        FW_MAIN["main.cpp<br/>Setup + 8 FreeRTOS Tasks"]
+        FW_WIFI["wifi_manager<br/>2 redes failover"]
+        FW_HTTP["http_poller<br/>Backoff 1s→60s"]
+        FW_MQTT["mqtt_client<br/>health/maintenance/status"]
+        FW_SENSOR["aht_sensor + ens160_sensor<br/>I2C 0x38 + 0x53"]
+        FW_SSR["ssr_controller<br/>4 canales active-LOW"]
+        FW_HYSTERESIS["hysteresis_controller<br/>Modos LOCAL/REMOTE/OFF"]
+        FW_STATE["state_machine<br/>8 estados + SWDT"]
+        FW_HEALTH["health_monitor<br/>Heap/stacks/I2C/sensors"]
+        FW_SMFB["taskButton<br/>SMFB: short/long/double"]
+        FW_OTA["ota_decisor + executor<br/>4-capas + SHA-256"]
+        FW_TS["thingspeak_client<br/>HTTP GET cada 20s"]
+        FW_TELEMETRY["telemetry_buffer<br/>RAM ring + SPIFFS spill"]
+    end
+
+    subgraph Backend["Backend (Node.js 20+ / Express 5)"]
+        direction TB
+        BE_API["API REST (JWT)<br/>19 rutas"]
+        BE_SSE["SSE Server<br/>EventSource"]
+        BE_MQTT["mqttBridge.js<br/>Conexión broker"]
+        BE_CONTROL["controlEngine.js<br/>Evaluación cada 8s"]
+        BE_PHASE["phaseEvaluator.js<br/>Transiciones de fase"]
+        BE_HEALTH["deviceHealthService.js<br/>Health + Maintenance"]
+        BE_NOTIFY["notificationService.js<br/>Email + Telegram + Webhook"]
+        BE_THINGSPEAK["thingSpeakSync.js<br/>Backfill datos"]
+        BE_EVENTBUS["eventBus.js<br/>In-memory pub/sub"]
+        BE_AUDIT["auditService.js<br/>Audit trail"]
+        BE_ENCRYPT["encryption.js<br/>AES-256-GCM"]
+        BE_PINO["pino.js<br/>Logger estructurado"]
+        BE_ROUTES["routes/<br/>runs-pilot, monitoring, diagnostics"]
+    end
+
+    subgraph Database["PostgreSQL 16"]
+        DB[("Sequelize ORM<br/>25 modelos<br/>CultivationCycle, Device,<br/>DeviceHealth, DeviceMaintenance,<br/>PhaseTransition, ...")]
+    end
+
+    subgraph Frontend["Frontend (React 18 / Vite)"]
+        direction TB
+        FE_DASH["DashboardPage"]
+        FE_MONITOR["MonitoringPage<br/>Health + Maintenance"]
+        FE_DEVICE["DeviceDetailPage"]
+        FE_CYCLES["CyclesPage"]
+        FE_RECIPES["RecipesPage"]
+        FE_ALARMS["AlarmsPage"]
+        FE_SSE["useSSE.js<br/>EventSource"]
+        FE_CLIENT["axiosInstance.js<br/>JWT interceptor"]
+    end
+
+    subgraph External["Servicios Externos"]
+        TS["ThingSpeak<br/>Respaldo telemetría"]
+        MQTT_BROKER["Mosquitto<br/>MQTT Broker"]
+    end
+
+    %% Firmware → Backend
+    FW_HTTP -->|"HTTP POST /telemetry<br/>cada 8s"| BE_API
+    FW_HTTP -->|"HTTP GET /poll<br/>cada 500ms"| BE_API
+    FW_MQTT -->|"mush2/{id}/health"| MQTT_BROKER
+    FW_MQTT -->|"mush2/{id}/maintenance"| MQTT_BROKER
+    FW_MQTT -->|"mush2/{id}/status"| MQTT_BROKER
+    MQTT_BROKER -->|"mush2/{id}/actuators"| FW_MQTT
+    MQTT_BROKER -->|"mush2/{id}/ota/command"| FW_MQTT
+
+    %% Backend → DB
+    BE_API --> DB
+    BE_CONTROL --> DB
+    BE_HEALTH --> DB
+
+    %% Backend → Frontend
+    BE_SSE -->|"SSE events"| FE_SSE
+    BE_API -->|"REST API"| FE_CLIENT
+
+    %% Backend → External
+    FW_TS -->|"HTTP GET cada 20s"| TS
+    BE_THINGSPEAK -->|"Backfill"| TS
+
+    %% Internal Backend
+    BE_MQTT --> BE_EVENTBUS
+    BE_CONTROL --> BE_EVENTBUS
+    BE_HEALTH --> BE_NOTIFY
+    BE_EVENTBUS --> BE_SSE
+
+    %% Estilos
+    classDef firmware fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef backend fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef db fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef frontend fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef external fill:#fce4ec,stroke:#c62828,stroke-width:2px
+
+    class FW_MAIN,FW_WIFI,FW_HTTP,FW_MQTT,FW_SENSOR,FW_SSR,FW_HYSTERESIS,FW_STATE,FW_HEALTH,FW_SMFB,FW_OTA,FW_TS,FW_TELEMETRY firmware
+    class BE_API,BE_SSE,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_THINGSPEAK,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
+    class DB db
+    class FE_DASH,FE_MONITOR,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
+    class TS,MQTT_BROKER external

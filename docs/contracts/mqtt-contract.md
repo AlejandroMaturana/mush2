@@ -8,7 +8,7 @@
 
 | Actor | Rol | Responsabilidades |
 |---|---|---|
-| **Firmware** (ESP8266) | Dispositivo de campo | Publicar telemetría, ejecutar comandos, publicar ACK, reportar estado |
+| **Firmware** (ESP32-S3) | Dispositivo de campo | Publicar telemetría, ejecutar comandos, publicar ACK, reportar estado |
 | **Backend** (Node.js) | Controlador central | Publicar comandos, recibir telemetría, persistir datos, emitir SSE |
 | **Broker MQTT** (Mosquitto/HiveMQ) | Mensajería | Rutear mensajes, mantener sesiones, entregar LWT, persistir retains |
 | **Frontend** (React) | Interfaz de usuario | No habla MQTT directamente (usa REST + SSE) |
@@ -46,8 +46,8 @@
 |---|---|---|---|
 | Telemetría sensores | **QoS 1** | QoS 1 | Tolerante a duplicados, intolerante a pérdida |
 | Estado actuadores | **QoS 1** (retain) | QoS 1 | Último valor conocido siempre disponible |
-| Comandos actuador | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 en ESP8266 de forma confiable |
-| Comandos configuración | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 en ESP8266 de forma confiable |
+| Comandos actuador | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 de forma confiable |
+| Comandos configuración | **QoS 1** | QoS 1 | PubSubClient no maneja QoS 2 de forma confiable |
 | Evento boot | **QoS 1** | QoS 1 | Notificación de arranque |
 | ACK | **QoS 1** | QoS 1 | Confirmación de comando |
 | Alarmas | **QoS 1** | QoS 1 | Tolerante a pérdida ocasional |
@@ -65,14 +65,14 @@
 
 | Tópico | Propósito | Actualización |
 |---|---|---|
-| `mush2/state/{deviceId}/online` | Estado de conexión | Al conectar (ONLINE) y vía LWT (OFFLINE) |
-| `mush2/telemetry/{deviceId}/state` | Último estado actuadores | Cada ciclo de telemetría |
+| `mush2/{deviceId}/status` | Estado de conexión | Al conectar (ONLINE) y vía LWT (OFFLINE) |
+| `mush2/{deviceId}/health` | Último estado de salud | Cada ciclo de health check (ADR-025) |
 
 ### 4.2 Reglas de retain
 
 - Solo los tópicos listados arriba usan retain.
 - Al conectar, el backend lee los retains de todos sus dispositivos para reconstruir estado.
-- Firmware publica retain `ONLINE` en cada boot y retain del estado de actuadores.
+- Firmware publica retain `ONLINE` en cada boot.
 - Si un dispositivo no reporta por más de 5 minutos, backend considera estado incierto.
 
 ## 5. Last Will and Testament (LWT)
@@ -81,7 +81,7 @@
 
 | Parámetro | Valor |
 |---|---|
-| Tópico | `mush2/state/{deviceId}/online` |
+| Tópico | `mush2/{deviceId}/status` |
 | Payload | `{"deviceId":"{deviceId}","status":"OFFLINE","ts":<epoch>,"reason":"unexpected"}` |
 | QoS | 1 |
 | Retain | `true` |
@@ -98,20 +98,20 @@
 ### 6.1 Backend
 
 ```
-mush2/telemetry/+/sensors    → QoS 1 (telemetría de todos los dispositivos)
-mush2/telemetry/+/state      → QoS 1 (estado de todos los dispositivos)
-mush2/event/+/boot           → QoS 1 (boot de cualquier dispositivo)
-mush2/event/+/ack            → QoS 1 (ACK de cualquier dispositivo)
-mush2/event/+/alarm          → QoS 1 (alarmas de cualquier dispositivo)
-mush2/state/+/online         → QoS 1 (cambios de estado online)
+mush2/+/telemetry          → QoS 1 (telemetría de todos los dispositivos)
+mush2/+/status             → QoS 1 (estado de todos los dispositivos)
+mush2/+/alarm              → QoS 1 (alarmas de cualquier dispositivo)
+mush2/+/ack                → QoS 1 (ACK de cualquier dispositivo)
+mush2/+/health             → QoS 1 (salud del dispositivo — ADR-025)
+mush2/+/maintenance        → QoS 1 (mantenimiento preventivo)
 ```
 
 ### 6.2 Firmware
 
 ```
-mush2/cmd/{deviceId}/actuator   → QoS 1 (comandos para este dispositivo)
-mush2/cmd/{deviceId}/config     → QoS 1 (cambios de configuración)
-mush2/cmd/{deviceId}/ota        → QoS 1 (comandos OTA)
+mush2/{deviceId}/actuators     → QoS 1 (comandos para este dispositivo)
+mush2/{deviceId}/config        → QoS 1 (cambios de configuración)
+mush2/{deviceId}/ota           → QoS 1 (comandos OTA)
 ```
 
 El firmware NO debe suscribirse a `#` ni a tópicos de otros dispositivos.
@@ -165,28 +165,36 @@ El frontend NO se suscribe directamente a MQTT. Recibe eventos en tiempo real v�
 
 ### 9.1 Restricciones de tópicos
 
-- El firmware SOLO publica en tópicos que comienzan con `mush2/telemetry/{deviceId}/`, `mush2/event/{deviceId}/` y `mush2/state/{deviceId}/`.
-- El firmware SOLO se suscribe a tópicos que comienzan con `mush2/cmd/{deviceId}/`.
-- El backend puede publicar en cualquier tópico `mush2/cmd/*`.
-- El backend se suscribe a `mush2/telemetry/+/`, `mush2/event/+/`, `mush2/state/+/`.
+- El firmware SOLO publica en tópicos que comienzan con `mush2/{deviceId}/telemetry`, `mush2/{deviceId}/status`, `mush2/{deviceId}/alarm`, `mush2/{deviceId}/ack`, `mush2/{deviceId}/health`, `mush2/{deviceId}/maintenance`.
+- El firmware SOLO se suscribe a tópicos que comienzan con `mush2/{deviceId}/actuators`, `mush2/{deviceId}/config`, `mush2/{deviceId}/ota`.
+- El backend puede publicar en cualquier tópico `mush2/*/actuators`.
+- El backend se suscribe a `mush2/+/telemetry`, `mush2/+/status`, `mush2/+/alarm`, `mush2/+/ack`, `mush2/+/health`, `mush2/+/maintenance`.
 
 ### 9.2 ACLs recomendadas (producción)
 
 > ACLs usan `%c` (client_id) para topic isolation. Username es `dev_{deviceId}`.
 
 ```
-# Firmware devices — client_id = mush2_{hex} (e.g. mush2_A0F262E55CBC)
-# Pattern %c se resuelve al client_id del dispositivo
-topic write mush2/telemetry/+/+
-topic write mush2/event/+/+
-topic write mush2/state/+/+
-topic read  mush2/cmd/+/+
+# Firmware devices — client_id = mush2_{deviceId}
+# Cada dispositivo solo puede publicar en sus propios tópicos
+topic write mush2/${client_id}/telemetry
+topic write mush2/${client_id}/status
+topic write mush2/${client_id}/alarm
+topic write mush2/${client_id}/ack
+topic write mush2/${client_id}/health
+topic write mush2/${client_id}/maintenance
+topic read  mush2/${client_id}/actuators
+topic read  mush2/${client_id}/config
+topic read  mush2/${client_id}/ota
 
 # Backend
-topic read  mush2/telemetry/+/+
-topic read  mush2/event/+/+
-topic read  mush2/state/+/+
-topic write mush2/cmd/+/+
+topic read  mush2/+/telemetry
+topic read  mush2/+/status
+topic read  mush2/+/alarm
+topic read  mush2/+/ack
+topic read  mush2/+/health
+topic read  mush2/+/maintenance
+topic write mush2/+/actuators
 ```
 
 ## 10. Monitoreo del Contrato

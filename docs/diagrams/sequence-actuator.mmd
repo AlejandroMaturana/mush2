@@ -1,0 +1,56 @@
+---
+title: Secuencia de Control de Actuador — Usuario → Actuador → ACK
+---
+sequenceDiagram
+    autonumber
+    participant U as Usuario
+    participant FE as Frontend
+    participant API as Backend API
+    participant CE as Control Engine
+    participant MQTT as MQTT Broker
+    participant FW as Firmware
+    participant SSR as SSR Relay
+
+    rect rgb(243, 229, 245)
+        Note right of U: Comando manual
+        U->>FE: Click "Actuator ON"
+        FE->>API: PATCH /api/v1/devices/:id/actuators/:ch<br/>{state: "ON"}
+        API->>API: authenticate (JWT) + authorize (RBAC)
+        API->>MQTT: publish mush2/{id}/actuators<br/>{cmdId, channel, state, mode}
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of FW: Ejecución en firmware
+        MQTT->>FW: message on mush2/{id}/actuators
+        FW->>FW: parse payload, validate cmdId
+        FW->>SSR: digitalWrite(SSR_CH1, LOW) [active-LOW]
+        SSR-->>FW: OK
+        FW->>FW: NVS persist state
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of FW: Confirmación ACK
+        FW->>MQTT: publish mush2/{id}/ack<br/>{cmdId, status: "OK", ts}
+        MQTT->>API: onMessage ack
+        API->>API: INSERT INTO events (type=ack)
+        API->>MQTT: publish mush2/{id}/status<br/>{actuatorState, lifecycle: RUNNING}
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of FE: Actualización UI
+        API->>FE: SSE event: actuator<br/>{deviceId, actuatorId, state: "ON"}
+        FE->>FE: Actualiza ActuatorControl badge
+        U->>FE: Ve checkmark de confirmación
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of CE: Control automático (ADR-021)
+        CE->>CE: evaluate() cada 8s
+        CE->>CE: Compara telemetría vs setpoints
+        alt Fuera de rango
+            CE->>MQTT: publish mush2/{id}/actuators<br/>{cmdId, channel, state: "ON"}
+            MQTT->>FW: command
+            FW->>SSR: execute
+            FW->>MQTT: publish ack
+        end
+    end

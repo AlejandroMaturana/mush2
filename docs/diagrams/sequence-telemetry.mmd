@@ -1,0 +1,49 @@
+---
+title: Secuencia de Telemetría — Sensor → Dashboard
+---
+sequenceDiagram
+    autonumber
+    participant FW as Firmware
+    participant AHT as AHT21 (I2C)
+    participant ENS as ENS160 (I2C)
+    participant HTTP as Backend HTTP
+    participant MQTT as MQTT Broker
+    participant DB as PostgreSQL
+    participant SSE as SSE Server
+    participant FE as Frontend
+
+    rect rgb(232, 245, 233)
+        Note right of FW: Cada 8s — taskSensors
+        FW->>AHT: readTemperature() + readHumidity()
+        AHT-->>FW: T=24.5°C, H=85.2%
+        FW->>ENS: setTempAndHum(T, H)
+        FW->>ENS: readCO2() + readTVOC() + readAQI()
+        ENS-->>FW: CO2=420ppm, VOC=15ppb, AQI=1
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of FW: Envío HTTP (principal)
+        FW->>HTTP: POST /api/v1/telemetry<br/>{deviceId, temperature, humidity, co2, voc, aqi, ssrState, ...}
+        HTTP->>DB: INSERT INTO telemetry
+        HTTP-->>FW: 200 OK
+    end
+
+    rect rgb(243, 229, 245)
+        Note right of FW: Envío MQTT (health/status)
+        FW->>MQTT: publish mush2/{id}/health<br/>{freeHeap, minFreeHeap, taskStacks, i2cStatus, sensorStatus}
+        MQTT->>HTTP: onMessage health
+        HTTP->>DB: INSERT INTO device_health
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of FW: Respaldo ThingSpeak
+        FW->>TS: HTTP GET field1=T&field2=H&field3=CO2
+        TS-->>FW: 200 OK
+    end
+
+    rect rgb(243, 229, 245)
+        Note right of SSE: Tiempo real → Frontend
+        HTTP->>SSE: eventBus.emit('telemetry', data)
+        SSE->>FE: event: telemetry<br/>data: {"temperature":24.5,"humidity":85,...}
+        FE->>FE: Actualiza Chart.js + gauges
+    end

@@ -1,54 +1,50 @@
-# Exportación de Diagramas — Mush2
+# Draw.io Exports — Mush2
 
-Los diagramas de arquitectura se editan en formato `.drawio` dentro de `docs/diagrams/` usando la herramienta [Draw.io](https://app.diagrams.net/). 
-
-Para que estos diagramas sean visibles directamente en GitHub o en la documentación Markdown, deben exportarse en formato **PNG** o **SVG** dentro de esta carpeta (`docs/diagrams/exports/`).
+> Este directorio contiene el **único archivo fuente de Draw.io** del proyecto: `state_machine.drawio`.
 
 ---
 
-## Procedimiento de Exportación
+## Política
 
-### Opción A: Usando la aplicación web de Draw.io (Recomendado)
+Ver `docs/diagrams/README.md` para la política completa de diagramas.
 
-1. Abre [app.diagrams.net](https://app.diagrams.net/).
-2. Carga el archivo `.drawio` correspondiente (ej: `architecture.drawio`).
-3. Ve a **Archivo** (File) → **Exportar como** (Export as) → **PNG...** o **SVG...**.
-4. En las opciones de exportación:
-   - Selecciona **Borde: 10** (para evitar recortes).
-   - Asegúrate de marcar **Fondo transparente** si usas PNG (opcional).
-   - Deja el tamaño al **100%**.
-   - Haz click en **Exportar**.
-5. Guarda el archivo con el mismo nombre base en `docs/diagrams/exports/` (ej: `architecture.png`).
+Todos los demás diagramas se mantienen en Mermaid (`.mmd`) en `docs/diagrams/`. Solo `state_machine.drawio` se conserva en Draw.io como diagrama maestro del proyecto.
 
-### Opción B: Usando VS Code Extension (Draw.io Integration)
+---
 
-Si utilizas VS Code, puedes instalar la extensión **"Draw.io Integration"** de Henning Dieterichs:
+## Archivo Único
 
-1. Abre el archivo `.drawio` directamente en VS Code.
-2. Haz click derecho en la pestaña del editor de Draw.io.
-3. Selecciona **Export** o guarda directamente configurando el auto-export en los settings de la extensión.
+| Archivo | Descripción | Renderizado |
+|---|---|---|
+| [`state_machine.drawio`](state_machine.drawio) | Máquina de estados del dispositivo ESP32-S3: 8 estados (BOOT, INIT, WIFI, NORMAL, DEGRADED, ERROR, RECOVERY, SAFE) | Se renderiza como imagen estática en GitHub |
 
-### Opción C: Exportación automática por línea de comandos (CLI)
+---
 
-Si deseas automatizar la exportación en tus scripts o CI/CD, puedes usar la herramienta CLI de Draw.io:
+## Exportación de `state_machine.drawio`
+
+### Opción A: Draw.io Web (Recomendado)
+
+1. Abre [app.diagrams.net](https://app.diagrams.net/)
+2. Carga `state_machine.drawio`
+3. **Archivo** → **Exportar como** → **PNG...** o **SVG...**
+4. Borde: 10, Tamaño: 100%
+5. Guarda en `docs/diagrams/exports/`
+
+### Opción B: VS Code Extension
+
+1. Abre `state_machine.drawio` en VS Code (extensión Draw.io Integration)
+2. Click derecho en la pestaña → **Export**
+
+### Opción C: CLI
 
 ```bash
-# Exportar a PNG
-drawio -x -f png --page-index 0 -o docs/diagrams/exports/architecture.png docs/diagrams/architecture.drawio
-
-# Exportar a SVG
-drawio -x -f svg --page-index 0 -o docs/diagrams/exports/architecture.svg docs/diagrams/architecture.drawio
+drawio -x -f png --page-index 0 \
+  -o docs/diagrams/exports/state_machine.png \
+  docs/diagrams/exports/state_machine.drawio
 ```
 
 ---
 
-## Archivos Requeridos
+## Nota
 
-Cada archivo `.drawio` debe tener su correspondiente exportación actualizada:
-
-| Archivo Fuente | Exportación Requerida | Renderizado en Markdown |
-|---|---|---|
-| [`architecture.drawio`](../architecture.drawio) | `architecture.png` | `![Arquitectura](exports/architecture.png)` |
-| [`database.drawio`](../database.drawio) | `database.png` | `![Base de datos](exports/database.png)` |
-| [`sequence.drawio`](../sequence.drawio) | `sequence.png` | `![Secuencia](exports/sequence.png)` |
-| [`state_machine.drawio`](../state_machine.drawio) | `state_machine.png` | `![Máquina de estados](exports/state_machine.png)` |
+Los diagramas Mermaid (`.mmd`) no requieren exportación — se renderizan automáticamente en GitHub y VitePress.

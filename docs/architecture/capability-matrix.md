@@ -116,7 +116,7 @@
 | Predictive Maint (FW) | `firmware/src/predictive_maintenance.cpp` | 🟢 | ❌ | 🟢 |
 | Boot Test (FW) | `firmware/src/boot_test.cpp` | 🟢 | ❌ | 🟢 |
 | Logger (FW) | `firmware/src/logger.cpp` | 🟢 | ❌ | 🟢 |
-| Logger (BE) | `backend/src/services/logger.js` | 🟢 | ✅ | 🟢 |
+| Logger (BE) | `backend/src/config/pino.js` | 🟢 | ✅ | 🟢 |
 
 ---
 
@@ -160,7 +160,7 @@
 | Env Config | `backend/src/config/env.js` | 🟡 | ❌ | 🟡 |
 | System Settings | `backend/src/config/systemSettingsDefaults.js` | 🟡 | ❌ | 🟡 |
 | Event Bus | `backend/src/services/eventBus.js` | 🟡 | ❌ | 🟡 |
-| WebSocket Server | `backend/src/services/webSocketServer.js` | 🟡 | ❌ | 🟡 |
+| SSE Server | `backend/src/services/webSocketServer.js` | 🟡 | ❌ | 🟡 |
 | Sync DB | `backend/src/sync-db.js` | 🟡 | ❌ | 🟡 |
 | Seed | `backend/src/seed.js` | 🟢 | ❌ | 🟢 |
 | Data Retention | `backend/src/jobs/dataRetentionJob.js` | 🟡 | ❌ | 🟡 |

@@ -1,0 +1,74 @@
+---
+title: Secuencia de Failover — Reconexión y Degradación
+---
+sequenceDiagram
+    autonumber
+    participant FW as Firmware
+    participant BROKER1 as Broker #1
+    participant BROKER2 as Broker #2
+    participant BACKEND as Backend
+    participant DB as PostgreSQL
+
+    rect rgb(232, 245, 233)
+        Note right of FW: Estado normal
+        FW->>BROKER1: publish mush2/{id}/telemetry
+        BROKER1-->>FW: OK
+        FW->>BROKER1: publish mush2/{id}/status (ONLINE)
+    end
+
+    rect rgb(252, 228, 236)
+        Note right of FW: Broker #1 falla
+        BROKER1--xFW: Connection lost
+        FW->>FW: Detecta desconexión
+        FW->>FW: NVS: offlineMode = true
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of FW: Reintentos con backoff
+        loop Reintento 1 (5s)
+            FW->>BROKER1: reconnect attempt
+            BROKER1--xFW: FAIL
+        end
+        loop Reintento 2 (10s)
+            FW->>BROKER1: reconnect attempt
+            BROKER1--xFW: FAIL
+        end
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of FW: Failover a Broker #2
+        FW->>BROKER2: connect
+        BROKER2-->>FW: CONNECTED
+        FW->>BROKER2: publish mush2/{id}/status (ONLINE, retain)
+        FW->>BROKER2: subscribe mush2/{id}/actuators
+        FW->>BROKER2: subscribe mush2/{id}/ota/command
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of FW: Reanuda operación normal
+        FW->>BROKER2: publish mush2/{id}/telemetry
+        FW->>BROKER2: publish mush2/{id}/health
+    end
+
+    rect rgb(252, 228, 236)
+        Note right of BACKEND: Backend detecta offline
+        BACKEND->>DB: UPDATE devices SET connectivity='OFFLINE'
+        BACKEND->>BACKEND: SSE event: device:offline
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of BACKEND: Firmware reconecta
+        FW->>BACKEND: POST /api/v1/telemetry (reconnect)
+        BACKEND->>DB: UPDATE devices SET connectivity='ONLINE'
+        BACKEND->>BACKEND: SSE event: device:online
+    end
+
+    rect rgb(252, 228, 236)
+        Note right of FW: Modo degradado (sin red)
+        Note over FW: Operación LOCAL: histéresis T/H/CO2<br/>Sin control remoto<br/>Buffer en SPIFFS para replay
+    end
+
+    rect rgb(243, 229, 245)
+        Note right of FW: Safe mode (5+ reboots)
+        Note over FW: EEPROM counter > 5<br/>LED rojo, espera 60s<br/>Solo WiFi, espera comando reset
+    end

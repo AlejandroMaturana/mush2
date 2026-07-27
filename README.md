@@ -7,6 +7,7 @@
 ![C++](https://img.shields.io/badge/C++-PlatformIO-00599C?logo=c%2B%2B&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-Framework-000000?logo=express&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white)
 ![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql&logoColor=white)
 ![FreeRTOS](https://img.shields.io/badge/FreeRTOS-Real%20Time-00979D?logo=freertos&logoColor=white)
@@ -46,7 +47,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 - **Monitoreo Ambiental Preciso**: Lectura de temperatura, humedad relativa y calidad del aire (CO₂, VOC) mediante sensores AHT21 y ENS160 vía I²C.
 - **Control de Actuadores SSR**: Gestión de 4 canales de relés de estado sólido (active-LOW) para ventilación, calefacción, humidificación e iluminación.
-- **Arquitectura FreeRTOS**: 6 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
+- **Arquitectura FreeRTOS**: 8 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
 - **Comunicación HTTP Polling**: Sincronización entre firmware y backend mediante REST API con cola de comandos y backoff exponencial.
 - **Dashboard en Tiempo Real**: Interfaz web React con SSE, visualización de datos históricos y control remoto de actuadores.
 - **Telemetría de Respaldo**: Envío de datos a ThingSpeak como sistema de respaldo y monitoreo externo.
@@ -60,9 +61,10 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 |---|---|
 | **Firmware** | C++ (PlatformIO / ESP32-S3) + FreeRTOS |
 | **Backend** | Node.js 20+ / Express 5 / Sequelize 6 |
+| **Contenedores** | Docker / Docker Compose (Broker MQTT + Backend) |
 | **Frontend** | React 18 + Vite + Chart.js |
 | **Base de datos** | PostgreSQL 16 |
-| **Comunicación** | HTTP polling (REST API) + WebSocket + SSE |
+| **Comunicación** | HTTP polling (REST API) + MQTT + SSE |
 | **Telemetría (respaldo)** | ThingSpeak |
 | **Watchdog** | TWDT (12s) + SWDT (30s) + Health Check (60s) |
 
@@ -71,13 +73,14 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 ## Componentes del Sistema
 
 ### Firmware (ESP32-S3 / FreeRTOS)
-- 6 tareas en 2 núcleos: Sensors (Core 1), SSR (Core 1), WiFi (Core 0), Poller (Core 0), OTA (Core 0), Telemetry (Core 0)
+- 8 tareas en 2 núcleos: Sensors (Core 1), SSR (Core 1), Button (Core 1), WiFi (Core 0), Poller (Core 0), OTA (Core 0), Telemetry (Core 0), Monitor (Core 0)
 - Lectura de sensores AHT21 y ENS160 vía I²C cada 8s
 - Control de 4 canales SSR para actuadores con histéresis
 - HTTP polling al backend con backoff exponencial y cola de comandos
 - Watchdog jerárquico: TWDT (12s, panic → reboot), SWDT (30s, recovery controlado), Health Check (60s)
 - Envío de telemetría a ThingSpeak cada 20s
-- OTA v3: 4-capas (Decisor + Safe Shutdown + Ejecutor + Confirmación Post-Boot) + MQTT
+- OTA v3: 4-capas (Decisor + Safe Shutdown + Ejecutor + Confirmación Post-Boot)
+- MQTT para health, maintenance, status y alarmas del dispositivo
 - Device ID dinámico derivado de MAC address
 
 ### Backend (Node.js/Express)
@@ -87,7 +90,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 - JWT auth + RBAC (SUPER_ADMIN, ADMIN, OPERATOR, VIEWER)
 - Seguridad: Helmet CSP, rate limiting, refresh token en httpOnly cookie
 - Persistencia en PostgreSQL 16 con Sequelize ORM
-- WebSocket para firmware + SSE para frontend
+- MQTT para firmware + SSE para frontend
 
 ### Frontend (React/Vite)
 - Dashboard en tiempo real con Chart.js y SSE
@@ -102,18 +105,19 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 - `PROJECT_CONTEXT.md` — Definición del proyecto
 - `PROJECT_JOURNAL.md` — Bitácora de decisiones
-- `docs/ADR/` — 14 Architecture Decision Records (ADR-001 a ADR-014)
+- `docs/ADR/` — 28 Architecture Decision Records (ADR-001 a ADR-028)
 - `docs/architecture/` — Arquitectura por componente
 - `docs/contracts/` — Contratos (API REST, MQTT)
 - `docs/roadmap/roadmap.md` — Roadmap de desarrollo (18 fases)
 - `docs/requirements.md` — Requerimientos funcionales
 
-### ADRs destacados (v0.9.1)
+### ADRs destacados
 - `ADR-001-ESP32.md` — Migración a ESP32-S3 como nodo de telemetría
-- `ADR-008-HTTP-Command-Protocol.md` — Protocolo HTTP polling
 - `ADR-012-FreeRTOS.md` — Arquitectura FreeRTOS y watchdog jerárquico
-- `ADR-013-Seguridad-Estrategia.md` — Estrategia de seguridad por capas
 - `ADR-014-OTA-v3.md` — Sistema OTA v3 con arquitectura 4-capas y rollback nativo
+- `ADR-020-run-replaces-cultivationcycle.md` — Evolución del modelo de dominio
+- `ADR-025-device-status-policy.md` — Modelo multidimensional de estado (Aceptado)
+- `ADR-028-Per-Device-MQTT-Identity.md` — Identidad MQTT por dispositivo (Aceptado)
 
 ---
 
@@ -132,4 +136,4 @@ MIT
 
 ---
 
-> **Estado del Sistema**: v0.9.0 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.
+> **Estado del Sistema**: v1.7.22 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.
