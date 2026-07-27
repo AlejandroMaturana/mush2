@@ -251,16 +251,16 @@
 | Campo | Valor |
 |-------|-------|
 | **Tipo** | Política |
-| **Descripción** | Entrega de telemetría en tiempo real vía WebSocket/SSE |
+| **Descripción** | Entrega de telemetría en tiempo real vía SSE |
 | **Costo operacional** | Alto (conexiones persistentes, ancho de banda) |
 | **Enforcement** | No implementado — actualmente disponible para todos |
 | **Estado** | 📋 |
 
 | Plan | Streaming |
 |------|-----------|
-| FREE | Polling cada 30s (sin WebSocket) |
-| BASIC | WebSocket con datos cada 5s |
-| PREMIUM | WebSocket streaming continuo (< 1s) |
+| FREE | Polling cada 30s (sin SSE) |
+| BASIC | SSE con datos cada 5s |
+| PREMIUM | SSE streaming continuo (< 1s) |
 
 ---
 
@@ -450,7 +450,7 @@
 | **automation.rules.active** 📋 | 3 | 10 | Ilimitado |
 | **automation.cycles.concurrent** 📋 | 1 | 3 | 10 |
 | **qos.dashboard.refresh** 📋 | 30s | 10s | 1s |
-| **qos.telemetry.streaming** 📋 | Polling 30s | WebSocket 5s | Streaming <1s |
+| **qos.telemetry.streaming** 📋 | Polling 30s | SSE 5s | SSE <1s |
 | **notifications.telegram** ✅ | CRITICAL/HIGH | Todas | Todas + config |
 | **notifications.push** 📋 | ❌ | ✅ | ✅ |
 | **analytics.dashboard.custom** 📋 | ❌ | 3 vistas | Ilimitado |

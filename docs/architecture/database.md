@@ -36,10 +36,16 @@ Chamber ──1:N── Device
 | chamberName | VARCHAR(100) | Nombre de la cámara |
 | chamberLocation | VARCHAR(200) | Ubicación |
 | firmwareVersion | VARCHAR(20) | Versión actual |
-| status | ENUM(ONLINE,OFFLINE,ERROR) | Estado |
+| hardwareRevision | VARCHAR(20) | Revisión de hardware |
+| connectivity | ENUM(ONLINE,DEGRADED,OFFLINE) | Estado de conectividad (ADR-025) |
+| healthCondition | ENUM(NORMAL,WARNING,CRITICAL) | Estado de salud (ADR-025) |
+| lifecycle | ENUM(INSTALLING,RUNNING,MAINTENANCE,DECOMMISSIONED) | Ciclo de vida (ADR-025) |
 | lastSeen | TIMESTAMP | Última conexión |
+| lastTelemetryAt | TIMESTAMP | Última telemetría recibida |
 | thingSpeakChannelId | VARCHAR(64) | Channel ID ThingSpeak |
 | thingSpeakReadKey | TEXT | Read key cifrada (AES-256-GCM) |
+| mqttUser | VARCHAR(100) | Usuario MQTT provisionado (ADR-028) |
+| mqttPass | TEXT | Password MQTT cifrada (ADR-028) |
 
 ### Sensor
 | Campo | Tipo | Descripción |
@@ -113,6 +119,8 @@ Chamber ──1:N── Device
 | lightCycleHours | INTEGER | Horas de luz por día |
 
 ### CultivationCycle
+> **Nota ADR-020**: La entidad de dominio se denomina `Run` (`backend/src/domain/entities/Run.ts`), pero la tabla de persistencia sigue siendo `cultivation_cycles` mapeada por `CultivationCycle.js`. La migración de persistencia de `CultivationCycle` a `Run` es trabajo futuro.
+
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | UUID PK | — |
@@ -135,6 +143,40 @@ Chamber ──1:N── Device
 | co2 | INTEGER | CO₂ promedio |
 | status | VARCHAR(20) | Estado del snapshot |
 | snapshotDate | DATE | Fecha del snapshot |
+
+### PhaseTransition
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | UUID PK | — |
+| cycleId | UUID FK(cultivation_cycle) | Ciclo padre |
+| fromPhase | ENUM | Fase de origen |
+| toPhase | ENUM | Fase de destino |
+| trigger | VARCHAR(50) | Causa de la transición (timer, condition, manual) |
+| timestamp | TIMESTAMP | Momento de la transición |
+
+### DeviceHealth
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | UUID PK | — |
+| deviceId | UUID FK(device) | Dispositivo |
+| freeHeap | INTEGER | Heap libre (bytes) |
+| minFreeHeap | INTEGER | Mínimo heap libre |
+| maxAllocHeap | INTEGER | Máxima asignación heap |
+| taskStackHighWater | JSONB | High water mark por tarea |
+| i2cStatus | VARCHAR(20) | Estado del bus I2C |
+| sensorStatus | JSONB | Estado de cada sensor |
+| timestamp | TIMESTAMP | Momento del reporte |
+
+### DeviceMaintenance
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | UUID PK | — |
+| deviceId | UUID FK(device) | Dispositivo |
+| component | VARCHAR(50) | Componente (sensor, ssr, wifi, etc.) |
+| health | INTEGER | Score de salud (0-100) |
+| estimatedFailure | INTEGER | Estimación de fallo (horas) |
+| reason | TEXT | Razón del mantenimiento |
+| timestamp | TIMESTAMP | Momento del reporte |
 
 ### User
 | Campo | Tipo | Descripción |

@@ -77,8 +77,39 @@
 | Envío de comandos | Firmware (recibe) | 🔴 |
 | DeviceHealth/DeviceMaintenance | Models | 🟡 |
 | MQTT topics | Firmware pub/sub | 🔴 |
+| Health/maintenance events | deviceHealthService → notificationService | 🟡 |
 
 **Contrato**: `docs/contracts/mqtt-contract.md` (completo)
+
+---
+
+### `backend/src/services/deviceHealthService.js`
+
+| Afecta | Componente | Severidad |
+|---|---|---|
+| Health checks del dispositivo | DeviceHealth model | 🔴 |
+| Mantenimiento preventivo | DeviceMaintenance model | 🟡 |
+| Notificaciones de salud | notificationService | 🟡 |
+| Frontend monitoring page | MonitoringPage.jsx | 🟡 |
+
+---
+
+### `backend/src/services/notificationService.js`
+
+| Afecta | Componente | Severidad |
+|---|---|---|
+| Notificaciones de alarmas | emailProvider, webhookProvider, telegramService | 🟡 |
+| Alertas críticas | Frontend AlarmContext | 🟡 |
+
+---
+
+### `backend/src/services/phaseEvaluator.js`
+
+| Afecta | Componente | Severidad |
+|---|---|---|
+| Transiciones de fase | CultivationCycle model | 🔴 |
+| PhaseTransition model | Audit de transiciones | 🟡 |
+| controlEngine.js | Orquestación (ADR-021) | 🔴 |
 
 ---
 

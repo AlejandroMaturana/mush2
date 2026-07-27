@@ -56,6 +56,8 @@ frontend/src/
 │   │       ...
 │   │
 │   ├───constants/                  # Constantes compartidas
+│   │       deviceStatus.js         # Device Status Policy (ADR-025): CONNECTIVITY, HEALTH, LIFECYCLE
+│   │       status.js               # Re-exports de deviceStatus + labels (SEVERITY, PHASE, CYCLE_STATUS)
 │   ├───hooks/                      # Hooks compartidos (useSSE legacy)
 │   └───utils/                      # Utilidades (formatDate, etc.)
 │
@@ -98,6 +100,11 @@ frontend/src/
 │   ├───diagnostics/
 │   │   ├───api/mqtt.js             # Diagnósticos MQTT
 │   │   └───pages/DiagnosticsPage.jsx
+│   │
+│   ├───monitoring/
+│   │   ├───api/monitoring.js        # Health + maintenance endpoints
+│   │   ├───components/              # ResetReasonBadge
+│   │   └───pages/MonitoringPage.jsx # Monitoreo de salud del dispositivo
 │   │
 │   ├───logs/
 │   │   ├───api/audit.js            # Audit logs
@@ -182,6 +189,7 @@ Rutas protegidas (requieren autenticación):
 /operations/alarms                      → Alarms
 /operations/logs                        → Logs
 /operations/diagnostics                 → Diagnostics
+/operations/monitoring                  → Monitoring
 /system/settings                        → Settings (layout con children)
 /system/settings/user                   → UserSettings
 /system/settings/device                 → DeviceSettings
@@ -202,6 +210,7 @@ Aliases de ruta (redirects):
 /alarms             → /operations/alarms
 /logs               → /operations/logs
 /diagnostics        → /operations/diagnostics
+/monitoring         → /operations/monitoring
 /settings           → /system/settings
 /provisioning       → /fleet/provision
 /devices/:id        → /fleet/devices/:id

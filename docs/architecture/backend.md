@@ -22,13 +22,17 @@
 ```
 backend/
 ├── src/
-│   ├── server.js          # Punto de entrada, arranque
-│   ├── app.js             # Configuración Express
+│   ├── server.js              # Punto de entrada, arranque
+│   ├── app.js                 # Configuración Express
+│   ├── composition-root.js    # Inyección de dependencias
 │   ├── config/
-│   │   ├── database.js    # Conexión Sequelize
-│   │   └── env.js         # Variables de entorno validadas
-│   ├── models/            # Modelos Sequelize (19)
-│   │   ├── index.js       # Asociaciones
+│   │   ├── database.js        # Conexión Sequelize
+│   │   ├── env.js             # Variables de entorno validadas
+│   │   ├── pino.js            # Logger estructurado (Pino)
+│   │   ├── resetReasons.js    # Mapa de razones de reinicio (ADR-027)
+│   │   └── readiness.js       # Estado de readiness del sistema
+│   ├── models/                # Modelos Sequelize (25)
+│   │   ├── index.js           # Asociaciones
 │   │   ├── Chamber.js
 │   │   ├── Device.js
 │   │   ├── Sensor.js
@@ -37,6 +41,9 @@ backend/
 │   │   ├── Recipe.js
 │   │   ├── CultivationCycle.js
 │   │   ├── CycleState.js
+│   │   ├── PhaseTransition.js
+│   │   ├── DeviceHealth.js
+│   │   ├── DeviceMaintenance.js
 │   │   ├── Event.js
 │   │   ├── Alarm.js
 │   │   ├── User.js
@@ -45,48 +52,50 @@ backend/
 │   │   ├── ApiKey.js
 │   │   ├── IntegrationCredentials.js
 │   │   ├── UserChamberAccess.js
-│   │   └── UserPreference.js
-│   ├── jobs/              # Tareas programadas
-│   │   ├── dataRetention.js   # Purga según plan de suscripción
-│   │   └── subscriptionExpiration.js # Cancelación al final del período
-│   ├── controllers/       # Lógica de endpoints
-│   │   ├── authController.js
-│   │   ├── chamberController.js
-│   │   ├── deviceController.js
-│   │   ├── sensorController.js
-│   │   ├── actuatorController.js
-│   │   ├── telemetryController.js
-│   │   ├── recipeController.js
-│   │   ├── cycleController.js
-│   │   ├── alarmController.js
-│   │   ├── eventController.js
-│   │   ├── userController.js
-│   │   ├── subscriptionController.js
-│   │   ├── auditLogController.js
-│   │   └── systemController.js
-│   ├── routes/            # Definición de rutas
-│   │   ├── index.js       # Montaje de rutas
+│   │   ├── UserPreference.js
+│   │   └── ... (+5 modelos adicionales)
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   └── Run.ts         # Entidad de dominio (ADR-020, persiste como CultivationCycle)
+│   │   └── valueObjects/
+│   ├── jobs/                  # Tareas programadas
+│   │   ├── dataRetentionJob.js        # Purga según plan de suscripción
+│   │   ├── subscriptionExpiration.js  # Cancelación al final del período
+│   │   └── offlineWatchdog.js         # Detección de dispositivos offline
+│   ├── middlewares/            # Middleware personalizado
+│   │   ├── auth.js            # Verificación JWT + API Key dual
+│   │   ├── rbac.js            # Control de roles (RBAC)
+│   │   ├── subscriptionRateLimit.js   # Rate limiting por suscripción
+│   │   └── tenant.js          # Scope de tenant
+│   ├── routes/                # Definición de rutas
+│   │   ├── index.js           # Montaje de rutas
 │   │   ├── auth.js
-│   │   ├── api.js         # API REST versión 1
-│   │   └── admin.js       # Rutas de administración
-│   ├── middlewares/        # Middleware personalizado
-│   │   ├── auth.js        # Verificación JWT + API Key dual
-│   │   ├── rbac.js        # Control de roles (RBAC)
-│   │   ├── capability.js  # Capability gate (requiere capacidades específicas)
-│   │   ├── audit.js       # Logging de auditoría
-│   │   ├── subscription.js # Límites por plan (rate limiting por suscripción)
-│   │   └── validate.js    # Validación de entrada (express-validator)
-│   ├── services/          # Lógica de negocio
-│   │   ├── controlEngine.js   # Motor de reglas
-│   │   ├── controlState.js    # Estado del controlador
-│   │   ├── mqttService.js     # Cliente MQTT
-│   │   ├── thingSpeakSync.js  # Sincronización TS
-│   │   └── telegramService.js # Notificaciones
-│   ├── routes/             # Vistas API
-│   └── utils/             # Utilidades
-│       └── encryption.js  # AES-256-GCM
-├── migrations/            # Sequelize migrations
-├── seeders/               # Datos de prueba
+│   │   ├── api.js             # API REST versión 1
+│   │   ├── runs-pilot.js      # Endpoints de Run (ADR-020)
+│   │   ├── monitoring.js      # Health + maintenance endpoints
+│   │   ├── admin.js           # Rutas de administración
+│   │   └── diagnostics.js     # Diagnósticos MQTT
+│   ├── services/              # Lógica de negocio (17)
+│   │   ├── controlEngine.js       # Motor de reglas (ADR-021)
+│   │   ├── phaseEvaluator.js      # Evaluador de fases (ADR-021)
+│   │   ├── mqttBridge.js          # Cliente MQTT (renombrado desde mqttService)
+│   │   ├── mqtt-adapter.ts        # Adaptador MQTT (domain layer)
+│   │   ├── mqttProvisioningService.js  # Provisión de credenciales MQTT
+│   │   ├── mosquittoProvisioningService.js  # Provisioning Mosquitto
+│   │   ├── deviceHealthService.js  # Health + maintenance (ADR-025)
+│   │   ├── notificationService.js  # Servicio centralizado de notificaciones
+│   │   ├── notifications/         # Proveedores de notificación
+│   │   │   ├── emailProvider.js
+│   │   │   ├── webhookProvider.js
+│   │   │   └── telegramService.js  # Proveedor Telegram (interno)
+│   │   ├── thingSpeakSync.js      # Sincronización TS
+│   │   ├── eventBus.js            # Event bus in-memory (ADR-017)
+│   │   ├── webSocketServer.js     # Server para eventos SSE
+│   │   ├── auditService.js        # Servicio de auditoría
+│   │   ├── encryption.js          # AES-256-GCM
+│   │   ├── logger.js              # Logger legacy (usar pino.js)
+│   │   └── logReaderService.js    # Lector de logs del firmware
+│   └── utils/                 # Utilidades
 ├── tests/
 │   ├── unit/
 │   └── integration/
@@ -148,42 +157,54 @@ User 1──N AuditLog
 
 ## Servicios Clave
 
-### mqttService.js
-- Conexión a broker (con fallback)
-- Suscripción a tópicos de telemetría
+### mqttBridge.js
+- Conexión a broker (sin fallback)
+- Suscripción a tópicos de telemetría, status, alarm, ack, health, maintenance
 - Publicación de comandos
 - Reconexión automática (exponential backoff)
 - Parseo y validación de payloads JSON
+- Delega a `deviceHealthService.js` para health/maintenance
 
 ### controlEngine.js
-- Evalúa reglas cada 30s
+- Evalúa reglas cada 8s
 - Compara telemetría vs setpoints de receta activa
 - Genera comandos MQTT para actuadores
 - Dispara alarmas si valores fuera de rango
 - Persiste decisiones en tabla Events
 
+### phaseEvaluator.js
+- Evaluador de fases del ciclo de cultivo (ADR-021)
+- Transiciones de fase automáticas según reglas temporales y condicionales
+
+### deviceHealthService.js
+- Health checks del dispositivo (ADR-025)
+- Métricas: heap, task stacks, I2C, sensor checks
+- Mantenimiento preventivo con estimación de fallo
+
+### notificationService.js
+- Servicio centralizado de notificaciones
+- Proveedores internos: emailProvider, webhookProvider, telegramService
+- Patrón: notificationService → TelegramProvider (`telegramService`)
+
 ### thingSpeakSync.js
 - Sincroniza datos desde ThingSpeak cuando backend estuvo caído
 - Batch de 5 minutos de datos perdidos
 - Evita duplicados por timestamp
-- Marca integridad en cada registro sincronizado
 
-### dataRetention.js (Job)
+### dataRetentionJob.js
 - Ejecución diaria vía node-cron
 - Purga telemetría según `data.retention.days` del plan (FREE=30d, BASIC=90d, PREMIUM=365d)
 - Preserva eventos estructurales (alarmas, cambios de estado) independientemente del plan
 
-### subscriptionExpiration.js (Job)
-- Ejecución diaria vía node-cron
-- Identifica suscripciones cuyo `currentPeriodEnd` ya venció
-- Marca como `canceled` y programa purge de datos al final del período
+### offlineWatchdog.js
+- Detección de dispositivos sin reportar por más de 5 minutos
+- Marca estado incierto y notifica
 
-### Telegram Service (notifications)
+### Telegram Service (notifications/telegramService.js)
+- Proveedor interno de `notificationService`
 - Notificaciones de alarmas y eventos vía bot (`@Mush2_bot`)
-- Canal de comunicación directo con el usuario
-- Comandos de consulta rápida
 
-## WebSockets / SSE
+## Server-Sent Events (SSE)
 
 El backend expone eventos Server-Sent Events en `GET /api/v1/events`:
 

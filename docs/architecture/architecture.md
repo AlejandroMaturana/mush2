@@ -10,10 +10,10 @@ Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 cap
 │                                                          │
 │   ┌──────────┐    ┌──────────┐    ┌──────────────────┐  │
 │   │ Firmware  │───▶│  Broker  │───▶│    Backend       │  │
-│   │ ESP8266   │◀───│  MQTT    │◀───│  Node/Express    │  │
+│   │ ESP32-S3  │◀───│  MQTT    │◀───│  Node/Express    │  │
 │   │           │    │          │    │                  │  │
 │   │ AHT21     │    │Mosquitto │    │ API REST (JWT)   │──┼──▶ DB PostgreSQL
-│   │ ENS160    │    │ HiveMQ   │    │ WebSocket (SSE)  │  │
+│   │ ENS160    │    │ HiveMQ   │    │ SSE (EventSource) │  │
 │   │ SSR 3ch   │    └──────────┘    │ Motor de reglas  │  │
 │   └──────┬────┘                    └────────┬─────────┘  │
 │          │                                   │            │
@@ -93,14 +93,14 @@ La plataforma implementa un modelo de suscripción basado en capacidades (ADR-01
 | Plan | API Calls/mes | Retención | Dispositivos | QoS |
 |------|---------------|-----------|--------------|-----|
 | FREE | 1,000 | 30 días | 1 | Polling 30s |
-| BASIC | 10,000 | 90 días | 5 | WebSocket 5s |
-| PREMIUM | 100,000 | 365 días | Ilimitado | Streaming < 1s |
+| BASIC | 10,000 | 90 días | 5 | SSE 5s |
+| PREMIUM | 100,000 | 365 días | Ilimitado | SSE < 1s |
 
 Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capacidades.
 
 ## Stack Tecnológico
 
-### Firmware (ESP8266/ESP32-S3)
+### Firmware (ESP32-S3)
 - **Lenguaje**: C++11 (PlatformIO / Arduino Core)
 - **Sensores**: AHT21 (I2C), ENS160 (I2C)
 - **Actuadores**: SSR 4 canales (active-high configurable)
@@ -115,6 +115,7 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 - **Autenticación**: JWT (HS256) + API Key dual, bcryptjs
 - **Autorización**: RBAC (4 roles) + capability-based rate limiting + tenant scope
 - **MQTT Cliente**: mqtt.js
+- **Logging**: Pino (structured JSON logs)
 - **Seguridad**: Helmet, CORS, rate limiting
 - **Pruebas**: Jest + Supertest
 
@@ -122,12 +123,12 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 - **Framework**: React 18 + Vite
 - **Estado**: Context API + hooks
 - **Visualización**: Chart.js + react-chartjs-2
-- **Tiempo real**: Server-Sent Events (SSE), WebSocket
+- **Tiempo real**: Server-Sent Events (SSE)
 - **Estilos**: CSS Modules / Tailwind
 - **Build**: Vite con chunks y lazy loading
 
 ### Base de Datos (PostgreSQL)
-- **Entidades**: 19 (Chamber, Device, Sensor, Actuator, Telemetry, Recipe, Cycle, User, Subscription, etc.)
+- **Entidades**: 25 (Chamber, Device, Sensor, Actuator, Telemetry, Recipe, CultivationCycle, CycleState, PhaseTransition, DeviceHealth, DeviceMaintenance, Event, Alarm, User, Subscription, AuditLog, ApiKey, IntegrationCredentials, UserChamberAccess, UserPreference, etc.)
 - **Backup**: pg_dump diario
 - **Migraciones**: Sequelize `sync({ alter: true })` para desarrollo; migraciones versionadas para producción
 
@@ -181,6 +182,8 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 - `docs/architecture/authorization-model.md` — Modelo de autorización en 4 capas y matriz de decisión
 - `docs/architecture/qos-policy.md` — Políticas de QoS por plan
 
-### Planos (Pending / docs/diagrams/)
+### Diagramas
 
-- `docs/diagrams/` — Diagramas de arquitectura, flujos de autorización y secuencia (pendiente de completar)
+- `docs/diagrams/` — Diagramas Mermaid del sistema (arquitectura, database, secuencias)
+- `docs/diagrams/exports/state_machine.drawio` — Diagrama maestro de máquina de estados (Draw.io)
+- `docs/diagrams/README.md` — Política de diagramas y convenciones
