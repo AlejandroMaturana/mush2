@@ -32,7 +32,7 @@ backend/src/
 
 ### Nomenclatura
 
-- **Archivos**: `camelCase.js` (ej: `mqttService.js`, `controlEngine.js`)
+- **Archivos**: `camelCase.js` (ej: `mqttBridge.js`, `controlEngine.js`)
 - **Funciones/Métodos**: `camelCase` (ej: `connectMQTT()`, `evaluateCycle()`)
 - **Constantes**: `UPPER_SNAKE_CASE` (ej: `MAX_RETRY_ATTEMPTS = 5`)
 - **Clases/Modelos**: `PascalCase` (ej: `class Device { }`)
@@ -81,15 +81,11 @@ export function connectMQTT(brokerUrl) {
 ```javascript
 try {
   // operación que puede fallar
-  const result = await riiskyOperation();
+  const result = await riskyOperation();
   return result;
 } catch (err) {
-  // Log siempre con contexto
-  console.error(`[SERVICE_NAME] Error doing X: ${err.message}`, { 
-    code: err.code,
-    context: { param1, param2 },
-    stack: err.stack 
-  });
+  // Log siempre con contexto usando Pino (ADR-006)
+  log.error({ module: 'SERVICE_NAME', err, param1, param2 }, 'Error doing X');
   
   // Re-throw o retornar valor seguro según el caso
   throw new AppError('USER_FRIENDLY_MESSAGE', 500);
@@ -100,26 +96,33 @@ try {
 
 **Reglas:**
 - NUNCA silenciar errores con `catch { }`
-- SIEMPRE loguear con contexto ([SERVICE_NAME] ...)
+- SIEMPRE loguear con contexto (module, event, deviceId, err)
 - Diferenciar entre errores recuperables e irrecuperables
 - Retornar errores HTTP apropiados (400, 401, 403, 500)
 
-### Logging
+### Logging (ADR-006 — Pino)
 
-**Prefijos de log obligatorios:**
+**Logger central:** `backend/src/config/pino.js`
+
+**Prefijos de log obligatorios (módulo):**
 
 ```javascript
-console.log('[DB]', 'Conexión establecida');
-console.log('[MQTT]', 'Conectado a broker');
-console.error('[CONTROL]', 'Error evaluando ciclo:', err.message);
-console.warn('[AUTH]', 'Intento fallido de login', { userId, attempts });
+import { createChildLogger } from '../config/pino.js';
+const log = createChildLogger('DB');
+log.info('Conexión establecida');
+
+const mqttLog = createChildLogger('MQTT');
+mqttLog.info({ event: 'CONNECTED' }, 'Conectado a broker');
+
+const controlLog = createChildLogger('CONTROL');
+controlLog.error({ err }, 'Error evaluando ciclo');
 ```
 
 **Niveles:**
-- `console.log()` - INFO: eventos normales, transiciones, operaciones exitosas
-- `console.warn()` - WARN: comportamientos inesperados pero recuperables
-- `console.error()` - ERROR: errores que afectan funcionalidad
-- Usar `util.inspect()` para objetos grandes
+- `log.info()` - INFO: eventos normales, transiciones, operaciones exitosas
+- `log.warn()` - WARN: comportamientos inesperados pero recuperables
+- `log.error()` - ERROR: errores que afectan funcionalidad
+- `log.debug()` - DEBUG: detalle excesivo (solo desarrollo)
 
 ### Testing
 

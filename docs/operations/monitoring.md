@@ -15,7 +15,7 @@ Backend (Node.js + Express)
   ├── Pino (logs estructurados JSON)
   ├── pino-http (request/response logging)
   ├── NotificationService (Telegram + Email + Webhook)
-  ├── DeviceHealthService (state machine de 7 estados)
+  ├── DeviceHealthService (modelo multidimensional: connectivity/health/lifecycle)
   └── Monitoring endpoints (metrics, logs, health)
   │
   v
@@ -23,17 +23,33 @@ Frontend (React)
   └── MonitoringPage (/operations/monitoring)
 ```
 
-## Estados de Salud del Dispositivo
+## Estados de Salud del Dispositivo (Modelo Multidimensional — ADR-025)
 
+El modelo de estado del dispositivo es **multidimensional** con 3 ejes independientes:
+
+### Conectividad (`connectivity`)
 | Estado | Descripción |
 |--------|-------------|
-| `PROVISIONING` | Dispositivo registrado, aún no reporta |
-| `ONLINE` | Último heartbeat dentro del intervalo |
-| `DEGRADED` | Sensores parcialmente caídos |
-| `STALE` | Sin heartbeat por > heartbeatInterval × staleMultiplier |
-| `OFFLINE` | Sin heartbeat por > heartbeatInterval × offlineMultiplier |
-| `MAINTENANCE` | En modo mantenimiento manual |
-| `RETIRED` | Dado de baja |
+| `ONLINE` | Conectado, dentro del intervalo esperado |
+| `DEGRADED` | Conectado pero con latencia elevada o paquetes perdidos |
+| `OFFLINE` | Sin conexión por más del umbral |
+
+### Condición de Salud (`health`)
+| Estado | Descripción |
+|--------|-------------|
+| `NORMAL` | Todos los subsystemas operativos |
+| `WARNING` | Alertas no críticas (sensor degradado, memoria baja) |
+| `CRITICAL` | Fallo que afecta operación (sensor caído, watchdog reset) |
+
+### Ciclo de Vida (`lifecycle`)
+| Estado | Descripción |
+|--------|-------------|
+| `INSTALLING` | Provisionamiento inicial |
+| `RUNNING` | Operación normal |
+| `MAINTENANCE` | En mantenimiento manual |
+| `DECOMMISSIONED` | Dado de baja |
+
+> Ver `docs/ADR/ADR-025-device-status-policy.md` y `docs/DDD/DDD-008-device-status-policy.md` para el diseño completo.
 
 ## Logs
 

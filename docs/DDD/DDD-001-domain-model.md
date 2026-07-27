@@ -195,7 +195,7 @@ Los Contextos Limitados definen fronteras semánticas donde un término tiene un
 **Dependencias externas**:
 - Recibe datos del contexto **Monitoreo** (lecturas actuales)
 - Consulta el contexto **Cultivo** (receta activa, fase actual)
-- Envía comandos al hardware físico (via MQTT/WebSocket)
+- Envía comandos al hardware físico (via MQTT)
 
 ### 3.5 Contexto: Usuarios (Identity)
 
@@ -579,6 +579,8 @@ stateDiagram-v2
 
 ### 6.3 Device - Estado del Dispositivo
 
+> **⚠️ OBSOLETO**: Esta máquina de estados fue reemplazada por el modelo multidimensional de DDD-008 (connectivity/health/lifecycle). Ver `docs/DDD/DDD-008-device-status-policy.md` y `docs/ADR/ADR-025-device-status-policy.md`.
+
 ```mermaid
 stateDiagram-v2
     [*] --> OFFLINE : Registrar
@@ -793,7 +795,7 @@ sequenceDiagram
 |----------|-----------------|----------------------|
 | **ControlEngine** | Evalúa y ejecuta el ciclo de control cada 60s | Control + Monitoreo + Cultivo |
 | **MQTTBridge** | Gestiona conexión bidireccional con hardware | Control + Monitoreo |
-| **WebSocketServer** | Push de estado a dispositivos en tiempo real | Control |
+| **SSEServer** | Push de estado a clientes en tiempo real (SSE) | Control |
 | **TelegramService** | Envía notificaciones y gestiona bot | Todos |
 | **ThingSpeakSync** | Sincroniza telemetría con ThingSpeak | Monitoreo |
 | **AuditService** | Registra acciones en audit trail | Usuarios |
@@ -885,7 +887,7 @@ sequenceDiagram
                               │  Actuadores: SSR 4ch    │
                               └───────────┬─────────────┘
                                           │
-                            MQTT (pub/sub) │ WebSocket
+                            MQTT (pub/sub) │ SSE
                                           │
                               ┌───────────▼─────────────┐
                               │      CONTROL            │

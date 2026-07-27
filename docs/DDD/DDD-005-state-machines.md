@@ -560,7 +560,7 @@ stateDiagram-v2
    └─> Generar órdenes para actuadores
    
 4. ENVIAR COMANDOS
-   └─> Push vía MQTT/WebSocket
+   └─> Push vía MQTT/SSE
    
 5. REGISTRAR ESTADO
    └─> Crear CycleState snapshot

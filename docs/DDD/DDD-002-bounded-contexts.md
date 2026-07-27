@@ -298,7 +298,7 @@ Ejecutar la **lógica de automatización** que mantiene las condiciones óptimas
 |------|------------------|----------------|
 | **Entrada** | Monitoreo | Lecturas de sensores en tiempo real |
 | **Entrada** | Cultivo | Receta activa, fase actual, modo de adaptación |
-| **Salida** | Firmware | Comandos vía MQTT/WebSocket |
+| **Salida** | Firmware | Comandos vía MQTT |
 | **Salida** | Monitoreo | Eventos: ComandoActuadorEnviado, CicloControlEjecutado |
 | **Salida** | Usuarios | Notificaciones via Telegram (fail-safe, transiciones) |
 | **Estado in-memory** | — | actuatorState (se pierde en reinicio) |
@@ -524,7 +524,7 @@ Gestionar **identidad, autorización, suscripciones y configuración** de usuari
 │  (Servicios de Aplicación, Orquestación, DTOs)             │
 ├─────────────────────────────────────────────────────────────┤
 │                    CAPA DE INFRAESTRUCTURA                  │
-│  (Repositorios, MQTT, WebSocket, Telegram, ThingSpeak)     │
+│  (Repositorios, MQTT, SSE, Telegram, ThingSpeak)     │
 ├─────────────────────────────────────────────────────────────┤
 │                    CAPA DE PERSISTENCIA                     │
 │  (Sequelize ORM, Migraciones, Seeds)                       │
