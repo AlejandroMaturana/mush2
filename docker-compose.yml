@@ -9,6 +9,7 @@ services:
     container_name: mush2-mosquitto
     restart: unless-stopped
     ports:
+      - "1883:1883"
       - "8883:8883"
     volumes:
       - ./docker/mosquitto/config:/mosquitto/config:ro
