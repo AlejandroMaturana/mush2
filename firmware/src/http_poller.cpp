@@ -19,6 +19,8 @@ HTTPPoller::HTTPPoller() : client() {
   _setpointsChanged = false;
   _tempMin = 0; _tempMax = 0; _humMin = 0; _humMax = 0; _co2Max = 0;
   _phase[0] = '\0';
+  _mqttUser[0] = '\0';
+  _mqttPass[0] = '\0';
   for (int i = 0; i < ACTUATOR_CHANNELS; i++) {
     desired[i].state = 0;
     desired[i].mode = 0;
@@ -80,6 +82,26 @@ bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress, c
 
   bool ok = response.indexOf("200 OK") >= 0 || response.indexOf("201 Created") >= 0;
   Serial.printf("[REG] Dispositivo %s: %s\n", ok ? "registrado" : "falló", deviceId.c_str());
+
+  // ADR-028: Parse MQTT credentials from response body
+  if (ok) {
+    int bodyStart = response.indexOf("\r\n\r\n");
+    if (bodyStart >= 0) {
+      String jsonBody = response.substring(bodyStart + 4);
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, jsonBody);
+      if (!err && doc.containsKey("mqtt")) {
+        const char* user = doc["mqtt"]["user"];
+        const char* pass = doc["mqtt"]["pass"];
+        if (user && pass) {
+          snprintf(_mqttUser, sizeof(_mqttUser), "%s", user);
+          snprintf(_mqttPass, sizeof(_mqttPass), "%s", pass);
+          Serial.printf("[REG] MQTT credentials recibidas: user=%s\n", _mqttUser);
+        }
+      }
+    }
+  }
+
   return ok;
 }
 

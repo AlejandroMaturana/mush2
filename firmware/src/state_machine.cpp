@@ -34,7 +34,13 @@ void StateMachine::init() {
   prefs.end();
 
   if (savedState >= _STATE_COUNT) savedState = ST_INIT;
-  if (savedState == ST_BOOT || savedState == ST_OTA_UPDATING || savedState == ST_SAFE) {
+
+  // Si el estado restaurado no es coherente con el inicio de setup()
+  // (que siempre va a WIFI o PROVISIONING), resetear a ST_INIT.
+  // Esto evita transiciones inválidas como NORMAL → WIFI.
+  if (savedState != ST_INIT && savedState != ST_WIFI && savedState != ST_PROVISIONING) {
+    Serial.printf("[STATE] Estado %s no válido para arranque — reset a INIT\n",
+      getStateName((DeviceState)savedState));
     savedState = ST_INIT;
   }
 
