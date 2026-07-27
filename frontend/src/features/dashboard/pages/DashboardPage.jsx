@@ -127,7 +127,7 @@ function Dashboard() {
     } else if (type === 'device_status_changed') {
       setDevices(prev => prev.map(d =>
         d.deviceId === data.deviceId
-          ? { ...d, status: data.status, lastSeen: data.timestamp }
+          ? { ...d, status: data.status, lastSeen: data.lastSeenAt }
           : d
       ))
     }
