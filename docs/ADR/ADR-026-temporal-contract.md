@@ -1,6 +1,6 @@
 # ADR-026: Temporal Contract
 
-**Estado:** Propuesto
+**Estado:** Aceptado
 
 **Fecha:** 2026-07-26
 

@@ -58,11 +58,14 @@ DRAFT → REVIEW (7-14 días) → ACCEPTED → genera ADR
 
 | RFC | Título | Estado | Área |
 |-----|--------|--------|------|
-| [RFC-0001](RFC-0001-https-tls-firmware.md) | HTTPS/TLS en firmware | DRAFT | Firmware / Seguridad |
+| [RFC-0001](RFC-0001-https-tls-firmware.md) | HTTPS/TLS en firmware | ACCEPTED | Firmware / Seguridad |
 | [RFC-0002](RFC-0002-mqtt-v2-upgrade.md) | Migración MQTT a v2 | DRAFT | Protocolo |
 | [RFC-0003](RFC-0003-multi-device-dashboard.md) | Dashboard multi-dispositivo | DRAFT | Frontend |
 | [RFC-0004](RFC-0004-notificaciones-push.md) | Notificaciones push | DRAFT | Backend / Mobile |
 | [RFC-0005](RFC-0005-BLE-Provisioning-&-Device-Bootstrap.md) | BLE Provisioning & Device Bootstrap | ACCEPTED | Firmware / Frontend / Backend |
+| [RFC-0006](RFC-0006-realtime-streaming.md) | Real-Time Streaming | DRAFT | Frontend / Backend |
+| [RFC-0007](RFC-0007-device-limits.md) | Device Limits | DRAFT | Backend / Frontend |
+| [RFC-0008](RFC-0008-button-interaction.md) | Multi-Function Button (SMFB) | DRAFT | Firmware / Backend |
 
 ## Template
 

@@ -1,6 +1,6 @@
 # ADR-028: Identidad MQTT por Dispositivo
 
-**Estado:** Propuesto  
+**Estado:** Aceptado
 **Fecha:** 2026-07-26  
 **Autores:** Opencode  
 **Decisores:** Alejandro Maturana
