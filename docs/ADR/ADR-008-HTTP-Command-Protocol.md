@@ -241,7 +241,7 @@ CREATE INDEX idx_command_queue_device_status
 
 ```cpp
 // config.h — Protocolo HTTP v2
-#define BACKEND_HOST      "192.168.1.6"
+#define BACKEND_HOST      "192.168.1.10"
 #define BACKEND_PORT      3797
 #define BACKEND_USE_TLS   0              // 1 para HTTPS
 #define BACKEND_API_KEY   "sk_mush2_s3_001_abc123def456"
