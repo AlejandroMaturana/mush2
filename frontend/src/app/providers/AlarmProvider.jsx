@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getAlarmStats } from '../../features/alarms/api/alarms'
-import { useSSE } from '../../shared/hooks/useSSE.js'
+import { useSSE } from '../../api/useSSE.js'
 
 const AlarmContext = createContext(null)
 

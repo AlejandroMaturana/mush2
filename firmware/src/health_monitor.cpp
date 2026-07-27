@@ -7,7 +7,6 @@
 #include "tasks.h"
 #include <Wire.h>
 #include <esp_system.h>
-#include <esp_task_wdt.h>
 
 extern MQTTClient mqtt;
 extern StateMachine sm;
@@ -239,12 +238,9 @@ bool HealthMonitor::isHealthy() {
 }
 
 void HealthMonitor::taskFunction() {
-  TickType_t lastWake = xTaskGetTickCount();
   uint32_t quickCount = 0;
 
   while (true) {
-    esp_task_wdt_reset();
-
     checkQuick();
     quickCount++;
 
@@ -252,14 +248,10 @@ void HealthMonitor::taskFunction() {
       checkComprehensive();
     }
 
-    vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(60000));
+    vTaskDelay(pdMS_TO_TICKS(60000));
   }
 }
 
 void taskMonitor(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[HEALTH] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
-
   healthMonitor.taskFunction();
 }

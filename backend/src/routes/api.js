@@ -1,15 +1,18 @@
 import { Op } from 'sequelize';
+import crypto from 'crypto';
 import express from 'express';
 import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
-import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth } from '../services/deviceHealthService.js';
+import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, recordOutgoing } from '../services/deviceHealthService.js';
+import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('API');
 const router = express.Router();
+const mqttProvisioner = new MosquittoProvisioningService();
 
 router.get('/devices', async (req, res) => {
   try {
@@ -102,7 +105,24 @@ router.post('/devices/register', async (req, res) => {
       },
     });
 
-    if (!created) {
+    let mqttCredentials = null;
+
+    if (created || !device.mqttUser) {
+      // ADR-028: Generate per-device MQTT credentials
+      const mqttUser = `dev_${deviceId}`;
+      const mqttPass = crypto.randomBytes(24).toString('base64url');
+
+      const provResult = await mqttProvisioner.provisionDevice(deviceId, mqttUser, mqttPass);
+
+      if (provResult.ok) {
+        await device.update({ mqttUser, mqttPassword: mqttPass });
+        mqttCredentials = { user: mqttUser, pass: mqttPass };
+        log.info({ event: 'MQTT_PROVISIONED', deviceId, mqttUser }, `MQTT credentials generated for ${deviceId}`);
+      } else {
+        log.error({ event: 'MQTT_PROVISION_FAILED', deviceId, error: provResult.error }, 'Failed to provision MQTT credentials');
+      }
+    } else {
+      // Existing device — just update lastSeen and firmware info
       const updates = { lastSeen: new Date() };
       if (macAddress) updates.macAddress = macAddress;
       if (firmwareVersion) updates.firmwareVersion = firmwareVersion;
@@ -111,7 +131,13 @@ router.post('/devices/register', async (req, res) => {
     }
 
     log.info({ event: 'DEVICE_REGISTERED', deviceId, created }, `Dispositivo ${created ? 'registrado' : 'actualizado'}: ${deviceId}`);
-    res.status(created ? 201 : 200).json({ data: device });
+
+    const response = { data: device.toJSON() };
+    if (mqttCredentials) {
+      response.mqtt = mqttCredentials;
+    }
+
+    res.status(created ? 201 : 200).json(response);
   } catch (err) {
     log.error({ module: 'REGISTER', event: 'REGISTER_ERROR', error: err.message }, 'Error registering device');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -379,6 +405,7 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
       state: command === 'ON' ? 'ON' : 'OFF',
       mode: 'REMOTE',
     }]);
+    recordOutgoing(device.deviceId).catch(() => {});
 
     if (req.user) {
       await logAudit({

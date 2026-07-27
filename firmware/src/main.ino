@@ -266,7 +266,28 @@ void setup() {
     httpPoller.init(deviceManager.getDeviceId().c_str(), BACKEND_HOST, BACKEND_PORT);
     ota.init(deviceManager.getDeviceId().c_str());
 
-    mqtt.init(deviceManager.getDeviceId().c_str());
+    // Capture device info for MQTT and backend
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char macStr[18];
+    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    strncpy(sharedMac, macStr, sizeof(sharedMac) - 1);
+    strncpy(sharedFwVer, ota.getVersion(), sizeof(sharedFwVer) - 1);
+    strncpy(sharedHwRev, HW_REVISION, sizeof(sharedHwRev) - 1);
+
+    // ADR-028: Register first to obtain MQTT credentials from backend
+    for (int i = 0; i < 5; i++) {
+      if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev)) break;
+      vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+
+    // ADR-028: Init MQTT with provisioned credentials (or fallback to defaults)
+    if (httpPoller.hasMqttCredentials()) {
+      mqtt.init(deviceManager.getDeviceId().c_str(), httpPoller.getMqttUser(), httpPoller.getMqttPass());
+    } else {
+      mqtt.init(deviceManager.getDeviceId().c_str());
+    }
     mqtt.setOtaCallback(otaMqttCallback);
     mqtt.setActuatorCallback(mqttActuatorCallback);
 
@@ -280,22 +301,6 @@ void setup() {
       Serial.printf("[BOOT] CRITICAL FAIL: %s — entering ST_SAFE\n", bootResult.failReason);
     } else {
       sm.fsmTransition(wifi.isConnected() ? ST_NORMAL : ST_DEGRADED, "setup complete");
-    }
-
-    // Capture device info for MQTT and backend
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    char macStr[18];
-    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
-      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    strncpy(sharedMac, macStr, sizeof(sharedMac) - 1);
-    strncpy(sharedFwVer, ota.getVersion(), sizeof(sharedFwVer) - 1);
-    strncpy(sharedHwRev, HW_REVISION, sizeof(sharedHwRev) - 1);
-
-    // Self-registration post-provisioning
-    for (int i = 0; i < 5; i++) {
-      if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev)) break;
-      vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
     if (otaConfirmacion.isPendingVerification()) {
@@ -333,6 +338,8 @@ void setup() {
                               NULL, BUTTON_TASK_PRIORITY, &taskButtonHandle, CORE_CONTROL);
     }
 
+    // HealthMonitor se init tan pronto como los tasks estén creados,
+    // para cubrir fallos tempranos del arranque (crash antes de setup completo).
     healthMonitor.init(&eventBus, taskSensorsHandle, taskSSRHandle,
                        taskWiFiHandle, taskMQTTHandle, taskOTAHandle,
                        taskTelemetryHandle, taskButtonHandle);

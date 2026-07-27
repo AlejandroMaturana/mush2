@@ -5,6 +5,7 @@ import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getPhaseThresholds } from '../services/controlEngine.js';
 import { createChildLogger } from '../config/pino.js';
+import { recordOutgoing, recordIncoming } from '../services/deviceHealthService.js';
 
 const log = createChildLogger('ACTUATORS');
 const PHASE_SEQUENCE = ['INCUBATION', 'FRUITING', 'MAINTENANCE', 'COMPLETED'];
@@ -23,6 +24,10 @@ router.get('/', async (req, res) => {
     if (!device) {
       return res.json({ deviceId, actuators: [], status: 'no_active_cycle' });
     }
+
+    // El HTTP Poller confirma que el dispositivo está activo.
+    // Actualizar lastSeen para que refleje actividad HTTP cuando MQTT no está disponible.
+    recordIncoming(deviceId, 'status').catch(() => {});
 
     const actuators = await Actuator.findAll({ where: { deviceId: device.id } });
     const actuatorList = actuators.map(a => ({
@@ -108,6 +113,7 @@ router.patch('/:channel', async (req, res) => {
       state: command,
       mode: 'REMOTE',
     }]);
+    recordOutgoing(deviceId).catch(() => {});
 
     res.json({
       channel: actuator.channel,

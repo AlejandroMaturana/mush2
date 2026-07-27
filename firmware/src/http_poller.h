@@ -34,6 +34,11 @@ public:
   bool getSsrActiveLow();
   bool ssrActiveLowChanged();
 
+  // ADR-028: MQTT credentials from registration response
+  const char* getMqttUser() { return _mqttUser; }
+  const char* getMqttPass() { return _mqttPass; }
+  bool hasMqttCredentials() { return _mqttUser[0] != '\0'; }
+
   bool hasActiveCycle() { return _hasActiveCycle; }
   const char* getPhase() { return _phase; }
   bool hasSetpoints() { return _hasSetpoints; }
@@ -67,6 +72,10 @@ private:
   float _tempMin, _tempMax, _humMin, _humMax;
   uint16_t _co2Max;
   bool _setpointsChanged;
+
+  // ADR-028: MQTT credentials received from backend
+  char _mqttUser[64];
+  char _mqttPass[64];
 
   void beginRequest();
   void runConnect();

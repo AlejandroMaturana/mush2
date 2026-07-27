@@ -1,7 +1,6 @@
 #include "aht21_driver.h"
 #include "../../config.h"
 #include <Wire.h>
-#include <esp_task_wdt.h>
 
 #define AHT_ADDRESS 0x38
 #define AHT_CMD_INIT 0xBE
@@ -44,8 +43,6 @@ bool AHT21Driver::read(void* out) {
     return false;
   }
 
-  esp_task_wdt_reset();
-
   Wire.beginTransmission(AHT_ADDRESS);
   Wire.write(AHT_CMD_TRIGGER);
   Wire.write(0x33);
@@ -54,9 +51,7 @@ bool AHT21Driver::read(void* out) {
     return false;
   }
 
-  esp_task_wdt_reset();
   vTaskDelay(pdMS_TO_TICKS(80));
-  esp_task_wdt_reset();
 
   size_t received = Wire.requestFrom((int)AHT_ADDRESS, (int)6);
   if (received != 6) return false;

@@ -1,7 +1,6 @@
 #include "aht_sensor.h"
 #include "config.h"
 #include <Wire.h>
-#include <esp_task_wdt.h>
 
 #define AHT_ADDRESS 0x38
 #define AHT_CMD_INIT 0xBE
@@ -46,8 +45,6 @@ SensorReading AHTSensor::read() {
     return reading;
   }
 
-  esp_task_wdt_reset();
-
   // Trigger measurement
   Wire.beginTransmission(AHT_ADDRESS);
   Wire.write(AHT_CMD_TRIGGER);
@@ -57,12 +54,8 @@ SensorReading AHTSensor::read() {
     return reading;
   }
 
-  esp_task_wdt_reset();
-
   // Wait for conversion (AHT21 max 80ms)
   vTaskDelay(pdMS_TO_TICKS(80));
-
-  esp_task_wdt_reset();
 
   // Read 6 bytes
   size_t received = Wire.requestFrom((int)AHT_ADDRESS, (int)6);

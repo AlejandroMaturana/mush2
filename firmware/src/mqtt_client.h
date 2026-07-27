@@ -28,7 +28,7 @@ struct MqttActuatorMessage {
 class MQTTClient {
 public:
   MQTTClient();
-  void init(const char* deviceId);
+  void init(const char* deviceId, const char* mqttUser = nullptr, const char* mqttPass = nullptr);
   void loop();
   bool isConnected();
 
@@ -56,6 +56,8 @@ private:
   #endif
   PubSubClient _client;
   char _deviceId[32];
+  char _mqttUser[64];
+  char _mqttPass[64];
   char _topicBase[48];
   unsigned long _lastReconnect;
   unsigned long _reconnectDelay;

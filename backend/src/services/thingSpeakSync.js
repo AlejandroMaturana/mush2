@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { Device, Telemetry, Sensor, IntegrationCredentials } from '../models/index.js';
 import { createChildLogger } from '../config/pino.js';
+import { recordIncoming } from './deviceHealthService.js';
 
 const SENSOR_MAP = {
   field1: { type: 'TEMPERATURE', unit: '°C' },
@@ -86,7 +87,7 @@ export async function syncDeviceFromThingSpeak(deviceId) {
       });
     }
 
-    await device.update({ lastSeen: new Date() });
+    await recordIncoming(device.deviceId, 'telemetry');
     lastSyncTimes.set(device.id, now);
     log.info({ event: 'SYNCED', deviceId }, `Synced ${deviceId} from ThingSpeak (entry ${entryId})`);
   } catch (err) {

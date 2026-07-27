@@ -150,11 +150,12 @@ function statusChanged(prev, next) {
   );
 }
 
-function emitTransition(deviceId, prevStatus, newStatus) {
+function emitTransition(deviceId, prevStatus, newStatus, lastSeenAt) {
   const payload = {
     deviceId,
     previousStatus: prevStatus,
     status: newStatus,
+    lastSeenAt: lastSeenAt || null,
     timestamp: new Date().toISOString(),
   };
 
@@ -204,18 +205,22 @@ async function getLatestHealth(deviceId) {
   return record;
 }
 
-// ── Core API ───────────────────────────────────────────────────────
+// ── Core API — Communication Event Pipeline (ADR-026) ──────────────
 
-async function recordEvent(deviceId, eventType) {
+const INCOMING_EVENT_FIELDS = {
+  telemetry: 'lastTelemetryAt',
+  ack: 'lastAckAt',
+};
+
+async function recordIncoming(deviceId, eventType) {
   const device = await Device.findOne({ where: { deviceId } });
   if (!device) return null;
 
   const now = new Date();
   const updates = { lastSeen: now };
 
-  if (eventType === 'telemetry') updates.lastTelemetryAt = now;
-  else if (eventType === 'command') updates.lastCommandAt = now;
-  else if (eventType === 'ack') updates.lastAckAt = now;
+  const field = INCOMING_EVENT_FIELDS[eventType];
+  if (field) updates[field] = now;
 
   const latestHealth = await getLatestHealth(device.id);
   const prevStatus = computeStatus(device, latestHealth);
@@ -224,10 +229,33 @@ async function recordEvent(deviceId, eventType) {
 
   const newStatus = computeStatus(device, latestHealth);
   if (statusChanged(prevStatus, newStatus)) {
-    emitTransition(device.deviceId, prevStatus, newStatus);
+    emitTransition(device.deviceId, prevStatus, newStatus, now);
   }
 
   return device;
+}
+
+async function recordOutgoing(deviceId) {
+  const device = await Device.findOne({ where: { deviceId } });
+  if (!device) return null;
+
+  const now = new Date();
+
+  const latestHealth = await getLatestHealth(device.id);
+  const prevStatus = computeStatus(device, latestHealth);
+
+  await device.update({ lastCommandAt: now });
+
+  const newStatus = computeStatus(device, latestHealth);
+  if (statusChanged(prevStatus, newStatus)) {
+    emitTransition(device.deviceId, prevStatus, newStatus, device.lastSeen);
+  }
+
+  return device;
+}
+
+async function recordEvent(deviceId, eventType) {
+  return recordIncoming(deviceId, eventType);
 }
 
 async function evaluateDevice(deviceOrId) {
@@ -304,6 +332,8 @@ export {
   computeConnectivity,
   computeHealthFromMetrics,
   computeLifecycle,
+  recordIncoming,
+  recordOutgoing,
   recordEvent,
   evaluateDevice,
   evaluateAllDevices,

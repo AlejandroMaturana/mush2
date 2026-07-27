@@ -27,10 +27,16 @@
 
 ### 2.2 Autenticación (producción)
 
+> Implementado en ADR-028. Cada dispositivo obtiene credenciales MQTT únicas durante el registro HTTP.
+
 | Parámetro | Valor |
 |---|---|
-| Username | `mush2_{deviceId}` |
-| Password | JWT corto o API key (por definir en hardening) |
+| Username | `dev_{deviceId}` (e.g. `dev_mush2_A0F262E55CBC`) |
+| Password | Generada por backend (32 bytes, base64url) |
+| Provisión | `POST /api/v1/devices/register` → respuesta incluye `mqtt.user` y `mqtt.pass` |
+| Persistencia en firmware | NVS (`mush2_prov` namespace, keys `mqtt_user` / `mqtt_pass`) |
+| Fallback | Si no hay credenciales provisionadas, usa `MQTT_USER`/`MQTT_PASS` de `config.h` |
+| Broker auth | `mosquitto_passwd` password_file, reinicio automático del container |
 
 ## 3. Calidad de Servicio (QoS)
 
@@ -166,12 +172,15 @@ El frontend NO se suscribe directamente a MQTT. Recibe eventos en tiempo real v�
 
 ### 9.2 ACLs recomendadas (producción)
 
+> ACLs usan `%c` (client_id) para topic isolation. Username es `dev_{deviceId}`.
+
 ```
-# Firmware device-001
-topic write mush2/telemetry/device-001/+
-topic write mush2/event/device-001/+
-topic write mush2/state/device-001/+
-topic read  mush2/cmd/device-001/+
+# Firmware devices — client_id = mush2_{hex} (e.g. mush2_A0F262E55CBC)
+# Pattern %c se resuelve al client_id del dispositivo
+topic write mush2/telemetry/+/+
+topic write mush2/event/+/+
+topic write mush2/state/+/+
+topic read  mush2/cmd/+/+
 
 # Backend
 topic read  mush2/telemetry/+/+

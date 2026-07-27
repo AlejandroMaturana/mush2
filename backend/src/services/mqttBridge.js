@@ -2,7 +2,7 @@ import mqtt from 'mqtt';
 import { Device, Telemetry, Actuator, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { events } from './eventBus.js';
 import { sendActuatorUpdate } from './webSocketServer.js';
-import { recordEvent, getStatusFromDevice } from './deviceHealthService.js';
+import { recordIncoming, getStatusFromDevice } from './deviceHealthService.js';
 import { createChildLogger } from '../config/pino.js';
 import { RESET_REASON_MAP } from '../config/resetReasons.js';
 
@@ -61,6 +61,14 @@ function createClient() {
 
     try {
       const data = JSON.parse(payload.toString());
+
+      // ── Communication Event Pipeline (ADR-026) ──────────────────
+      // Centralized: every MQTT message from a device is proof-of-life.
+      const INCOMING_TYPES = { telemetry: 1, status: 1, alarm: 1, ack: 1, health: 1, maintenance: 1 };
+      if (INCOMING_TYPES[type]) {
+        recordIncoming(deviceId, type).catch(() => {});
+      }
+
       if (type === 'telemetry') {
         handleTelemetry(deviceId, data);
       } else if (type === 'status') {
@@ -80,7 +88,6 @@ function createClient() {
               if (Object.keys(updates).length > 0) {
                 device.update(updates).catch(() => {});
               }
-              recordEvent(deviceId, 'status').catch(() => {});
             })
             .catch(() => {});
         }
@@ -210,8 +217,6 @@ async function handleTelemetry(deviceId, data) {
       });
     }
 
-    await recordEvent(deviceId, 'telemetry');
-
     events.emit('telemetry', {
       deviceId,
       sensors: {
@@ -263,8 +268,6 @@ async function handleHealth(deviceId, data) {
       timestamp: ts,
     });
 
-    await recordEvent(deviceId, 'health');
-
     events.emit('health', { deviceId, ...data });
   } catch (err) {
     log.error({ module: 'MQTT', event: 'HEALTH_ERROR', error: err.message }, `Error handling health from ${deviceId}`);
@@ -289,8 +292,6 @@ async function handleMaintenance(deviceId, data) {
       reason: data.reason,
       timestamp: ts,
     });
-
-    await recordEvent(deviceId, 'maintenance');
 
     events.emit('maintenance', { deviceId, ...data });
   } catch (err) {

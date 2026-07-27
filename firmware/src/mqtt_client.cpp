@@ -9,18 +9,37 @@ MQTTClient::MQTTClient()
   : _client(_tcpClient), _lastReconnect(0), _reconnectDelay(MQTT_RECONNECT_INITIAL_MS),
     _wasConnected(false), _otaCb(nullptr), _actuatorCb(nullptr) {
   _deviceId[0] = '\0';
+  _mqttUser[0] = '\0';
+  _mqttPass[0] = '\0';
   _topicBase[0] = '\0';
 }
 
-void MQTTClient::init(const char* deviceId) {
+void MQTTClient::init(const char* deviceId, const char* mqttUser, const char* mqttPass) {
   snprintf(_deviceId, sizeof(_deviceId), "%s", deviceId);
   snprintf(_topicBase, sizeof(_topicBase), "mush2/%s", deviceId);
+
+  // ADR-028: Use provisioned credentials if provided, else fallback to compile-time defaults
+  if (mqttUser && mqttUser[0] != '\0') {
+    snprintf(_mqttUser, sizeof(_mqttUser), "%s", mqttUser);
+    snprintf(_mqttPass, sizeof(_mqttPass), "%s", mqttPass);
+    Serial.printf("[MQTT] Credenciales provisionadas para %s\n", _mqttUser);
+  } else {
+    snprintf(_mqttUser, sizeof(_mqttUser), "%s", MQTT_USER);
+    snprintf(_mqttPass, sizeof(_mqttPass), "%s", MQTT_PASS);
+    Serial.printf("[MQTT] Usando credenciales por defecto (fallback)\n");
+  }
 
   #if MQTT_USE_TLS == 1
     _tcpClient.setCACert(MQTT_CA_ROOT);
     _tcpClient.setHandshakeTimeout(MQTT_HANDSHAKE_TIMEOUT_MS);
     Serial.printf("[MQTT] TLS habilitado, handshake timeout %lu ms\n", MQTT_HANDSHAKE_TIMEOUT_MS);
   #endif
+
+  // Limitar timeout TCP para evitar bloqueo prolongado del task MQTT.
+  // TCP connect: 3s + CONNACK wait: 3s = 6s total < watchdog de 10s.
+  _tcpClient.setTimeout(3000);
+  _client.setSocketTimeout(3);
+  Serial.printf("[MQTT] Timeouts: TCP=%dms, CONNACK=%ds\n", 3000, 3);
 
   _client.setServer(MQTT_BROKER, MQTT_PORT);
   _client.setCallback(_staticCallback);
@@ -135,8 +154,9 @@ void MQTTClient::_connect() {
     const char* scheme = "MQTT";
   #endif
 
-  char clientId[40];
-  snprintf(clientId, sizeof(clientId), "%s_%lu", _deviceId, millis() % 100000);
+  // Client ID estable: sin sufijo aleatorio para mantener sesión consistente.
+  // Cada reinicio genera un ID diferente, lo que puede causar rechazo del broker.
+  const char* clientId = _deviceId;
 
   Serial.printf("[MQTT] Conectando a %s %s:%d como %s...\n", scheme, MQTT_BROKER, MQTT_PORT, clientId);
 
@@ -144,7 +164,7 @@ void MQTTClient::_connect() {
   snprintf(lwtTopic, sizeof(lwtTopic), "%s/status", _topicBase);
   const char* lwtPayload = "{\"state\":\"offline\",\"ts\":0}";
 
-  if (_client.connect(clientId, MQTT_USER, MQTT_PASS, lwtTopic, 1, true, lwtPayload)) {
+  if (_client.connect(clientId, _mqttUser, _mqttPass, lwtTopic, 1, true, lwtPayload)) {
     Serial.printf("[MQTT] Conectado via %s\n", scheme);
 
     _reconnectDelay = MQTT_RECONNECT_INITIAL_MS;
