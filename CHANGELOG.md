@@ -1,5 +1,41 @@
 # Changelog — Mush2
 
+## 2026-07-27
+
+### Backend — v1.3.0
+
+- recordIncoming / recordOutgoing en deviceHealthService
+- Funnel MQTT en mqttBridge
+- lifecycle ENUM reemplaza status
+- SSE device-status + tests de pipeline
+- Nuevo MosquittoProvisioningService
+- Migración de credenciales por dispositivo
+
+### Frontend — v1.13.0
+
+- Actualiza AlarmProvider, Dashboard y DeviceList
+- Elimina useSSE (reemplazado por device-status stream)
+
+### Firmware (ESP32-S3) — v0.22.0
+
+- Ajustes de timeouts, client ID y flujo de estado
+- Complementarios al nuevo modelo TWDT e identidad MQTT
+- TASK-027 / ADR-027: eliminados registros TWDT de WiFi, Poller, MQTT, OTA, Telemetry, Provisioning, Sensors y HealthMonitor
+- Limpieza de esp_task_wdt_reset + includes huérfanos en 4 drivers
+- ota_nvs usa FIRMWARE_VERSION (ya no hardcodea 0.9.1)
+
+### Docs — v0.1.5
+
+- ADR-026: Contrato Temporal (Event/Reception/Persistence/Presentation)
+- ADR-027: Auditoría TWDT — solo SSR + Button
+- ADR-028: Identidad MQTT por dispositivo
+- Actualización de ADR-008 y mqtt-contract
+
+**otros - docker**
+- Configuración de password_file
+- Exposición de puertos para identidad MQTT por dispositivo
+
+
 ## 2026-07-24
 
 ### Backend — v1.2.0
@@ -919,7 +955,7 @@ Entrada en PROJECT_JOURNAL.md"
 - **Bug fix crítico**: Stack canary overflow (`Guru Meditation: Stack canary watchpoint triggered`) causado por `WiFiClientSecure` (mbedTLS) al intentar TLS. El TLS handshake requería ~80 KB de stack; la tarea HTTP tenía insuficientes 48 KB (12288 words)
 - `config.h`: `STACK_HTTP` aumentado de 12288 → 20480 words (~80 KB) como medida defensiva
 - `config.h`: Nuevo flag `HTTP_DISABLE_TLS` para compilación sin TLS (LAN local)
-- `config.h`: Backend apuntado a IP LAN del PC (`192.168.1.6:3797`)
+- `config.h`: Backend apuntado a IP LAN del PC (`192.168.1.10:3797`)
 - `http_handler.h`: Cliente HTTP polling con compilación condicional para TLS
 - `http_handler.cpp`: Eliminado reintento automático PLAIN→TLS que causaba el reboot loop. La lógica de fallback ahora rota solo entre endpoints. `BACKOFF_MAX` reducido de 180s → 60s (LAN no necesita backoff largo)
 - `http_handler.cpp`: Pre-resolución DNS inteligente: si `API_HOST` es una IP literal, no llama a resolución DNS (ahorra ~12s de bloqueo por boot)
