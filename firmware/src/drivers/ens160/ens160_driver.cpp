@@ -1,7 +1,6 @@
 #include "ens160_driver.h"
 #include "../../config.h"
 #include <Wire.h>
-#include <esp_task_wdt.h>
 
 #define ENS160_ADDRESS 0x53
 
@@ -46,8 +45,6 @@ bool ENS160Driver::read(void* out) {
     return false;
   }
 
-  esp_task_wdt_reset();
-
   _ens160.setTempAndHum(_lastTemp, _lastHum);
   int aqi = _ens160.getAQI();
   int eco2 = _ens160.getECO2();
@@ -59,8 +56,6 @@ bool ENS160Driver::read(void* out) {
     reading->tvoc = tvoc;
     reading->valid = true;
   }
-
-  esp_task_wdt_reset();
 
   return reading->valid;
 }

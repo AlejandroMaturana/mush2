@@ -127,9 +127,6 @@ void mqttActuatorCallback(const MqttActuatorMessage* msg) {
 // ============================================================
 
 void taskSensors(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[SENSORS] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastSensorValid = 0;
   unsigned long fallbackStart = 0;
@@ -138,7 +135,6 @@ void taskSensors(void* pvParameters) {
   ISensor* ensSensor = sensorRegistry.getSensor("ENS160");
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_SENSORS);
 
     SensorReading reading = {0, 0, false};
@@ -377,15 +373,11 @@ void taskSSR(void* pvParameters) {
 // ============================================================
 
 void taskProvisioningIdle(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[PROV] WDT add: %s\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR");
   TickType_t lastWake = xTaskGetTickCount();
   bool ledOn = true;
   unsigned long lastLedToggle = 0;
 
   while (true) {
-    esp_task_wdt_reset();
     bleProv.loop();
 
     unsigned long now = millis();
@@ -404,15 +396,11 @@ void taskProvisioningIdle(void* pvParameters) {
 // ============================================================
 
 void taskWiFi(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[WiFi] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastWifiRetry = 0;
   unsigned int wifiRetryDelay = 5000;
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_WIFI);
 
     wifi.loop();
@@ -434,7 +422,6 @@ void taskWiFi(void* pvParameters) {
     if (!wifiOk && sm.getState() == ST_DEGRADED) {
       unsigned long now = millis();
       if (now - lastWifiRetry >= wifiRetryDelay) {
-        esp_task_wdt_reset();
         lastWifiRetry = now;
         wifi.connect();
         wifiRetryDelay = min(wifiRetryDelay * 2, 60000u);
@@ -456,13 +443,9 @@ void taskWiFi(void* pvParameters) {
 }
 
 void taskPoller(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[POLLER] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_POLLER);
 
     if (wifi.isConnected()) {
@@ -536,13 +519,9 @@ void taskPoller(void* pvParameters) {
 // ============================================================
 
 void taskMQTT(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[MQTT] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_MQTT);
 
     if (wifi.isConnected()) {
@@ -554,14 +533,10 @@ void taskMQTT(void* pvParameters) {
 }
 
 void taskOTA(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[OTA] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastSerialCheck = 0;
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_OTA);
 
     if (wifi.isConnected()) {
@@ -648,9 +623,6 @@ ota_skip:
 }
 
 void taskTelemetry(void* pvParameters) {
-  esp_err_t wdtErr = esp_task_wdt_add(NULL);
-  if (wdtErr != ESP_OK) Serial.printf("[TELEMETRY] WDT add: %s (0x%x)\n",
-    wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastTsSend = 0;
   unsigned long lastMqttTel = 0;
@@ -658,7 +630,6 @@ void taskTelemetry(void* pvParameters) {
   unsigned long lastReplay = 0;
 
   while (true) {
-    esp_task_wdt_reset();
     healthMonitor.feed(HB_TELEMETRY);
 
     unsigned long now = millis();

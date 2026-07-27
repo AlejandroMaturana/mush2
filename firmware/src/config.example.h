@@ -46,7 +46,8 @@
   #elif MUSH_ENV == ENV_STAGING
     #define MQTT_BROKER "mqtt-staging.your-domain.tld"
   #else
-    #define MQTT_BROKER "test.mosquitto.org"
+    // Desarrollo: broker local (mismo host que BACKEND_HOST)
+    #define MQTT_BROKER BACKEND_HOST
   #endif
 #endif
 
@@ -59,11 +60,13 @@
 #endif
 
 #ifndef MQTT_USER
-#define MQTT_USER "device_001"
+// ADR-028: Default empty — credentials are provisioned via HTTP registration
+// and stored in NVS. This fallback is only for backward compatibility.
+#define MQTT_USER ""
 #endif
 
 #ifndef MQTT_PASS
-#define MQTT_PASS "change_me"
+#define MQTT_PASS ""
 #endif
 
 #ifndef MQTT_USE_TLS
@@ -121,7 +124,7 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 
 // ---- Backend HTTP ----
 #ifndef BACKEND_HOST
-#define BACKEND_HOST "192.168.1.6"
+#define BACKEND_HOST "192.168.1.10"
 #endif
 #ifndef BACKEND_PORT
 #define BACKEND_PORT 3797

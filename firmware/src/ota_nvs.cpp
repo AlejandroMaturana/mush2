@@ -10,7 +10,7 @@ void nvsInit() {
   if (schemaVer < NVS_SCHEMA_VER) {
     prefs.begin(NVS_NAMESPACE, false);
     prefs.putUChar(NVS_KEY_SCHEMA, NVS_SCHEMA_VER);
-    prefs.putString(NVS_KEY_FW_VER, "0.9.0");
+    prefs.putString(NVS_KEY_FW_VER, FIRMWARE_VERSION);
     prefs.end();
     Serial.println("[OTA] Inicializando NVS con schema_v=1");
   }

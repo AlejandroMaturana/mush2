@@ -1,7 +1,6 @@
 #include "ens160_sensor.h"
 #include "config.h"
 #include <Wire.h>
-#include <esp_task_wdt.h>
 
 #define ENS160_ADDRESS 0x53
 
@@ -45,8 +44,6 @@ EnsReading EnsSensor::read(float temp, float hum) {
     return reading;
   }
 
-  esp_task_wdt_reset();
-
   _ens160.setTempAndHum(temp, hum);
   int aqi = _ens160.getAQI();
   int eco2 = _ens160.getECO2();
@@ -58,8 +55,6 @@ EnsReading EnsSensor::read(float temp, float hum) {
     reading.tvoc = tvoc;
     reading.valid = true;
   }
-
-  esp_task_wdt_reset();
 
   return reading;
 }
