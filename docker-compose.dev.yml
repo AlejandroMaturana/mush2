@@ -1,0 +1,47 @@
+version: "3.8"
+
+# ── Development Environment (ADR-029) ──────────────────────────────
+# This file creates an isolated development stack.
+# It MUST NOT share containers, volumes, or networks with docker-compose.yml.
+# Usage: docker compose -f docker-compose.dev.yml up -d
+
+services:
+  # ── MQTT Broker (Development) ────────────────────────────────────
+  dev-mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mush2-dev-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1884:1883"
+    volumes:
+      - ./docker/mosquitto/config:/mosquitto/config:ro
+      - ./docker/mosquitto/certs:/mosquitto/certs:ro
+      - mush2-dev-mosquitto-data:/mosquitto/data
+      - mush2-dev-mosquitto-log:/mosquitto/log
+    networks:
+      - mush2-dev-internal
+
+  # ── PostgreSQL (Development) ─────────────────────────────────────
+  dev-postgres:
+    image: postgres:16-alpine
+    container_name: mush2-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mush2_dev
+      POSTGRES_USER: mush2_dev
+      POSTGRES_PASSWORD: ${DEV_DB_PASSWORD:?Set DEV_DB_PASSWORD in .env.development}
+    ports:
+      - "5433:5432"
+    volumes:
+      - mush2-dev-pgdata:/var/lib/postgresql/data
+    networks:
+      - mush2-dev-internal
+
+networks:
+  mush2-dev-internal:
+    driver: bridge
+
+volumes:
+  mush2-dev-pgdata:
+  mush2-dev-mosquitto-data:
+  mush2-dev-mosquitto-log:

@@ -54,7 +54,8 @@ docs/ADR/
 ├── ADR-025-device-status-policy.md
 ├── ADR-026-temporal-contract.md
 ├── ADR-027-esp32-task-watchdog-audit.md
-└── ADR-028-Per-Device-MQTT-Identity.md
+├── ADR-028-Per-Device-MQTT-Identity.md
+└── ADR-029-Environment-Isolation.md
 ```
 
 ## Índice de documentos
@@ -89,6 +90,7 @@ docs/ADR/
 | [ADR-026](ADR-026-temporal-contract.md)                   | Temporal Contract                    | Contrato temporal para eventos de dominio (Aceptado).               |
 | [ADR-027](ADR-027-esp32-task-watchdog-audit.md)           | Auditoría TWDT ESP32-S3              | Auditoría del Task Watchdog Timer en ESP32-S3 (Aceptado).           |
 | [ADR-028](ADR-028-Per-Device-MQTT-Identity.md)            | Identidad MQTT por Dispositivo       | Identidad MQTT por dispositivo con ACLs (Aceptado).                 |
+| [ADR-029](ADR-029-Environment-Isolation.md)               | Aislamiento de Ambientes              | Infraestructura aislada por ambiente con validación fail-fast.       |
 
 ## Numeración
 

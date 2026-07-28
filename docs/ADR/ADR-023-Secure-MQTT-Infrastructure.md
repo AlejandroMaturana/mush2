@@ -247,7 +247,7 @@ sequenceDiagram
 
 | Versión | Fecha      | Autor            | Cambios                          |
 | ------- | ---------- | ---------------- | -------------------------------- |
-| 1.0     | 2026-07-23 | Alejandro Maturana | Creación del documento (ACEPTADO) |
+| 1.0     | 2026-07-23 | AlejandroMaturana | Creación del documento (ACEPTADO) |
 
 ---
 

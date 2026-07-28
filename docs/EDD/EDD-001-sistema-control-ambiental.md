@@ -4,7 +4,7 @@
 
 | Campo             | Valor                                                         |
 | ----------------- | ------------------------------------------------------------- |
-| Autor             | Alejandro Maturana                                            |
+| Autor             | AlejandroMaturana                                            |
 | Estado            | ACCEPTED                                                      |
 | Fecha             | 2026-06-06                                                    |
 | Versión           | 1.0.0                                                         |
@@ -148,7 +148,7 @@ Firmware (local, sin red)
 
 | Componente      | Impacto | Cambios requeridos                                               |
 | --------------- | ------- | ---------------------------------------------------------------- |
-| Firmware        | Alto    | 6 tareas FreeRTOS, HTTP polling, state machine 8 estados, OTA v3 |
+| Firmware        | Alto    | 6 tareas FreeRTOS, HTTP polling, state machine 10 estados, OTA v3 |
 | Backend         | Alto    | Motor de reglas, WebSocket/SSE, MQTT bridge, RBAC, PostgreSQL    |
 | Frontend        | Medio   | React 18, SSE, Chart.js, dashboard en tiempo real                |
 | Base de datos   | Alto    | 18+ entidades relacionadas, backup diario                        |

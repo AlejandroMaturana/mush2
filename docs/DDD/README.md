@@ -34,6 +34,7 @@ docs/DDD/
 ├── DDD-006-domain-event.md        # Eventos de Dominio
 ├── DDD-007-migration-roadmap.md   # Roadmap de Migración
 ├── DDD-008-device-status-policy.md # Device Status Policy (multidimensional)
+├── DDD-009-Configuration-Environment-Model.md # Configuration & Environment Model
 ```
 
 ## Índice de documentos
@@ -48,6 +49,7 @@ docs/DDD/
 | [DDD-006](DDD-006-domain-event.md) | Eventos de Dominio | ~20 Eventos con flujos de secuencia | DDD-001, DDD-002, DDD-003 |
 | [DDD-007](DDD-007-migration-roadmap.md) | Roadmap de Migración | Plan de 8 fases (22-32 semanas) | Todos |
 | [DDD-008](DDD-008-device-status-policy.md) | Device Status Policy | Modelo multidimensional de estado de dispositivo | DDD-001, DDD-005 |
+| [DDD-009](DDD-009-Configuration-Environment-Model.md) | Configuration & Environment Model | Modelo de configuración y aislamiento de ambientes | DDD-002 |
 
 ## Numeración
 

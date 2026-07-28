@@ -18,7 +18,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 - [x] `docs/architecture/architecture.md` — Diagrama de componentes: ESP8266 → MQTT → Backend → PostgreSQL → Frontend
 - [x] `docs/architecture/backend.md` — Capas: routes → controllers → services → models
 - [x] `docs/architecture/frontend.md` — Árbol de componentes React, routing, SSE
-- [x] `docs/architecture/firmware.md` — Módulos, pinout, state machine de 8 estados
+- [x] `docs/architecture/firmware.md` — Módulos, pinout, state machine de 10 estados
 - [x] `docs/database.md` — Esquema con relaciones: User → Chamber → Device → Sensor → Telemetry
 - [x] `docs/requirements.md` — Requerimientos funcionales y no funcionales
 - [x] `docs/ADR/` — ADR-001 a ADR-006 documentados
@@ -83,7 +83,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 
 ### Riesgos encontrados
 - **R1**: PubSubClient en ESP8266 no reconecta automáticamente tras pérdida de WiFi
-  - Resuelto con: state machine de 8 estados en Fase 5
+  - Resuelto con: state machine de 10 estados en Fase 5
 - **R2**: La tabla `telemetria` crece ~4320 filas/día por dispositivo
   - Diferido a: estrategia de retención de datos (pendiente M8+)
 
@@ -226,7 +226,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 **Objetivo**: El sistema sobrevive a fallos sin intervención humana. Seguridad básica implementada.
 
 ### Entregables
-- [x] Firmware: state machine de 8 estados (INIT → CONNECTING_WIFI → CONNECTING_MQTT → OPERATIONAL → etc.)
+- [x] Firmware: state machine de 10 estados (BOOT → INIT → WIFI → NORMAL → DEGRADED → ERROR → RECOVERY → SAFE + OTA_UPDATING + PROVISIONING)
 - [x] Firmware: watchdog hardware (WDT) + watchdog software (timer de inactividad)
 - [x] Firmware: configuración persistente en EEPROM (modo, setpoints)
 - [x] Firmware: MQTT backoff exponencial + Last Will Testament (LWT)

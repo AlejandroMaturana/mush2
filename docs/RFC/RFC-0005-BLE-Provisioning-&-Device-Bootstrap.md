@@ -6,7 +6,7 @@
 
 | Campo            | Valor                                      |
 | ---------------- | ------------------------------------------ |
-| Autor            | Alejandro Maturana                         |
+| Autor            | AlejandroMaturana                         |
 | Estado           | ACCEPTED                                   |
 | Prioridad        | Alta                                       |
 | Tipo             | Feature / Arquitectura                     |

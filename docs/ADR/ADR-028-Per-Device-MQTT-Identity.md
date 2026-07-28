@@ -3,7 +3,7 @@
 **Estado:** Aceptado
 **Fecha:** 2026-07-26  
 **Autores:** Opencode  
-**Decisores:** Alejandro Maturana
+**Decisores:** AlejandroMaturana
 
 ---
 

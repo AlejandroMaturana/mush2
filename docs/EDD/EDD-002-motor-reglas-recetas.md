@@ -4,7 +4,7 @@
 
 | Campo             | Valor              |
 | ----------------- | ------------------ |
-| Autor             | Alejandro Maturana |
+| Autor             | AlejandroMaturana |
 | Estado            | ACCEPTED           |
 | Fecha             | 2026-06-15         |
 | Versión           | 1.0.0              |

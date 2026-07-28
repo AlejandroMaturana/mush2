@@ -4,7 +4,7 @@
 
 | Campo             | Valor                |
 | ----------------- | -------------------- |
-| Autor             | Alejandro Maturana   |
+| Autor             | AlejandroMaturana   |
 | Estado            | ACEPTADO             |
 | Fecha de apertura | 2026-07-05           |
 | Fecha de cierre   | 2026-07-23           |
@@ -184,8 +184,8 @@ Fase 2: ADR-024 (HTTPS deployment)
 
 | Versión | Fecha      | Autor            | Cambios                                    |
 | ------- | ---------- | ---------------- | ------------------------------------------ |
-| 1.0     | 2026-07-05 | Alejandro Maturana | Creación del documento (DRAFT)           |
-| 2.0     | 2026-07-23 | Alejandro Maturana | Decisiones Q1-Q5, split en ADR-023/024   |
+| 1.0     | 2026-07-05 | AlejandroMaturana | Creación del documento (DRAFT)           |
+| 2.0     | 2026-07-23 | AlejandroMaturana | Decisiones Q1-Q5, split en ADR-023/024   |
 
 ---
 

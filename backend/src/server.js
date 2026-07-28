@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import app from './app.js';
 import { env } from './config/env.js';
+import { validate, getConfigSummary } from './config/ConfigurationService.js';
 import sequelize from './config/database.js';
 import { getReadiness, markServiceStarted, markServiceFailed, markReady } from './config/readiness.js';
 import logger, { createChildLogger } from './config/pino.js';
@@ -12,6 +13,11 @@ let tsSyncHandle = null;
 async function start() {
   try {
     log.info({ event: 'STARTING', pid: process.pid }, 'Iniciando backend');
+
+    // ── Fail-fast configuration validation (ADR-029) ──────────────
+    const configResult = validate(env);
+    log.info({ event: 'CONFIG_VALIDATED', ...configResult }, 'Configuracion validada');
+    log.info({ event: 'CONFIG_SUMMARY', ...getConfigSummary(env) }, 'Configuracion actual');
 
     // ── Critical path: DB authenticate + HTTP listen ────────────────
     await sequelize.authenticate();

@@ -123,7 +123,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 ## Autor
 
-**Alejandro Maturana** — _Ingeniero Industrial & Full Stack Developer_
+**AlejandroMaturana** — _Ingeniero Industrial & Full Stack Developer_
 
 - **GitHub**: [@AlejandroMaturana](https://github.com/AlejandroMaturana)
 - **LinkedIn**: [manugl86](https://www.linkedin.com/in/manugl86)

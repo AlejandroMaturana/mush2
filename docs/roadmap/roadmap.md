@@ -65,7 +65,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ## FASE 5 — Hardening (COMPLETADA ✅)
 
-- [x] Firmware: state machine (8 estados), watchdog HW+SW, EEPROM, MQTT backoff + LWT
+- [x] Firmware: state machine (10 estados: +OTA_UPDATING, +PROVISIONING), watchdog HW+SW, EEPROM, MQTT backoff + LWT
 - [x] Backend: JWT auth + RBAC, rate limiting, Helmet CSP, audit logging, tests
 - [x] Frontend: ErrorBoundary, Skeleton, AuthContext, responsive
 

@@ -1061,7 +1061,7 @@ Entrada en PROJECT_JOURNAL.md"
 
 ### Firmware
 
-- Máquina de estados: BOOT → INIT → WIFI → NORMAL → DEGRADED → ERROR → RECOVERY → SAFE
+- Máquina de estados: BOOT → INIT → WIFI → NORMAL → DEGRADED → ERROR → RECOVERY → SAFE + OTA_UPDATING + PROVISIONING (10 estados)
 - Watchdog hardware 8s + software 30s con feed en cada loop
 - EEPROM: contador de reinicios, modo SAFE tras 5 reinicios consecutivos
 - HTTP: exponential backoff (5s – 180s) + keep-alive
