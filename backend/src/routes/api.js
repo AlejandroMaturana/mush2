@@ -9,6 +9,7 @@ import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, recordOutgoing } from '../services/deviceHealthService.js';
 import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
 import { createChildLogger } from '../config/pino.js';
+import { env } from '../config/env.js';
 
 const log = createChildLogger('API');
 const router = express.Router();
@@ -519,7 +520,7 @@ router.post('/devices/:id/thingSpeak/validate', checkDeviceAccess, async (req, r
       return res.status(400).json({ error: 'apiKey requerida' });
     }
 
-    const host = process.env.TS_HOST || 'api.thingspeak.com';
+    const host = env.TS.host;
     const response = await fetch(`https://${host}/channels.json?api_key=${apiKey}`, {
       signal: AbortSignal.timeout(10000),
     });
