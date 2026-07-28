@@ -1,8 +1,10 @@
-version: "3.8"
-
 # ── Development Environment (ADR-029) ──────────────────────────────
 # This file creates an isolated development stack.
 # It MUST NOT share containers, volumes, or networks with docker-compose.yml.
+#
+# PostgreSQL uses defaults matching .env.development.
+# Override via shell: DB_PASSWORD=xxx docker compose -f docker-compose.dev.yml up -d
+#
 # Usage: docker compose -f docker-compose.dev.yml up -d
 
 services:
@@ -14,7 +16,7 @@ services:
     ports:
       - "1884:1883"
     volumes:
-      - ./docker/mosquitto/config:/mosquitto/config:ro
+      - ./docker/mosquitto/dev:/mosquitto/config:ro
       - ./docker/mosquitto/certs:/mosquitto/certs:ro
       - mush2-dev-mosquitto-data:/mosquitto/data
       - mush2-dev-mosquitto-log:/mosquitto/log
@@ -27,9 +29,9 @@ services:
     container_name: mush2-dev-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mush2_dev
-      POSTGRES_USER: mush2_dev
-      POSTGRES_PASSWORD: ${DEV_DB_PASSWORD:?Set DEV_DB_PASSWORD in .env.development}
+      POSTGRES_DB: ${DB_NAME:-mush2_dev}
+      POSTGRES_USER: ${DB_USER:-mush2_dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mush2_dev_password}
     ports:
       - "5433:5432"
     volumes:

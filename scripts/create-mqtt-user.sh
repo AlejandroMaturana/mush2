@@ -1,29 +1,49 @@
 #!/usr/bin/env bash
 # ── create-mqtt-user.sh ──────────────────────────────────────────
-# Creates or updates MQTT users in Mosquitto password file.
+# Creates or updates MQTT users in Mosquitto password files.
 #
 # Usage:
-#   ./scripts/create-mqtt-user.sh              # interactive mode
-#   ./scripts/create-mqtt-user.sh <user> <pass> # direct mode
+#   ./scripts/create-mqtt-user.sh                          # interactive mode (dev)
+#   ./scripts/create-mqtt-user.sh <user> <pass>            # direct mode (dev)
+#   ./scripts/create-mqtt-user.sh <user> <pass> dev        # explicit environment
+#   ./scripts/create-mqtt-user.sh <user> <pass> prod       # explicit environment
 #
 # Requirements: mosquitto_passwd (included with Mosquitto)
+#
+# Per ADR-029, each environment has its own isolated password_file:
+#   - docker/mosquitto/dev/password_file
+#   - docker/mosquitto/prod/password_file
 # ──────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-PASSWORD_FILE="$PROJECT_ROOT/docker/mosquitto/config/password_file"
-PASSWORD_FILE_EXAMPLE="$PROJECT_ROOT/docker/mosquitto/config/password_file.example"
+
+# ── Determine environment ────────────────────────────────────────
+ENV="${3:-dev}"
+case "$ENV" in
+  dev|development)
+    ENV_DIR="dev"
+    ;;
+  prod|production)
+    ENV_DIR="prod"
+    ;;
+  *)
+    echo "[ERROR] Invalid environment: '$ENV'. Use 'dev' or 'prod'."
+    exit 1
+    ;;
+esac
+
+PASSWORD_DIR="$PROJECT_ROOT/docker/mosquitto/$ENV_DIR"
+PASSWORD_FILE="$PASSWORD_DIR/password_file"
+
+# Ensure password file directory exists
+mkdir -p "$PASSWORD_DIR"
 
 # Ensure password file exists
 if [ ! -f "$PASSWORD_FILE" ]; then
-  if [ -f "$PASSWORD_FILE_EXAMPLE" ]; then
-    cp "$PASSWORD_FILE_EXAMPLE" "$PASSWORD_FILE"
-    echo "[INFO] Created password_file from example"
-  else
-    touch "$PASSWORD_FILE"
-  fi
+  touch "$PASSWORD_FILE"
 fi
 
 add_user() {
@@ -31,7 +51,7 @@ add_user() {
   local pass="$2"
 
   if mosquitto_passwd -b "$PASSWORD_FILE" "$user" "$pass"; then
-    echo "[OK] User '$user' added/updated"
+    echo "[OK] User '$user' added/updated in $ENV_DIR password_file"
   else
     echo "[ERROR] Failed to add user '$user'"
     echo "       Is mosquitto_passwd installed?"
@@ -42,12 +62,13 @@ add_user() {
 
 # ── Main ─────────────────────────────────────────────────────────
 
-if [ $# -eq 2 ]; then
+if [ $# -ge 2 ]; then
   # Direct mode
   add_user "$1" "$2"
 else
   # Interactive mode
-  echo "=== Mush2 MQTT User Management ==="
+  echo "=== Mush2 MQTT User Management ($ENV) ==="
+  echo "Password file: $PASSWORD_FILE"
   echo ""
 
   # Backend bridge user
@@ -82,5 +103,10 @@ else
   echo ""
   echo "=== Done ==="
   echo "Password file: $PASSWORD_FILE"
-  echo "Restart Mosquitto to apply: docker compose restart mosquitto"
+  echo "Restart Mosquitto to apply:"
+  if [ "$ENV_DIR" = "dev" ]; then
+    echo "  docker compose -f docker-compose.dev.yml restart dev-mosquitto"
+  else
+    echo "  docker compose restart mosquitto"
+  fi
 fi
