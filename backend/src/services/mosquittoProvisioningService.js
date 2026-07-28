@@ -5,6 +5,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import MQTTProvisioningService from './mqttProvisioningService.js';
 import { createChildLogger } from '../config/pino.js';
+import { env } from '../config/env.js';
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,15 +25,15 @@ export default class MosquittoProvisioningService extends MQTTProvisioningServic
   constructor({ passwordFile, mosquittoContainer, mosquittoPasswdPath } = {}) {
     super();
     this.passwordFile = passwordFile
-      || process.env.MOSQUITTO_PASSWORD_FILE
-      || resolve(__dirname, '../../../docker/mosquitto/config/password_file');
+      || env.MQTT_PROVISIONING.passwordFile
+      || '';
 
     this.container = mosquittoContainer
-      || process.env.MOSQUITTO_CONTAINER
+      || env.MQTT_PROVISIONING.container
       || 'mush2-mosquitto';
 
     this.mosquittoPasswd = mosquittoPasswdPath
-      || process.env.MOSQUITTO_PASSWD_PATH
+      || env.MQTT_PROVISIONING.mosquittoPasswd
       || 'mosquitto_passwd';
   }
 

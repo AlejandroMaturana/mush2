@@ -3,15 +3,29 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '../../..');
 
-// Load .env.development defaults first (safe defaults for development)
-dotenv.config({ path: resolve(__dirname, '../../../.env.development') });
+// ── Detect NODE_ENV ────────────────────────────────────────────
+// Priority: process.env.NODE_ENV > default 'development'.
+//
+// Production environments MUST set NODE_ENV explicitly (Render,
+// Docker, shell). Never auto-detect from .env.* files — readdirSync
+// order is non-deterministic and caused a regression when
+// .env.production was scanned before .env.development.
+const nodeEnv = process.env.NODE_ENV || 'development';
 
-// Load .env overrides on top (local credentials, gitignored)
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
+// ── Load .env (base — shared values across all environments) ──
+dotenv.config({ path: resolve(ROOT, '.env') });
+
+// ── Load .env.{NODE_ENV} (override — env-specific values) ─────
+// `override: true` ensures env-specific values ALWAYS win over .env.
+dotenv.config({
+  path: resolve(ROOT, `.env.${nodeEnv}`),
+  override: true,
+});
 
 export const env = {
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  NODE_ENV: nodeEnv,
   PORT: parseInt(process.env.PORT || '3797', 10),
 
   DB: {
@@ -57,4 +71,5 @@ export const env = {
   },
 
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+  LOG_TIME_ZONE: process.env.LOG_TIME_ZONE || '',
 };

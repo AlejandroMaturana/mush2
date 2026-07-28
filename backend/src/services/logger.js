@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { env } from '../config/env.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOG_DIR = resolve(__dirname, '../../logs');
@@ -10,7 +11,7 @@ if (!existsSync(LOG_DIR)) {
   mkdirSync(LOG_DIR, { recursive: true });
 }
 
-const defaultTimeZone = () => process.env.LOG_TIME_ZONE
+const defaultTimeZone = () => env.LOG_TIME_ZONE
   || Intl.DateTimeFormat().resolvedOptions().timeZone
   || 'UTC';
 

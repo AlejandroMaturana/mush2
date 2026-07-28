@@ -120,7 +120,8 @@ function createClient() {
   });
 
   c.on('error', (err) => {
-    log.error({ module: 'MQTT', event: 'ERROR', error: err.message }, `Error en ${broker.label}`);
+    const detail = err.message || String(err);
+    log.error({ module: 'MQTT', event: 'ERROR', error: detail }, `Error en ${broker.label}: ${detail}`);
   });
 
   c.on('close', () => {

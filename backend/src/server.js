@@ -44,7 +44,11 @@ async function start() {
       initSecondaryServices(httpServer);
     });
   } catch (err) {
-    log.fatal({ event: 'STARTUP_ERROR', error: err.message }, 'Error al iniciar');
+    // Log full diagnostic context — Sequelize errors nest the real
+    // message in err.original, and some Error subclasses have an
+    // empty top-level message.
+    const detail = err.original?.message || err.cause?.message || err.message || String(err);
+    log.fatal({ event: 'STARTUP_ERROR', error: detail, stack: err.stack }, `Error al iniciar: ${detail}`);
     process.exit(1);
   }
 }

@@ -11,10 +11,24 @@
 const VALID_ENVIRONMENTS = ['development', 'production'];
 
 const PRODUCTION_HOSTNAME_PATTERNS = [
-  /render\.com$/i,
-  /onrender\.com$/i,
-  /\.render\.app$/i,
+  /render\.com/i,
+  /onrender\.com/i,
+  /\.render\.app/i,
 ];
+
+/**
+ * Extract hostname from a value that may be a bare hostname or a full URL.
+ * Returns the hostname portion, or the original string if parsing fails.
+ */
+function extractHostname(value) {
+  if (!value) return '';
+  try {
+    if (/^[a-z]+:\/\//i.test(value)) {
+      return new URL(value).hostname;
+    }
+  } catch { /* not a valid URL */ }
+  return value;
+}
 
 /**
  * Validate the environment configuration.
@@ -53,15 +67,26 @@ export function validate(env) {
 
   // ── 4. Cross-environment detection (CRITICAL) ──────────────────
   if (env.NODE_ENV === 'development') {
-    const dbUrl = env.DB.url || '';
-    const dbHost = env.DB.host || '';
+    const dbHost = extractHostname(env.DB.url || env.DB.host || '');
 
     for (const pattern of PRODUCTION_HOSTNAME_PATTERNS) {
-      if (pattern.test(dbUrl) || pattern.test(dbHost)) {
+      if (pattern.test(dbHost)) {
         errors.push(
           `CRITICAL: Production database detected in development environment. ` +
-          `Database host "${dbHost || dbUrl}" matches a production pattern. ` +
+          `Database host "${dbHost}" matches a production pattern. ` +
           `Set DATABASE_URL or DB_HOST to a local development instance.`
+        );
+      }
+    }
+
+    // Detect production MQTT broker in development
+    const mqttHost = extractHostname(env.MQTT?.brokerUrl || '');
+    for (const pattern of PRODUCTION_HOSTNAME_PATTERNS) {
+      if (pattern.test(mqttHost)) {
+        errors.push(
+          `CRITICAL: Production MQTT broker detected in development environment. ` +
+          `Broker host "${mqttHost}" matches a production pattern. ` +
+          `Set MQTT_BROKER_URL to a local development instance.`
         );
       }
     }
@@ -108,7 +133,7 @@ export function getConfigSummary(env) {
       port: env.DB.port,
     },
     mqtt: {
-      url: env.MQTT_BROKER_URL || '(not set)',
+      url: env.MQTT?.brokerUrl || '(not set)',
     },
     cors: env.CORS_ORIGIN,
   };

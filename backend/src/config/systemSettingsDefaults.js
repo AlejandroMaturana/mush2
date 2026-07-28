@@ -1,7 +1,9 @@
+import { env } from './env.js';
+
 export const SYSTEM_SETTINGS_DEFAULTS = [
   // === Installation ===
   { key: 'app_name', value: 'Mush2', type: 'string', label: 'App Name', category: 'installation', isPublic: true },
-  { key: 'app_environment', value: 'production', type: 'string', label: 'Environment', category: 'installation' },
+  { key: 'app_environment', value: env.NODE_ENV, type: 'string', label: 'Environment', category: 'installation' },
   { key: 'setup_completed', value: 'false', type: 'boolean', label: 'Setup Completed', category: 'installation' },
 
   // === Timing ===
