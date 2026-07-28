@@ -5,19 +5,17 @@ const SpeciesProfile = sequelize.define('SpeciesProfile', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(100), allowNull: false },
   scientificName: { type: DataTypes.STRING(150), allowNull: false },
-  adapterClass: {
-    type: DataTypes.ENUM('ADAPTOGEN', 'EDIBLE', 'MEDICINAL'),
-    allowNull: false,
-  },
+  adapterClass: { type: DataTypes.STRING(100), allowNull: false },
   originClimate: { type: DataTypes.STRING(100) },
   difficultyLevel: {
     type: DataTypes.ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED'),
     allowNull: false,
     defaultValue: 'BEGINNER',
   },
-  compounds: { type: DataTypes.JSONB, defaultValue: {} },
   description: { type: DataTypes.TEXT },
-  iconUrl: { type: DataTypes.STRING(500) },
+  shortDescription: { type: DataTypes.TEXT },
+  imageUrl: { type: DataTypes.STRING(500) },
+  generalAttributes: { type: DataTypes.JSONB, defaultValue: {} },
 }, {
   tableName: 'species_profiles',
   timestamps: true,
