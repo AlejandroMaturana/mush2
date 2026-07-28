@@ -36,6 +36,16 @@ services:
         fromDatabase:
           name: mush2-db
           property: port
+      # ── MQTT Broker ────────────────────────────────────────────
+      # PENDING DEPENDENCY: No MQTT broker deployed yet for Render.
+      # When a broker is added (e.g. Mosquitto on Railway/Fly.io),
+      # set MQTT_BROKER_URL and MQTT_BROKER_PASS here.
+      # Without these, the MQTT bridge will fail gracefully on startup
+      # (non-blocking — backend still serves HTTP/API).
+      # - key: MQTT_BROKER_URL
+      #   value: mqtt://YOUR-BROKER-HOST:1883
+      # - key: MQTT_BROKER_PASS
+      #   value: YOUR_BROKER_PASSWORD
 
 databases:
   - name: mush2-db

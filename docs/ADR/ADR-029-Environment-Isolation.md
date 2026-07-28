@@ -8,7 +8,7 @@
 
 # Resumen
 
-Establece la arquitectura de aislamiento entre ambientes de Mush2. Cada ambiente (development, production, etc.) posee infraestructura completamente independiente: bases de datos, brokers MQTT, redes Docker y configuración. El sistema valida activamente la consistencia del ambiente durante el arranque e impide el inicio si detecta una configuración cruzada.
+Establece la arquitectura de aislamiento entre ambientes de Mush2. Cada ambiente posee infraestructura completamente independiente: bases de datos, brokers MQTT, redes Docker y configuración. El sistema valida activamente la consistencia del ambiente durante el arranque e impide el inicio si detecta una configuración cruzada.
 
 ---
 
@@ -46,7 +46,7 @@ El backend debe validar su configuración durante el arranque y detenerse inmedi
 
 * Variables obligatorias faltantes.
 * Configuraciones incompatibles con el ambiente declarado.
-* Conexiones a infraestructura que no corresponde al ambiente actual.
+* Conexiones a infraestructura que no corresponde al ambiente actual (DB y MQTT).
 
 ## 4. Environment Variables Explícitas
 
@@ -62,7 +62,7 @@ El desarrollo utiliza un `docker-compose.dev.yml` independiente del `docker-comp
 
 * **Resuelve el problema inmediato:** Elimina la posibilidad de que el backend de desarrollo conecte a la base de datos de producción.
 * **Previene regresiones:** Las validaciones fail-fast detectan configuraciones peligrosas antes de que causen daño.
-* **Base para futuras etapas:** El modelo de ambientes es extensible a staging, laboratory, testing sin refactorizar.
+* **Base para futuras etapas:** El modelo de ambientes es extensible a staging, laboratory, testing sin refactorizar (capacidades futuras, no implementadas).
 * **Simplicidad:** No introduce herramientas externas ni frameworks nuevos; usa Docker Compose y variables de entorno existentes.
 
 ---
@@ -169,6 +169,7 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 | ADR-029-R04 | Una configuración cruzada debe provocar FATAL y exit(1) |
 | ADR-029-R05 | El docker-compose.dev.yml es independiente del docker-compose.yml |
 | ADR-029-R06 | Ninguna variable de entorno puede asumir valores de otro ambiente por defecto |
+| ADR-029-R07 | La DB setting `app_environment` se deriva de `NODE_ENV` en el seed; no se define manualmente |
 
 ---
 
@@ -178,6 +179,7 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 |--------|--------|
 | `backend/src/config/ConfigurationService.js` | Nuevo: validación fail-fast de configuración |
 | `backend/src/config/env.js` | Actualizado: centraliza todas las variables de entorno |
+| `backend/src/config/systemSettingsDefaults.js` | Actualizado: `app_environment` deriva de `env.NODE_ENV` |
 | `backend/src/server.js` | Modificado: ejecuta validación antes de DB authenticate |
 | `backend/src/services/mqttBridge.js` | Modificado: usa env.js en lugar de process.env directo |
 | `docker-compose.dev.yml` | Nuevo: stack de desarrollo aislado |
@@ -189,11 +191,13 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 # Validación
 
 1. Iniciar el backend con `.env.development` → debe arrancar correctamente.
-2. Modificar `DATABASE_URL` para apuntar a una IP externa → debe fallar con FATAL.
-3. Configurar `NODE_ENV=production` sin `JWT_SECRET` → debe fallar con FATAL.
-4. Iniciar Docker Desktop con `docker-compose.dev.yml` → debe crear contenedores independientes.
-5. Verificar que los contenedores de desarrollo tienen nombres diferentes a los de producción.
-6. Detener Docker Desktop → la infraestructura de Render no debe verse afectada.
+2. Modificar `DATABASE_URL` para apuntar a un hostname de Render → debe fallar con FATAL.
+3. Configurar `MQTT_BROKER_URL` con un hostname de Render en desarrollo → debe fallar con FATAL.
+4. Configurar `NODE_ENV=production` sin `JWT_SECRET` → debe fallar con FATAL.
+5. Iniciar Docker Desktop con `docker-compose.dev.yml` → debe crear contenedores independientes.
+6. Verificar que los contenedores de desarrollo tienen nombres diferentes a los de producción.
+7. Verificar que `app_environment` en DB settings coincide con `NODE_ENV` (derivado, no editable).
+8. Detener Docker Desktop → la infraestructura de Render no debe verse afectada.
 
 ---
 
@@ -217,6 +221,8 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 | Versión | Fecha | Cambio |
 |----------|---------|--------|
 | 1.0 | 2026-07-27 | Creación del documento (ACEPTADO) |
+| 1.1 | 2026-07-28 | `app_environment` se deriva de `NODE_ENV` (regla R07) |
+| 1.2 | 2026-07-28 | Hardening: cross-env DB+MQTT con extracción de hostname, tests, docs clarificados |
 
 ---
 

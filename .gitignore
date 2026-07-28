@@ -17,7 +17,8 @@ backend/mush2_backup_20260630_113545.dump
 .env
 .env.local
 .env.development
-docker/mosquitto/config/password_file
+.env.production
+docker/mosquitto/*/password_file
 docker/mosquitto/certs/*.key
 docker/mosquitto/certs/*.crt
 *.log
