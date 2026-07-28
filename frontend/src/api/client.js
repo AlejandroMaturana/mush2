@@ -8,7 +8,7 @@ export { getLatestTelemetry, getLatestHealth, getTelemetryHistory } from '../fea
 export { getTelegramDeviceConfig, updateTelegramDeviceConfig } from '../features/devices/api/telegram'
 export { getCycles, getCycle, createCycle, updateCycle, transitionCycle, abortCycle, getCycleTransitions, getCycleStates, getBioactives, createBioactive, getBioactivesCorrelation } from '../features/cultivation/api/cycles'
 export { getRecipes, getRecipe, createRecipe, updateRecipe } from '../features/cultivation/api/recipes'
-export { getSpecies, getSpeciesById, createSpecies, updateSpecies, deleteSpecies } from '../features/cultivation/api/species'
+export { getSpeciesCatalog, getSpecies as getSpeciesById, createSpecies, updateSpecies, deleteSpecies } from '../features/cultivation/api/species'
 export { getChamberAnalytics } from '../features/analytics/api/analytics'
 export { getAlarmStats, getAlarms, getAlarmById, acknowledgeAlarm, resolveAlarm } from '../features/alarms/api/alarms'
 export { getAuditLogs } from '../features/logs/api/audit'
