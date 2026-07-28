@@ -59,7 +59,7 @@ El diagrama de la **máquina de estados del dispositivo** (`docs/diagrams/export
 
 | Archivo | Tipo | Descripción |
 |---|---|---|
-| `exports/state_machine.drawio` | StateDiagram | Máquina de estados del dispositivo: 8 estados (BOOT, INIT, WIFI, NORMAL, DEGRADED, ERROR, RECOVERY, SAFE) |
+| `exports/state_machine.drawio` | StateDiagram | Máquina de estados del dispositivo: 10 estados (BOOT, INIT, WIFI, NORMAL, DEGRADED, ERROR, RECOVERY, SAFE, OTA_UPDATING, PROVISIONING) |
 
 ---
 

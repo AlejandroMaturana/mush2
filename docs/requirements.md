@@ -88,7 +88,7 @@
 
 ### Disponibilidad
 - [x] Firmware opera en modo DEGRADED sin conexión WiFi/HTTP
-- [x] Máquina de estados: BOOT→INIT→WIFI→NORMAL→DEGRADED→ERROR→RECOVERY→SAFE
+- [x] Máquina de estados: BOOT→INIT→WIFI→NORMAL→DEGRADED→ERROR→RECOVERY→SAFE + OTA_UPDATING + PROVISIONING (10 estados)
 - [x] Watchdog jerárquico: TWDT (12s panic) + SWDT (30s recovery) + Health Check (60s heartbeat)
 - [x] Backend tolera pausas en polling (cola persistente de comandos)
 - [x] Base de datos con backup diario (pg_dump)

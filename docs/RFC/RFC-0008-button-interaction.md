@@ -4,7 +4,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Autor | Alejandro Maturana |
+| Autor | AlejandroMaturana |
 | Estado | DRAFT |
 | Fecha de apertura | 2026-07-12 |
 | Fecha de cierre | — |

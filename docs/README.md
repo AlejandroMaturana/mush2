@@ -133,7 +133,7 @@ Diagramas de arquitectura visual. Los diagramas principales están en Mermaid (`
 | `sequence-telemetry.mmd` | Mermaid | Flujo de telemetría: sensores → HTTP/MQTT → DB → SSE → Frontend |
 | `sequence-actuator.mmd` | Mermaid | Control de actuador: usuario → API → MQTT → firmware → ACK |
 | `sequence-failover.mmd` | Mermaid | Failover: broker caído → reconexión → modo degradado → safe mode |
-| `state_machine.drawio` | Draw.io | Máquina de estados del firmware (8 estados) — diagrama maestro |
+| `state_machine.drawio` | Draw.io | Máquina de estados del firmware (10 estados) — diagrama maestro |
 | `exports/` | — | Archivos Draw.io (solo state_machine.drawio) |
 
 ### 👤 Usuario (`docs/user/`)
