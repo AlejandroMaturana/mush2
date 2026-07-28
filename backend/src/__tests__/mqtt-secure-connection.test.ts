@@ -21,16 +21,11 @@ describe('MQTT Secure Connection', () => {
       expect(mqttBridgeSource).not.toContain("const BROKERS = [");
     });
 
-    it('should read MQTT_BROKER_URL from environment', () => {
-      expect(mqttBridgeSource).toContain("process.env.MQTT_BROKER_URL");
-    });
-
-    it('should read MQTT_BROKER_USER from environment', () => {
-      expect(mqttBridgeSource).toContain("process.env.MQTT_BROKER_USER");
-    });
-
-    it('should read MQTT_BROKER_PASS from environment', () => {
-      expect(mqttBridgeSource).toContain("process.env.MQTT_BROKER_PASS");
+    it('should read MQTT config from centralized env.js (ADR-029)', () => {
+      expect(mqttBridgeSource).toContain("import { env } from '../config/env.js'");
+      expect(mqttBridgeSource).toContain("env.MQTT.brokerUrl");
+      expect(mqttBridgeSource).toContain("env.MQTT.username");
+      expect(mqttBridgeSource).toContain("env.MQTT.password");
     });
   });
 

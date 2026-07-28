@@ -5,16 +5,17 @@ import { sendActuatorUpdate } from './webSocketServer.js';
 import { recordIncoming, getStatusFromDevice } from './deviceHealthService.js';
 import { createChildLogger } from '../config/pino.js';
 import { RESET_REASON_MAP } from '../config/resetReasons.js';
+import { env } from '../config/env.js';
 
 const TOPIC_PREFIX = 'mush2';
 const MAX_RECONNECT_ATTEMPTS = 20;
 const log = createChildLogger('MQTT');
 
-// Single broker configuration (no fallback)
+// Single broker configuration via centralized env.js (ADR-029)
 const broker = {
-  url: process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883',
-  username: process.env.MQTT_BROKER_USER || 'backend_bridge',
-  password: process.env.MQTT_BROKER_PASS || '',
+  url: env.MQTT.brokerUrl,
+  username: env.MQTT.username,
+  password: env.MQTT.password,
   label: 'Mosquitto',
 };
 
