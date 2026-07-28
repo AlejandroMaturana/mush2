@@ -1,11 +1,11 @@
 import client from '../../../shared/api/axiosInstance'
 
-export async function getSpecies(params = {}) {
+export async function getSpeciesCatalog(params = {}) {
   const { data } = await client.get('/species', { params })
   return data.data ?? data
 }
 
-export async function getSpeciesById(id) {
+export async function getSpecies(id) {
   const { data } = await client.get(`/species/${id}`)
   return data
 }

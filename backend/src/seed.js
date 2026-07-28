@@ -1,70 +1,175 @@
 import sequelize from './config/database.js';
 import bcrypt from 'bcryptjs';
-import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device, IntegrationCredentials, SpeciesProfile } from './models/index.js';
+import { Recipe, User, Chamber, UserChamberAccess, AuditLog, Device, IntegrationCredentials, SpeciesProfile, MedicinalProperty, BioactiveCompound } from './models/index.js';
 
-const SPECIES_PROFILES = [
+const DIFFICULTY_MAP = {
+  'Principiante': 'BEGINNER',
+  'Intermedio': 'INTERMEDIATE',
+  'Avanzado': 'ADVANCED',
+};
+
+const SPECIES = [
   {
-    name: 'Melena de León',
-    scientificName: 'Hericium erinaceus',
-    adapterClass: 'MEDICINAL',
-    originClimate: 'Templado húmedo',
-    difficultyLevel: 'INTERMEDIATE',
-    compounds: { betaGlucans: 30, erinacinas: true, hericenones: true },
-    description: 'Hongo medicinal con forma de cascada blanca. Rico en erinacinas que estimulan la producción de NGF (Factor de Crecimiento Nervioso). Requiere CO₂ bajo para desarrollo óptimo.',
+    id: 'hericium-erinaceus',
+    nombre_comun: 'Melena de León',
+    nombre_cientifico: 'Hericium erinaceus',
+    clase: 'Medicinal',
+    dificultad: 'Intermedio',
+    clima_origen: 'Templado',
+    descripcion: 'Hongo con aspecto de cascada de espinas blancas. Altamente valorado por sus propiedades nootrópicas y de salud neurológica.',
+    propiedades_medicinales: [
+      { categoria: 'Nootrópico y Cognitivo', descripcion: 'Estimula la síntesis de NGF (Factor de Crecimiento Nervioso), mejorando la memoria y concentración.' },
+      { categoria: 'Gastroprotector', descripcion: 'Apoya la salud de la mucosa gástrica y la microbiota intestinal.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'hericenones', valor: null },
+      { nombre: 'erinacines', valor: null },
+      { nombre: 'beta Glucans', valor: '30%' },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '8-10',
+      eficiencia_biologica_promedio: '60-80%',
+      sustratos_compatibles: ['Serrín de maderas duras', 'Suplemento de salvado de trigo'],
+    },
   },
   {
-    name: 'Reishi',
-    scientificName: 'Ganoderma lucidum',
-    adapterClass: 'MEDICINAL',
-    originClimate: 'Subtropical',
-    difficultyLevel: 'ADVANCED',
-    compounds: { betaGlucans: 40, triterpenes: true, ganodermanontriol: true },
-    description: 'El "hongo de la inmortalidad". Rico en triterpenos y betaglucanos. Forma de estante o sombrero. Ciclo largo pero alto valor medicinal.',
+    id: 'ganoderma-lucidum',
+    nombre_comun: 'Reishi',
+    nombre_cientifico: 'Ganoderma lucidum',
+    clase: 'Medicinal',
+    dificultad: 'Avanzado',
+    clima_origen: 'Subtropical',
+    descripcion: "El 'hongo de la inmortalidad'. Rico en triterpenos y betaglucanos. Forma de estante y consistencia leñosa.",
+    propiedades_medicinales: [
+      { categoria: 'Inmunomodulador', descripcion: 'Estimula la respuesta del sistema inmunitario y combate la fatiga.' },
+      { categoria: 'Adaptógeno y Relajante', descripcion: 'Ayuda a reducir el estrés físico/mental y promueve la calidad del sueño.' },
+      { categoria: 'Hepatoprotector', descripcion: 'Apoya la función hepática y reduce la inflamación celular.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'beta Glucans', valor: '40%' },
+      { nombre: 'triterpenes', valor: null },
+      { nombre: 'ganodermanontriol', valor: null },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '12-16',
+      eficiencia_biologica_promedio: '50-80%',
+      sustratos_compatibles: ['Serrín de maderas duras', 'Paja de trigo', 'Afrecho de trigo'],
+    },
   },
   {
-    name: 'Shiitake',
-    scientificName: 'Lentinula edodes',
-    adapterClass: 'EDIBLE',
-    originClimate: 'Templado',
-    difficultyLevel: 'INTERMEDIATE',
-    compounds: { betaGlucans: 25, lentinan: true, eritadenina: true },
-    description: 'Hongo comestible premium de origen asiático. Requiere sustrato de madera dura. Alto valor nutricional y sabor umami intenso.',
+    id: 'lentinula-edodes',
+    nombre_comun: 'Shiitake',
+    nombre_cientifico: 'Lentinula edodes',
+    clase: 'Comestible / Medicinal',
+    dificultad: 'Intermedio',
+    clima_origen: 'Templado húmedo',
+    descripcion: 'Clásico hongo asiático de sombrero marrón oscuro, gran sabor umami y excelentes propiedades inmunitarias.',
+    propiedades_medicinales: [
+      { categoria: 'Inmunoestimulante', descripcion: 'Contiene lentinan, conocido por potenciar las defensas del organismo.' },
+      { categoria: 'Cardiovascular', descripcion: 'Ayuda a mantener niveles saludables de colesterol gracias al eritadenine.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'lentinan', valor: null },
+      { nombre: 'eritadenine', valor: null },
+      { nombre: 'beta Glucans', valor: '25%' },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '10-14',
+      eficiencia_biologica_promedio: '75-100%',
+      sustratos_compatibles: ['Serrín de roble / maderas duras', 'Tarugos de madera (cultivo en troncos)'],
+    },
   },
   {
-    name: 'Cola de Pavo',
-    scientificName: 'Trametes versicolor',
-    adapterClass: 'MEDICINAL',
-    originClimate: 'Templado',
-    difficultyLevel: 'BEGINNER',
-    compounds: { betaGlucans: 35, polysaccharopeptide: true, PSP: true },
-    description: 'Hongo medicinal con forma de abanico. Alto contenido de PSP (polisacárido péptido). Ideal para principiantes por su resistencia.',
+    id: 'trametes-versicolor',
+    nombre_comun: 'Cola de Pavo',
+    nombre_cientifico: 'Trametes versicolor',
+    clase: 'Medicinal',
+    dificultad: 'Principiante',
+    clima_origen: 'Templado',
+    descripcion: 'Hongo medicinal con forma de abanico y anillos coloridos. Alto contenido de PSP (polisacárido péptido). Ideal para principiantes por su resistencia.',
+    propiedades_medicinales: [
+      { categoria: 'Inmunooncología', descripcion: 'Extremadamente estudiado por su apoyo al sistema inmune en terapias integrativas.' },
+      { categoria: 'Prebiótico', descripcion: 'Rico en polisacáridos que nutren la flora intestinal beneficiosa.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'P S P', valor: null },
+      { nombre: 'beta Glucans', valor: '35%' },
+      { nombre: 'polysaccharopeptide', valor: null },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '6-8',
+      eficiencia_biologica_promedio: '80-110%',
+      sustratos_compatibles: ['Serrín de madera', 'Ramas y troncos caídos'],
+    },
   },
   {
-    name: 'Cordyceps',
-    scientificName: 'Cordyceps militaris',
-    adapterClass: 'MEDICINAL',
-    originClimate: 'Montañoso templado',
-    difficultyLevel: 'ADVANCED',
-    compounds: { cordycepin: true, adenosina: true, betaGlucans: 20 },
-    description: 'Parásito de insectos con potentes propiedades energéticas. La versión cultivada (C. militaris) reemplaza al salvaje C. sinensis.',
+    id: 'cordyceps-militaris',
+    nombre_comun: 'Cordyceps Militaris',
+    nombre_cientifico: 'Cordyceps militaris',
+    clase: 'Medicinal',
+    dificultad: 'Avanzado',
+    clima_origen: 'Templado / Alpino',
+    descripcion: 'Hongo entomopatógeno de llamativo color naranja brillante. Potente estimulante de la energía celular y la oxigenación.',
+    propiedades_medicinales: [
+      { categoria: 'Energético y Rendimiento', descripcion: 'Optimiza la producción de ATP y mejora la utilización de oxígeno durante el ejercicio.' },
+      { categoria: 'Antienvejecimiento', descripcion: 'Alto contenido de antioxidantes y cordicepina con efectos revitalizantes.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'cordycepin', valor: null },
+      { nombre: 'adenosine', valor: null },
+      { nombre: 'beta Glucans', valor: '20%' },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '6-8',
+      eficiencia_biologica_promedio: '40-60%',
+      sustratos_compatibles: ['Arroz integral enriquecido', 'Medios líquidos especializados'],
+    },
   },
   {
-    name: 'Pleurotus',
-    scientificName: 'Pleurotus ostreatus',
-    adapterClass: 'EDIBLE',
-    originClimate: 'Templado húmedo',
-    difficultyLevel: 'BEGINNER',
-    compounds: { betaGlucans: 15, lovastatina: true, ergotioneina: true },
-    description: 'Ostra común. Hongo comestible ideal para principiantes. Crecimiento rápido y rendimiento alto.',
+    id: 'pleurotus-ostreatus',
+    nombre_comun: 'Pleurotus',
+    nombre_cientifico: 'Pleurotus ostreatus',
+    clase: 'Comestible',
+    dificultad: 'Principiante',
+    clima_origen: 'Templado húmedo',
+    descripcion: 'Ostra común. Hongo comestible ideal para principiantes. Crecimiento rápido y gran adaptabilidad a diversos sustratos.',
+    propiedades_medicinales: [
+      { categoria: 'Salud Metabólica', descripcion: 'Contiene compuestos naturales que apoyan la regulación del colesterol.' },
+      { categoria: 'Nutricional', descripcion: 'Aporte alto de proteínas vegetales, fibra y antioxidantes.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'beta Glucans', valor: '15%' },
+      { nombre: 'lovastatina', valor: null },
+      { nombre: 'ergotioneina', valor: null },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: '3-5',
+      eficiencia_biologica_promedio: '80-120%',
+      sustratos_compatibles: ['Paja de trigo o arroz', 'Serrín de maderas blandas', 'Pulpa de café'],
+    },
   },
   {
-    name: 'Chaga',
-    scientificName: 'Inonotus obliquus',
-    adapterClass: 'MEDICINAL',
-    originClimate: 'Boreal frío',
-    difficultyLevel: 'ADVANCED',
-    compounds: { betaGlucans: 45, melanina: true, superoxidoDismutasa: true },
-    description: 'Hongo parásito de abedules. Altísimo contenido de antioxidantes. Extracción por calor obligatoria.',
+    id: 'inonotus-obliquus',
+    nombre_comun: 'Chaga',
+    nombre_cientifico: 'Inonotus obliquus',
+    clase: 'Medicinal',
+    dificultad: 'Avanzado',
+    clima_origen: 'Boreal frío',
+    descripcion: 'Hongo parásito de abedules. Altísimo contenido de antioxidantes. Extracción compleja debido a su ciclo de vida silvestre.',
+    propiedades_medicinales: [
+      { categoria: 'Antioxidante Extremo', descripcion: 'Posee uno de los valores ORAC más altos del reino fúngico, combatiendo el estrés oxidativo celular.' },
+      { categoria: 'Antiinflamatorio', descripcion: 'Apoya la respuesta inflamatoria sistémica y la salud de la piel.' },
+    ],
+    compuestos_bioactivos: [
+      { nombre: 'melanina', valor: null },
+      { nombre: 'beta Glucans', valor: '45%' },
+      { nombre: 'superoxido Dismutasa', valor: null },
+    ],
+    atributos_generales: {
+      ciclo_estimado_semanas: 'Silvestre / No cultivable masivamente en interior a corto plazo',
+      eficiencia_biologica_promedio: 'N/D',
+      sustratos_compatibles: ['Troncos vivos de abedul'],
+    },
   },
 ];
 
@@ -195,7 +300,79 @@ async function seed() {
     await sequelize.authenticate();
     console.log('[Seed] DB conectada');
 
-    // ── RECETAS ──
+    console.log(`[Seed] ${SPECIES.length} especies`);
+
+    for (const data of SPECIES) {
+      const difficultyLevel = DIFFICULTY_MAP[data.dificultad] || 'BEGINNER';
+      const imageUrl = `/images/species/${data.id}.webp`;
+
+      const existing = await SpeciesProfile.findOne({ where: { scientificName: data.nombre_cientifico } });
+      let species;
+      if (existing) {
+        await existing.update({
+          name: data.nombre_comun,
+          adapterClass: data.clase,
+          originClimate: data.clima_origen,
+          difficultyLevel,
+          description: data.descripcion,
+          shortDescription: data.descripcion,
+          imageUrl,
+          generalAttributes: data.atributos_generales || {},
+        });
+        species = existing;
+        console.log(`[Seed] Actualizada: ${species.name}`);
+      } else {
+        species = await SpeciesProfile.create({
+          name: data.nombre_comun,
+          scientificName: data.nombre_cientifico,
+          adapterClass: data.clase,
+          originClimate: data.clima_origen,
+          difficultyLevel,
+          description: data.descripcion,
+          shortDescription: data.descripcion,
+          imageUrl,
+          generalAttributes: data.atributos_generales || {},
+        });
+        console.log(`[Seed] Creada: ${species.name}`);
+      }
+
+      if (data.propiedades_medicinales?.length) {
+        for (const prop of data.propiedades_medicinales) {
+          const existingProp = await MedicinalProperty.findOne({
+            where: { speciesId: species.id, category: prop.categoria },
+          });
+          if (existingProp) {
+            await existingProp.update({ description: prop.descripcion });
+          } else {
+            await MedicinalProperty.create({
+              speciesId: species.id,
+              category: prop.categoria,
+              description: prop.descripcion,
+            });
+          }
+        }
+      }
+
+      if (data.compuestos_bioactivos?.length) {
+        for (const comp of data.compuestos_bioactivos) {
+          const existingComp = await BioactiveCompound.findOne({
+            where: { speciesId: species.id, name: comp.nombre },
+          });
+          if (existingComp) {
+            await existingComp.update({ value: comp.valor });
+          } else {
+            await BioactiveCompound.create({
+              speciesId: species.id,
+              name: comp.nombre,
+              value: comp.valor,
+            });
+          }
+        }
+      }
+    }
+
+    console.log('[Seed] Especies pobladas');
+
     for (const data of RECIPES) {
       const [recipe, created] = await Recipe.findOrCreate({
         where: { name: data.name },
@@ -204,16 +381,6 @@ async function seed() {
       console.log(`[Seed] ${created ? 'Creada' : 'Ya existe'}: receta ${recipe.name}`);
     }
 
-    // ── ESPECIES ──
-    for (const data of SPECIES_PROFILES) {
-      const [species, created] = await SpeciesProfile.findOrCreate({
-        where: { scientificName: data.scientificName },
-        defaults: data,
-      });
-      console.log(`[Seed] ${created ? 'Creada' : 'Ya existe'}: especie ${species.name}`);
-    }
-
-    // ── VINCULAR RECETAS CON ESPECIES ──
     const allSpecies = await SpeciesProfile.findAll();
     const speciesMap = Object.fromEntries(allSpecies.map(s => [s.scientificName, s.id]));
 
@@ -222,11 +389,10 @@ async function seed() {
       const speciesId = speciesMap[recipe.species];
       if (speciesId) {
         await recipe.update({ speciesId });
-        console.log(`[Seed] Vinculada receta "${recipe.name}" con especie (id=${speciesId})`);
+        console.log(`[Seed] Vinculada receta "${recipe.name}" → especie id=${speciesId}`);
       }
     }
 
-    // ── USUARIOS DE PRUEBA ──
     const createdUsers = {};
     for (const u of TEST_USERS) {
       const passwordHash = await bcrypt.hash(u.password, 10);
@@ -235,14 +401,9 @@ async function seed() {
         defaults: { username: u.username, email: u.email, passwordHash, role: u.role },
       });
       createdUsers[u.role] = user;
-      if (userCreated) {
-        console.log(`[Seed] Creado usuario ${u.username} (${u.role})`);
-      } else {
-        console.log(`[Seed] Usuario ${u.username} ya existe`);
-      }
+      if (userCreated) console.log(`[Seed] Usuario ${u.username} (${u.role})`);
     }
 
-    // ── CÁMARAS DE PRUEBA ──
     const adminUser = createdUsers['SUPER_ADMIN'];
     const createdChambers = [];
     for (const c of TEST_CHAMBERS) {
@@ -251,10 +412,9 @@ async function seed() {
         defaults: { ...c, createdBy: adminUser.id, updatedBy: adminUser.id },
       });
       createdChambers.push(chamber);
-      console.log(`[Seed] ${created ? 'Creada' : 'Ya existe'}: cámara ${chamber.name}`);
+      if (created) console.log(`[Seed] Cámara ${chamber.name}`);
     }
 
-    // ── REGLAS DE ACCESO ──
     const accessRules = [
       { user: createdUsers['SUPER_ADMIN'], chambers: createdChambers, role: 'OWNER' },
       { user: createdUsers['ADMIN'], chambers: createdChambers.slice(0, 2), role: 'OWNER' },
@@ -279,22 +439,11 @@ async function seed() {
         }
       }
     }
-    console.log('[Seed] Reglas de acceso creadas');
 
-    // ── AUDITORÍA DE EJEMPLO ──
     const auditEntries = [
-      {
-        userId: adminUser.id, action: 'LOGIN_SUCCESS', resource: 'user',
-        resourceId: adminUser.id, details: { method: 'local' }, ip: '127.0.0.1',
-      },
-      {
-        userId: adminUser.id, action: 'DEVICE_REGISTER', resource: 'device',
-        details: { deviceId: 'mush2_test_001' }, ip: '127.0.0.1',
-      },
-      {
-        userId: adminUser.id, action: 'RECIPE_CREATE', resource: 'recipe',
-        details: { recipeName: RECIPES[0].name }, ip: '127.0.0.1',
-      },
+      { userId: adminUser.id, action: 'LOGIN_SUCCESS', resource: 'user', resourceId: adminUser.id, details: { method: 'local' }, ip: '127.0.0.1' },
+      { userId: adminUser.id, action: 'DEVICE_REGISTER', resource: 'device', details: { deviceId: 'mush2_test_001' }, ip: '127.0.0.1' },
+      { userId: adminUser.id, action: 'RECIPE_CREATE', resource: 'recipe', details: { recipeName: RECIPES[0].name }, ip: '127.0.0.1' },
     ];
 
     for (const entry of auditEntries) {
@@ -303,13 +452,8 @@ async function seed() {
         defaults: entry,
       });
     }
-    console.log('[Seed] Auditoría de ejemplo creada');
 
-    // ── THINGSPEAK TEST DATA ──
-    const thingSpeakDevices = await Device.findAll({
-      where: { thingSpeakEnabled: false },
-      limit: 2,
-    });
+    const thingSpeakDevices = await Device.findAll({ where: { thingSpeakEnabled: false }, limit: 2 });
     for (const device of thingSpeakDevices) {
       await device.update({
         thingSpeakEnabled: true,
@@ -319,23 +463,26 @@ async function seed() {
         thingSpeakSyncInterval: 300000,
       });
       await IntegrationCredentials.setCredentials(device.id, 'THINGSPEAK', {
-        channelId: '123456',
-        readKey: 'ABCDEFGHIJKLMNOP',
-        writeKey: 'ZYXWVUTSRQPONMLK',
-        syncInterval: 300000,
+        channelId: '123456', readKey: 'ABCDEFGHIJKLMNOP', writeKey: 'ZYXWVUTSRQPONMLK', syncInterval: 300000,
       });
-      console.log(`[Seed] ThingSpeak habilitado en dispositivo ${device.deviceId}`);
-    }
-    if (thingSpeakDevices.length === 0) {
-      console.log('[Seed] No hay dispositivos para asignar ThingSpeak de prueba');
     }
 
     await sequelize.close();
-    console.log('[Seed] OK — R11 completado');
+    console.log('[Seed] OK');
   } catch (err) {
     console.error('[Seed] Error:', err);
     process.exit(1);
   }
 }
 
-seed();
+// Self-execute when run directly: `node src/seed.js`
+// When imported as a module, just export (used by seed-dev.js).
+const isDirectRun = process.argv[1] && (
+  process.argv[1].endsWith('/seed.js') || process.argv[1].endsWith('\\seed.js')
+);
+
+if (isDirectRun) {
+  seed();
+}
+
+export default seed;

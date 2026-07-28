@@ -1,21 +1,22 @@
 /**
  * Development-only seed script (ADR-029).
  *
- * Wraps the existing seed.js with an environment guard:
+ * Wraps seed.js with an environment guard:
  * - Verifies NODE_ENV=development before running
- * - Uses the development database configuration
+ * - Validates configuration before connecting to DB
  *
- * Usage: npm run db:seed:dev
+ * Usage: pnpm db:seed:dev
  */
 import { env } from './config/env.js';
 import { validate } from './config/ConfigurationService.js';
+import seed from './seed.js';
 
 async function seedDev() {
   // ── Environment guard ──────────────────────────────────────────
   if (env.NODE_ENV !== 'development') {
     console.error(
       `[Seed-Dev] REFUSED: This script can only run in development mode. ` +
-      `Current NODE_ENV: "${env.NODE_ENV}". Use npm run db:seed for production.`
+      `Current NODE_ENV: "${env.NODE_ENV}". Use pnpm db:seed for other environments.`
     );
     process.exit(1);
   }
@@ -32,8 +33,7 @@ async function seedDev() {
 
   // ── Run seed ───────────────────────────────────────────────────
   console.log('[Seed-Dev] Starting development seed...');
-  const { default: seed } = await import('./seed.js');
-  // seed.js self-executes, so the import triggers it
+  await seed();
 }
 
 seedDev();
