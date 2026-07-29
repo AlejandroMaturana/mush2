@@ -24,6 +24,14 @@ dotenv.config({
   override: true,
 });
 
+// ── Environment-aware defaults for MQTT provisioning ──────────────
+// Each environment has its own isolated password_file (ADR-029).
+// Override with MOSQUITTO_PASSWORD_FILE env var.
+const mqttPasswordFile =
+  nodeEnv === 'production'
+    ? 'docker/mosquitto/prod/password_file'
+    : 'docker/mosquitto/dev/password_file';
+
 export const env = {
   NODE_ENV: nodeEnv,
   PORT: parseInt(process.env.PORT || '3797', 10),
@@ -65,7 +73,7 @@ export const env = {
   },
 
   MQTT_PROVISIONING: {
-    passwordFile: process.env.MOSQUITTO_PASSWORD_FILE || '',
+    passwordFile: process.env.MOSQUITTO_PASSWORD_FILE || mqttPasswordFile,
     container: process.env.MOSQUITTO_CONTAINER || 'mush2-mosquitto',
     mosquittoPasswd: process.env.MOSQUITTO_PASSWD_PATH || 'mosquitto_passwd',
   },
