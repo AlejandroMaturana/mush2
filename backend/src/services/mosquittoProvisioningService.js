@@ -1,14 +1,11 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import MQTTProvisioningService from './mqttProvisioningService.js';
 import { createChildLogger } from '../config/pino.js';
 import { env } from '../config/env.js';
 
 const execFileAsync = promisify(execFile);
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const log = createChildLogger('MQTT_PROV');
 
 /**
@@ -81,8 +78,8 @@ export default class MosquittoProvisioningService extends MQTTProvisioningServic
   async reload() {
     try {
       const { stdout, stderr } = await execFileAsync(
-        'docker', ['compose', 'restart', this.container],
-        { timeout: 30000, cwd: resolve(__dirname, '../../..') },
+        'docker', ['restart', this.container],
+        { timeout: 30000 },
       );
 
       log.info({ event: 'BROKER_RESTARTED', container: this.container }, 'Mosquitto container restarted');
