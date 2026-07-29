@@ -121,9 +121,45 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 ---
 
+## Desarrollo Local
+
+### Prerequisitos
+
+- Node.js 20+
+- Docker Desktop
+- PostgreSQL 16 (opcional, se usa el contenedor Docker)
+
+### Bootstrap rápido
+
+```bash
+# 1. Clonar
+git clone <repo>
+cd mush2
+
+# 2. Crear archivos de configuración local
+cp .env.development.example .env.development
+cp docker/mosquitto/dev/password_file.example docker/mosquitto/dev/password_file
+
+# 3. Iniciar stack de infraestructura (PostgreSQL + Mosquitto)
+docker compose -f docker-compose.dev.yml up -d
+
+# 4. Generar credenciales MQTT
+./scripts/create-mqtt-user.sh backend_bridge <password> dev
+
+# 5. Instalar dependencias del backend
+cd backend && npm install
+
+# 6. Iniciar backend
+npm run dev
+```
+
+El backend se conecta al stack Docker en `localhost:5433` (PostgreSQL) y `localhost:1884` (MQTT).
+
+---
+
 ## Autor
 
-**AlejandroMaturana** — _Ingeniero Industrial & Full Stack Developer_
+**AlejandroMaturana** — _Ingeniero Industrial & Desarrollador Full Stack_
 
 - **GitHub**: [@AlejandroMaturana](https://github.com/AlejandroMaturana)
 - **LinkedIn**: [manugl86](https://www.linkedin.com/in/manugl86)
