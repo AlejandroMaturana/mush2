@@ -31,7 +31,7 @@ function DeviceRow({ device, telemetry }) {
   return (
     <tr
       className="card-clickable"
-      onClick={() => navigate(`/fleet/devices/${device.id}`)}
+      onClick={() => navigate(`/fleet/devices/${device.deviceId}`)}
     >
       <td style={{ padding: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -92,7 +92,7 @@ function Dashboard() {
       if (cancelledRef.current) return
       setDevices(devs)
 
-      const allTel = await Promise.all(devs.map(d => getLatestTelemetry(d.id).catch(() => null)))
+      const allTel = await Promise.all(devs.map(d => getLatestTelemetry(d.deviceId).catch(() => null)))
       if (cancelledRef.current) return
 
       const map = {}

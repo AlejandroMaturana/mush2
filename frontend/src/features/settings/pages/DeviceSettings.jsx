@@ -45,14 +45,14 @@ function DeviceSettings() {
 
   async function handleRename() {
     if (!device || !renameValue.trim()) return; setSaving(true); setRenameMsg(null)
-    try { await updateDevice(device.id, { chamberName: renameValue.trim() }); setDevice(p => ({ ...p, chamberName: renameValue.trim() })); setRenameMsg({ type: 'ok', text: 'Nombre del dispositivo actualizado' }) }
+    try { await updateDevice(device.deviceId, { chamberName: renameValue.trim() }); setDevice(p => ({ ...p, chamberName: renameValue.trim() })); setRenameMsg({ type: 'ok', text: 'Nombre del dispositivo actualizado' }) }
     catch (err) { setRenameMsg({ type: 'err', text: err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
   async function handleValidateThingSpeak() {
     if (!device || !tsApiKey.trim()) return; setTsValidating(true); setTsMsg(null); setTsChannels([]); setTsSelectedChannel(null)
-    try { const r = await validateThingSpeak(device.id, tsApiKey.trim()); if (r.valid) { setTsChannels(r.channels); setTsMsg({ type: 'ok', text: `Clave válida — ${r.channels.length} canal(es) encontrado(s)` }) } }
+    try { const r = await validateThingSpeak(device.deviceId, tsApiKey.trim()); if (r.valid) { setTsChannels(r.channels); setTsMsg({ type: 'ok', text: `Clave válida — ${r.channels.length} canal(es) encontrado(s)` }) } }
     catch (err) { setTsMsg({ type: 'err', text: err.response?.data?.error || 'Clave de API inválida' }) }
     finally { setTsValidating(false) }
   }
@@ -64,7 +64,7 @@ function DeviceSettings() {
     try {
       const enabled = !!tsChannelId
       const payload = { thingSpeakEnabled: enabled, thingSpeakChannelId: enabled ? tsChannelId : null, thingSpeakReadKey: enabled ? tsReadKey : null, thingSpeakWriteKey: enabled ? tsWriteKey : null, thingSpeakSyncInterval: parseInt(tsSyncInterval, 10) || 300000 }
-      await updateDevice(device.id, payload); setDevice(p => ({ ...p, ...payload })); setTsMsg({ type: 'ok', text: enabled ? 'ThingSpeak habilitado y guardado' : 'ThingSpeak deshabilitado' })
+      await updateDevice(device.deviceId, payload); setDevice(p => ({ ...p, ...payload })); setTsMsg({ type: 'ok', text: enabled ? 'ThingSpeak habilitado y guardado' : 'ThingSpeak deshabilitado' })
     } catch (err) { setTsMsg({ type: 'err', text: err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
@@ -72,7 +72,7 @@ function DeviceSettings() {
   async function handleDisconnectThingSpeak() {
     if (!device) return; setSaving(true); setTsMsg(null)
     try {
-      await updateDevice(device.id, { thingSpeakEnabled: false, thingSpeakChannelId: null, thingSpeakReadKey: null, thingSpeakWriteKey: null })
+      await updateDevice(device.deviceId, { thingSpeakEnabled: false, thingSpeakChannelId: null, thingSpeakReadKey: null, thingSpeakWriteKey: null })
       setDevice(p => ({ ...p, thingSpeakEnabled: false, thingSpeakChannelId: null, thingSpeakReadKey: null, thingSpeakWriteKey: null }))
       setTsApiKey(''); setTsChannels([]); setTsSelectedChannel(null); setTsChannelId(''); setTsReadKey(''); setTsWriteKey('')
       setTsMsg({ type: 'ok', text: 'ThingSpeak desconectado' })
@@ -98,8 +98,8 @@ function DeviceSettings() {
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Identidad y parámetros de hardware</p>
         </div>
         {devices.length > 0 && (
-          <select value={selectedId || ''} onChange={e => setSelectedId(Number(e.target.value))} className="form-select" style={{ fontSize: '11px', minWidth: '180px' }}>
-            {devices.map(d => <option key={d.id} value={d.id}>{d.chamberName || d.deviceId}</option>)}
+          <select value={selectedId || ''} onChange={e => setSelectedId(e.target.value)} className="form-select" style={{ fontSize: '11px', minWidth: '180px' }}>
+            {devices.map(d => <option key={d.id} value={d.deviceId}>{d.chamberName || d.deviceId}</option>)}
           </select>
         )}
       </div>

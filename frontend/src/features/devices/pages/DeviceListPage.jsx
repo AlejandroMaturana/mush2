@@ -163,7 +163,7 @@ function DeviceList() {
                 return (
                   <tr key={d.id}>
                     <td>
-                      <Link to={`/fleet/devices/${d.id}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--spore-green)', textDecoration: 'none', fontWeight: 600 }}>
+                      <Link to={`/fleet/devices/${d.deviceId}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--spore-green)', textDecoration: 'none', fontWeight: 600 }}>
                         {d.deviceId}
                       </Link>
                       {d.macAddress && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', display: 'block' }}>{d.macAddress}</span>}
@@ -191,7 +191,7 @@ function DeviceList() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '4px' }}>
-                        <Link to={`/fleet/devices/${d.id}`} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-container)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                        <Link to={`/fleet/devices/${d.deviceId}`} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-container)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--outline)' }}>visibility</span>
                         </Link>
                         <button onClick={() => setShowDeleteModal(d)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-container)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
