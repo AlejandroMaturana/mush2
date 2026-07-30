@@ -92,10 +92,11 @@ jobs:
         run: cd backend && pnpm install
 
       - name: Run tests
-        run: cd backend && node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.js
+        run: cd backend && pnpm run test:ci
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mush2_test
           NODE_ENV: test
+          LOG_LEVEL: silent
 
   frontend:
     name: Frontend build

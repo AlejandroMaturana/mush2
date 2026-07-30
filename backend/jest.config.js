@@ -4,4 +4,7 @@ export default {
   testRegex: '(/__tests__/.*|\\.test)\\.js$',
   testPathIgnorePatterns: ['/node_modules/', '/src/__tests__/test-server.js'],
   moduleFileExtensions: ['js', 'json'],
+  collectCoverageFrom: ['src/**/*.js'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov'],
 };
