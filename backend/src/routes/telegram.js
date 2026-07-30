@@ -74,24 +74,25 @@ router.post('/unlink', authenticate, async (req, res) => {
 });
 
 async function canAccessDevice(userId, deviceId) {
-  const device = await Device.findByPk(deviceId);
-  if (!device) return false;
-  if (device.userId === userId) return true;
-  const access = await UserChamberAccess.findOne({ where: { userId, deviceId } });
-  return !!access;
+  const device = await Device.findOne({ where: { deviceId } });
+  if (!device) return null;
+  if (device.userId === userId) return device;
+  const access = await UserChamberAccess.findOne({ where: { userId, deviceId: device.id } });
+  return access ? device : null;
 }
 
 router.get('/device/:deviceId', authenticate, async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    if (!await canAccessDevice(req.user.id, deviceId)) {
+    const device = await canAccessDevice(req.user.id, deviceId);
+    if (!device) {
       return res.status(403).json({ error: 'FORBIDDEN' });
     }
 
-    let config = await TelegramDeviceConfig.findOne({ where: { deviceId } });
+    let config = await TelegramDeviceConfig.findOne({ where: { deviceId: device.id } });
     if (!config) {
-      config = await TelegramDeviceConfig.create({ deviceId });
+      config = await TelegramDeviceConfig.create({ deviceId: device.id });
     }
 
     res.json({ data: config });
@@ -105,7 +106,8 @@ router.patch('/device/:deviceId', authenticate, async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    if (!await canAccessDevice(req.user.id, deviceId)) {
+    const device = await canAccessDevice(req.user.id, deviceId);
+    if (!device) {
       return res.status(403).json({ error: 'FORBIDDEN' });
     }
 
@@ -115,7 +117,7 @@ router.patch('/device/:deviceId', authenticate, async (req, res) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
 
-    const [config] = await TelegramDeviceConfig.findOrCreate({ where: { deviceId }, defaults: { deviceId } });
+    const [config] = await TelegramDeviceConfig.findOrCreate({ where: { deviceId: device.id }, defaults: { deviceId: device.id } });
     await config.update(updates);
 
     res.json({ data: config });

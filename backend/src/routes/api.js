@@ -151,7 +151,8 @@ router.post('/devices/:id/claim', async (req, res) => {
       return res.status(401).json({ error: 'Autenticación requerida' });
     }
 
-    const device = await Device.findByPk(req.params.id) || await Device.findOne({ where: { deviceId: req.params.id } });
+    const device = await Device.findOne({ where: { deviceId: req.params.id } });
+
     if (!device) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
     }
@@ -191,12 +192,12 @@ router.post('/devices/:id/claim', async (req, res) => {
 
 router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
-    const device = await Device.findByPk(req.device.id, { include: [{ model: Actuator }] });
-    if (!device) return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
-    const json = device.toJSON();
-    const latestHealth = await getLatestHealth(device.id);
-    json.status = getStatusFromDevice(device, latestHealth);
-    json.secondsSinceLastSeen = getSecondsSinceLastSeen(device);
+    const actuators = await Actuator.findAll({ where: { deviceId: req.device.id } });
+    const json = req.device.toJSON();
+    json.actuators = actuators;
+    const latestHealth = await getLatestHealth(req.device.id);
+    json.status = getStatusFromDevice(req.device, latestHealth);
+    json.secondsSinceLastSeen = getSecondsSinceLastSeen(req.device);
     res.json(json);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -235,7 +236,7 @@ router.patch('/devices/:id', checkDeviceAccess, async (req, res) => {
 router.get('/devices/:id/cycle', checkDeviceAccess, async (req, res) => {
   try {
     const cycle = await CultivationCycle.findOne({
-      where: { deviceId: req.params.id, status: 'ACTIVE' },
+      where: { deviceId: req.device.id, status: 'ACTIVE' },
       include: [{ model: Recipe }],
     });
     res.json({ data: cycle });
@@ -252,7 +253,7 @@ router.get('/devices/:id/telemetry/latest', checkDeviceAccess, async (req, res) 
       FROM telemetry t
       WHERE t."deviceId" = $1
       ORDER BY t."sensorType", t."timestamp" DESC
-    `, { bind: [req.params.id] });
+    `, { bind: [req.device.id] });
 
     const result = {};
     for (const row of rows) {
@@ -269,7 +270,6 @@ router.get('/devices/:id/telemetry/latest', checkDeviceAccess, async (req, res) 
 router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
   try {
     const { sensorType, from, to, limit = 8000, resolution } = req.query;
-    const deviceId = req.params.id;
     const limitNum = parseInt(limit, 10);
 
     if (resolution && parseInt(resolution) > 0) {
@@ -283,7 +283,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
         bucketExpr = `date_trunc('day', t."timestamp")`;
       }
 
-      const params = [deviceId];
+      const params = [req.device.id];
       if (from) params.push(new Date(from));
       if (to) params.push(new Date(to));
       const rangeClause = from ? ` AND t."timestamp" >= $2` : '';
@@ -303,7 +303,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
 
       const data = rows.reverse().map(r => ({
         id: `${r.sensorType}_${r.bucket}`,
-        deviceId,
+        deviceId: req.device.id,
         sensorType: r.sensorType,
         value: parseFloat(r.value),
         unit: r.unit,
@@ -313,7 +313,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
       return res.json({ data });
     }
 
-    const where = { deviceId };
+    const where = { deviceId: req.device.id };
     if (sensorType) where.sensorType = sensorType.toUpperCase();
     if (from || to) {
       where.timestamp = {};
@@ -334,7 +334,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
 router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
   try {
     const { from, to, limit = 100 } = req.query;
-    const where = { deviceId: req.params.id };
+    const where = { deviceId: req.device.id };
     if (from || to) {
       where.timestamp = {};
       if (from) where.timestamp[Op.gte] = new Date(from);
@@ -354,7 +354,7 @@ router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
 router.get('/devices/:id/health/latest', checkDeviceAccess, async (req, res) => {
   try {
     const latest = await DeviceHealth.findOne({
-      where: { deviceId: req.params.id },
+      where: { deviceId: req.device.id },
       order: [['timestamp', 'DESC']],
     });
     res.json(latest || {});
@@ -365,7 +365,7 @@ router.get('/devices/:id/health/latest', checkDeviceAccess, async (req, res) => 
 
 router.get('/devices/:id/actuators', checkDeviceAccess, async (req, res) => {
   try {
-    const actuators = await Actuator.findAll({ where: { deviceId: req.params.id } });
+    const actuators = await Actuator.findAll({ where: { deviceId: req.device.id } });
     res.json({ data: actuators });
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -550,7 +550,7 @@ router.post('/devices/:id/thingSpeak/validate', checkDeviceAccess, async (req, r
 router.get('/devices/:id/integrations', checkDeviceAccess, async (req, res) => {
   try {
     const list = await IntegrationCredentials.findAll({
-      where: { deviceId: req.params.id },
+      where: { deviceId: req.device.id },
       attributes: ['id', 'provider', 'status', 'lastUsed', 'lastError', 'createdAt', 'updatedAt'],
     });
     res.json({ data: list });
@@ -566,7 +566,7 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
       return res.status(400).json({ error: 'channelId requerido' });
     }
 
-    const instance = await IntegrationCredentials.setCredentials(req.params.id, 'THINGSPEAK', {
+    const instance = await IntegrationCredentials.setCredentials(req.device.id, 'THINGSPEAK', {
       channelId,
       readKey: readKey || '',
       writeKey: writeKey || '',
@@ -579,7 +579,7 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
       thingSpeakReadKey: readKey || null,
       thingSpeakWriteKey: writeKey || null,
       thingSpeakSyncInterval: syncInterval || 300000,
-    }, { where: { id: req.params.id } });
+    }, { where: { id: req.device.id } });
 
     if (req.user) {
       await logAudit({
@@ -600,7 +600,7 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
 router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
   try {
     const { component, from, to, limit = 100 } = req.query;
-    const where = { deviceId: req.params.id };
+    const where = { deviceId: req.device.id };
     if (component) where.component = component;
     if (from || to) {
       where.timestamp = {};
@@ -621,7 +621,7 @@ router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
 router.get('/devices/:id/maintenance/latest', checkDeviceAccess, async (req, res) => {
   try {
     const latest = await DeviceMaintenance.findAll({
-      where: { deviceId: req.params.id },
+      where: { deviceId: req.device.id },
       order: [['timestamp', 'DESC']],
       group: ['component'],
       attributes: [
@@ -640,7 +640,7 @@ router.post('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
   try {
     const { type, component, notes, health, estimatedFailure } = req.body;
     const record = await DeviceMaintenance.create({
-      deviceId: parseInt(req.params.id, 10),
+      deviceId: req.device.id,
       component: component || type || 'GENERAL',
       health: health || 100,
       estimatedFailure: estimatedFailure || null,

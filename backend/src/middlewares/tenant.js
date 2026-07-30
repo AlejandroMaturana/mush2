@@ -19,8 +19,8 @@ export async function tenantScope(req, res, next) {
 
 export async function checkDeviceAccess(req, res, next) {
   try {
-    const { id } = req.params;
-    const device = await Device.findByPk(id) || await Device.findOne({ where: { deviceId: id } });
+    const { id: deviceId } = req.params;
+    const device = await Device.findOne({ where: { deviceId } });
 
     if (!device) {
       return res.status(404).json({ error: 'Dispositivo no encontrado' });
@@ -39,7 +39,7 @@ export async function checkDeviceAccess(req, res, next) {
 
     // Dispositivo tiene dueño pero el request no está autenticado
     if (!req.user) {
-      return res.status(401).json({ error: 'Autenticación requerida para acceder a este dispositivo' });
+      return res.status(401).json({ error: 'Autenticación requerida para acceder a este dispositivo', code: 'AUTH_REQUIRED' });
     }
 
     const UserChamberAccess = (await import('../models/UserChamberAccess.js')).default;

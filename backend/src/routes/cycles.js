@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
 
     let resolvedChamberId = chamberId;
     if (deviceId) {
-      const dev = await Device.findByPk(deviceId);
+      const dev = await Device.findOne({ where: { deviceId } });
       if (!dev) return res.status(400).json({ error: 'El dispositivo no existe' });
       if (dev.chamberId != null && resolvedChamberId == null) resolvedChamberId = dev.chamberId;
     }
