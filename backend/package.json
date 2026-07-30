@@ -12,7 +12,10 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --watch",
     "test:ddd": "vitest run --config vitest.config.ts",
-    "test:ddd:watch": "vitest --config vitest.config.ts"
+    "test:ddd:watch": "vitest --config vitest.config.ts",
+    "test:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts --coverage"
   },
   "author": "AlejandroMaturana",
   "license": "MIT",

@@ -152,6 +152,7 @@ router.post('/devices/:id/claim', async (req, res) => {
     }
 
     const device = await Device.findOne({ where: { deviceId: req.params.id } });
+
     if (!device) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
     }

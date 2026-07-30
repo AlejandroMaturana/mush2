@@ -8,7 +8,7 @@
  * Throws a descriptive error on any critical violation.
  */
 
-const VALID_ENVIRONMENTS = ['development', 'production'];
+const VALID_ENVIRONMENTS = ['development', 'production', 'test'];
 
 const PRODUCTION_HOSTNAME_PATTERNS = [
   /render\.com/i,
