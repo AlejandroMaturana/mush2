@@ -1,5 +1,48 @@
 # Changelog — Mush2
 
+## 2026-07-29
+
+### Backend — v1.4.0
+
+- feat(config): ConfigurationService con carga jerárquica `.env` + `.env.{NODE_ENV}`
+- feat(config): Aislamiento de entorno de desarrollo (ADR-029)
+- feat(mqtt): Broker Mosquitto aislado por entorno
+- feat(mqtt): ACL finales de Mosquitto para vertical slice DEV
+  - `mush2/+/telemetry` (write), `mush2/+/alarm` (write), `mush2/+/health` (write)
+  - `mush2/+/actuators` (read), `mush2/+/ota/command` (read)
+  - `mush2/+/ota/#` (readwrite) para backend_bridge
+- feat(mosquitto): Templates de configuración y bootstrap de desarrollo local
+- fix(acl): Corrección de scope OTA para backend_bridge (`ota` → `ota/#`)
+- chore(docker): Stack de desarrollo aislado (`docker-compose.dev.yml`)
+
+### Frontend — v1.14.0
+
+- feat(species): SpeciesLibrary convertida a solo lectura
+- feat(species): Modelo de especies normalizado con propiedades y compuestos
+- feat(species): Seed actualizada con datos de catálogo
+- feat(species): Endpoints de catálogo actualizados
+- chore(assets): Imágenes de especies reorganizadas
+
+### Docs — v0.2.0
+
+- ADR-029: Aislamiento de entornos de desarrollo
+- ADR-029: Modelo de configuración y separación DEV/STAGING/PRODUCTION
+- Actualización de referencias cruzadas y documentación de arquitectura
+
+### Scripts & Tooling
+
+- feat(scripts): `dev-mqtt-setup.ps1` — provisioning idempotente de Mosquitto DEV
+  - Pre-validación de contenedor Docker
+  - Detección de credenciales existentes (no duplica)
+  - Validación automática de autenticación post-creación
+- chore(docker): Exposición de puertos para identidad MQTT por dispositivo
+- Actualización de `.gitignore` y `render.yaml` para aislamiento de entornos
+
+**Resultado**
+- FASE 1 completada — Infraestructura MQTT de desarrollo completamente operativa con ACL granulares, script de provisioning idempotente y validación end-to-end de todo el vertical slice (Device → Backend → Device).
+- Aislamiento de entornos ADR-029 aplicado a configuración, MQTT y Docker.
+- Species Library migrada a solo lectura como fuente de datos centralizada.
+
 ## 2026-07-27
 
 ### Backend — v1.3.0
