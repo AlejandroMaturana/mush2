@@ -151,7 +151,7 @@ router.post('/devices/:id/claim', async (req, res) => {
       return res.status(401).json({ error: 'Autenticación requerida' });
     }
 
-    const device = await Device.findByPk(req.params.id);
+    const device = await Device.findByPk(req.params.id) || await Device.findOne({ where: { deviceId: req.params.id } });
     if (!device) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
     }
@@ -191,9 +191,7 @@ router.post('/devices/:id/claim', async (req, res) => {
 
 router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
-    const device = await Device.findByPk(req.params.id, {
-      include: [{ model: Actuator }],
-    });
+    const device = await Device.findByPk(req.device.id, { include: [{ model: Actuator }] });
     if (!device) return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
     const json = device.toJSON();
     const latestHealth = await getLatestHealth(device.id);

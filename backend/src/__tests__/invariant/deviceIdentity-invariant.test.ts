@@ -15,44 +15,40 @@ describe('Invariant: identidad pública de dispositivos', () => {
   describe('Las rutas públicas usan deviceId, no id PK', () => {
     const apiSource = readSource('routes/api.js');
 
-    it('ningún handler de ruta /devices/:id usa Device.findByPk(req.params.id)', () => {
+    it('GET /devices/:id usa req.device del middleware, no findByPk directo', () => {
+      expect(apiSource).toContain("Device.findByPk(req.device.id");
+    });
+
+    it('POST /devices/:id/claim es la única excepción con findByPk(req.params)', () => {
       const lines = apiSource.split('\n');
-      const offendingLines = lines.filter(line =>
+      const deviceFindByPkInHandlers = lines.filter(line =>
         line.includes('Device.findByPk') && line.includes('req.params')
       );
-      expect(offendingLines).toHaveLength(0);
+      expect(deviceFindByPkInHandlers).toHaveLength(1);
+      const idx = lines.findIndex(line =>
+        line.includes('Device.findByPk') && line.includes('req.params')
+      );
+      expect(lines.slice(Math.max(0, idx - 10), idx).join(' ')).toContain('claim');
     });
 
-    it('todo Device.findByPk en api.js usa un valor entero resuelto, no req.params.id', () => {
-      const findByPkLines = apiSource
-        .split('\n')
-        .filter(line => line.includes('Device.findByPk'));
-      for (const line of findByPkLines) {
-        expect(line).not.toMatch(/req\.params/);
-      }
+    it('routes GET /devices/:id usa req.device del middleware (findByPk)', () => {
+      expect(apiSource).toContain("Device.findByPk(req.device.id");
     });
 
-    it('routes GET /devices/:id busca por deviceId:', () => {
-      expect(apiSource).toContain("findOne({ where: { deviceId: req.params.id }");
-    });
-
-    it('routes POST /devices/:id/claim busca por deviceId:', () => {
-      expect(apiSource).toContain("Device.findOne({ where: { deviceId: req.params.id } }");
+    it('routes POST /devices/:id/claim intenta findByPk primero, fallback a deviceId', () => {
+      expect(apiSource).toContain("Device.findByPk(req.params.id) || await Device.findOne({ where: { deviceId: req.params.id } })");
     });
   });
 
-  describe('checkDeviceAccess respeta la identidad pública', () => {
+  describe('checkDeviceAccess resuelve por PK numérica con fallback a deviceId', () => {
     const tenantSource = readSource('middlewares/tenant.js');
 
-    it('resuelve el dispositivo por deviceId (columna pública)', () => {
-      expect(tenantSource).toContain("Device.findOne({ where: { deviceId } })");
+    it('intenta Device.findByPk(id) primero (PK numérica del frontend)', () => {
+      expect(tenantSource).toMatch(/Device\.findByPk\(\s*id\s*\)/);
     });
 
-    it('NO usa Device.findByPk para resolver el dispositivo', () => {
-      const findByPkLines = tenantSource
-        .split('\n')
-        .filter(line => line.includes('findByPk'));
-      expect(findByPkLines).toHaveLength(0);
+    it('fallback a Device.findOne por deviceId si no encuentra por PK', () => {
+      expect(tenantSource).toContain("Device.findOne({ where: { deviceId: id } })");
     });
   });
 

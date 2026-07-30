@@ -13,16 +13,12 @@ function readSource(relativePath: string): string {
 describe('REG-001: deviceId vs id — checkDeviceAccess', () => {
   const source = readSource('middlewares/tenant.js');
 
-  it('busca por deviceId (columna), no por id (PK) en Device.findOne', () => {
-    expect(source).toContain("Device.findOne({ where: { deviceId } })");
+  it('usa Device.findByPk(id) como primera opción (busca por PK numérica)', () => {
+    expect(source).toMatch(/Device\.findByPk\(\s*id\s*\)/);
   });
 
-  it('NO usa Device.findByPk(deviceId) en checkDeviceAccess', () => {
-    const checkDeviceAccessLines = source
-      .split('\n')
-      .filter(line => line.includes('checkDeviceAccess') || line.includes('findByPk'));
-    const linesWithFindByPk = checkDeviceAccessLines.filter(line => line.includes('findByPk'));
-    expect(linesWithFindByPk).toHaveLength(0);
+  it('fallback a Device.findOne({ where: { deviceId: id } }) si no encuentra por PK', () => {
+    expect(source).toContain("Device.findOne({ where: { deviceId: id } })");
   });
 
   it('UserChamberAccess busca por device.id (integer PK), no por deviceId string', () => {

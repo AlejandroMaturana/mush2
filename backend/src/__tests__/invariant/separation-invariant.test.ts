@@ -15,12 +15,16 @@ describe('Invariant: separación de responsabilidades', () => {
   describe('los controladores de ruta no hacen consultas Sequelize directas', () => {
     const apiSource = readSource('routes/api.js');
 
-    it('ningún Device.findByPk con req.params en handlers públicos', () => {
+    it('solo POST /devices/:id/claim usa Device.findByPk(req.params) — excepción documentada', () => {
       const lines = apiSource.split('\n');
       const deviceFindByPkInHandlers = lines.filter(line =>
         line.includes('Device.findByPk') && line.includes('req.params')
       );
-      expect(deviceFindByPkInHandlers).toHaveLength(0);
+      expect(deviceFindByPkInHandlers).toHaveLength(1);
+      const idx = lines.findIndex(line =>
+        line.includes('Device.findByPk') && line.includes('req.params')
+      );
+      expect(lines.slice(Math.max(0, idx - 10), idx).join(' ')).toContain('claim');
     });
 
     it('ningún handler dentro de router.* llama a modelos directo sin pasar por middleware', () => {

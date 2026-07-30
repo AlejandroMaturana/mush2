@@ -19,8 +19,8 @@ export async function tenantScope(req, res, next) {
 
 export async function checkDeviceAccess(req, res, next) {
   try {
-    const deviceId = req.params.id;
-    const device = await Device.findByPk(deviceId);
+    const { id } = req.params;
+    const device = await Device.findByPk(id) || await Device.findOne({ where: { deviceId: id } });
 
     if (!device) {
       return res.status(404).json({ error: 'Dispositivo no encontrado' });
@@ -44,7 +44,7 @@ export async function checkDeviceAccess(req, res, next) {
 
     const UserChamberAccess = (await import('../models/UserChamberAccess.js')).default;
     const access = await UserChamberAccess.findOne({
-      where: { userId: req.user.id, deviceId },
+      where: { userId: req.user.id, deviceId: device.id },
     });
 
     if (!access) {
