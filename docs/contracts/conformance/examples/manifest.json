@@ -1,0 +1,16 @@
+[
+  { "file": "examples/telemetry.json", "schema": "telemetry.schema.json", "expectValid": true },
+  { "file": "examples/status-online.json", "schema": "status.schema.json", "expectValid": true },
+  { "file": "examples/status-periodic.json", "schema": "status.schema.json", "expectValid": true },
+  { "file": "examples/health.json", "schema": "health.schema.json", "expectValid": true },
+  { "file": "examples/alarm.json", "schema": "alarm.schema.json", "expectValid": true },
+  { "file": "examples/maintenance.json", "schema": "maintenance.schema.json", "expectValid": true },
+  { "file": "examples/command.json", "schema": "command.schema.json", "expectValid": true },
+  { "file": "examples/ack.json", "schema": "ack.schema.json", "expectValid": true },
+  { "file": "examples/lwt.json", "schema": "lwt.schema.json", "expectValid": true },
+  { "file": "examples/divergent/telemetry-eco2.json", "schema": "telemetry.schema.json", "expectValid": false },
+  { "file": "examples/divergent/health-heap.json", "schema": "health.schema.json", "expectValid": false },
+  { "file": "examples/divergent/command-bridge-nested.json", "schema": "command.schema.json", "expectValid": false },
+  { "file": "examples/divergent/telemetry-ts-ms.json", "schema": "telemetry.schema.json", "expectValid": false },
+  { "file": "examples/divergent/telemetry-no-ts.json", "schema": "telemetry.schema.json", "expectValid": false }
+]

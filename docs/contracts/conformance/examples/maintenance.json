@@ -1,0 +1,7 @@
+{
+  "component": "sensor.aht21",
+  "health": 80,
+  "estimatedFailure": 1786000000,
+  "reason": "degradation",
+  "ts": 1785340800
+}

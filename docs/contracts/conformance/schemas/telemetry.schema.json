@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Telemetry",
+  "description": "Payload canónico de telemetría publicado por un dispositivo (firmware o simulador) en mush2/{deviceId}/telemetry",
+  "type": "object",
+  "required": ["temp", "hum", "co2", "tvoc", "aqi", "ts"],
+  "properties": {
+    "temp": { "type": "number", "minimum": -50, "maximum": 100, "description": "Temperatura en °C" },
+    "hum": { "type": "number", "minimum": 0, "maximum": 100, "description": "Humedad relativa en %" },
+    "co2": { "type": "integer", "minimum": 0, "maximum": 10000, "description": "CO2 en ppm" },
+    "tvoc": { "type": "integer", "minimum": 0, "maximum": 65535, "description": "TVOC en ppb" },
+    "aqi": { "type": "integer", "minimum": 0, "maximum": 500, "description": "Índice de calidad de aire" },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}

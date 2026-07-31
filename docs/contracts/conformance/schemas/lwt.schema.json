@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 LWT (offline)",
+  "description": "Last Will (retained) publicado por el broker cuando un dispositivo se desconecta (mqtt-contract §5)",
+  "type": "object",
+  "required": ["state", "ts"],
+  "properties": {
+    "state": { "const": "offline" },
+    "deviceId": { "type": "string" },
+    "status": { "const": "OFFLINE" },
+    "reason": { "type": "string" },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800 }
+  },
+  "additionalProperties": true
+}

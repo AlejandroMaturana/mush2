@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Health",
+  "description": "Payload canónico de salud publicado en mush2/{deviceId}/health (ADR-025)",
+  "type": "object",
+  "required": ["freeHeap", "minFreeHeap", "maxAllocHeap", "stack", "uptime", "ts"],
+  "properties": {
+    "freeHeap": { "type": "integer", "minimum": 0 },
+    "minFreeHeap": { "type": "integer", "minimum": 0 },
+    "maxAllocHeap": { "type": "integer", "minimum": 0 },
+    "stack": {
+      "type": "object",
+      "properties": {
+        "sensors": { "type": "integer", "minimum": 0 },
+        "ssr": { "type": "integer", "minimum": 0 },
+        "wifi": { "type": "integer", "minimum": 0 },
+        "mqtt": { "type": "integer", "minimum": 0 },
+        "ota": { "type": "integer", "minimum": 0 },
+        "telemetry": { "type": "integer", "minimum": 0 },
+        "button": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "i2cHealthy": { "type": "boolean" },
+    "sensorAht21": { "type": "boolean" },
+    "sensorEns160": { "type": "boolean" },
+    "staleTaskMask": { "type": "integer", "minimum": 0 },
+    "heartbeatsHealthy": { "type": "boolean" },
+    "bootTestPassed": { "type": "boolean" },
+    "bootTestFailReason": { "type": "string" },
+    "uptime": { "type": "integer", "minimum": 0, "description": "Segundos desde el boot" },
+    "rebootCount": { "type": "integer", "minimum": 0 },
+    "resetReason": { "type": "integer", "minimum": 0 },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}
