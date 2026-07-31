@@ -53,7 +53,7 @@
 
 #ifndef MQTT_PORT
   #if MUSH_ENV == ENV_DEVELOPMENT
-    #define MQTT_PORT 1883
+    #define MQTT_PORT 1884
   #else
     #define MQTT_PORT 8883
   #endif
