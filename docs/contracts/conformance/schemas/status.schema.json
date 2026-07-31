@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Status",
+  "description": "Payload canónico de estado publicado en mush2/{deviceId}/status (retained: online/offline; periódico: estado FSM)",
+  "type": "object",
+  "required": ["state", "ts"],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": ["online", "offline", "BOOT", "INIT", "WIFI", "NORMAL", "DEGRADED", "ERROR", "RECOVERY", "SAFE", "OTA_UPDATING", "PROVISIONING", "UNKNOWN"]
+    },
+    "mode": { "type": "string" },
+    "rssi": { "type": "integer", "minimum": -120, "maximum": 0 },
+    "mac": { "type": "string" },
+    "fwVer": { "type": "string" },
+    "hwRev": { "type": "string" },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}

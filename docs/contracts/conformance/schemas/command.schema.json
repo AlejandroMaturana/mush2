@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Command",
+  "description": "Comando de actuación canónico publicado por el backend en mush2/{deviceId}/actuators (ADR-030). Formato flat conforme al ADR-030.",
+  "type": "object",
+  "required": ["cmdId", "channel", "state", "source", "ts"],
+  "properties": {
+    "cmdId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "UUID v4 generado por el backend (ADR-030 §2)"
+    },
+    "channel": { "type": "integer", "minimum": 1, "maximum": 4, "description": "Canal según EDD-006: 1=Ventilación, 2=Calefacción, 3=Humidificación, 4=Iluminación" },
+    "state": {
+      "anyOf": [
+        { "type": "integer", "enum": [0, 1] },
+        { "type": "string", "enum": ["ON", "OFF"] }
+      ],
+      "description": "Estado deseado. Formato final a fijar en ISSUE futuro (gap H-02)"
+    },
+    "source": { "type": "string", "minLength": 1 },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}

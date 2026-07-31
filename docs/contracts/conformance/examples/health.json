@@ -1,0 +1,25 @@
+{
+  "freeHeap": 180000,
+  "minFreeHeap": 152000,
+  "maxAllocHeap": 72000,
+  "stack": {
+    "sensors": 4096,
+    "ssr": 3072,
+    "wifi": 6144,
+    "mqtt": 4096,
+    "ota": 8192,
+    "telemetry": 4096,
+    "button": 2048
+  },
+  "i2cHealthy": true,
+  "sensorAht21": true,
+  "sensorEns160": true,
+  "staleTaskMask": 0,
+  "heartbeatsHealthy": true,
+  "uptime": 3600,
+  "rebootCount": 0,
+  "resetReason": 1,
+  "bootTestPassed": true,
+  "bootTestFailReason": "",
+  "ts": 1785340800
+}

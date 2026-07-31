@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Alarm",
+  "description": "Payload canónico de alarma publicado en mush2/{deviceId}/alarm",
+  "type": "object",
+  "required": ["reason", "ts"],
+  "properties": {
+    "reason": { "type": "string", "minLength": 1 },
+    "temp": { "type": "number" },
+    "hum": { "type": "number" },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}

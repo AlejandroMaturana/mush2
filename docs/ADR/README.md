@@ -55,7 +55,9 @@ docs/ADR/
 ├── ADR-026-temporal-contract.md
 ├── ADR-027-esp32-task-watchdog-audit.md
 ├── ADR-028-Per-Device-MQTT-Identity.md
-└── ADR-029-Environment-Isolation.md
+├── ADR-029-Environment-Isolation.md
+├── ADR-030-command-actuation-protocol.md
+└── ADR-031-simulator-architecture.md
 ```
 
 ## Índice de documentos
@@ -91,6 +93,8 @@ docs/ADR/
 | [ADR-027](ADR-027-esp32-task-watchdog-audit.md)           | Auditoría TWDT ESP32-S3              | Auditoría del Task Watchdog Timer en ESP32-S3 (Aceptado).           |
 | [ADR-028](ADR-028-Per-Device-MQTT-Identity.md)            | Identidad MQTT por Dispositivo       | Identidad MQTT por dispositivo con ACLs (Aceptado).                 |
 | [ADR-029](ADR-029-Environment-Isolation.md)               | Aislamiento de Ambientes              | Infraestructura aislada por ambiente con validación fail-fast.       |
+| [ADR-030](ADR-030-command-actuation-protocol.md)          | Command & Actuation Protocol          | Protocolo formal de comando y actuación (Aceptado).                   |
+| [ADR-031](ADR-031-simulator-architecture.md)               | Simulation Platform                    | Infraestructura oficial de validación Contract First (Aceptado).      |
 
 ## Numeración
 

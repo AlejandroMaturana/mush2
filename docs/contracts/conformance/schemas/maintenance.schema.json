@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mush2 Maintenance",
+  "description": "Payload canónico de mantenimiento preventivo publicado en mush2/{deviceId}/maintenance",
+  "type": "object",
+  "required": ["component", "health", "ts"],
+  "properties": {
+    "component": { "type": "string", "minLength": 1 },
+    "health": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Salud del componente (0-100)" },
+    "estimatedFailure": { "type": "integer", "minimum": 0, "description": "Época Unix estimada de fallo" },
+    "reason": { "type": "string" },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,6 @@
+{
+  "reason": "SENSOR_FAIL_AHT21",
+  "temp": 0,
+  "hum": 0,
+  "ts": 1785340800
+}
