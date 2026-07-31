@@ -9,8 +9,6 @@
 **Área:** Backend / Firmware / Protocolo / CI
 
 **Documentos relacionados:**
-- `ISSUE-031-simulation-platform.md` — ISSUE Rector (FASE 0/0.5/1)
-- `AUDIT-001-simulation-platform.md` — Auditoría técnica
 - `docs/contracts/conformance/README.md` — Artefactos de conformance (FASE 0.5)
 
 ---
@@ -23,7 +21,6 @@ La plataforma evoluciona por fases (ISSUE-031, `simulation-platform-roadmap.md`)
 
 ## 2. Contexto
 
-- El contrato MQTT oficial vive en `docs/contracts/mqtt-contract.md`, pero la auditoría (AUDIT-001, hallazgos H-01 a H-08) evidencia que backend, firmware y documentación interpretan el wire de forma divergente.
 - No existe infraestructura reproducible de validación: la vertical slice se verifica a mano con hardware real (`DEV_ENVIRONMENT.md`).
 - El monorepo (`pnpm-workspace.yaml`) tiene 4 paquetes (`frontend`, `backend`, `firmware`, `docs`) y no incluye aún `packages/` ni `apps/`.
 
