@@ -67,7 +67,7 @@ El Lenguaje Ubicuo es el corazón de DDD. Términos precisos que desarrolladores
 | **Dispositivo (Device)** | Controlador IoT ESP32-S3 que gestiona sensores y actuadores de una cámara |
 | **Sensor** | Dispositivo de medición (Temperatura, Humedad, CO₂, VOC). Puede estar en estado ACTIVE, INACTIVE o FAULT |
 | **Actuador (SSR)** | Solid State Relay que controla equipmento: ventilador, calefactor, humidificador, luz |
-| **Canal** | Canal de salida del actuador (0-3), cada uno controla un equipo diferente |
+| **Canal** | Canal de salida del actuador (1-4, EDD-006): CH1=VENTILATION, CH2=HEATER, CH3=HUMIDIFIER, CH4=LIGHT |
 | **Modo Local/Remote** | Si el actuador responde a comandos del motor de control (REMOTE) o a operación manual (LOCAL) |
 
 ### 2.5 Control y Automatización
@@ -354,7 +354,7 @@ Device (Raíz)
 │
 ├── Actuator[] (entidades internas)
 │   ├── id: number
-│   ├── channel: number
+│   ├── channel: number (1-4, mapeo EDD-006)
 │   ├── state: ActuatorState
 │   ├── mode: ActuatorMode
 │   └── overrideUntil: Date

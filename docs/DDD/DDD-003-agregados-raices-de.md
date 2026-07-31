@@ -286,7 +286,7 @@ Device (RAÍZ)
 │
 ├── Entidades Internas
 │   ├── Sensor[] (sensores: TEMPERATURE, HUMIDITY, CO2, VOC)
-│   ├── Actuator[] (actuadores: channel 0-3, state ON/OFF, mode LOCAL/REMOTE)
+│   ├── Actuator[] (actuadores: channel 1-4, state ON/OFF, mode LOCAL/REMOTE)
 │   └── DeviceHealth[] (métricas de salud)
 │
 └── Timestamps
@@ -300,7 +300,7 @@ Device (RAÍZ)
 | DV-002 | **DeviceId único** | deviceId debe ser único en el sistema | HIGH |
 | DV-003 | **Cultivo activo bloquea eliminación** | No se puede eliminar un device con cultivo ACTIVE | HIGH |
 | DV-004 | **Estado válido** | status debe ser un valor del enum | MEDIUM |
-| DV-005 | **Canales válidos** | Los actuadores deben tener channel en rango 0-3 | MEDIUM |
+| DV-005 | **Canales válidos** | Los actuadores deben tener channel en rango 1-4 (EDD-006) | MEDIUM |
 | DV-006 | **Sensores requeridos** | Un device para cultivo debe tener sensores de temperatura y humedad | HIGH |
 
 ### 6.4 Transiciones de Estado

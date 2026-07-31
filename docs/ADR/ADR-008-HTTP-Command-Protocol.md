@@ -1,7 +1,9 @@
 # ADR-008: Protocolo de comandos vía HTTP polling con cola persistente
 
-**Fecha**: 2026-06-13 (actualizado 2026-06-27)
-**Estado**: Aceptado
+**Fecha**: 2026-06-13 (actualizado 2026-07-31)
+**Estado**: Aceptado — **parcialmente obsoleto** por ADR-030 (ver §Obsolescencia parcial)
+
+> ⚠️ **AVISO DE OBSOLESCENCIA PARCIAL (ADR-030, 2026-07-31)**: La entrega de comandos ya **no** reemplaza MQTT por HTTP polling. ADR-030/RFC-0009 establecen **MQTT como canal primario** de comando y HTTP polling solo como **fallback**. Secciones obsoletas: §Contexto (decisión de "reemplazando completamente MQTT"), §Motivos → Abandono de MQTT, §Endpoints REST → comando vía polling como canal principal, §Cola de comandos persistente (nunca implementada; diferida como H-103). Lo que conserva vigencia: endpoints de telemetría/heartbeat, ACK con códigos OK/INVALID_CHANNEL/INVALID_STATE/BUSY/UNKNOWN_CMD/ALREADY_EXECUTED (adoptados por `ack.schema.json`), seguridad TLS/API key, y el formato de `actuators` array en la respuesta de polling (RFC-0009 §5.3).
 
 ## Contexto
 El sistema requiere comunicación bidireccional entre el nodo ESP32-S3 y el backend para telemetría (nodo → backend) y comandos de actuadores (backend → nodo). La implementación original con brokers MQTT públicos (test.mosquitto.org, broker.hivemq.com) presentó problemas de seguridad al operar sin TLS ni autenticación, y se descartó por depender de infraestructura externa sin SLA. Se adoptó un esquema de polling HTTP directo al backend, pero la implementación actual aún presenta fallos de sincronización en comandos de actuadores AppWeb-SSR. Se requiere formalizar un protocolo robusto y escalable.
@@ -259,6 +261,17 @@ CREATE INDEX idx_command_queue_device_status
 | Polling no recibido | 3 intervalos (~9s) | Backend asume comando no entregado |
 | Sin heartbeat + sin polling | 30s | Backend cancela comandos PENDING → EXPIRED |
 | Firmware detecta WiFi caído | Inmediato | Estado DEGRADED, reintenta cada 10s hasta 5 veces, luego SAFE |
+
+## Obsolescencia parcial (ADR-030)
+
+| Sección | Estado | Nota |
+|---------|--------|------|
+| Decisión — "reemplazando completamente MQTT" | ❌ Obsoleta | MQTT es el canal primario de comando (ADR-030). HTTP polling es fallback |
+| Motivos → Abandono de MQTT | ❌ Obsoleta | La evolución revirtió esta decisión; el broker privado con TLS se implementó |
+| Endpoints → `GET /api/v1/actuators` como canal de comandos | ⚠️ Parcial | Sigue vigente como fallback; entrega estado deseado + setpoints, sin `commands[]` (RFC-0009 §5.3, H-103 diferido) |
+| Cola de comandos persistente | ⚠️ Diferida | Nunca implementada; `command_queue` diferida como H-103 |
+| Confirmación → `POST /api/v1/commands/{cmdId}/ack` | ⚠️ Parcial | Los códigos de estado y el ACK unario se adoptaron en MQTT (`ack.schema.json`, RFC-0009 §5.2) |
+| Telemetría, Heartbeat, Seguridad, Polling adaptativo | ✅ Vigente | No contradicen ADR-030 |
 
 ## Referencias
 - Implementación firmware: `firmware/src/http_poller.h`, `firmware/src/http_poller.cpp`, `firmware/src/main.ino`

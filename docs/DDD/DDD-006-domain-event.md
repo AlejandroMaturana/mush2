@@ -331,7 +331,7 @@ events.on('control_eval', (data) => {
 | `eventType` | string | 'ComandoActuadorEnviado' |
 | `timestamp` | Date | Momento del evento |
 | `deviceId` | number | Dispositivo |
-| `channel` | number | Canal (0-3) |
+| `channel` | number | Canal (1-4, EDD-006) |
 | `state` | ActuatorState | ON/OFF |
 | `mode` | ActuatorMode | LOCAL/REMOTE |
 
