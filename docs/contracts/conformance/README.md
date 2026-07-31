@@ -31,7 +31,7 @@ docs/contracts/conformance/
 2. `telemetry` requiere `temp`, `hum`, `co2`, `tvoc`, `aqi`, `ts` (los nombres reales del firmware, no `eco2`).
 3. `health` usa `freeHeap`/`minFreeHeap`/`maxAllocHeap` y objeto `stack` (no `heap`).
 4. `status` admite estados retained (`online`/`offline`) y estados FSM (`NORMAL`, `DEGRADED`, etc.).
-5. `command` y `ack` usan el **formato canónico flat del ADR-030**: `cmdId` (UUID v4), `channel`, `state`, `source`, `ts` (comando) y `status` (ACK).
+5. `command` y `ack` usan el **formato canónico anidado del ADR-030/RFC-0009 §5**: `{ cmdId (UUID v4), source, ts (segundos), command: { type: 'ACTUATOR_SET', channel 1-4, value (boolean) } }` para comando y `{ cmdId, channel, state (boolean), status, ts }` para ACK.
 6. El LWT es `{"state":"offline","ts":...}` retained en `mush2/{deviceId}/status`.
 
 ## 3. Cómo se ejecuta la validación
@@ -52,14 +52,19 @@ El contrato congelado expone divergencias del ecosistema actual. Ninguna se cier
 
 | ID | Gap | Evidencia |
 |----|-----|-----------|
-| G-1 | El backend publica comandos con formato **anidado** (`command:{type,channel,value}`) y `ts` en **ms**, no conforme al ADR-030 | `AUDIT-001` H-02; ejemplo `divergent/command-bridge-nested.json` |
-| G-2 | El firmware no publica ACK | `AUDIT-001` H-03 |
+| G-2 | El firmware no publica ACK | `AUDIT-001` H-03 — **implementado en Fase 4B** de ISSUE-030 (ACK unario + status OK/INVALID_CHANNEL/UNKNOWN_CMD/ALREADY_EXECUTED), pendiente verificación hardware |
 | G-3 | El firmware publica con QoS 0 (contrato declara QoS 1) | `AUDIT-001` H-04 |
 | G-4 | `DEV_ENVIRONMENT.md` documentaba `eco2`/`heap`/`state` numérico; corregido a ejemplos canónicos | `AUDIT-001` H-05 |
 | O-1 | `mqtt-contract.md §7.1` exige campos `protocol` y `deviceId` en todo payload; el firmware no los publica | Decidir en ISSUE futuro: exigir o eliminar la cláusula |
 | O-2 | `mqtt-contract.md §5.1` define LWT con `status:"OFFLINE"`; el firmware publica `{"state":"offline","ts":0}` | Alinear contrato o firmware |
-| O-3 | El formato de `state` en command/ack es `integer(0/1)` (ADR-030) vs `string("ON"/"OFF")` (firmware); el schema acepta ambos provisionalmente | Fijar formato definitivo antes de FASE 1 de comandos |
 | O-4 | `getTimestamp()` del firmware usa uptime en segundos cuando NTP no está sincronizado (no época) | El schema exige época; documentado como modo degradado |
+
+**Gaps resueltos en ISSUE-030 (Fase 4D):**
+
+| ID | Gap | Resolución |
+|----|-----|-----------|
+| G-1 | El backend publicaba `ts` en ms y formato anidado no conforme al ADR-030 | ADR-030/RFC-0009 actualizados al formato anidado unario (canónico); `mqttBridge.js` publica `ts` en segundos (ADR-026). Ejemplo `divergent/command-legacy-array.json` demuestra el rechazo del formato legacy |
+| O-3 | Formato de `state` en command/ack ambiguo (int vs string) | `command.schema.json` fija `command.value` como `boolean`; `ack.schema.json` fija `state` como `boolean`; se eliminó el dual-provisional |
 
 ## 5. Relación con el simulador (FASE 1)
 

@@ -149,14 +149,31 @@ describe('Conformance: contrato MQTT congelado (FASE 0.5)', () => {
     },
   );
 
-  it('el comando anidado del backend (formato actual) es rechazado por el schema canónico', () => {
+  it('el comando canónico del backend (formato anidado RFC-0009 §5.1) valida contra el schema', () => {
     const bridgeFormat = {
       cmdId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       source: 'backend.controlEngine',
-      ts: Date.now(),
+      ts: Math.floor(Date.now() / 1000),
       command: { type: 'ACTUATOR_SET', channel: 2, value: true },
     };
     const errors = validate(schemas['command.schema.json'], bridgeFormat);
+    expect(errors).toEqual([]);
+  });
+
+  it('el formato legacy actuators[] es rechazado por el schema canónico (drift detectado)', () => {
+    const legacyFormat = {
+      protocol: '2.0.0',
+      cmdId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      deviceId: 'mush2_s3_001',
+      ts: Math.floor(Date.now() / 1000),
+      source: 'auto',
+      target: 'actuator',
+      actuators: [
+        { channel: 1, state: 'ON', mode: 'REMOTE' },
+        { channel: 2, state: 'OFF', mode: 'REMOTE' },
+      ],
+    };
+    const errors = validate(schemas['command.schema.json'], legacyFormat);
     expect(errors.length).toBeGreaterThan(0);
   });
 

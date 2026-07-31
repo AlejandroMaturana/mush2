@@ -98,13 +98,15 @@ describe('MQTT Backward Compatibility', () => {
       expect(mqttBridgeSource).toContain("/actuators");
     });
 
-    it('should include type: actuator_state in payload', () => {
-      expect(mqttBridgeSource).toContain("type: 'actuator_state'");
+    it('should include cmdId and source in each command', () => {
+      expect(mqttBridgeSource).toContain("cmdId: c.cmdId");
+      expect(mqttBridgeSource).toContain("source: c.source");
     });
 
-    it('should include channel and state for each actuator', () => {
+    it('should include type ACTUATOR_SET and channel/value in canonical command', () => {
+      expect(mqttBridgeSource).toContain("type: 'ACTUATOR_SET'");
       expect(mqttBridgeSource).toContain("channel: c.channel");
-      expect(mqttBridgeSource).toContain("state: c.state");
+      expect(mqttBridgeSource).toContain("value: c.state");
     });
   });
 

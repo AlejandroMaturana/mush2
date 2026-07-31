@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Mush2 ACK",
-  "description": "Reconocimiento de comando canónico publicado en mush2/{deviceId}/ack (ADR-030)",
+  "description": "Reconocimiento de comando canónico publicado en mush2/{deviceId}/ack (RFC-0009 §5.2 / ADR-030). Un ACK por cmdId.",
   "type": "object",
   "required": ["cmdId", "channel", "state", "status", "ts"],
   "properties": {
@@ -10,18 +10,18 @@
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
       "description": "UUID v4 del comando reconocido (ADR-030 §2)"
     },
-    "channel": { "type": "integer", "minimum": 1, "maximum": 4 },
-    "state": {
-      "anyOf": [
-        { "type": "integer", "enum": [0, 1] },
-        { "type": "string", "enum": ["ON", "OFF"] }
-      ]
+    "channel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "Canal 1-4. 0 solo para errores de parseo (UNKNOWN_CMD/INVALID_CHANNEL) donde el canal no pudo determinarse"
     },
+    "state": { "type": "boolean", "description": "Estado ejecutado/confirmado: true=ON, false=OFF" },
     "status": {
       "type": "string",
-      "enum": ["PENDING", "DELIVERED", "COMPLETED", "FAILED", "EXPIRED", "ACKED", "TIMEOUT"]
+      "enum": ["OK", "INVALID_CHANNEL", "INVALID_STATE", "BUSY", "UNKNOWN_CMD", "ALREADY_EXECUTED"]
     },
     "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

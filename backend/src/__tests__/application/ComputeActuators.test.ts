@@ -24,7 +24,7 @@ describe('ComputeActuators', () => {
     });
   }
 
-  it('returns heater ON when temp below min', async () => {
+  it('returns heater (CH2) ON when temp below min', async () => {
     const recipe = makeRecipe();
     const run = makeRun();
     const telemetry = Telemetry.create({
@@ -51,13 +51,14 @@ describe('ComputeActuators', () => {
 
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
-      const heaterCmd = result.value.find(c => c.channel === 1);
+      const heaterCmd = result.value.find(c => c.channel === 2);
       expect(heaterCmd).toBeDefined();
+      expect(heaterCmd!.type).toBe('HEATER');
       expect(heaterCmd!.state).toBe('ON');
     }
   });
 
-  it('returns fan ON when CO2 above max', async () => {
+  it('returns ventilation (CH1) ON when CO2 above max', async () => {
     const recipe = makeRecipe();
     const run = makeRun();
     const telemetry = Telemetry.create({
@@ -84,9 +85,10 @@ describe('ComputeActuators', () => {
 
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
-      const fanCmd = result.value.find(c => c.channel === 0);
-      expect(fanCmd).toBeDefined();
-      expect(fanCmd!.state).toBe('ON');
+      const ventCmd = result.value.find(c => c.channel === 1);
+      expect(ventCmd).toBeDefined();
+      expect(ventCmd!.type).toBe('VENTILATION');
+      expect(ventCmd!.state).toBe('ON');
     }
   });
 

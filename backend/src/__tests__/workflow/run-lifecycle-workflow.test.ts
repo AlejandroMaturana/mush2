@@ -152,21 +152,21 @@ describe('WORKFLOW: Run Lifecycle', () => {
     const coldResult = await computeActuators.execute({ run, telemetry: coldTelemetry });
     expect(coldResult.isOk()).toBe(true);
     const cmds = coldResult.unwrap();
-    const heaterCmd = cmds.find(c => c.channel === 1);
+    const heaterCmd = cmds.find(c => c.channel === 2);
     expect(heaterCmd?.state).toBe('ON');
 
     const hotTelemetry = makeTelemetry('run-1', { temperature: 32, humidity: 88, co2: 500 });
     const hotResult = await computeActuators.execute({ run, telemetry: hotTelemetry });
     expect(hotResult.isOk()).toBe(true);
     const hotCmds = hotResult.unwrap();
-    const heaterOffCmd = hotCmds.find(c => c.channel === 1);
+    const heaterOffCmd = hotCmds.find(c => c.channel === 2);
     expect(heaterOffCmd?.state).toBe('OFF');
 
     const highCo2Telemetry = makeTelemetry('run-1', { temperature: 24, humidity: 88, co2: 1200 });
     const co2Result = await computeActuators.execute({ run, telemetry: highCo2Telemetry });
     expect(co2Result.isOk()).toBe(true);
     const co2Cmds = co2Result.unwrap();
-    expect(co2Cmds.find(c => c.channel === 0)?.state).toBe('ON');
+    expect(co2Cmds.find(c => c.channel === 1)?.state).toBe('ON');
   });
 
   it('W003 — EvaluatePhase triggers transition when conditions met', async () => {
