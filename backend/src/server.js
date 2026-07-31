@@ -125,7 +125,13 @@ async function initSecondaryServices(httpServer) {
 
     events.on('control_eval', (data) => {
       if (!data.deviceId || !data.actuatorCommands) return;
-      const cmds = data.actuatorCommands.map(c => ({ channel: c.channel, state: c.command, mode: 'REMOTE' }));
+      const cmds = data.actuatorCommands.map(c => ({
+        channel: c.channel,
+        state: c.command,
+        cmdId: c.cmdId,
+        source: 'backend.controlEngine',
+        mode: 'REMOTE',
+      }));
       sendActuatorUpdate(data.deviceId, cmds);
       const config = {};
       if (data.phase) config.phase = data.phase;

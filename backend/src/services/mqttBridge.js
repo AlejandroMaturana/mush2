@@ -92,13 +92,8 @@ function createClient() {
             })
             .catch(() => {});
         }
-        if (data.actuatorState || data.channel) {
-          events.emit('ack', {
-            deviceId,
-            actuatorState: data.actuatorState || { channel: data.channel, state: data.state },
-            status: data.status || 'ACKED',
-            timestamp: Date.now(),
-          });
+        if (data.cmdId || data.channel) {
+          handleAck(deviceId, data);
         }
       } else if (type === 'alarm') {
         events.emit('alarm', { deviceId, ...data });
@@ -107,12 +102,7 @@ function createClient() {
       } else if (type === 'maintenance') {
         handleMaintenance(deviceId, data);
       } else if (type === 'ack') {
-        events.emit('ack', {
-          deviceId,
-          actuatorState: data.actuatorState || { channel: data.channel, state: data.state },
-          status: data.status || 'ACKED',
-          timestamp: Date.now(),
-        });
+        handleAck(deviceId, data);
       }
     } catch (err) {
       log.error({ module: 'MQTT', event: 'PARSE_ERROR', error: err.message }, `Error parsing from ${topic}`);
@@ -157,24 +147,58 @@ export function startMqttBridge() {
 
 export function publishActuatorCommand(deviceId, commands, config = null) {
   const topic = `${TOPIC_PREFIX}/${deviceId}/actuators`;
-  const payload = JSON.stringify({
-    type: 'actuator_state',
-    deviceId,
-    timestamp: Date.now(),
-    actuators: commands.map(c => ({
-      channel: c.channel,
-      state: c.state,
-      mode: c.mode || 'REMOTE',
-    })),
-    ...(config || {}),
-  });
   const opts = { qos: 1, retain: false };
+  if (!client || !client.connected) return false;
 
-  if (client && client.connected) {
+  for (const c of commands) {
+    const payload = JSON.stringify({
+      cmdId: c.cmdId,
+      source: c.source || 'backend.controlEngine',
+      ts: Math.floor(Date.now() / 1000),
+      command: {
+        type: 'ACTUATOR_SET',
+        channel: c.channel,
+        value: c.state === 'ON' || c.state === true,
+      },
+      ...(config || {}),
+    });
     client.publish(topic, payload, opts);
-    return true;
   }
-  return false;
+  return true;
+}
+
+async function handleAck(deviceId, data) {
+  const channel = data.channel;
+  const cmdId = data.cmdId;
+  const status = data.status || 'ACKED';
+
+  events.emit('ack', {
+    deviceId,
+    actuatorState: { channel, state: data.state },
+    cmdId,
+    status,
+    timestamp: Date.now(),
+  });
+
+  if (!channel) return;
+  try {
+    const [device] = await Device.findOrCreate({
+      where: { deviceId },
+      defaults: { deviceId },
+    });
+    const [actuator] = await Actuator.findOrCreate({
+      where: { deviceId: device.id, channel },
+      defaults: { deviceId: device.id, channel },
+    });
+    const stateStr = data.state === true || data.state === 1 ? 'ON' : 'OFF';
+    await actuator.update({
+      state: stateStr,
+      lastAck: cmdId || `ack_${Date.now()}`,
+      lastSeen: new Date(),
+    });
+  } catch (err) {
+    log.error({ module: 'MQTT', event: 'ACK_ERROR', error: err.message }, `Error handling ACK from ${deviceId}`);
+  }
 }
 
 export function getMqttStatus() {

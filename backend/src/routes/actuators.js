@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Op } from 'sequelize';
 import express from 'express';
 import { Device, Actuator, CultivationCycle, Recipe } from '../models/index.js';
@@ -84,11 +85,16 @@ router.patch('/:channel', async (req, res) => {
     if (!command || !['ON', 'OFF'].includes(command)) {
       return res.status(400).json({ error: 'command debe ser ON u OFF' });
     }
+    if (channel < 1 || channel > 4) {
+      return res.status(400).json({ error: 'channel debe ser 1-4' });
+    }
 
     const device = await Device.findOrCreate({
       where: { deviceId },
       defaults: { deviceId },
     }).then(([d]) => d);
+
+    const cmdId = crypto.randomUUID();
 
     const [actuator] = await Actuator.findOrCreate({
       where: { deviceId: device.id, channel },
@@ -98,27 +104,28 @@ router.patch('/:channel', async (req, res) => {
     await actuator.update({
       state: command,
       mode: 'REMOTE',
-      lastCommand: `cmd_${Date.now()}`,
+      lastCommand: cmdId,
       lastSeen: new Date(),
       overrideUntil: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    sendActuatorUpdate(deviceId, [{
+    const cmds = [{
       channel,
       state: command,
+      cmdId,
+      source: 'api.manual',
       mode: 'REMOTE',
-    }]);
-    publishActuatorCommand(deviceId, [{
-      channel,
-      state: command,
-      mode: 'REMOTE',
-    }]);
+    }];
+
+    sendActuatorUpdate(deviceId, cmds);
+    publishActuatorCommand(deviceId, cmds);
     recordOutgoing(deviceId).catch(() => {});
 
     res.json({
       channel: actuator.channel,
       state: actuator.state,
       mode: actuator.mode,
+      cmdId,
     });
   } catch (err) {
     log.error({ module: 'ACTUATOR', event: 'COMMAND_ERROR', error: err.message }, 'Error sending actuator command');
