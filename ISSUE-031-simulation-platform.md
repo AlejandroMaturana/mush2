@@ -7,9 +7,8 @@
 **Autores:** Equipo Mush2
 
 **Documentos relacionados:**
-- `AUDIT-001-simulation-platform.md` — Auditoría técnica (evidencia archivo:línea)
 - `simulation-platform-roadmap.md` — Roadmap FASE 0-9 (referencia)
-- `ISSUE-030-command-actuation-protocol.md` — Command & Actuation Protocol (gate FASE 3.5)
+- `ISSUE#160-command-actuation-protocol` — Command & Actuation Protocol (gate FASE 3.5)
 
 ---
 
@@ -17,7 +16,7 @@
 
 Mush2 es un ecosistema monorepo (pnpm) compuesto por `frontend`, `backend`, `firmware` y `docs`. El firmware (ESP32-S3) publica telemetría y estado por MQTT hacia el broker Mosquitto; el backend suscribe, persiste y emite eventos por SSE; el frontend consume esos eventos. El contrato MQTT oficial reside en `docs/contracts/mqtt-contract.md`.
 
-La capa de comandos (backend → firmware) está gobernada por `ISSUE-030-command-actuation-protocol.md` y su materialización normativa (`ADR-030`, `RFC-0009`).
+La capa de comandos (backend → firmware) está gobernada por `ISSUE#160-command-actuation-protocol` y su materialización normativa (`ADR-030`, `RFC-0009`).
 
 La validación actual del ecosistema depende de hardware físico: no existe un mecanismo reproducible para ejercitar contratos, integración y comportamiento sin dispositivos reales.
 
@@ -299,7 +298,6 @@ Checklist:
 
 ## Reglas de gobernanza aplicadas
 
-- La auditoría técnica (evidencia archivo:línea) vive en `AUDIT-001-simulation-platform.md`; este ISSUE solo contiene conclusiones arquitectónicas.
 - Ninguna fase se implementa antes de que el contrato correspondiente esté congelado (FASE 0.5).
 - Cada fase futura (FASE 2+) debe materializarse como ISSUE propio que herede estos principios.
 - No se modifican contratos ni se crean topics nuevos sin pasar por el framework de gobernanza (ISSUE → DDD → ADR → EDD/RFC).

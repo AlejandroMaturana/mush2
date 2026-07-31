@@ -1,25 +1,44 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Mush2 Command",
-  "description": "Comando de actuación canónico publicado por el backend en mush2/{deviceId}/actuators (ADR-030). Formato flat conforme al ADR-030.",
+  "description": "Comando de actuación canónico publicado por el backend en mush2/{deviceId}/actuators (RFC-0009 §5.1 / ADR-030). Formato anidado unario con dedup por cmdId y ACK obligatorio.",
   "type": "object",
-  "required": ["cmdId", "channel", "state", "source", "ts"],
+  "required": ["cmdId", "source", "ts", "command"],
   "properties": {
     "cmdId": {
       "type": "string",
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
       "description": "UUID v4 generado por el backend (ADR-030 §2)"
     },
-    "channel": { "type": "integer", "minimum": 1, "maximum": 4, "description": "Canal según EDD-006: 1=Ventilación, 2=Calefacción, 3=Humidificación, 4=Iluminación" },
-    "state": {
-      "anyOf": [
-        { "type": "integer", "enum": [0, 1] },
-        { "type": "string", "enum": ["ON", "OFF"] }
-      ],
-      "description": "Estado deseado. Formato final a fijar en ISSUE futuro (gap H-02)"
+    "source": { "type": "string", "minLength": 1, "description": "Origen del comando: backend.controlEngine, api.manual, ..." },
+    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" },
+    "command": {
+      "type": "object",
+      "required": ["type", "channel", "value"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ACTUATOR_SET"],
+          "description": "Tipo de comando. Solo ACTUATOR_SET definido (RFC-0009)"
+        },
+        "channel": { "type": "integer", "minimum": 1, "maximum": 4, "description": "Canal según EDD-006: 1=VENTILATION, 2=HEATER, 3=HUMIDIFIER, 4=LIGHT" },
+        "value": { "type": "boolean", "description": "Estado deseado: true=ON, false=OFF" }
+      },
+      "additionalProperties": false
     },
-    "source": { "type": "string", "minLength": 1 },
-    "ts": { "type": "integer", "minimum": 0, "maximum": 4102444800, "description": "Timestamp Unix en segundos (ADR-026)" }
+    "setpoints": {
+      "type": "object",
+      "required": ["tempMin", "tempMax", "humMin", "humMax", "co2Max"],
+      "properties": {
+        "tempMin": { "type": "number" },
+        "tempMax": { "type": "number" },
+        "humMin": { "type": "number" },
+        "humMax": { "type": "number" },
+        "co2Max": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "phase": { "type": "string", "minLength": 1, "description": "Fase activa del ciclo (opcional, para sincronización)" }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

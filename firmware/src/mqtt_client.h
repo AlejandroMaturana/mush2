@@ -25,6 +25,18 @@ struct MqttActuatorMessage {
   uint16_t co2Max;
 };
 
+struct MqttCommandMessage {
+  char cmdId[40];
+  uint8_t channel;
+  uint8_t state;
+  uint8_t mode;
+  const char* status;
+  const char* phase;
+  bool hasSetpoints;
+  float tempMin, tempMax, humMin, humMax;
+  uint16_t co2Max;
+};
+
 class MQTTClient {
 public:
   MQTTClient();
@@ -47,6 +59,7 @@ public:
 
   void setOtaCallback(void (*cb)(const char* url, const char* version, const char* hash));
   void setActuatorCallback(void (*cb)(const MqttActuatorMessage* msg));
+  void setCommandCallback(void (*cb)(const MqttCommandMessage* msg));
 
 private:
   #if MQTT_USE_TLS == 1
@@ -65,6 +78,7 @@ private:
 
   void (*_otaCb)(const char* url, const char* version, const char* hash);
   void (*_actuatorCb)(const MqttActuatorMessage* msg);
+  void (*_cmdCb)(const MqttCommandMessage* msg);
 
   void _connect();
   void _publishOnline();

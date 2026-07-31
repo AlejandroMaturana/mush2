@@ -66,7 +66,7 @@ DRAFT → REVIEW (7-14 días) → ACCEPTED → genera ADR
 | [RFC-0006](RFC-0006-realtime-streaming.md) | Real-Time Streaming | DRAFT | Frontend / Backend |
 | [RFC-0007](RFC-0007-device-limits.md) | Device Limits | DRAFT | Backend / Frontend |
 | [RFC-0008](RFC-0008-button-interaction.md) | Multi-Function Button (SMFB) | DRAFT | Firmware / Backend |
-| [RFC-0009](RFC-0009-command-actuation-protocol.md) | Command & Actuation Protocol | DRAFT | Backend / Firmware / Protocolo |
+| [RFC-0009](RFC-0009-command-actuation-protocol.md) | Command & Actuation Protocol | ACCEPTED | Backend / Firmware / Protocolo |
 | [RFC-0010](RFC-0010-simulation-platform.md) | Simulation Platform — infraestructura de validación | DRAFT | Infraestructura / Protocolo |
 
 ## Template

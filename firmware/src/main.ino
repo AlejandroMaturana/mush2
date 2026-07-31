@@ -290,6 +290,7 @@ void setup() {
     }
     mqtt.setOtaCallback(otaMqttCallback);
     mqtt.setActuatorCallback(mqttActuatorCallback);
+    mqtt.setCommandCallback(mqttCommandCallback);
 
     bootTime = millis();
     lightCycleStart = bootTime;

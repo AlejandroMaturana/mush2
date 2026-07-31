@@ -1,10 +1,10 @@
 {
   "cmdId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "source": "backend.controlEngine",
-  "ts": 1785340800123,
+  "ts": 1785340800,
   "command": {
     "type": "ACTUATOR_SET",
-    "channel": 2,
+    "channel": 0,
     "value": true
   }
 }

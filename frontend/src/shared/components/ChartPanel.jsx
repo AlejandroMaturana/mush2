@@ -169,7 +169,10 @@ function ChartPanel({ deviceId, telemetry, has }) {
     cancelledRef.current = false
     currentRange.current = range
     try {
-      const { data: rows } = await client.get(`/devices/${deviceId}/telemetry`, { params: { limit, resolution } })
+      const resp = await client.get(`/devices/${deviceId}/telemetry`, { params: { limit, resolution } })
+      const rows = Array.isArray(resp.data)
+        ? resp.data
+        : (resp.data && Array.isArray(resp.data.data)) ? resp.data.data : []
       if (cancelledRef.current || currentRange.current !== range) return
       const reshaped = TemporalEngine.reshapeRows(rows)
       const agg = entry && entry.resolution.value > 0

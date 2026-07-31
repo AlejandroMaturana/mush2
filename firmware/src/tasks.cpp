@@ -123,6 +123,89 @@ void mqttActuatorCallback(const MqttActuatorMessage* msg) {
 }
 
 // ============================================================
+//  MQTT command dedup ring buffer (RFC-0009 §1.4)
+//  Registra cmdId ejecutados recientemente; un duplicado es
+//  ignorado (QoS 1 puede entregar el mismo comando dos veces).
+// ============================================================
+
+static char dedupRing[CMD_DEDUP_RING_SIZE][40];
+static uint8_t dedupRingIndex = 0;
+static uint8_t dedupRingCount = 0;
+
+static bool cmdIsDuplicate(const char* cmdId) {
+  if (!cmdId || cmdId[0] == '\0') return false;
+  for (uint8_t i = 0; i < dedupRingCount; i++) {
+    if (strcmp(dedupRing[i], cmdId) == 0) return true;
+  }
+  strncpy(dedupRing[dedupRingIndex], cmdId, sizeof(dedupRing[0]) - 1);
+  dedupRing[dedupRingIndex][sizeof(dedupRing[0]) - 1] = '\0';
+  dedupRingIndex = (dedupRingIndex + 1) % CMD_DEDUP_RING_SIZE;
+  if (dedupRingCount < CMD_DEDUP_RING_SIZE) dedupRingCount++;
+  return false;
+}
+
+static void publishAck(const char* cmdId, int channel, uint8_t state, const char* status) {
+  if (!mqtt.isConnected()) return;
+  char payload[128];
+  snprintf(payload, sizeof(payload),
+    "{\"cmdId\":\"%s\",\"channel\":%d,\"state\":%s,\"status\":\"%s\",\"ts\":%lu}",
+    cmdId ? cmdId : "", channel, state ? "true" : "false", status,
+    (unsigned long)getTimestamp());
+  mqtt.publish("ack", payload);
+}
+
+void mqttCommandCallback(const MqttCommandMessage* msg) {
+  if (!msg) return;
+
+  if (msg->status && strcmp(msg->status, "UNKNOWN_CMD") == 0) {
+    publishAck(msg->cmdId, 0, 0, "UNKNOWN_CMD");
+    return;
+  }
+
+  int ch = msg->channel;
+  if (ch < 1 || ch > 4) {
+    publishAck(msg->cmdId, 0, 0, "INVALID_CHANNEL");
+    return;
+  }
+
+  if (msg->cmdId[0] != '\0' && cmdIsDuplicate(msg->cmdId)) {
+    Serial.printf("[MQTT] cmdId duplicado ignorado: %s (ch%d)\n", msg->cmdId, ch);
+    publishAck(msg->cmdId, ch, msg->state, "ALREADY_EXECUTED");
+    return;
+  }
+
+  actuatorDesired[ch - 1] = msg->state;
+  actuatorMode[ch - 1] = msg->mode;
+  predictiveMaint.onActuatorChange(ch, msg->state == 1, millis());
+  Serial.printf("[MQTT] Actuator ch%d: %s (REMOTE) cmdId=%s\n",
+    ch, msg->state ? "ON" : "OFF", msg->cmdId[0] != '\0' ? msg->cmdId : "(none)");
+
+  if (msg->hasSetpoints) {
+    Setpoints sp = { msg->tempMin, msg->tempMax, msg->humMin, msg->humMax, msg->co2Max };
+    hyst.setSetpoints(sp);
+    Serial.printf("[MQTT] Setpoints actualizados: T[%.1f-%.1f] H[%.1f-%.1f] CO2<=%u\n",
+      sp.tempMin, sp.tempMax, sp.humMin, sp.humMax, sp.co2Max);
+  }
+
+  if (msg->phase && msg->phase[0] != '\0' && strcmp(msg->phase, currentPhase) != 0) {
+    strncpy(currentPhase, msg->phase, sizeof(currentPhase) - 1);
+    currentPhase[sizeof(currentPhase) - 1] = '\0';
+    phaseStartedAt = millis();
+    Serial.printf("[MQTT] Fase actualizada: %s\n", currentPhase);
+  }
+
+  provisionalMode = false;
+
+  ActuatorPersistedData data;
+  memcpy(data.desired, (const uint8_t*)actuatorDesired, 4);
+  memcpy(data.mode, (const uint8_t*)actuatorMode, 4);
+  actuatorNVSSave(&data);
+  lastActuatorPersist = esp_timer_get_time();
+
+  publishAck(msg->cmdId, ch, msg->state, "OK");
+}
+
+// ============================================================
 //  FreeRTOS Tasks — Core 1 (Control)
 // ============================================================
 

@@ -232,8 +232,6 @@ ADR-030
 
 ## 10. Referencias
 
-- `ISSUE-031-simulation-platform.md`
-- `AUDIT-001-simulation-platform.md`
 - `RFC-0009-command-actuation-protocol.md`
 - `docs/ADR/ADR-030-command-actuation-protocol.md`
 - `docs/EDD/EDD-006-mapeo-canales-actuadores.md`

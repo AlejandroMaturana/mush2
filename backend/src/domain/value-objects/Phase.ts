@@ -9,6 +9,7 @@ export interface PhaseData {
   humRange: HumidityRange;
   co2Target: CO2Target;
   durationDays: number;
+  lightCycleHours?: number;
 }
 
 export class Phase {
@@ -18,6 +19,7 @@ export class Phase {
     readonly humRange: HumidityRange,
     readonly co2Target: CO2Target,
     readonly durationDays: number,
+    readonly lightCycleHours: number | undefined,
   ) {}
 
   static create(data: PhaseData): Result<Phase, string> {
@@ -33,6 +35,7 @@ export class Phase {
       data.humRange,
       data.co2Target,
       data.durationDays,
+      data.lightCycleHours,
     ));
   }
 
@@ -43,6 +46,7 @@ export class Phase {
       humRange: this.humRange.toJSON(),
       co2Target: this.co2Target.toJSON(),
       durationDays: this.durationDays,
+      lightCycleHours: this.lightCycleHours,
     };
   }
 }

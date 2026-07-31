@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import crypto from 'crypto';
 import { Device, Telemetry, Recipe, CultivationCycle, CycleState, Actuator, Alarm } from '../models/index.js';
 import SystemSetting from '../models/SystemSetting.js';
 import { events } from './eventBus.js';
@@ -143,9 +144,9 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
   if (temp >= TEMP_CRITICAL) {
     if (!state.overheat) {
       state.overheat = true;
-      commands.push({ channel: 1, command: 'ON', reason: 'OVERHEAT' });
-      commands.push({ channel: 2, command: 'OFF', reason: 'OVERHEAT' });
-      commands.push({ channel: 3, command: 'OFF', reason: 'OVERHEAT' });
+      commands.push({ channel: 1, command: 'ON', reason: 'OVERHEAT', cmdId: crypto.randomUUID() });
+      commands.push({ channel: 2, command: 'OFF', reason: 'OVERHEAT', cmdId: crypto.randomUUID() });
+      commands.push({ channel: 3, command: 'OFF', reason: 'OVERHEAT', cmdId: crypto.randomUUID() });
       log.info({ event: 'OVERHEAT', deviceId }, `${deviceId} OVERHEAT — vent ON, heat/humid OFF`);
     }
     return commands;
@@ -182,22 +183,22 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
 
   if (state.ventOn && !state.prevVent) {
     if (co2 > 0) {
-      commands.push({ channel: 1, command: 'ON', reason: co2 > thresholds.co2Max ? 'CO2_HIGH' : 'TEMP_HIGH' });
+      commands.push({ channel: 1, command: 'ON', reason: co2 > thresholds.co2Max ? 'CO2_HIGH' : 'TEMP_HIGH', cmdId: crypto.randomUUID() });
     } else {
-      commands.push({ channel: 1, command: 'ON', reason: 'TEMP_HIGH' });
+      commands.push({ channel: 1, command: 'ON', reason: 'TEMP_HIGH', cmdId: crypto.randomUUID() });
     }
   } else if (!state.ventOn && state.prevVent) {
-    commands.push({ channel: 1, command: 'OFF', reason: 'CLEAR' });
+    commands.push({ channel: 1, command: 'OFF', reason: 'CLEAR', cmdId: crypto.randomUUID() });
   }
 
   if (state.ventOn) {
     state.heatOn = false;
     state.humidOn = false;
     if (state.prevHeat) {
-      commands.push({ channel: 2, command: 'OFF', reason: 'VENT_BLOCK' });
+      commands.push({ channel: 2, command: 'OFF', reason: 'VENT_BLOCK', cmdId: crypto.randomUUID() });
     }
     if (state.prevHumid) {
-      commands.push({ channel: 3, command: 'OFF', reason: 'VENT_BLOCK' });
+      commands.push({ channel: 3, command: 'OFF', reason: 'VENT_BLOCK', cmdId: crypto.randomUUID() });
     }
   } else {
     if (state.heatOn) {
@@ -210,7 +211,7 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
       }
     }
     if (state.heatOn !== state.prevHeat) {
-      commands.push({ channel: 2, command: state.heatOn ? 'ON' : 'OFF', reason: state.heatOn ? 'TEMP_LOW' : 'TEMP_OK' });
+      commands.push({ channel: 2, command: state.heatOn ? 'ON' : 'OFF', reason: state.heatOn ? 'TEMP_LOW' : 'TEMP_OK', cmdId: crypto.randomUUID() });
     }
 
     if (temp >= 27.5) {
@@ -231,7 +232,7 @@ function computeActuatorCommands(deviceId, temp, hum, co2, thresholds) {
       }
     }
     if (state.humidOn !== state.prevHumid) {
-      commands.push({ channel: 3, command: state.humidOn ? 'ON' : 'OFF', reason: state.humidOn ? 'HUM_LOW' : 'HUM_OK' });
+      commands.push({ channel: 3, command: state.humidOn ? 'ON' : 'OFF', reason: state.humidOn ? 'HUM_LOW' : 'HUM_OK', cmdId: crypto.randomUUID() });
     }
   }
 
@@ -358,7 +359,7 @@ async function evaluateCycle(cycle) {
         });
         await actuator.update({
           state: cmd.command,
-          lastCommand: `auto_${cmd.reason}_${Date.now()}`,
+          lastCommand: cmd.cmdId,
           lastSeen: new Date(),
           mode: 'REMOTE',
         });
@@ -379,7 +380,7 @@ async function evaluateCycle(cycle) {
       thresholds: { tempMin: thresholds.tempMin, tempMax: thresholds.tempMax, humMin: thresholds.humMin, humMax: thresholds.humMax, co2Max: thresholds.co2Max },
       readings: { temp, hum, co2, vpd: vpd ? parseFloat(vpd.toFixed(3)) : null },
       deviations,
-      actuatorCommands: filteredCommands.map(c => ({ channel: c.channel, command: c.command, reason: c.reason })),
+      actuatorCommands: filteredCommands.map(c => ({ channel: c.channel, command: c.command, reason: c.reason, cmdId: c.cmdId })),
     };
     events.emit('control_eval', evalEvent);
 
@@ -427,7 +428,7 @@ async function evaluateCycle(cycle) {
 
           if (nextPhase === 'COMPLETED') {
             await cycle.update({ status: 'COMPLETED' });
-            for (const ch of [1, 2, 3]) {
+            for (const ch of [1, 2, 3, 4]) {
               try {
                 const [act] = await Actuator.findOrCreate({ where: { deviceId: device.id, channel: ch }, defaults: { deviceId: device.id, channel: ch } });
                 await act.update({ state: 'OFF', mode: 'REMOTE', lastSeen: new Date() });

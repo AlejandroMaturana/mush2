@@ -8,7 +8,6 @@
 
 **Documentos relacionados:**
 - `ISSUE-031-simulation-platform.md` — ISSUE Rector de la Simulation Platform (FASE 0/0.5/1)
-- `AUDIT-001-simulation-platform.md` — Auditoría técnica
 - `simulation-platform-roadmap.md` — Roadmap FASE 0-9
 
 ---
@@ -226,7 +225,6 @@ OUT OF SCOPE
 | Documento | Relación |
 |-----------|----------|
 | `ISSUE-031-simulation-platform.md` | ISSUE Rector; FASE 2 hereda sus principios |
-| `AUDIT-001-simulation-platform.md` | Evidencia del estado actual |
 | `docs/DDD/DDD-008-device-status-policy.md` | Estado tridimensional aplicado al Virtual Device |
 | `docs/contracts/mqtt-contract.md` | Fuente de unidades, rangos y payloads |
 | `docs/ADR/ADR-026-temporal-contract.md` | Unidades temporales del wire |

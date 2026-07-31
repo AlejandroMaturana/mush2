@@ -7,7 +7,7 @@ MQTTClient* MQTTClient::_instance = nullptr;
 
 MQTTClient::MQTTClient()
   : _client(_tcpClient), _lastReconnect(0), _reconnectDelay(MQTT_RECONNECT_INITIAL_MS),
-    _wasConnected(false), _otaCb(nullptr), _actuatorCb(nullptr) {
+    _wasConnected(false), _otaCb(nullptr), _actuatorCb(nullptr), _cmdCb(nullptr) {
   _deviceId[0] = '\0';
   _mqttUser[0] = '\0';
   _mqttPass[0] = '\0';
@@ -52,6 +52,10 @@ void MQTTClient::setOtaCallback(void (*cb)(const char* url, const char* version,
 
 void MQTTClient::setActuatorCallback(void (*cb)(const MqttActuatorMessage* msg)) {
   _actuatorCb = cb;
+}
+
+void MQTTClient::setCommandCallback(void (*cb)(const MqttCommandMessage* msg)) {
+  _cmdCb = cb;
 }
 
 void MQTTClient::loop() {
@@ -257,6 +261,46 @@ void MQTTClient::_onMessage(char* topic, uint8_t* payload, unsigned int len) {
       return;
     }
 
+    // ── Formato canónico (RFC-0009 §5.1 / ADR-030): command object unario ──
+    // { cmdId, source, ts, command:{ type, channel, value }, setpoints?, phase? }
+    if (doc["command"].is<JsonObject>()) {
+      JsonObject cmd = doc["command"];
+      const char* type = cmd["type"] | "";
+
+      MqttCommandMessage msg;
+      msg.cmdId[0] = '\0';
+      const char* cmdId = doc["cmdId"] | "";
+      if (cmdId && cmdId[0] != '\0') {
+        strncpy(msg.cmdId, cmdId, sizeof(msg.cmdId) - 1);
+        msg.cmdId[sizeof(msg.cmdId) - 1] = '\0';
+      }
+      msg.channel = cmd["channel"] | 0;
+      msg.state = (cmd["value"] | false) ? 1 : 0;
+      msg.mode = 1; // REMOTE
+      msg.status = "OK";
+      msg.phase = doc["phase"] | "";
+      msg.hasSetpoints = doc["setpoints"].is<JsonObject>();
+      if (msg.hasSetpoints) {
+        JsonObject sp = doc["setpoints"];
+        msg.tempMin = sp["tempMin"] | 0.0f;
+        msg.tempMax = sp["tempMax"] | 0.0f;
+        msg.humMin = sp["humMin"] | 0.0f;
+        msg.humMax = sp["humMax"] | 0.0f;
+        msg.co2Max = sp["co2Max"] | 0;
+      }
+
+      if (strcmp(type, "ACTUATOR_SET") != 0) {
+        Serial.printf("[MQTT] Comando desconocido: %s\n", type);
+        msg.status = "UNKNOWN_CMD";
+      }
+
+      if (_cmdCb) {
+        _cmdCb(&msg);
+      }
+      return;
+    }
+
+    // ── Formato legacy: actuators[] array (transición, sin dedup ni ACK) ──
     JsonArray acts = doc["actuators"].as<JsonArray>();
     if (acts.isNull()) {
       Serial.println("[MQTT] actuators: falta array 'actuators'");

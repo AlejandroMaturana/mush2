@@ -11,7 +11,6 @@
 **Documentos relacionados:**
 - `RFC-0010-simulation-platform.md` — Propuesta (DRAFT)
 - `ISSUE-031-simulation-platform.md` — ISSUE Rector
-- `AUDIT-001-simulation-platform.md` — Auditoría técnica
 
 ---
 
