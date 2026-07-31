@@ -121,6 +121,9 @@ extern volatile bool i2cPredictiveAlert;
 extern volatile bool mqttCmdBufferHasData;
 extern volatile uint32_t mqttCmdBufferCount;
 
+// MQTT command dedup ring (RFC-0009 §1.4 — cmdId ejecutados recientemente)
+#define CMD_DEDUP_RING_SIZE 16
+
 // OTA command state (set by serial or MQTT)
 extern volatile bool otaCommandPending;
 extern char otaCommandUrl[256];
@@ -161,5 +164,6 @@ void reProvision();
 time_t getTimestamp();
 void otaMqttCallback(const char* url, const char* version, const char* hash);
 void mqttActuatorCallback(const MqttActuatorMessage* msg);
+void mqttCommandCallback(const MqttCommandMessage* msg);
 
 #endif
