@@ -48,6 +48,9 @@ DRAFT → REVIEW (7 días) → ACCEPTED / REJECTED / SUPERSEDED
 | [EDD-003](EDD-003-ota-v3-canary-deployment.md) | OTA v3 con canary deployment | ACCEPTED |
 | [EDD-004](EDD-004-estrategia-multitenant.md) | Estrategia multi-tenant y escalabilidad | DRAFT |
 | [EDD-005](EDD-005-BLE-provisioning.md) | BLE Provisioning — configuración inicial por Bluetooth | DRAFT |
+| [EDD-006](EDD-006-mapeo-canales-actuadores.md) | Mapeo canónico de canales de actuadores | ACCEPTED |
+| [EDD-007](EDD-007-virtual-device-model.md) | Virtual Device Model — modelo de dispositivo simulado | DRAFT |
+| [EDD-008](EDD-008-scenario-model.md) | Scenario Model — escenarios declarativos | DRAFT |
 
 ## Template
 
