@@ -7,6 +7,12 @@
 #define HYSTERESIS_BAND_HUM 7.0
 #define HYSTERESIS_BAND_CO2 100
 
+// Índices canónicos de salida alineados con EDD-006 §5.2 (CH1=vent, CH2=heat, CH3=humid, CH4=light)
+#define IDX_VENT 0
+#define IDX_HEAT 1
+#define IDX_HUMID 2
+#define IDX_LIGHT 3
+
 struct Setpoints {
   float tempMin;
   float tempMax;

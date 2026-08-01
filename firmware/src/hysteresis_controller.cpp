@@ -189,10 +189,10 @@ void HysteresisController::evaluate(float temperature, float humidity, uint16_t 
   alarmReason[0] = '\0';
 
   if (ohState == OH_ACTIVE) {
-    ssrOutputs[0] = 0;
-    ssrOutputs[1] = 1;
-    ssrOutputs[2] = 0;
-    ssrOutputs[3] = 0;
+    ssrOutputs[IDX_VENT] = 1;
+    ssrOutputs[IDX_HEAT] = 0;
+    ssrOutputs[IDX_HUMID] = 0;
+    ssrOutputs[IDX_LIGHT] = 0;
     return;
   }
 
@@ -203,10 +203,10 @@ void HysteresisController::evaluate(float temperature, float humidity, uint16_t 
   }
 
   if (mode != CTRL_LOCAL) {
-    ssrOutputs[0] = 0;
-    ssrOutputs[1] = 0;
-    ssrOutputs[2] = 0;
-    ssrOutputs[3] = lightOn ? 1 : 0;
+    ssrOutputs[IDX_VENT] = 0;
+    ssrOutputs[IDX_HEAT] = 0;
+    ssrOutputs[IDX_HUMID] = 0;
+    ssrOutputs[IDX_LIGHT] = lightOn ? 1 : 0;
     return;
   }
 
@@ -220,10 +220,10 @@ void HysteresisController::evaluate(float temperature, float humidity, uint16_t 
     humid = 1;
   }
 
-  ssrOutputs[0] = heat;
-  ssrOutputs[1] = vent;
-  ssrOutputs[2] = humid;
-  ssrOutputs[3] = lightOn ? 1 : 0;
+  ssrOutputs[IDX_VENT] = vent;
+  ssrOutputs[IDX_HEAT] = heat;
+  ssrOutputs[IDX_HUMID] = humid;
+  ssrOutputs[IDX_LIGHT] = lightOn ? 1 : 0;
 
   checkAlarms(temperature, humidity, co2);
 }

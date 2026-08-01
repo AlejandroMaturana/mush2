@@ -361,12 +361,10 @@ void taskSSR(void* pvParameters) {
       uint8_t hystOutputs[4] = {0, 0, 0, 0};
       hyst.evaluate(temp, hum, eco2, hystOutputs);
 
-      uint8_t finalState[4] = {
-        hystOutputs[1],  // CH1 = Ventilación
-        hystOutputs[0],  // CH2 = Calefacción
-        hystOutputs[2],  // CH3 = Humidificación
-        hystOutputs[3],  // CH4 = Iluminación
-      };
+      uint8_t finalState[4];
+      for (int ch = 0; ch < 4; ch++) {
+        finalState[ch] = hystOutputs[ch];
+      }
 
       for (int ch = 0; ch < 4; ch++) {
         if (actuatorMode[ch] == 1) {
