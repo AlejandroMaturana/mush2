@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { resolve, dirname } from 'path';
+import { resolve, dirname, isAbsolute } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -27,10 +27,20 @@ dotenv.config({
 // ── Environment-aware defaults for MQTT provisioning ──────────────
 // Each environment has its own isolated password_file (ADR-029).
 // Override with MOSQUITTO_PASSWORD_FILE env var.
+//
+// The password_file lives in the repo (docker/mosquitto/<env>/password_file)
+// and is read by both the broker (mounted) and the provisioner. The dev
+// backend runs with cwd = backend/, so relative values MUST resolve against
+// the repo ROOT — otherwise provisioning fails with "password_file not found".
 const mqttPasswordFile =
   nodeEnv === 'production'
     ? 'docker/mosquitto/prod/password_file'
     : 'docker/mosquitto/dev/password_file';
+
+function resolveRepoPath(p) {
+  if (!p) return p;
+  return isAbsolute(p) ? p : resolve(ROOT, p);
+}
 
 export const env = {
   NODE_ENV: nodeEnv,
@@ -73,7 +83,7 @@ export const env = {
   },
 
   MQTT_PROVISIONING: {
-    passwordFile: process.env.MOSQUITTO_PASSWORD_FILE || mqttPasswordFile,
+    passwordFile: resolveRepoPath(process.env.MOSQUITTO_PASSWORD_FILE || mqttPasswordFile),
     container: process.env.MOSQUITTO_CONTAINER || 'mush2-mosquitto',
     mosquittoPasswd: process.env.MOSQUITTO_PASSWD_PATH || 'mosquitto_passwd',
   },

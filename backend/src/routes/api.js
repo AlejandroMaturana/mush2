@@ -119,6 +119,13 @@ router.post('/devices/register', async (req, res) => {
         await device.update({ mqttUser, mqttPassword: mqttPass });
         mqttCredentials = { user: mqttUser, pass: mqttPass };
         log.info({ event: 'MQTT_PROVISIONED', deviceId, mqttUser }, `MQTT credentials generated for ${deviceId}`);
+
+        // Mosquitto no hot-reloada password_file: sin reload el broker sigue
+        // rechazando al usuario recién provisionado (ADR-029).
+        const reloadResult = await mqttProvisioner.reload();
+        if (!reloadResult.ok) {
+          log.error({ event: 'MQTT_RELOAD_FAILED', deviceId, error: reloadResult.error }, 'Credentials provisioned but broker reload failed');
+        }
       } else {
         log.error({ event: 'MQTT_PROVISION_FAILED', deviceId, error: provResult.error }, 'Failed to provision MQTT credentials');
       }
