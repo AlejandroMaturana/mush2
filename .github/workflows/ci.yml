@@ -45,10 +45,11 @@ jobs:
           #define SENSOR_INTERVAL 10000
           #define TS_INTERVAL 15000
           #define SSR_ACTIVE_LOW 1
-          #define SSR_CH1_PIN GPIO_NUM_11
-          #define SSR_CH2_PIN GPIO_NUM_12
-          #define SSR_CH3_PIN GPIO_NUM_13
-          #define SSR_CH4_PIN GPIO_NUM_14
+          #include "channel_mapping.h"
+          #define SSR_CH1_PIN CHANNEL_1_PIN
+          #define SSR_CH2_PIN CHANNEL_2_PIN
+          #define SSR_CH3_PIN CHANNEL_3_PIN
+          #define SSR_CH4_PIN CHANNEL_4_PIN
           #define DEFAULT_TEMP_MIN 20.0
           #define DEFAULT_TEMP_MAX 24.0
           #define DEFAULT_HUM_MIN 85.0
@@ -58,6 +59,9 @@ jobs:
 
       - name: Build firmware
         run: cd firmware && pio run
+
+      - name: Firmware unit tests (native)
+        run: cd firmware && pio test -c platformio.test.ini -e native
 
   backend:
     name: Backend test

@@ -37,11 +37,12 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define LED_RGB_COUNT 1
 #define LED_RGB_BRIGHTNESS 24
 
-// SSR 4CH (runtime-configurable via NVS)
-#define SSR_CH1_PIN GPIO_NUM_11
-#define SSR_CH2_PIN GPIO_NUM_12
-#define SSR_CH3_PIN GPIO_NUM_13
-#define SSR_CH4_PIN GPIO_NUM_14
+// SSR 4CH (runtime-configurable via NVS) — mapeo canónico EDD-006 §5.2
+#include "channel_mapping.h"
+#define SSR_CH1_PIN CHANNEL_1_PIN
+#define SSR_CH2_PIN CHANNEL_2_PIN
+#define SSR_CH3_PIN CHANNEL_3_PIN
+#define SSR_CH4_PIN CHANNEL_4_PIN
 #define SSR_ACTIVE_LOW {SSR_ACTIVE_LOW}
 
 // FreeRTOS pinning

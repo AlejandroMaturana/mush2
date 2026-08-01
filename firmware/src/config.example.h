@@ -141,10 +141,12 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 #define LED_RGB_BRIGHTNESS 24
 
 // ---- SSR 4 Canales (active-LOW por defecto) ----
-#define SSR_CH1_PIN GPIO_NUM_11   // Ventilación
-#define SSR_CH2_PIN GPIO_NUM_12   // Calefacción (manta térmica)
-#define SSR_CH3_PIN GPIO_NUM_13   // Humidificación
-#define SSR_CH4_PIN GPIO_NUM_14   // Iluminación (fotoperiodo)
+// Mapeo channel → GPIO: fuente única de verdad en channel_mapping.h (EDD-006 §5.2)
+#include "channel_mapping.h"
+#define SSR_CH1_PIN CHANNEL_1_PIN   // Ventilación (GPIO 11)
+#define SSR_CH2_PIN CHANNEL_2_PIN   // Calefacción (GPIO 12)
+#define SSR_CH3_PIN CHANNEL_3_PIN   // Humidificación (GPIO 13)
+#define SSR_CH4_PIN CHANNEL_4_PIN   // Iluminación (GPIO 14)
 
 // Valor por defecto para SSR_ACTIVE_LOW (1=low-level, 0=high-level).
 // Se sobreescribe en tiempo de ejecución desde NVS (BLE provisioning o backend).
