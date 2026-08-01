@@ -10,9 +10,10 @@
 | **Nombre** | Device Status Policy |
 | **Fecha** | 2026-07-25 |
 | **Versión** | 1.0 |
-| **Estado** | Borrador |
+| **Estado** | Aceptado |
 | **Autor** | Equipo Mush2 |
 | **Depende de** | DDD-001, DDD-003, DDD-005, DDD-006 |
+| **Aprobado por** | ADR-025 (Device Status Policy) |
 
 ---
 
@@ -571,6 +572,7 @@ El sistema almacena y transmite la **composición completa**:
 | Versión | Fecha | Autor | Cambios |
 |---------|-------|-------|---------|
 | 1.0 | 2026-07-25 | Equipo Mush2 | Creación del documento |
+| 1.1 | 2026-08-01 | Equipo Mush2 | Promovido a **Aceptado** (ADR-025; seguimiento ISSUE-030 Fase 4D) |
 
 ---
 
