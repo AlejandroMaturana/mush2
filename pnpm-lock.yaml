@@ -124,6 +124,19 @@ importers:
         specifier: ^3.2.7
         version: 3.2.7(@types/debug@4.1.13)(@types/node@26.1.0)(jsdom@30.0.1(@noble/hashes@1.8.0))
 
+  simulator:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+      mqtt:
+        specifier: ^5.15.1
+        version: 5.15.1
+    devDependencies:
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@26.1.0)
+
 packages:
 
   '@adobe/css-tools@4.5.0':
