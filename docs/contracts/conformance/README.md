@@ -52,7 +52,7 @@ El contrato congelado expone divergencias del ecosistema actual. Ninguna se cier
 
 | ID | Gap | Evidencia |
 |----|-----|-----------|
-| G-2 | El firmware no publica ACK | `AUDIT-001` H-03 — **implementado en Fase 4B** de ISSUE-030 (ACK unario + status OK/INVALID_CHANNEL/UNKNOWN_CMD/ALREADY_EXECUTED), pendiente verificación hardware |
+| G-2 | El firmware no publica ACK | `AUDIT-001` H-03 — **implementado en Fase 4B** de ISSUE-030 (ACK unario + status OK/INVALID_CHANNEL/UNKNOWN_CMD/ALREADY_EXECUTED), **verificado en hardware (2026-08-01, PASS)** |
 | G-3 | El firmware publica con QoS 0 (contrato declara QoS 1) | `AUDIT-001` H-04 |
 | G-4 | `DEV_ENVIRONMENT.md` documentaba `eco2`/`heap`/`state` numérico; corregido a ejemplos canónicos | `AUDIT-001` H-05 |
 | O-1 | `mqtt-contract.md §7.1` exige campos `protocol` y `deviceId` en todo payload; el firmware no los publica | Decidir en ISSUE futuro: exigir o eliminar la cláusula |
