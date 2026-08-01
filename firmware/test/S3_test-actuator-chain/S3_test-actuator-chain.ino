@@ -7,6 +7,8 @@
 #define ACTUATOR_CHAIN_TEST_VERSION "1.0.0"
 
 // Include sources bajo test
+#include <Arduino.h>
+#include <Preferences.h>
 #include <ssr_controller.h>
 #include <hysteresis_controller.h>
 #include <config.h>
@@ -164,26 +166,27 @@ void testHysteresisEvaluate() {
     float temp, hum;
     uint16_t co2;
     const char* desc;
-    uint8_t expectHeat;   // hystOutputs[0]
-    uint8_t expectVent;   // hystOutputs[1]
-    uint8_t expectHum;    // hystOutputs[2]
-    uint8_t expectLight;  // hystOutputs[3]
+    uint8_t expectVent;   // IDX_VENT (0) -> CH1
+    uint8_t expectHeat;   // IDX_HEAT (1) -> CH2
+    uint8_t expectHum;    // IDX_HUMID (2) -> CH3
+    uint8_t expectLight;  // IDX_LIGHT (3) -> CH4
   };
 
   // With defaults: TEMP 20-24°C, HUM 78-85%, CO2 max 1200
+  // Orden de campos: {temp, hum, co2, desc, expectVent, expectHeat, expectHum, expectLight}
   TestCase cases[] = {
     // Temp within range, humid low -> humidify
     {22.0, 50.0, 500, "Low humidity",          0, 0, 1, 1},
     // Temp high -> ventilate
-    {26.0, 80.0, 500, "High temp -> vent",     0, 1, 0, 1},
+    {26.0, 80.0, 500, "High temp -> vent",     1, 0, 0, 1},
     // CO2 high -> ventilate
-    {22.0, 80.0, 1500, "High CO2 -> vent",     0, 1, 0, 1},
+    {22.0, 80.0, 1500, "High CO2 -> vent",     1, 0, 0, 1},
     // Temp low -> heat
-    {18.0, 80.0, 500, "Low temp -> heat",      1, 0, 0, 1},
+    {18.0, 80.0, 500, "Low temp -> heat",      0, 1, 0, 1},
     // All nominal
     {22.0, 80.0, 500, "All nominal",           0, 0, 0, 1},
-    // Temp critical -> overheat safety
-    {33.0, 80.0, 500, "Critical temp -> overheat", 0, 1, 0, 0},
+    // Temp critical -> overheat safety (fail-safe: vent ON, heat OFF)
+    {33.0, 80.0, 500, "Critical temp -> overheat", 1, 0, 0, 0},
   };
 
   uint8_t localPassed = 0;
@@ -208,12 +211,11 @@ void testHysteresisEvaluate() {
     uint8_t outputs[4];
     hyst.evaluate(tc.temp, tc.hum, tc.co2, outputs);
 
-    // Channel mapping from taskSSR in main.ino:
-    // CH1=Vent=outputs[1], CH2=Heat=outputs[0], CH3=Hum=outputs[2], CH4=Light=outputs[3]
-    uint8_t ch1 = outputs[1];  // vent
-    uint8_t ch2 = outputs[0];  // heat
-    uint8_t ch3 = outputs[2];  // humid
-    uint8_t ch4 = outputs[3];  // light
+    // Channel mapping canónico (EDD-006 §5.2): CH1=Vent=outputs[0], CH2=Heat=outputs[1]
+    uint8_t ch1 = outputs[IDX_VENT];  // vent
+    uint8_t ch2 = outputs[IDX_HEAT];  // heat
+    uint8_t ch3 = outputs[IDX_HUMID]; // humid
+    uint8_t ch4 = outputs[IDX_LIGHT]; // light
 
     bool match = (ch1 == tc.expectVent && ch2 == tc.expectHeat &&
                   ch3 == tc.expectHum && ch4 == tc.expectLight);
@@ -224,9 +226,41 @@ void testHysteresisEvaluate() {
       localPassed++;
     } else {
       Serial.printf(" FAIL (got %u%u%u%u, expected %u%u%u%u)\n",
-        ch2, ch1, ch3, ch4,   // SSR order: heat, vent, hum, light
-        tc.expectHeat, tc.expectVent, tc.expectHum, tc.expectLight);
+        ch1, ch2, ch3, ch4,   // SSR order: vent, heat, hum, light
+        tc.expectVent, tc.expectHeat, tc.expectHum, tc.expectLight);
       localFailed++;
+    }
+
+    if (i == 5) {
+      // CH-T13 — fail-safe overheat en hardware: aplicar salidas a los SSR y leer el GPIO físico.
+      // El fail-safe debe activar CH1 (ventilación, GPIO 11 = LOW) y desactivar CH2 (calefacción, GPIO 12 = HIGH),
+      // independientemente del mapeo interno (el remapeo ya fue eliminado, EDD-006 §7.4).
+      ssr.setChannel(1, ch1);
+      ssr.setChannel(2, ch2);
+      ssr.setChannel(3, ch3);
+      ssr.setChannel(4, ch4);
+      delay(150);
+
+      int p1 = SSR_CH1_PIN;  // GPIO 11
+      int p2 = SSR_CH2_PIN;  // GPIO 12
+      // Lectura directa: digitalRead sobre pin OUTPUT devuelve el nivel drive (sin cambiar pinMode)
+      bool ventEnergized = (digitalRead(p1) == LOW);  // active-low: ON = LOW
+      bool heatOff = (digitalRead(p2) == HIGH);       // active-low: OFF = HIGH
+
+      ssr.setChannel(1, 0);
+      ssr.setChannel(2, 0);
+      ssr.setChannel(3, 0);
+      ssr.setChannel(4, 0);
+
+      if (ventEnergized && heatOff) {
+        Serial.println(F("  [CH-T13] Overheat fail-safe hardware: CH1 vent ON, CH2 heat OFF PASS"));
+        passed++;
+      } else {
+        Serial.printf("  [CH-T13] Overheat fail-safe hardware FAIL: CH1 GPIO%d=%s CH2 GPIO%d=%s\n",
+          p1, digitalRead(p1) == LOW ? "LOW" : "HIGH",
+          p2, digitalRead(p2) == LOW ? "LOW" : "HIGH");
+        failed++;
+      }
     }
   }
 
@@ -242,7 +276,7 @@ void testRemoteOverride() {
   // For each channel, if actuatorMode[ch]==1 (REMOTE), use actuatorDesired[ch]
   // Overheat always wins, SAFE_SENSOR always wins
 
-  uint8_t hystOut[4] = {0, 0, 1, 1};  // heat=0, vent=0, hum=1, light=1
+  uint8_t hystOut[4] = {0, 0, 1, 1};  // vent=0, heat=0, hum=1, light=1
   uint8_t desired[4] = {1, 1, 0, 0};
   uint8_t mode[4]    = {1, 1, 1, 1};  // all REMOTE
 
@@ -251,9 +285,8 @@ void testRemoteOverride() {
     finalState[ch] = hystOut[ch];
   }
 
-  // Main.ino remote override logic:
-  // CH1=hystOut[1], CH2=hystOut[0], CH3=hystOut[2], CH4=hystOut[3]
-  uint8_t chMap[4] = {1, 0, 2, 3};
+  // Mapeo canónico (EDD-006 §5.2): CH1=vent, CH2=heat, CH3=humid, CH4=light
+  uint8_t chMap[4] = {0, 1, 2, 3};
   for (int ch = 0; ch < 4; ch++) {
     if (mode[ch] == 1) {
       finalState[ch] = desired[ch];
