@@ -7,6 +7,7 @@
 | Autor             | ISSUE-030                        |
 | Estado            | ACCEPTED                         |
 | Fecha             | 2026-07-30                       |
+| Última actualización | 2026-08-01 — swap de índices + remapeo eliminado, verificado en hardware (CH-T13) |
 | ADRs relacionados | ADR-001, ADR-003, ADR-008, ADR-021, ADR-025, ADR-028 |
 | RFC relacionados  | RFC-0009                         |
 | EDD relacionados  | EDD-001, EDD-002                 |
@@ -30,7 +31,7 @@ El sistema Mush2 controla 4 actuadores físicos mediante 4 relés SSR conectados
 2. `ComputeActuators.ts` nombra **"Fan"** a lo que en todas partes es **Ventilación** — siendo el mismo actuador físico
 3. **Light (CH4) solo existe en firmware** — el backend no reconoce este canal
 4. **Ningún documento formaliza el mapeo** como fuente única de verdad. La única referencia GPIO→función está en comentarios de `config.example.h`
-5. El firmware tiene un **remapeo interno** en `tasks.cpp` para compensar la diferencia de índices entre el hysteresis controller y el SSR físico
+5. El firmware tenía un **remapeo interno** en `tasks.cpp` para compensar la diferencia de índices entre el hysteresis controller y el SSR físico — **eliminado en 2026-08-01** (ver §7.4)
 
 Identificado como **H-101** (crítico, bloqueante) en el análisis arquitectónico de RFC-0009.
 
@@ -223,20 +224,22 @@ ssrOutputs[3] = light     → CH4 (GPIO 14)
 Esto requiere cambiar `hysteresis_controller.cpp`:
 - En `evaluate()`, intercambiar los índices de heat y vent
 - En `shouldHeat()` y `shouldVentilate()`: la lógica no cambia, solo la posición en el array de salida
-- En `setOverheat()`: `ssrOutputs[0] = 0` (vent OFF), `ssrOutputs[1] = 1` (heat OFF) — fail-safe debe ventilar (CH1=ON, CH2=OFF)
-- En overheat recovery: `ssrOutputs[0] = 0`, `ssrOutputs[1] = 0` — consistente
+- En overheat (OH_ACTIVE): `ssrOutputs[IDX_VENT] = 1` (vent ON), `ssrOutputs[IDX_HEAT] = 0` (heat OFF) — fail-safe debe ventilar (CH1=ON, CH2=OFF)
+- En overheat recovery: `ssrOutputs[IDX_VENT] = 0`, `ssrOutputs[IDX_HEAT] = 0` — consistente
+
+> **Ejecutado 2026-08-01** — el swap se aplicó con las constantes `IDX_VENT/IDX_HEAT/IDX_HUMID/IDX_LIGHT` y el remapeo en `tasks.cpp` se eliminó (ver §7.4).
 
 ### 7.4 Transición planificada
 
 | Paso | Acción | Riesgo |
 |------|--------|--------|
 | 1 | Documentar remapeo actual en código (ya hecho en este EDD) | Ninguno |
-| 2 | Agregar constantes simbólicas: `IDX_VENT=0, IDX_HEAT=1, IDX_HUMID=2, IDX_LIGHT=3` | Bajo |
-| 3 | Intercambiar índices en `evaluate()` y eliminar remapeo en `tasks.cpp` | **Medio** — requiere verificación en hardware real |
-| 4 | Validar overheat fail-safe (CH1=ON, CH2=OFF) | Alto — seguridad |
-| 5 | Si el paso 3-4 tiene riesgo operativo, mantener remapeo como deuda técnica y diferir | Bajo |
+| 2 | Agregar constantes simbólicas: `IDX_VENT=0, IDX_HEAT=1, IDX_HUMID=2, IDX_LIGHT=3` | Bajo — ✅ hecho 2026-08-01 |
+| 3 | Intercambiar índices en `evaluate()` y eliminar remapeo en `tasks.cpp` | **Medio** — ✅ verificado en hardware real (2026-08-01) |
+| 4 | Validar overheat fail-safe (CH1=ON, CH2=OFF) | Alto — ✅ CH-T13 PASS en hardware (2026-08-01) |
+| 5 | Si el paso 3-4 tiene riesgo operativo, mantener remapeo como deuda técnica y diferir | No aplica — pasos 3-4 completados con verificación en hardware |
 
-**Recomendación**: el paso 1 debe hacerse ahora (documentación). Los pasos 2-5 en una OTA dedicada con pruebas en hardware real, no como parte de la implementación del protocolo.
+**Estado: pasos 1-4 completados.** El swap se ejecutó en una sesión dedicada con el dispositivo conectado (2026-08-01): `evaluate()` produce índices alineados al mapeo canónico (CH1=vent, CH2=heat, CH3=humid, CH4=light) y `tasks.cpp` copia `hystOutputs` directamente a `finalState`, sin remapeo. La suite de integración `S3_test-actuator-chain` (proyecto autónomo en `firmware/test/S3_test-actuator-chain/`) valida en hardware el toggle de los 4 SSR, la lógica de histéresis y el fail-safe overheat (CH-T13): 15/15 PASS.
 
 ---
 
@@ -333,15 +336,15 @@ Actuator[] (entidades internas)
 | `backend/src/routes/actuators.js` | Incluir CH4 en respuesta | Pendiente |
 | `backend/src/services/mqttBridge.js` | Incluir CH4 en publicaciones | Pendiente |
 | `backend/src/models/Actuator.js` | Validar channel 1-4 (actualmente 1-3); agregar campo `type` opcional | Pendiente |
-| `firmware/src/hysteresis_controller.cpp` | Agregar constantes simbólicas `IDX_VENT=0, IDX_HEAT=1, IDX_HUMID=2, IDX_LIGHT=3` | Pendiente |
+| `firmware/src/hysteresis_controller.cpp` | Agregar constantes simbólicas `IDX_VENT=0, IDX_HEAT=1, IDX_HUMID=2, IDX_LIGHT=3` | ✅ Hecho 2026-08-01 |
 
 #### Baja (post-RFC-0009, OTA dedicada)
 
 | Archivo | Cambio | Estado |
 |--------|--------|--------|
-| `firmware/src/hysteresis_controller.cpp` | Intercambiar índices heat/vent en `evaluate()` | Pendiente (riesgo operativo) |
-| `firmware/src/tasks.cpp` | Eliminar remapeo `hystOutputs[1]→finalState[0]` y `hystOutputs[0]→finalState[1]` | Pendiente (depende de paso anterior) |
-| `firmware/src/config.example.h` | Promover comentarios a definición formal (`CHANNEL_FUNCTION` enum) | Pendiente |
+| `firmware/src/hysteresis_controller.cpp` | Intercambiar índices heat/vent en `evaluate()` | ✅ Hecho 2026-08-01 (verificado en hardware) |
+| `firmware/src/tasks.cpp` | Eliminar remapeo `hystOutputs[1]→finalState[0]` y `hystOutputs[0]→finalState[1]` | ✅ Hecho 2026-08-01 |
+| `firmware/src/config.example.h` | Promover comentarios a definición formal (`CHANNEL_FUNCTION` enum) | ✅ Hecho 2026-08-01 — `channel_mapping.h` (fuente única de verdad EDD-006 §5.2) |
 
 ### 10.2 Documentos a actualizar
 
@@ -362,7 +365,7 @@ Actuator[] (entidades internas)
 |--------|-------|---------|------------|
 | Cambio en ComputeActuators.ts rompe tests existentes | Media | Medio | No está en producción. Tests se actualizan junto con código |
 | Algún componente olvida migrar y usa mapeo antiguo | Media | Alto | Este EDD es la fuente de verdad. Todo PR debe referenciarlo. Contract tests (CH-T01 a CH-T13) detectarán desajustes |
-| Remapeo de firmware (paso 3-4 en §7.4) causa error de overheat | Baja | **Crítico** | Diferir a OTA dedicada con pruebas en hardware real. Mientras tanto, mantener el remapeo actual |
+| Remapeo de firmware (paso 3-4 en §7.4) causa error de overheat | Baja | **Crítico** | ✅ Resuelto 2026-08-01 — swap + eliminación del remapeo verificados en hardware real (CH-T13 PASS: fail-safe ventila CH1 y apaga CH2). Riesgo residual mínimo |
 | Se agrega un 5° actuador sin actualizar este EDD | Baja | Medio | RM-003 exige nuevo EDD para cambios de GPIO mapping |
 | CH4 en modelo pero sin lógica de backend crea confusión | Baja | Bajo | §5.4 RM-005 documenta explícitamente que la estrategia de control es decisión separada |
 
@@ -388,7 +391,7 @@ Actuator[] (entidades internas)
 | Documentación formal del mapeo | 1 fuente única (este EDD) | 🟡 DRAFT |
 | CH4 reconocido en backend | Presente en modelo, API y MQTT | 🟡 Ausente |
 | ComputeActuators.ts alineado | 1-indexed, ActuatorType canónico | 🟡 0-indexed, "Fan" |
-| Remapeo interno en firmware | 0 (eliminado) | 🟡 1 remapeo vigente |
+| Remapeo interno en firmware | 0 (eliminado) | 🟢 0 — eliminado y verificado en hardware (2026-08-01) |
 | Contract tests de canales | Suite ≥ 10 tests | 🟡 No existen |
 
 ---
@@ -397,7 +400,7 @@ Actuator[] (entidades internas)
 
 - `firmware/src/config.example.h` — Comentarios GPIO→función (fuente previa no formal)
 - `firmware/src/hysteresis_controller.cpp` — Índices internos del control local
-- `firmware/src/tasks.cpp` — Remapeo de índices en taskSSR
+- `firmware/src/tasks.cpp` — Copia de salidas sin remapeo (swap eliminado 2026-08-01)
 - `firmware/src/ssr_controller.cpp` — Driver SSR CH1-CH4 (1-indexed)
 - `backend/src/services/controlEngine.js` — Mapping legacy (CH1=VENT, CH2=HEAT, CH3=HUMID)
 - `backend/src/application/use-cases/ComputeActuators.ts` — Mapping desalineado (Ch0=Fan, Ch1=Heater, Ch2=Humid)
