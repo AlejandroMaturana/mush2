@@ -12,8 +12,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 **Objetivo**: Definir todos los contratos entre componentes antes de escribir código. Cero ambigüedad en interfaces.
 
 ### Entregables
-- [x] `docs/protocol/protocol-v1.md` — Tópicos MQTT, payloads JSON, QoS 1, retained messages
-- [x] `docs/contracts/mqtt-contract.md` — Responsabilidades: firmware publica, backend suscribe, comandos con ACK
+- [x] `docs/contracts/mqtt-contract.md` — Tópicos MQTT, payloads JSON, QoS 1, retained messages, responsabilidades (firmware publica, backend suscribe, comandos con ACK)
 - [x] `docs/contracts/api-contract.md` — Endpoints REST con request/response schema
 - [x] `docs/architecture/architecture.md` — Diagrama de componentes: ESP8266 → MQTT → Backend → PostgreSQL → Frontend
 - [x] `docs/architecture/backend.md` — Capas: routes → controllers → services → models
@@ -27,7 +26,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 ### Criterios de aceptación
 - [x] Un desarrollador nuevo puede leer `architecture.md` y entender el flujo de datos sin preguntar
 - [x] `api-contract.md` es suficiente para que frontend y backend se desarrollen en paralelo sin bloqueos
-- [x] `protocol-v1.md` es suficiente para que firmware y backend se comuniquen sin ambigüedad
+- [x] `mqtt-contract.md` es suficiente para que firmware y backend se comuniquen sin ambigüedad
 
 ### Issues vinculados (retrospectiva)
 | # | Título | Estado |
@@ -413,7 +412,7 @@ Cada milestone agrupa una fase del roadmap en entregables verificables, con crit
 - [ ] Infraestructura: certificados TLS para MQTT
 - [ ] Firmware: soporte TLS en ESP32-S3 vía `WiFiClientSecure`
 - [ ] Backend: conexión MQTT con TLS + autenticación
-- [ ] Protocolo: `docs/protocol/protocol-v2.md`
+- [ ] Protocolo: nueva versión en `docs/contracts/mqtt-contract.md`
 
 ### Criterios de aceptación
 - [ ] Wireshark no muestra datos en texto plano

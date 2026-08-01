@@ -128,7 +128,7 @@ El frontend NO se suscribe directamente a MQTT. Recibe eventos en tiempo real v�
 - Todo mensaje debe incluir el campo `"protocol"` con la versión del protocolo.
 - Todo mensaje debe incluir el campo `"ts"` con timestamp Unix en segundos.
 - Todo mensaje debe incluir el campo `"deviceId"` con el identificador del dispositivo.
-- Los campos adicionales son específicos del tipo de mensaje (ver `protocol-v1.md`).
+- Los campos adicionales son específicos del tipo de mensaje.
 
 ### 7.2 Validación de payload
 

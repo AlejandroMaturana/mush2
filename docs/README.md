@@ -11,7 +11,7 @@
 |---|---|
 | Colaborador nuevo | [`PROJECT_CONTEXT.md`](../PROJECT_CONTEXT.md) → [`docs/architecture/overview.md`](architecture/architecture.md) → [`docs/governance/contribution-guide.md`](governance/contribution-guide.md) |
 | Agente IA | [`PROJECT_CONTEXT.md`](../PROJECT_CONTEXT.md) → [`docs/contracts/api-contract.md`](contracts/api-contract.md) → ADR relevante al área de trabajo |
-| Desarrollador firmware | [`docs/architecture/firmware.md`](architecture/firmware.md) → [`docs/protocol/protocol-v1.md`](protocol/protocol-v1.md) → [`docs/ADR/ADR-014-OTA-v3.md`](ADR/ADR-014-OTA-v3.md) |
+| Desarrollador firmware | [`docs/architecture/firmware.md`](architecture/firmware.md) → [`docs/contracts/mqtt-contract.md`](contracts/mqtt-contract.md) → [`docs/ADR/ADR-014-OTA-v3.md`](ADR/ADR-014-OTA-v3.md) |
 | Desarrollador backend | [`docs/architecture/backend.md`](architecture/backend.md) → [`docs/contracts/api-contract.md`](contracts/api-contract.md) → [`docs/contracts/mqtt-contract.md`](contracts/mqtt-contract.md) |
 | Desarrollador frontend | [`docs/architecture/frontend.md`](architecture/frontend.md) → [`docs/design/ui-standards.md`](design/ui-standards.md) |
 | Operador / cultivador | [`docs/user/manual.md`](user/manual.md) → [`docs/operations/deployment.md`](operations/deployment.md) |
@@ -41,15 +41,6 @@ Define los **contratos de comunicación** entre componentes. Son inmutables sin 
 |---|---|
 | [`api-contract.md`](contracts/api-contract.md) | Endpoints REST v1: request/response, autenticación, errores |
 | [`mqtt-contract.md`](contracts/mqtt-contract.md) | Tópicos MQTT, payloads JSON, responsabilidades publisher/subscriber |
-
-### 📡 Protocolo (`docs/protocol/`)
-Versionado independiente del protocolo HTTP de comunicación firmware ↔ backend.
-
-| Documento | Contenido |
-|---|---|
-| [`protocol-v1.md`](protocol/protocol-v1.md) | Especificación completa del protocolo HTTP polling v1 |
-| [`compatibility-matrix.md`](protocol/compatibility-matrix.md) | Matriz de compatibilidad firmware ↔ backend ↔ protocolo |
-| [`VERSION`](protocol/VERSION) | Versión actual del protocolo |
 
 ### 🏛️ Decisiones de Diseño (`docs/ADR/`)
 Registro de **decisiones de arquitectura** tomadas y su justificación. Una vez aceptado, un ADR es inmutable.

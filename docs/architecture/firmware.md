@@ -167,7 +167,7 @@ BOOT → INIT → WIFI → NORMAL ↔ DEGRADED
 
 ## Protocolo HTTP Polling
 
-> Ver `docs/protocol/protocol-v1.md` y `docs/contracts/api-contract.md` para endpoints y formatos.
+> Ver `docs/contracts/mqtt-contract.md` (MQTT) y `docs/contracts/api-contract.md` (REST HTTP polling) para endpoints y formatos.
 
 El firmware se comunica con el backend mediante **HTTP Polling** (comandos, telemetría) y **MQTT** (health, maintenance, status, alarm).
 
@@ -312,7 +312,7 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 
 ## Referencias
 
-- `docs/protocol/protocol-v1.md` — Protocolo HTTP polling
+- `docs/contracts/mqtt-contract.md` — Protocolo MQTT
 - `docs/contracts/api-contract.md` — Endpoints REST
 - `docs/ADR/ADR-017-Event-Bus.md` — Event Bus in-memory
 - `docs/ADR/ADR-014-OTA-v3.md` — Sistema OTA 4 capas

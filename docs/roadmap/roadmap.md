@@ -8,8 +8,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 
 ## FASE 0 — Definición y Contratos (COMPLETADA ✅)
 
-- [x] `docs/protocol/protocol-v1.md` — Contrato MQTT: tópicos, payloads, QoS
-- [x] `docs/contracts/mqtt-contract.md` — Responsabilidades MQTT
+- [x] `docs/contracts/mqtt-contract.md` — Contrato MQTT: tópicos, payloads, QoS, responsabilidades
 - [x] `docs/contracts/api-contract.md` — Endpoints REST
 - [x] `docs/architecture/architecture.md` — Arquitectura general
 - [x] `docs/architecture/backend.md` — Estructura backend

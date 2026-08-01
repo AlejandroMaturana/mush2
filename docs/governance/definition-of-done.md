@@ -55,9 +55,9 @@ Checklist exhaustivo para marcar una tarea como **COMPLETADA**. Aplica a feature
 
 ### Protocolo MQTT
 
-- [ ] Si hay cambio en tópicos MQTT: ADR creado + `docs/protocol/protocol-v1.md` actualizado
+- [ ] Si hay cambio en tópicos MQTT: ADR creado + `docs/contracts/mqtt-contract.md` actualizado
 - [ ] Si hay cambio en payload: `docs/contracts/mqtt-contract.md` actualizado
-- [ ] Si hay versión nueva de protocolo: `docs/protocol/VERSION` incrementado (MAJOR/MINOR/PATCH)
+- [ ] Si hay versión nueva de protocolo: versión de protocolo en `docs/contracts/mqtt-contract.md` incrementada (MAJOR/MINOR/PATCH)
 - [x] Backward compatibility verificada (firmware viejo vs backend nuevo) — Tests automatizados: `backward-compatibility.test.ts`
 
 ### Base de Datos

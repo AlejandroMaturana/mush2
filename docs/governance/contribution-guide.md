@@ -306,7 +306,7 @@ Si cambios afectan arquitectura, protocolo o configuración:
 |---|---|
 | Nuevo modelo/tabla | `docs/architecture/database.md`, schema diagram |
 | Nuevo endpoint | `docs/contracts/api-contract.md` |
-| Nuevo tópico MQTT | `docs/protocol/protocol-v1.md`, `docs/contracts/mqtt-contract.md` |
+| Nuevo tópico MQTT | `docs/contracts/mqtt-contract.md` (+ ADR) |
 | Nueva configuración | `backend/README.md`, `docs/deployment.md` |
 | Cambio de dependencias | `docs/governance/tech-debt.md` |
 
@@ -341,11 +341,11 @@ Si descubres una vulnerabilidad:
 4. Backend: Agregar `Sensor` model y `SensorType` enum
 5. Crear migration de DB si es necesario
 6. Tests: Mocking sensor en `__tests__/integration.test.js`
-7. Docs: Actualizar `docs/protocol/protocol-v1.md`
+7. Docs: Actualizar `docs/contracts/mqtt-contract.md`
 
 ### ¿Cómo cambio el protocolo MQTT?
 
-1. IMPORTANTE: Incremental mayor en `docs/protocol/VERSION`
+1. IMPORTANTE: Incremental mayor de la versión de protocolo declarada en `docs/contracts/mqtt-contract.md`
 2. Actualizar `docs/contracts/mqtt-contract.md`
 3. Backend: Validar `protocol` field en cada mensaje
 4. Firmware: Ajustar publishers/subscribers
@@ -370,7 +370,7 @@ Ver sección "Seguridad" arriba. Protocolo:
 - `PROJECT_CONTEXT.md` — Definición del proyecto
 - `coding-standards.md` — Estándares de código
 - `docs/architecture/` — Arquitectura detallada
-- `docs/protocol/protocol-v1.md` — Protocolo MQTT
+- `docs/contracts/mqtt-contract.md` — Protocolo MQTT
 - `docs/contracts/` — Contratos API, MQTT, DB
 - GitHub Issues/Discussions — Preguntas y sugerencias
 

@@ -19,7 +19,7 @@ Cada componente mantiene su versión en un archivo `VERSION`:
 backend/VERSION     → 0.1.0
 frontend/VERSION    → 0.1.0
 firmware/VERSION    → 0.1.0
-docs/protocol/VERSION → 1.0.0
+Protocolo           → versión declarada en `docs/contracts/mqtt-contract.md` (campo `protocol` en payloads)
 ```
 
 ## Matriz de Compatibilidad

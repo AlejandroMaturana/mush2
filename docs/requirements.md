@@ -110,7 +110,7 @@
 
 ### Mantenibilidad
 - [x] Código modular (firmware, backend, frontend separados)
-- [x] Documentación de protocolo HTTP (protocol-v1.md)
+- [x] Documentación de protocolo MQTT (`docs/contracts/mqtt-contract.md`)
 - [x] Contrato de API (api-contract.md)
 - [x] Versionado semántico en todos los componentes
 - [x] CHANGELOG por componente

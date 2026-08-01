@@ -197,7 +197,7 @@ La implementación sigue el principio **"contratos primero, slices verticales de
 ## 10. Referencias
 
 - [`docs/architecture/architecture.md`](../architecture/architecture.md) — Diagrama de componentes
-- [`docs/protocol/protocol-v1.md`](../protocol/protocol-v1.md) — Protocolo HTTP
+- [`docs/contracts/mqtt-contract.md`](../contracts/mqtt-contract.md) — Protocolo MQTT
 - [`docs/contracts/api-contract.md`](../contracts/api-contract.md) — Contratos REST
 - [`docs/ADR/ADR-001-ESP32.md`](../ADR/ADR-001-ESP32.md) — Elección hardware
 - [`docs/ADR/ADR-008-HTTP-Command-Protocol.md`](../ADR/ADR-008-HTTP-Command-Protocol.md) — Protocolo HTTP polling
