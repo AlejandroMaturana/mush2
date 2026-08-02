@@ -65,9 +65,9 @@ cd backend
 # Instalar dependencias (primera vez)
 pnpm install
 
-# Configurar variables de entorno
-cp .env.example .env.local
-# Editar .env.local con tus valores
+# Configurar variables de entorno (desde la raíz del repositorio)
+cp ../.env.development.example ../.env.development
+# Editar ../.env.development con tus valores
 
 # Base de datos
 pnpm run db:reset      # Reset completo
@@ -92,8 +92,7 @@ cd frontend
 # Instalar dependencias
 pnpm install
 
-# Configurar .env.local (opcional, usa defaults)
-# VITE_API_URL=http://localhost:3797
+# No requiere variables de entorno (usa defaults y proxy Vite)
 
 # Desarrollo
 pnpm run dev

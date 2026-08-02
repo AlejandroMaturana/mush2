@@ -31,11 +31,10 @@ Sistema API REST para gestión de cultivos de hongos adaptógenos. Orquesta disp
 cd backend
 pnpm install
 
-# 2. Configurar variables de entorno
-cp .env.example .env.local
-# Editar .env.local con credenciales locales:
+# 2. Configurar variables de entorno (desde la raíz del repositorio)
+cp ../.env.development.example ../.env.development
+# Editar ../.env.development con credenciales locales:
 # - DB_HOST, DB_USER, DB_PASSWORD
-# - API_HOST
 # - JWT_SECRET (cambiar en producción)
 
 # 3. Sincronizar base de datos
@@ -386,7 +385,7 @@ pnpm install --force
 
 Verifica:
 - PostgreSQL está running: `psql -U postgres`
-- Variables en `.env.local`: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`
+- Variables en `.env.development` (raíz del repo): `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`
 - Pool de conexiones no saturado: `SELECT count(*) FROM pg_stat_activity;`
 
 ### "HTTP connection timeout"
@@ -394,7 +393,7 @@ Verifica:
 Verifica:
 - Backend está accesible: `curl http://localhost:3797/health`
 - Firewall permite puerto HTTP (3797)
-- `API_HOST` configurado correctamente en `.env.local`
+- Variables de conexión configuradas correctamente en `.env.development` (raíz del repo)
 
 ### "Token invalid"
 

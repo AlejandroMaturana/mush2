@@ -31,8 +31,7 @@ cd frontend
 pnpm install
 
 # 2. Configurar variables de entorno
-cp .env.example .env.local
-# VITE_API_URL=http://localhost:3797/api/v1
+# No requiere variables de entorno (usa defaults y proxy Vite a localhost:3797)
 
 # 3. Iniciar servidor de desarrollo
 pnpm run dev

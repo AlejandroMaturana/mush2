@@ -100,9 +100,11 @@ backend/
 │   ├── unit/
 │   └── integration/
 ├── VERSION
-├── package.json
-└── .env.local
+└── package.json
 ```
+
+> Nota: las variables de entorno del backend se cargan desde la raíz del repositorio
+> (`.env` + `.env.{NODE_ENV}`, ver `backend/src/config/env.js`), no desde `backend/.env.local`.
 
 ## Modelo de Datos (Relaciones Principales)
 
