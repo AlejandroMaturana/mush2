@@ -17,7 +17,7 @@
 
 Este RFC propone la **Simulation Platform** como la infraestructura oficial de validación del ecosistema Mush2: una aplicación `simulator` capaz de comportarse como un dispositivo ESP32 ante el backend, ejecutándose sin hardware físico, conforme al contrato MQTT oficial.
 
-La plataforma evoluciona por fases (ISSUE-031, `simulation-platform-roadmap.md`) desde un Protocol Simulator mínimo hasta un Digital Twin, pero la **decisión estructural** que este RFC propone desde la FASE 0 es: **un paquete de protocolo compartido (`packages/protocol`) como única fuente de verdad del contrato**, consumido por backend y simulador, para eliminar el *contract drift* identificado en la auditoría.
+La plataforma evoluciona por fases desde un Protocol Simulator mínimo hasta un Digital Twin, pero la **decisión estructural** que este RFC propone desde la FASE 0 es: **un paquete de protocolo compartido (`packages/protocol`) como única fuente de verdad del contrato**, consumido por backend y simulador, para eliminar el *contract drift* identificado en la auditoría.
 
 ## 2. Contexto
 
@@ -59,7 +59,7 @@ La plataforma evoluciona por fases (ISSUE-031, `simulation-platform-roadmap.md`)
 
 ### 4.4 Principios rectores
 
-Contract First, Hardware Independent, Deterministic Simulation, Environment First, Single Source of Truth, Incremental Fidelity, Observable by Design, Non-invasive Integration (definidos en ISSUE-031).
+Contract First, Hardware Independent, Deterministic Simulation, Environment First, Single Source of Truth, Incremental Fidelity, Observable by Design, Non-invasive Integration.
 
 ## 5. Alternativas consideradas
 
@@ -90,5 +90,5 @@ Contract First, Hardware Independent, Deterministic Simulation, Environment Firs
 ## 8. Proceso
 
 - Estado actual: DRAFT — período de comentarios 7-14 días.
-- Si ACCEPTED → genera ADR (ver `ADR-031-simulator-architecture.md`) y habilita la FASE 1 del ISSUE-031.
+- Si ACCEPTED → genera ADR (ver `ADR-031-simulator-architecture.md`).
 - Este RFC no implementa código; define la arquitectura de la plataforma.

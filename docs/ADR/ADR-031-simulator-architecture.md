@@ -10,17 +10,16 @@
 
 **Documentos relacionados:**
 - `RFC-0010-simulation-platform.md` — Propuesta (DRAFT)
-- `ISSUE-031-simulation-platform.md` — ISSUE Rector
 
 ---
 
 # Resumen
 
-Se adopta la **Simulation Platform** como la infraestructura oficial de validación del ecosistema Mush2. Se decide que la plataforma es un cliente legítimo del contrato MQTT (no un reemplazo del firmware ni del backend), que evoluciona por fases con fidelidad incremental, y que el **contrato compartido** es la única fuente de verdad del wire. Los artefactos de conformance (schemas, ejemplos canónicos, validadores) generados en la FASE 0.5 del ISSUE-031 pasan a ser la referencia normativa para cualquier consumidor del broker.
+Se adopta la **Simulation Platform** como la infraestructura oficial de validación del ecosistema Mush2. Se decide que la plataforma es un cliente legítimo del contrato MQTT (no un reemplazo del firmware ni del backend), que evoluciona por fases con fidelidad incremental, y que el **contrato compartido** es la única fuente de verdad del wire. Los artefactos de conformance (schemas, ejemplos canónicos, validadores) pasan a ser la referencia normativa para cualquier consumidor del broker.
 
 # Contexto
 
-La auditoría (AUDIT-001) evidencia contract drift entre contrato documentado, backend y firmware (H-01 a H-08). La validación del sistema depende de hardware físico y no existe una forma reproducible de ejercitar la vertical slice. El ecosistema necesita una plataforma de validación desacoplada del hardware que, además, no perpetúe el drift.
+Se evidencia contract drift entre contrato documentado, backend y firmware (H-01 a H-08). La validación del sistema depende de hardware físico y no existe una forma reproducible de ejercitar la vertical slice. El ecosistema necesita una plataforma de validación desacoplada del hardware que, además, no perpetúe el drift.
 
 # Decisión
 
@@ -39,11 +38,11 @@ La auditoría (AUDIT-001) evidencia contract drift entre contrato documentado, b
 
 ## 3. Principios rectores obligatorios
 
-Contract First, Hardware Independent, Deterministic Simulation, Environment First, Single Source of Truth, Incremental Fidelity, Observable by Design, Non-invasive Integration (definidos en ISSUE-031). Toda fase futura debe respetarlos.
+Contract First, Hardware Independent, Deterministic Simulation, Environment First, Single Source of Truth, Incremental Fidelity, Observable by Design, Non-invasive Integration. Toda fase futura debe respetarlos.
 
 ## 4. Evolución por fases
 
-La plataforma evoluciona por fases (ISSUE-031): Protocol Simulator → Stateful Device → Environment Model → Scenario Engine → Farm → Virtual Time → CI → HAL → Digital Twin. Cada fase es un ISSUE propio que hereda estos principios.
+La plataforma evoluciona por fases: Protocol Simulator → Stateful Device → Environment Model → Scenario Engine → Farm → Virtual Time → CI → HAL → Digital Twin. Cada fase es un ISSUE propio que hereda estos principios.
 
 ## 5. Aislamiento de ambientes
 

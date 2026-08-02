@@ -10,11 +10,10 @@
 | ADRs rel. | ADR-026, ADR-028, ADR-030, ADR-031 |
 | RFC rel. | RFC-0009, RFC-0010 |
 | EDD rel. | EDD-006 |
-| ISSUE rel. | ISSUE-031 (FASE 1), ISSUE-032 (FASE 2) |
 
 ## 1. Problema / Contexto
 
-Mush2 requiere validar su ecosistema sin hardware físico. Se necesita una entidad **Virtual Device** que, desde el punto de vista del backend, sea indistinguible de un ESP32 real: habla el contrato MQTT, se registra y autentica como un dispositivo, publica telemetría/estado/health y responde a comandos. La auditoría (AUDIT-001) exige además que esta entidad no perpetúe el contract drift, por lo que su comportamiento se rige por los artefactos de conformance.
+Mush2 requiere validar su ecosistema sin hardware físico. Se necesita una entidad **Virtual Device** que, desde el punto de vista del backend, sea indistinguible de un ESP32 real: habla el contrato MQTT, se registra y autentica como un dispositivo, publica telemetría/estado/health y responde a comandos.
 
 ## 2. Objetivos
 
@@ -65,8 +64,6 @@ Virtual Device
 | Device → Broker | `mush2/{deviceId}/maintenance` | component/health | `maintenance.schema.json` |
 | Device → Broker | `mush2/{deviceId}/ack` | cmdId/status/actuatorState | `ack.schema.json` |
 | Broker → Device | `mush2/{deviceId}/actuators` | comando canónico | `command.schema.json` |
-
-En FASE 1 la telemetría puede ser **estática**; en FASE 2 (ISSUE-032) el estado interno evoluciona.
 
 ### 5.3 Configuración externa
 
@@ -199,7 +196,7 @@ ADR-030
 - La ruta legacy se mantiene funcional y marcada como `deprecated` durante FASE 1.
 - La ruta canónica (ADR-030) se valida contra el contrato antes de retirar la legacy.
 - No se elimina código legacy hasta demostrar estabilidad del flujo canónico (criterio de salida de FASE 1).
-- Ambas rutas conviven sin mappings contradictorios (ítem del checklist de ISSUE-031).
+- Ambas rutas conviven sin mappings contradictorios.
 
 ## 6. Impacto en componentes
 

@@ -43,7 +43,7 @@ El entorno DEV contempla:
 - **Frontend** React + Vite
 - **PostgreSQL DEV** en contenedor Docker
 - **Mosquitto DEV** (broker MQTT con autenticación y ACL)
-- **Simulador de dispositivo** (emula el firmware ESP32, ISSUE-031)
+- **Simulador de dispositivo** (emula el firmware ESP32)
 - **Firmware ESP32** (opcional — requiere hardware; el simulador lo reemplaza en DEV)
 
 Está **fuera de alcance**: Render, TLS productivo, CI/CD productivo, escalamiento y monitoreo público.
@@ -261,7 +261,7 @@ pnpm --dir frontend run dev
 
 ## 10. Simulador de dispositivo
 
-Emula el firmware ESP32 (ISSUE-031): publica telemetría/status conforme al contrato canónico y responde a comandos con ACK (ADR-030).
+Emula el firmware ESP32: publica telemetría/status conforme al contrato canónico y responde a comandos con ACK (ADR-030).
 
 ```bash
 # Iniciar (con watch)
@@ -519,6 +519,5 @@ pnpm --dir backend run db:seed:dev
 - `backend/src/config/ConfigurationService.js` — validación fail-fast
 - `scripts/dev-mqtt-setup.ps1` — provisioning MQTT DEV (Windows)
 - `scripts/create-mqtt-user.sh` — gestión de usuarios MQTT (Linux/Mac)
-- `simulator/` — simulador de dispositivo (ISSUE-031)
 - `docs/contracts/conformance/` — contratos canónicos MQTT (schemas y ejemplos)
 - `docs/architecture/firmware.md` — firmware ESP32

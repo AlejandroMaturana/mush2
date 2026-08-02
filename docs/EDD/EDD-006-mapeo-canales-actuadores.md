@@ -4,7 +4,7 @@
 
 | Campo             | Valor                            |
 | ----------------- | -------------------------------- |
-| Autor             | ISSUE-030                        |
+| Autor             | AlejandroMaturana                |
 | Estado            | ACCEPTED                         |
 | Fecha             | 2026-07-30                       |
 | Última actualización | 2026-08-01 — swap de índices + remapeo eliminado, verificado en hardware (CH-T13) |

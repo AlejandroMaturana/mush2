@@ -4,7 +4,7 @@
 
 | Campo             | Valor                                        |
 | ----------------- | -------------------------------------------- |
-| Autor             | ISSUE-030                                    |
+| Autor             | AlejandroMaturana                            |
 | Estado            | ACCEPTED                                     |
 | Fecha de apertura | 2026-07-30                                   |
 | Fecha de cierre   | 2026-07-31                                   |
@@ -26,7 +26,7 @@ Mush2 opera actualmente con dos caminos de comando activos (MQTT publish y HTTP 
 4. **Invariantes en código**: reglas de safety (temp ≥ 32°C), override (5 min LOCAL) y minOnTime (3s SSR) existen solo en implementación, sin contrato formal que las proteja de regresión.
 5. **Riesgo REG-001 repetido**: sin invariantes formalizadas, una correción puede reintroducirse silenciosamente en una modificación futura.
 
-Si no se implementa este protocolo, cada nuevo tipo de actuador o canal de comando requerirá decisiones ad-hoc, perpetuando la deuda arquitectónica documentada en ISSUE-030 (H-01 a H-06).
+Si no se implementa este protocolo, cada nuevo tipo de actuador o canal de comando requerirá decisiones ad-hoc, perpetuando la deuda arquitectónica.
 
 ## Diseño detallado
 
@@ -377,7 +377,7 @@ La respuesta HTTP definida en §5.3 es compatible con el parser actual en `firmw
 ## Plan de migración
 
 1. **Publicar RFC-0009**: documento en estado DRAFT para revisión.
-2. **Revisión y Architecture Decision Gate**: según FASE 3.5 de ISSUE-030.
+2. **Revisión y Architecture Decision Gate**: por cambios documentados.
 3. **Si Accepted**: crear ADR-XXX + actualizar backend para incluir `cmdId` y `source` en el pipeline.
 4. **Migración de firmware**: en próxima OTA, actualizar parser MQTT para usar `cmdId` en deduplicación.
 5. **HTTP polling**: mantener como fallback. El array `commands` se agrega al response cuando haya comandos pendientes sin ACK.
@@ -404,7 +404,7 @@ Los cambios son incrementalmente desplegables y cada etapa mantiene compatibilid
 
 **Justificación:**
 
-> Aprobado por Architecture Decision Gate (ISSUE-030 FASE 3.5). El formato canónico definitivo es el **anidado unario** de §5.1/§5.2, con el schema congelado de `docs/contracts/conformance/` como fuente normativa única del wire contract (decisión Fase 4D de ISSUE-030).
+> Aprobado por Architecture Decision Gate . El formato canónico definitivo es el **anidado unario** de §5.1/§5.<2, con el schema congelado de `docs/contracts/conformance/` como fuente normativa única del wire contract.
 
 **ADR generado:** ADR-030 (Aceptado)
 
@@ -413,4 +413,4 @@ Los cambios son incrementalmente desplegables y cada etapa mantiene compatibilid
 | Versión | Fecha      | Autor            | Cambios |
 |---------|------------|------------------|---------|
 | 1.0     | 2026-07-24 | AlejandroMaturana | Creación del documento (DRAFT) |
-| 2.0     | 2026-07-31 | AlejandroMaturana | ACCEPTED; formato canónico anidado unario (§5.1/§5.2); cmdId UUID v4 (§2.3); §5.3 HTTP sin `commands[]`; §6 dual-format firmware; schemas conformance como fuente normativa (Fase 4D ISSUE-030) |
+| 2.0     | 2026-07-31 | AlejandroMaturana | ACCEPTED; formato canónico anidado unario (§5.1/§5.2); cmdId UUID v4 (§2.3); §5.3 HTTP sin `commands[]`; §6 dual-format firmware; schemas conformance como fuente normativa |

@@ -4,7 +4,7 @@
 
 **Fecha:** 2026-07-30
 
-**Autores:** ISSUE-030
+**Autores:** AlejandroMaturana
 
 **Decisores:** Equipo Mush2
 
@@ -40,7 +40,6 @@ ADR-008 (HTTP Command Protocol, 2026-06-13) documentó una arquitectura basada e
 |----|----------|--------|
 | H-102 | Canal primario no formalizado (MQTT vs HTTP) | RFC-0009 |
 | H-104 | cmdId: formato y autoridad sin definir | RFC-0009 |
-| H-109 | ADR-008 no deprecado formalmente en sus secciones obsoletas | ISSUE-030 |
 
 ## Riesgos de no actuar
 
@@ -254,7 +253,7 @@ Firmware:
 
 ## Formato canónico (MQTT command)
 
-> Normativo: `docs/contracts/conformance/schemas/command.schema.json` (única fuente de verdad del wire contract, Fase 4D de ISSUE-030).
+> Normativo: `docs/contracts/conformance/schemas/command.schema.json` (única fuente de verdad del wire contract.
 
 ```json
 {
@@ -340,4 +339,4 @@ Firmware:
 | Versión | Fecha | Cambio |
 |---------|-------|--------|
 | 1.0 | 2026-07-30 | Creación |
-| 1.1 | 2026-07-31 | Alineación con Fase 4D de ISSUE-030: formato canónico anidado unario; schemas conformance como fuente normativa; se elimina cmdId compacto |
+| 1.1 | 2026-07-31 | Formato canónico anidado unario; schemas conformance como fuente normativa; se elimina cmdId compacto |

@@ -1,7 +1,6 @@
 # Protocol Simulator (Virtual Device) — FASE 1
 
-Simulador de protocolo que emula un dispositivo físico Mush2 frente al backend
-MQTT. Es el entregable central de **FASE 1** del ISSUE-031 (Simulation Platform).
+Simulador de protocolo que emula un dispositivo físico Mush2 frente al backend MQTT.
 
 Comportamiento (paridad exacta con el firmware):
 
@@ -190,6 +189,5 @@ pnpm --filter mush2-backend test
 
 ## Referencias
 
-- ISSUE-031 (FASE 1 — Protocol Simulator) · ADR-031 · EDD-007
 - RFC-0009 §5.1/§5.2 · ADR-030 · ADR-026 (ts en segundos) · ADR-028/029 (provisioning)
 - Contrato congelado: `docs/contracts/conformance/` (schemas + examples + manifest)

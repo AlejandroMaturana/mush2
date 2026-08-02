@@ -1,6 +1,6 @@
 # Conformance — Contrato MQTT Mush2 (FASE 0.5)
 
-> **Propósito:** congelar el contrato del wire mediante artefactos verificables antes de escribir cualquier línea del simulador (ISSUE-031, FASE 0.5). Estos artefactos son la referencia normativa para backend, firmware y simulador, y la base del futuro `packages/protocol` (RFC-0010, ADR-031).
+> **Propósito:** congelar el contrato del wire mediante artefactos verificables antes de escribir cualquier línea del simulador. Estos artefactos son la referencia normativa para backend, firmware y simulador, y la base del futuro `packages/protocol` (RFC-0010, ADR-031).
 
 ---
 
@@ -52,19 +52,12 @@ El contrato congelado expone divergencias del ecosistema actual. Ninguna se cier
 
 | ID | Gap | Evidencia |
 |----|-----|-----------|
-| G-2 | El firmware no publica ACK | `AUDIT-001` H-03 — **implementado en Fase 4B** de ISSUE-030 (ACK unario + status OK/INVALID_CHANNEL/UNKNOWN_CMD/ALREADY_EXECUTED), **verificado en hardware (2026-08-01, PASS)** |
-| G-3 | El firmware publica con QoS 0 (contrato declara QoS 1) | `AUDIT-001` H-04 |
-| G-4 | `DEV_ENVIRONMENT.md` documentaba `eco2`/`heap`/`state` numérico; corregido a ejemplos canónicos | `AUDIT-001` H-05 |
+| G-2 | El firmware no publica ACK | ACK unario + status OK/INVALID_CHANNEL/UNKNOWN_CMD/ALREADY_EXECUTED, **verificado en hardware (2026-08-01, PASS)** |
+| G-3 | El firmware publica con QoS 0 (contrato declara QoS 1) | Auditoría dedicada |
+| G-4 | `DEV_ENVIRONMENT.md` documentaba `eco2`/`heap`/`state` numérico; corregido a ejemplos canónicos | Auditoría dedicada H-05 |
 | O-1 | `mqtt-contract.md §7.1` exige campos `protocol` y `deviceId` en todo payload; el firmware no los publica | Decidir en ISSUE futuro: exigir o eliminar la cláusula |
 | O-2 | `mqtt-contract.md §5.1` define LWT con `status:"OFFLINE"`; el firmware publica `{"state":"offline","ts":0}` | Alinear contrato o firmware |
 | O-4 | `getTimestamp()` del firmware usa uptime en segundos cuando NTP no está sincronizado (no época) | El schema exige época; documentado como modo degradado |
-
-**Gaps resueltos en ISSUE-030 (Fase 4D):**
-
-| ID | Gap | Resolución |
-|----|-----|-----------|
-| G-1 | El backend publicaba `ts` en ms y formato anidado no conforme al ADR-030 | ADR-030/RFC-0009 actualizados al formato anidado unario (canónico); `mqttBridge.js` publica `ts` en segundos (ADR-026). Ejemplo `divergent/command-legacy-array.json` demuestra el rechazo del formato legacy |
-| O-3 | Formato de `state` en command/ack ambiguo (int vs string) | `command.schema.json` fija `command.value` como `boolean`; `ack.schema.json` fija `state` como `boolean`; se eliminó el dual-provisional |
 
 ## 5. Relación con el simulador (FASE 1)
 

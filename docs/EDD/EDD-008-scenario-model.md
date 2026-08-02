@@ -9,7 +9,6 @@
 | Fecha | 2026-07-30 |
 | ADRs rel. | ADR-026, ADR-031 |
 | RFC rel. | RFC-0010 |
-| ISSUE rel. | ISSUE-031 (FASE 4) |
 
 ## 1. Problema / Contexto
 
@@ -112,6 +111,5 @@ El Scenario Engine (FASE 4) carga el escenario, lo aplica al estado del Virtual 
 
 ## 10. Referencias
 
-- `ISSUE-031-simulation-platform.md` (Visión de Largo Plazo, FASE 4)
 - `docs/contracts/conformance/README.md`
 - `simulation-platform-roadmap.md`
