@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Chamber, Device, CultivationCycle } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
-import { migrateChambers } from '../scripts/migrate-chambers.js';
+import { migrateChambers } from '../../../scripts/archive/migrations/migrate-chambers.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('CHAMBERS');
