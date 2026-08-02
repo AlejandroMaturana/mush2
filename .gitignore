@@ -5,6 +5,7 @@ node_modules/
 cache/
 dist/
 build/
+backend/coverage/
 backend/mush2_backup_20260630_113545.dump
 .aaron
 .pio
