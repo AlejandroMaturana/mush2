@@ -77,6 +77,8 @@ pnpm run db:seed       # Datos de prueba
 pnpm run dev
 
 # Tests
+# Opcional: solo si necesitas tests con configuración local
+# cp .env.test.example .env.test
 pnpm test                # Correr una vez
 pnpm run test:watch      # Modo watch
 pnpm run test:coverage   # Con cobertura

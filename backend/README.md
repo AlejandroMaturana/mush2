@@ -240,6 +240,9 @@ router.get('/admin/users', authenticate, requireMinRole('ADMIN'), controller);
 ## 🧪 Testing
 
 ```bash
+# Opcional: solo si necesitas tests con configuración local
+cp .env.test.example .env.test
+
 # Correr todos los tests
 pnpm test
 
