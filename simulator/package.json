@@ -1,6 +1,6 @@
 {
   "name": "mush2-simulator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Protocol Simulator (Virtual Device) — FASE 1. Emula el firmware: publica telemetría/status conforme al contrato canónico y responde a comandos con ACK (ADR-030).",

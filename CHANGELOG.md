@@ -1,5 +1,78 @@
 # Changelog — Mush2
 
+## 2026-08-02
+
+### Backend — v1.5.0
+
+- feat(mqtt): Pipeline de comando canónico con `cmdId` y mapeo de canales (EDD-006)
+  - `mqttBridge` consume comandos canónicos con dedup por `cmdId` y emite ACK MQTT
+  - `controlEngine`, `ComputeActuators`, ruta `actuators`, modelo `Actuator` y value object `Phase` alineados al formato canónico
+- feat(protocol): Command & Actuation Protocol formalizado (ISSUE-030 / ADR-030)
+- fix(devices): Resolución de dispositivos por `deviceId` público en lugar de PK integer
+  - `tenant.js`, `api.js`, `telegram.js` y `cycles.js` usan `req.device.id` para FKs
+  - Claim y acceso resuelven por `deviceId` (evita error de casteo string → integer en PostgreSQL)
+- fix(mqtt): Provisioning MQTT dev con `password_file` resuelto desde la raíz y reload del broker tras provisionar (ADR-029)
+- refactor(backend): Eliminada capa DDD huérfana y archivadas migraciones one-shot (Lote 3.2)
+- test: Suite completa de testing (FASE 0–5)
+  - Infraestructura y arquitectura de tests (Vitest + JET)
+  - Invariantes de dominio y regression suite (REG-xxx)
+  - Contract tests (REST, errores, middlewares, convenciones)
+  - Workflow tests (Run Lifecycle) y cobertura horizontal (52 tests en 12 módulos)
+- test: Invariantes actualizados al patrón `deviceId` + habilitado coverage v8 (baseline verde)
+- test: Conformance tests del contrato MQTT (schemas JSON + ejemplos canónicos)
+- test: Channel mapping EDD-006 y conformance al formato canónico
+
+### Frontend — v1.15.0
+
+- fix(ui): Corregido el chart modal en `ChartPanel`
+- fix(devices): Links, navegación y llamadas API usan `device.deviceId` (string)
+- test: FASE 6 — Arquitectura + Frontend (387 tests total)
+- test: Infraestructura de testing (Vitest) y entorno `test`
+  - Tests de componentes `EmptyState`, `ErrorState` y `LoadingState`
+  - Tests de constantes `deviceStatus` y utils `cn`/`format`
+
+### Firmware (ESP32-S3) — v0.23.0
+
+- feat(mqtt): Parser dual-format (canónico + legacy), dedup por `cmdId` y ACK MQTT (ISSUE-030)
+- fix: Swap de índices heat/vent en `hysteresis_controller` (EDD-006 ss7.4)
+- fix: Corregida variable de entorno MQTT en `config.example`
+- test: Unit tests CH-T08/CH-T09 del mapeo GPIO (EDD-006 ss5.2)
+- test: Suite `S3_test-actuator-chain` con verificación física CH-T13 (15/15)
+
+### Simulator — v0.1.1
+
+- feat(simulator): Virtual Device MVP FASE 1 con librería de contrato (ISSUE-031)
+  - Emula el firmware: publica telemetría/status conforme al contrato canónico
+  - Responde a comandos con ACK y dedup por `cmdId` (ADR-030)
+  - Nueva librería de contrato con schemas y validator
+
+### Docs — v0.2.1
+
+- ADR-030: Command & Actuation Protocol (ISSUE-030)
+- RFC-0009: Command & Actuation Protocol
+- EDD-006: Mapeo de canales de actuadores — swap de índices y CH-T13 verificados en hardware (ss7.4)
+- ADR-031 / RFC-0010 / EDD-007: Simulation Platform — FASE 0 formalizada y ISSUE Rector materializado (ISSUE-032)
+- DDD-008 promovido a Aceptado (ADR-025)
+- docs/contracts: Unificada como fuente de verdad del protocolo (se depreca `docs/protocol`)
+  - Conformance G-2 verificado en hardware (2026-08-01)
+  - Schemas JSON y conformance tests para los mensajes del contrato
+- docs/user/dev-environment.md: Nueva guía consolidada de entorno de desarrollo (carga de env desde la raíz)
+- Actualización de referencias cruzadas y restauración de links
+
+### Scripts & Tooling
+
+- chore(release): Bump a v1.8.0 y unificación del manifest de versión en frontend
+- chore: Renombrada la rama base `master` → `main`
+- chore(config): Migración del entorno de test a template
+- chore(build): Ignorado `backend/coverage`
+- feat: Añadidas dependencias para JET y Vitest
+
+**Resultado**
+- Pipeline de comando canónico end-to-end (Backend ↔ Firmware ↔ Simulator) con ACK, dedup por `cmdId` y mapeo de canales EDD-006.
+- Contrato MQTT congelado con schemas y conformance tests verificados en hardware (G-2, CH-T13).
+- Fundamentos de testing establecidos (387 tests) y resolución de dispositivos por `deviceId` público.
+- Simulation Platform arrancada (FASE 0/0.5/1) con Virtual Device MVP.
+
 ## 2026-07-29
 
 ### Backend — v1.4.0
