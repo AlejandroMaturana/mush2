@@ -13,12 +13,12 @@ function readSource(relativePath: string): string {
 describe('REG-001: deviceId vs id — checkDeviceAccess', () => {
   const source = readSource('middlewares/tenant.js');
 
-  it('usa Device.findByPk(id) como primera opción (busca por PK numérica)', () => {
-    expect(source).toMatch(/Device\.findByPk\(\s*id\s*\)/);
+  it('usa Device.findOne({ where: { deviceId } }) para resolver por deviceId', () => {
+    expect(source).toContain("const device = await Device.findOne({ where: { deviceId } });");
   });
 
-  it('fallback a Device.findOne({ where: { deviceId: id } }) si no encuentra por PK', () => {
-    expect(source).toContain("Device.findOne({ where: { deviceId: id } })");
+  it('no usa findByPk(id) con req.params.id como PK numérica', () => {
+    expect(source).not.toMatch(/Device\.findByPk\(/);
   });
 
   it('UserChamberAccess busca por device.id (integer PK), no por deviceId string', () => {

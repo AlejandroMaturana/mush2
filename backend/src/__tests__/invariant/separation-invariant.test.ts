@@ -15,14 +15,14 @@ describe('Invariant: separación de responsabilidades', () => {
   describe('los controladores de ruta no hacen consultas Sequelize directas', () => {
     const apiSource = readSource('routes/api.js');
 
-    it('solo POST /devices/:id/claim usa Device.findByPk(req.params) — excepción documentada', () => {
+    it('solo POST /devices/:id/claim consulta Device.findOne por req.params — excepción documentada', () => {
       const lines = apiSource.split('\n');
-      const deviceFindByPkInHandlers = lines.filter(line =>
-        line.includes('Device.findByPk') && line.includes('req.params')
+      const deviceFindOneInHandlers = lines.filter(line =>
+        line.includes('Device.findOne') && line.includes('req.params')
       );
-      expect(deviceFindByPkInHandlers).toHaveLength(1);
+      expect(deviceFindOneInHandlers).toHaveLength(1);
       const idx = lines.findIndex(line =>
-        line.includes('Device.findByPk') && line.includes('req.params')
+        line.includes('Device.findOne') && line.includes('req.params')
       );
       expect(lines.slice(Math.max(0, idx - 10), idx).join(' ')).toContain('claim');
     });
