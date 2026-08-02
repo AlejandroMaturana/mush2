@@ -304,7 +304,7 @@ Ese ejercicio, repetido durante meses, acelera la curva de aprendizaje mucho má
 | Traer datos nuevos                                    | git pull                                                 |
 | Borrar el último commit definitivamente               | git reset --hard HEAD~1                                  |
 | Deshacer el último commit pero conservar los archivos | git reset --soft HEAD~1                                  |
-| Borrar el último commit de GitHub                     | git push origin master --force                           |
+| Borrar el último commit de GitHub                     | git push origin main --force                           |
 | Borrado estándar de rama local                        | git branch -d nombre_de_la_rama                          |
 | Borrado estándar de rama remota                       | git push origin --delete nombre_de_la_rama               |
 | Guardar cambios temporalmente                         | git stash                                                |
