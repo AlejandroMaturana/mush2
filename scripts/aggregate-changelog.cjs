@@ -114,12 +114,9 @@ function generateVersionManifest(versions) {
     manifest.components[dir] = info.version;
   }
   const json = JSON.stringify(manifest, null, 2) + '\n';
-  const manifestPath = path.join(PROJECT_ROOT, '.changeset', 'version-manifest.json');
-  fs.writeFileSync(manifestPath, json, 'utf8');
-  console.log(`  .changeset/version-manifest.json → ${versions.system.version}`);
   const frontendCopy = path.join(PROJECT_ROOT, 'frontend', 'public', 'version-manifest.json');
   fs.writeFileSync(frontendCopy, json, 'utf8');
-  console.log(`  frontend/public/version-manifest.json → copied`);
+  console.log(`  frontend/public/version-manifest.json → ${versions.system.version}`);
 }
 
 function generateReleaseScript(versions) {
@@ -129,7 +126,7 @@ function generateReleaseScript(versions) {
     '@echo off',
     `echo === Release ${sys.name} v${sys.version} ===`,
     'echo.',
-    'git add VERSION package.json CHANGELOG.md .changeset/version-manifest.json',
+    'git add VERSION package.json CHANGELOG.md',
     'git add frontend/VERSION frontend/package.json',
     'git add backend/VERSION backend/package.json',
     'git add firmware/VERSION firmware/package.json firmware/platformio.ini',

@@ -11,15 +11,49 @@ Todos los componentes usan **Versionado Semántico** (`MAJOR.MINOR.PATCH`).
 | **Frontend** | Rediseño completo, breaking UI | Nueva página, nuevo componente | Bugfix, ajuste CSS |
 | **Protocol** | Cambio incompatible en tópicos/payloads | Nuevo tópico, nuevo campo opcional | Corrección de especificación |
 
-## Archivos VERSION
+## Fuente de verdad
 
-Cada componente mantiene su versión en un archivo `VERSION`:
+La **única fuente de verdad** es el campo `version` de los `package.json`:
 
 ```
-backend/VERSION     → 0.1.0
-frontend/VERSION    → 0.1.0
-firmware/VERSION    → 0.1.0
-Protocolo           → versión declarada en `docs/contracts/mqtt-contract.md` (campo `protocol` en payloads)
+package.json (raíz)          → versión del sistema
+backend/package.json         → backend
+frontend/package.json        → frontend
+firmware/package.json        → firmware
+docs/package.json            → docs
+```
+
+No se editan versiones a mano en ningún otro lugar.
+
+## Archivos derivados (generados, no editados a mano)
+
+`node scripts/aggregate-changelog.cjs` (script `aggregate` / `version-packages`) sincroniza
+automáticamente los derivados a partir de los `package.json`:
+
+| Derivado | Generado por |
+|---|---|
+| `VERSION`, `backend/VERSION`, `frontend/VERSION`, `firmware/VERSION`, `docs/VERSION` | `syncVersionFile()` |
+| `firmware/platformio.ini` → `-DFIRMWARE_VERSION` | `syncPlatformIO()` |
+| `frontend/public/version-manifest.json` | `generateVersionManifest()` |
+| `scripts/release.bat` | `generateReleaseScript()` |
+
+`frontend/public/version-manifest.json` es el **único** manifest versionado: lo consume el
+frontend en runtime (`useVersionManifest.js`). No existe copia en `.changeset/`.
+
+## Flujo definitivo de release
+
+```
+1. Cambios en un componente → su CHANGELOG.md
+2. pnpm version-packages
+   ├─ changeset version       → bumpear versions en package.json
+   └─ node scripts/aggregate-changelog.cjs
+       ├─ sincroniza VERSION files desde package.json
+       ├─ bumpea versión raíz (patch)
+       ├─ regenera frontend/public/version-manifest.json
+       ├─ regenera scripts/release.bat
+       └─ agrega sección al CHANGELOG.md raíz y limpia CHANGELOGs por componente
+3. Ejecutar scripts/release.bat → commit de release
+4. Tag vX.Y.Z
 ```
 
 ## Matriz de Compatibilidad
@@ -43,3 +77,5 @@ CHANGELOG.md (raíz — cambios del proyecto completo)
 ```
 
 Formato: [Keep a Changelog](https://keepachangelog.com/) v1.1.0.
+
+Los `CHANGELOG.md` por componente se agregan al raíz y se limpian durante `aggregate-changelog.cjs`.
