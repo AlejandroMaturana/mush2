@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import { Recipe } from '../models/index.js';
 import { logAudit } from '../services/auditService.js';
 
@@ -8,7 +9,10 @@ router.get('/recipes', async (req, res) => {
   try {
     const where = {};
     if (req.tenant && req.tenant.userId) {
-      where.userId = req.tenant.userId;
+      where[Op.or] = [
+        { userId: req.tenant.userId },
+        { userId: null },
+      ];
     }
     const recipes = await Recipe.findAll({ where, order: [['name', 'ASC']] });
     res.json({ data: recipes });

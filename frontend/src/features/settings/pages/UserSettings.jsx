@@ -71,7 +71,7 @@ function UserSettings() {
 
   async function handleSaveProfile(e) {
     e.preventDefault(); setSaving(true); setMsg(null)
-    try { await updateProfileSettings({ username, email }); setMsg({ type: 'ok', text: 'Perfil actualizado' }); sessionStorage.setItem('mush2_user', JSON.stringify({ user: { username, email } })) }
+    try { await updateProfileSettings({ username, email }); setMsg({ type: 'ok', text: 'Perfil actualizado' }); localStorage.setItem('mush2_user', JSON.stringify({ ...user, username, email })) }
     catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
   }

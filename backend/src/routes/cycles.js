@@ -10,12 +10,25 @@ import { createChildLogger } from '../config/pino.js';
 const logger = createChildLogger('CYCLE');
 const router = express.Router();
 
+const CYCLE_STATUSES = ['PLANNED', 'ACTIVE', 'COMPLETED', 'ABORTED'];
+
 router.get('/', async (req, res) => {
   try {
     const where = {};
     if (req.tenant && req.tenant.userId) where.userId = req.tenant.userId;
-    if (req.query.status) where.status = req.query.status;
-    if (req.query.chamberId) where.chamberId = req.query.chamberId;
+    if (req.query.status) {
+      if (!CYCLE_STATUSES.includes(req.query.status)) {
+        return res.status(400).json({ error: 'VALIDATION', message: `status inválido. Válidos: ${CYCLE_STATUSES.join(', ')}` });
+      }
+      where.status = req.query.status;
+    }
+    if (req.query.chamberId) {
+      const chamberId = Number(req.query.chamberId);
+      if (!Number.isInteger(chamberId) || chamberId <= 0) {
+        return res.status(400).json({ error: 'VALIDATION', message: 'chamberId debe ser un entero positivo' });
+      }
+      where.chamberId = chamberId;
+    }
 
     const cycles = await CultivationCycle.findAll({
       where,
@@ -51,9 +64,11 @@ router.post('/', async (req, res) => {
     if (!recipeId) return res.status(400).json({ error: 'recipeId es requerido' });
 
     let resolvedChamberId = chamberId;
+    let resolvedDeviceId = null;
     if (deviceId) {
       const dev = await Device.findOne({ where: { deviceId } });
       if (!dev) return res.status(400).json({ error: 'El dispositivo no existe' });
+      resolvedDeviceId = dev.id;
       if (dev.chamberId != null && resolvedChamberId == null) resolvedChamberId = dev.chamberId;
     }
 
@@ -65,7 +80,7 @@ router.post('/', async (req, res) => {
       species: species || recipe.species,
       strain: strain || undefined,
       startDate: startDate || undefined,
-      deviceId: deviceId || undefined,
+      deviceId: resolvedDeviceId,
       chamberId: resolvedChamberId || undefined,
       notes: notes || undefined,
       userId: req.user.id,
@@ -116,7 +131,8 @@ router.patch('/:id', async (req, res) => {
                 co2Max: thresholds.co2Max,
               },
             };
-            publishActuatorCommand(cycle.deviceId, [], config);
+            const device = await Device.findByPk(cycle.deviceId);
+            if (device) publishActuatorCommand(device.deviceId, [], config);
           }
         }
       } catch { /* best-effort: activation already saved */ }

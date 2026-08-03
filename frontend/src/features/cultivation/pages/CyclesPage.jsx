@@ -124,7 +124,7 @@ function Cycles() {
     try {
       await createCycle({
         recipeId: parseInt(form.recipeId, 10), species: form.species, strain: form.strain || undefined,
-        startDate: form.startDate || undefined, deviceId: form.deviceId ? parseInt(form.deviceId, 10) : undefined,
+        startDate: form.startDate || undefined, deviceId: form.deviceId || undefined,
       })
       setShowForm(false)
       setForm({ recipeId: '', species: '', strain: '', startDate: '', deviceId: '' })
@@ -250,7 +250,7 @@ function Cycles() {
                 <select value={form.deviceId} onChange={e => setForm({...form, deviceId: e.target.value})} className="form-select">
                   <option value="">— Sin dispositivo (manual) —</option>
                   {devices.map(d => (
-                    <option key={d.id} value={d.id}>
+                    <option key={d.id} value={d.deviceId}>
                       {d.chamberName || d.deviceId}{d.chamberId != null ? ` (Cámara ${d.chamberId})` : ''} {d.macAddress ? `· ${d.macAddress}` : ''}
                     </option>
                   ))}
