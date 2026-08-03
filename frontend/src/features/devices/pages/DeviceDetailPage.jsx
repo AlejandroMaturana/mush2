@@ -71,6 +71,16 @@ function DeviceDetail() {
     }
   }
 
+  const syncState = useCallback(async () => {
+    try {
+      const [dev, acts] = await Promise.all([getDevice(id), getActuators(id)])
+      if (cancelledRef.current) return
+      if (dev) setDevice(dev)
+      setActuators(acts)
+      setError(null)
+    } catch {}
+  }, [id])
+
   function applyTelemetry(sensors, initial = false) {
     if (!sensors) return
     const prev = prevTelemetry.current
@@ -121,17 +131,23 @@ function DeviceDetail() {
   }, [id, addLog])
 
   useSSE(useCallback((type, data) => {
+    if (type === 'connected') {
+      syncState()
+      return
+    }
     if (type === 'telemetry' && device && data.deviceId === device.deviceId) {
       if (data.sensors) {
         applyTelemetry(data.sensors)
       }
     }
-    if (type === 'ack') {
+    if (type === 'ack' && device && data.deviceId === device.deviceId) {
       const ch = data.actuatorState?.channel
+      if (ch == null) return
+      const raw = data.actuatorState.state
+      const state = raw === 'ON' || raw === true || raw === 1 ? 'ON' : 'OFF'
+      const lastAck = data.status === 'TIMEOUT' ? 'TIMEOUT' : 'ACKED'
       setActuators(prev => prev.map(a =>
-        a.channel === ch
-          ? { ...a, state: data.actuatorState.state, lastAck: data.status }
-          : a
+        a.channel === ch ? { ...a, state, lastAck } : a
       ))
       setPendingChannels(prev => {
         const next = new Set(prev)
@@ -139,13 +155,24 @@ function DeviceDetail() {
         return next
       })
       const label = actuators.find(a => a.channel === ch)?.label || `CANAL ${ch}`
-      if (data.status === 'ACKED') {
-        addLog(`${label} → CONFIRMADO (${data.actuatorState.state})`, 'success')
-      } else if (data.status === 'TIMEOUT') {
+      if (lastAck === 'ACKED') {
+        addLog(`${label} → CONFIRMADO (${state})`, 'success')
+      } else {
         addLog(`${label} → TIEMPO AGOTADO`, 'error')
       }
     }
-  }, [device, actuators, addLog]))
+    if (type === 'control_eval' && device && data.deviceId === device.deviceId && Array.isArray(data.actuatorCommands)) {
+      setActuators(prev => prev.map(a => {
+        const cmd = data.actuatorCommands.find(c => c.channel === a.channel)
+        return cmd ? { ...a, state: cmd.command === 'ON' ? 'ON' : 'OFF' } : a
+      }))
+    }
+    if (type === 'device_status_changed' && device && data.deviceId === device.deviceId) {
+      if (data.status?.connectivity === 'ONLINE' && data.previousStatus?.connectivity !== 'ONLINE') {
+        syncState()
+      }
+    }
+  }, [device, actuators, addLog, syncState]))
 
   function getCmdState(act) {
     if (pendingChannels.has(act.channel)) return 'PENDING'
@@ -271,9 +298,9 @@ function DeviceDetail() {
       <DeviceConnectivityPanel deviceId={id} />
 
       {/* Telemetry + System Log */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        <Panel title="TELEMETRÍA" subtitle="Datos de sensores en tiempo real" variant="default" className="flex-1" style={{ flex: '1 1 65%', minWidth: '300px' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="device-dash-grid">
+        <Panel title="TELEMETRÍA" subtitle="Datos de sensores en tiempo real" className="device-dash-panel">
+          <div className="device-gauge-grid">
             <DomeGauge value={has.temp ? telemetry.temperature : SENSOR_CFG.temp.min} prevValue={telemetry.temperature} min={SENSOR_CFG.temp.min} max={SENSOR_CFG.temp.max} optMin={SENSOR_CFG.temp.optMin} optMax={SENSOR_CFG.temp.optMax} unit={SENSOR_CFG.temp.unit} label={SENSOR_CFG.temp.label} decimals={SENSOR_CFG.temp.decimals} history={sparkHistory.current.temp} noData={!has.temp} />
             <DomeGauge value={has.hum ? telemetry.humidity : SENSOR_CFG.hum.min} prevValue={telemetry.humidity} min={SENSOR_CFG.hum.min} max={SENSOR_CFG.hum.max} optMin={SENSOR_CFG.hum.optMin} optMax={SENSOR_CFG.hum.optMax} unit={SENSOR_CFG.hum.unit} label={SENSOR_CFG.hum.label} decimals={SENSOR_CFG.hum.decimals} history={sparkHistory.current.hum} noData={!has.hum} />
             <DomeGauge value={has.eco2 ? telemetry.co2 : SENSOR_CFG.eco2.min} prevValue={telemetry.co2} min={SENSOR_CFG.eco2.min} max={SENSOR_CFG.eco2.max} optMin={SENSOR_CFG.eco2.optMin} optMax={SENSOR_CFG.eco2.optMax} unit={SENSOR_CFG.eco2.unit} label={SENSOR_CFG.eco2.label} decimals={SENSOR_CFG.eco2.decimals} history={sparkHistory.current.eco2} noData={!has.eco2} />
@@ -281,8 +308,8 @@ function DeviceDetail() {
           </div>
         </Panel>
 
-        <div style={{ flex: '1 1 30%', minWidth: '250px' }}>
-          <Panel title="REGISTRO DE EVENTOS" subtitle="Bitácora en tiempo real">
+        <Panel title="REGISTRO DE EVENTOS" subtitle="Bitácora en tiempo real" className="device-dash-panel device-dash-log">
+          <div className="device-log-scroll">
             <EventFeed
               events={logs.map((entry, i) => ({
                 id: i,
@@ -294,8 +321,8 @@ function DeviceDetail() {
               emptyMessage="Esperando datos..."
               maxItems={10}
             />
-          </Panel>
-        </div>
+          </div>
+        </Panel>
       </div>
 
       {/* Actuators */}

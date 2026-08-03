@@ -1,5 +1,19 @@
 # Changelog — Mush2
 
+## 2026-08-03
+
+### Backend — v1.5.1
+
+- fix(recipes): Incluye recetas seed globales y plantillas desde catálogo de especies
+- fix(cycles): Valida query params y resuelve deviceId canónico (evita 500 y corrige MQTT)
+
+### Frontend — v1.15.1
+
+- fix(auth): Migra sesión de sessionStorage a localStorage (sesión compartida entre pestañas)
+- refactor(ui): Cambia título de “Flota de dispositivos” a “Lista de dispositivos”
+- style(ui): Rediseña DeviceDetail con CSS Grid (telemetría + log fijo) y gauges 2×2
+- fix(ui): Re-sincroniza actuadores en cada conexión SSE (elimina estado estancado tras F5/red)
+
 ## 2026-08-02
 
 ### Backend — v1.5.0

@@ -4,30 +4,30 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const stored = sessionStorage.getItem('mush2_user')
+    const stored = localStorage.getItem('mush2_user')
     return stored ? JSON.parse(stored) : null
   })
 
   const login = useCallback((userData, accessToken, refreshToken) => {
     setUser(userData)
-    sessionStorage.setItem('mush2_user', JSON.stringify(userData))
-    sessionStorage.setItem('mush2_access_token', accessToken)
-    sessionStorage.setItem('mush2_refresh_token', refreshToken)
+    localStorage.setItem('mush2_user', JSON.stringify(userData))
+    localStorage.setItem('mush2_access_token', accessToken)
+    localStorage.setItem('mush2_refresh_token', refreshToken)
   }, [])
 
   const logout = useCallback(() => {
     setUser(null)
-    sessionStorage.removeItem('mush2_user')
-    sessionStorage.removeItem('mush2_access_token')
-    sessionStorage.removeItem('mush2_refresh_token')
+    localStorage.removeItem('mush2_user')
+    localStorage.removeItem('mush2_access_token')
+    localStorage.removeItem('mush2_refresh_token')
   }, [])
 
   const getToken = useCallback(() => {
-    return sessionStorage.getItem('mush2_access_token')
+    return localStorage.getItem('mush2_access_token')
   }, [])
 
   const getRefreshToken = useCallback(() => {
-    return sessionStorage.getItem('mush2_refresh_token')
+    return localStorage.getItem('mush2_refresh_token')
   }, [])
 
   return (
