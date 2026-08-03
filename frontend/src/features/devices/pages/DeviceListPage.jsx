@@ -95,7 +95,7 @@ function DeviceList() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <EntityHeader
-        title="Flota de dispositivos"
+        title="Lista de dispositivos"
         subtitle={`${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} · ${onlineCount} en línea${degradedCount > 0 ? ` · ${degradedCount} degradado${degradedCount !== 1 ? 's' : ''}` : ''}${offlineCount > 0 ? ` · ${offlineCount} fuera de línea` : ''}`}
         actions={
           <Link to="/fleet/provision" className="btn btn-glow" style={{ fontSize: '11px' }}>
