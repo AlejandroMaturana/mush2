@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getRecipes, createRecipe, updateRecipe } from '../../../api/client.js'
+import { getRecipes, createRecipe, updateRecipe, getSpeciesCatalog } from '../../../api/client.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
@@ -13,6 +13,30 @@ const SPECIES_PRESETS = [
   { id: 'reishi', name: 'Reishi', species: 'Ganoderma lucidum', icon: 'spa', color: '#f87171', incubation: { tempMin: 26, tempMax: 30, humMin: 85, humMax: 95, co2Max: 1200, days: 14 }, fruiting: { tempMin: 22, tempMax: 26, humMin: 85, humMax: 95, co2Max: 600, days: 21 }, fae: { interval: 90, strategy: 'CO2_TRIGGER', level: 'LOW' }, light: 12 },
   { id: 'king-oyster', name: 'King Oyster', species: 'Pleurotus eryngii', icon: 'yard', color: '#a3e635', incubation: { tempMin: 22, tempMax: 25, humMin: 85, humMax: 95, co2Max: 1200, days: 14 }, fruiting: { tempMin: 15, tempMax: 18, humMin: 80, humMax: 90, co2Max: 600, days: 10 }, fae: { interval: 60, strategy: 'TIMER', level: 'MEDIUM' }, light: 14 },
 ]
+
+const DEFAULT_PRESET_PARAMS = {
+  incubation: { tempMin: 22, tempMax: 26, humMin: 85, humMax: 95, co2Max: 1200, days: 14 },
+  fruiting: { tempMin: 18, tempMax: 22, humMin: 85, humMax: 95, co2Max: 800, days: 10 },
+  fae: { interval: 60, strategy: 'TIMER', level: 'MEDIUM' },
+  light: 12, icon: 'potted_plant', color: 'var(--spore-green)',
+}
+
+function buildCatalogPresets(speciesList) {
+  return speciesList.map(s => {
+    const matched = SPECIES_PRESETS.find(p => p.species === s.scientificName)
+    return {
+      id: `catalog-${s.id}`,
+      name: s.name,
+      species: s.scientificName,
+      icon: matched?.icon || DEFAULT_PRESET_PARAMS.icon,
+      color: matched?.color || DEFAULT_PRESET_PARAMS.color,
+      incubation: matched ? { ...matched.incubation } : { ...DEFAULT_PRESET_PARAMS.incubation },
+      fruiting: matched ? { ...matched.fruiting } : { ...DEFAULT_PRESET_PARAMS.fruiting },
+      fae: matched ? { ...matched.fae } : { ...DEFAULT_PRESET_PARAMS.fae },
+      light: matched ? matched.light : DEFAULT_PRESET_PARAMS.light,
+    }
+  })
+}
 
 function PhaseTimeline({ incubationDays, fruitingDays }) {
   const total = (incubationDays || 0) + (fruitingDays || 0)
@@ -72,6 +96,7 @@ function PhaseSection({ title, icon, data, onChange }) {
 
 function Recipes() {
   const [recipes, setRecipes] = useState([])
+  const [speciesCatalog, setSpeciesCatalog] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -97,7 +122,14 @@ function Recipes() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    getSpeciesCatalog()
+      .then(setSpeciesCatalog)
+      .catch(() => setSpeciesCatalog([]))
+  }, [])
+
+  const presets = speciesCatalog.length ? buildCatalogPresets(speciesCatalog) : SPECIES_PRESETS
 
   function applyPreset(preset) {
     setSelectedPreset(preset.id)
@@ -263,7 +295,7 @@ function Recipes() {
               <div>
                 <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: '8px' }}>Plantillas de especies</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {SPECIES_PRESETS.map(p => (
+                  {presets.map(p => (
                     <button key={p.id} type="button" onClick={() => applyPreset(p)} style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '8px', borderRadius: '8px',
                       border: `1px solid ${selectedPreset === p.id ? 'var(--spore-green)' : 'var(--outline-variant)'}`,
