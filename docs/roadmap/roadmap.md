@@ -297,7 +297,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 - [x] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
 - [x] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
 - [x] Backend: health check por nodo (última telemetría, estado MQTT, watchdog)
-- [x] Frontend: página `/monitoring` con estado de salud del sistema
+- [x] Frontend: página `/monitoring` con estado de salud del sistema (retirada de la UI en refactor de Operations 2026-08; endpoints `/monitoring/*` permanecen para tooling)
 - [x] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
 
 ### Capacidades futuras del Fail-Safe
