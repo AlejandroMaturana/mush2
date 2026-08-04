@@ -274,10 +274,16 @@ function DeviceDetail() {
         badge={device.status?.lifecycle || 'ACTIVE'}
         badgeVariant={isOnline ? 'online' : isMaintenance ? 'info' : isStale ? 'warning' : 'critical'}
         actions={
-          <button onClick={() => setShowDeleteModal(true)} className="btn btn-danger" style={{ fontSize: '11px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-            ELIMINAR
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button onClick={() => navigate(`/fleet/devices/${id}/analytics`)} className="btn btn-secondary" style={{ fontSize: '11px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>analytics</span>
+              ANÁLISIS
+            </button>
+            <button onClick={() => setShowDeleteModal(true)} className="btn btn-danger" style={{ fontSize: '11px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+              ELIMINAR
+            </button>
+          </div>
         }
       />
 

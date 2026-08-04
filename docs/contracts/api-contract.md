@@ -429,23 +429,33 @@ Requiere auth + rol ADMIN. Publica mensaje de prueba.
 
 ## 21. Tiempo Real
 
-### `GET /events`
-Server-Sent Events (autenticación via query param `?token=jwt`).
+### `GET /events` (SSE — LIVE)
+Server-Sent Events (autenticación via query param `?token=jwt`). **Es la única fuente de eventos consumida por el frontend.** El feed es la memoria del servidor (`sse/events`); no hay persistencia.
+
+El cliente debe normalizar cada evento al shape `{ id, type, timestamp, deviceId, severity, message, metadata }` antes de renderizar (ver `frontend/src/features/events/pages/EventsPage.jsx`).
 
 Eventos:
 | Evento | Descripción |
 |--------|-------------|
+| `connected` | Heartbeat/confirmación de suscripción (usado como indicador de conexión) |
 | `ack` | Confirmación de comandos del dispositivo |
 | `state` | Cambios de estado de actuadores |
-| `telemetry` | Datos de sensores en tiempo real |
+| `telemetry` | Datos de sensores en tiempo real (alta frecuencia; OFF por defecto en la UI) |
 | `alarm` | Alarmas del sistema |
 | `control_eval` | Evaluaciones del control engine |
 | `health` | Reportes de salud del dispositivo |
 | `maintenance` | Eventos de mantenimiento |
 | `phase_transition` | Transiciones de fase del ciclo |
+| `device_health` | Reportes de salud del dispositivo (payload `status`) |
+| `device_status_changed` | Cambio de estado/desconexión del dispositivo |
 
 ### `GET /events/device/:deviceId`
-SSE filtrado por dispositivo específico.
+SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
+
+### REST `/api/v1/events` + `models/Event.js` — LEGACY (sin consumo frontend)
+- `backend/src/routes/events.js` + `backend/src/models/Event.js` forman un módulo **legacy/escrito-huérfano**: el modelo solo se lee en `routes/events.js` y en la métrica `Event.count()` de `routes/monitoring.js`. **Nada escribe** en la tabla `events`.
+- Desde esta refactorización, el frontend **no depende** de `GET /api/v1/events` ni `GET /api/v1/events/device/:deviceId` (se eliminaron `getEvents`/`getDeviceEvents` de `client.js`).
+- **No eliminar ni tocar backend**: se conserva como documentación de deuda técnica y su eliminación queda fuera del alcance actual.
 
 ---
 

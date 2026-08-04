@@ -14,9 +14,8 @@ const CycleDetail = lazy(() => import('../features/cultivation/pages/CycleDetail
 const BioactiveDashboard = lazy(() => import('../features/cultivation/pages/BioactiveDashboardPage.jsx'))
 const Alarms = lazy(() => import('../features/alarms/pages/AlarmsPage.jsx'))
 const Logs = lazy(() => import('../features/logs/pages/LogsPage.jsx'))
-const Diagnostics = lazy(() => import('../features/diagnostics/pages/DiagnosticsPage.jsx'))
 const Events = lazy(() => import('../features/events/pages/EventsPage.jsx'))
-const Analytics = lazy(() => import('../features/analytics/pages/AnalyticsPage.jsx'))
+const DeviceAnalytics = lazy(() => import('../features/analytics/pages/DeviceAnalyticsPage.jsx'))
 const Settings = lazy(() => import('../features/settings/pages/SettingsPage.jsx'))
 const SettingsHub = lazy(() => import('../features/settings/pages/SettingsHub.jsx'))
 const UserSettings = lazy(() => import('../features/settings/pages/UserSettings.jsx'))
@@ -26,7 +25,6 @@ const ApiKeysSettings = lazy(() => import('../features/settings/pages/ApiKeysSet
 const SystemSettings = lazy(() => import('../features/settings/pages/SystemSettings.jsx'))
 const SubscriptionSettings = lazy(() => import('../features/settings/pages/SubscriptionSettings.jsx'))
 const Provisioning = lazy(() => import('../features/devices/pages/ProvisioningPage.jsx'))
-const Monitoring = lazy(() => import('../features/monitoring/pages/MonitoringPage.jsx'))
 
 export const publicRoutes = [
   { path: '*', element: Landing },
@@ -39,6 +37,7 @@ export const protectedRoutes = [
   { path: '/fleet/provision', element: Provisioning },
   { path: '/fleet/devices', element: DeviceList },
   { path: '/fleet/devices/:id', element: DeviceDetail },
+  { path: '/fleet/devices/:id/analytics', element: DeviceAnalytics },
 
   { path: '/cultivation/recipes', element: Recipes },
   { path: '/cultivation/recipes/compare', element: RecipeComparator },
@@ -47,12 +46,9 @@ export const protectedRoutes = [
   { path: '/cultivation/cycles/:id', element: CycleDetail },
   { path: '/cultivation/cycles/:id/bioactives', element: BioactiveDashboard },
 
-  { path: '/operations/analytics', element: Analytics },
   { path: '/operations/alarms', element: Alarms },
   { path: '/operations/events', element: Events },
   { path: '/operations/logs', element: Logs },
-  { path: '/operations/diagnostics', element: Diagnostics },
-  { path: '/operations/monitoring', element: Monitoring },
 
   {
     path: '/system/settings',
@@ -74,11 +70,9 @@ export const protectedRoutes = [
   { path: '/species', element: () => <Navigate to="/cultivation/species" replace /> },
   { path: '/cycles', element: () => <Navigate to="/cultivation/cycles" replace /> },
   { path: '/cycles/:id/bioactives', element: () => <Navigate to="/cultivation/cycles/:id/bioactives" replace /> },
-  { path: '/analytics', element: () => <Navigate to="/operations/analytics" replace /> },
+  { path: '/analytics', element: () => <Navigate to="/fleet/devices" replace /> },
   { path: '/alarms', element: () => <Navigate to="/operations/alarms" replace /> },
   { path: '/logs', element: () => <Navigate to="/operations/logs" replace /> },
-  { path: '/diagnostics', element: () => <Navigate to="/operations/diagnostics" replace /> },
-  { path: '/monitoring', element: () => <Navigate to="/operations/monitoring" replace /> },
   { path: '/settings', element: () => <Navigate to="/system/settings" replace /> },
   { path: '/settings/*', element: () => <Navigate to="/system/settings" replace /> },
   { path: '/provisioning', element: () => <Navigate to="/fleet/provision" replace /> },

@@ -95,16 +95,11 @@ frontend/src/
 │   │
 │   ├───analytics/
 │   │   ├───api/analytics.js        # Analytics por chamber
-│   │   └───pages/AnalyticsPage.jsx
+│   │   ├───components/RiskBar.jsx  # Barras de riesgo biológico
+│   │   └───pages/DeviceAnalyticsPage.jsx  # /fleet/devices/:id/analytics
 │   │
-│   ├───diagnostics/
-│   │   ├───api/mqtt.js             # Diagnósticos MQTT
-│   │   └───pages/DiagnosticsPage.jsx
-│   │
-│   ├───monitoring/
-│   │   ├───api/monitoring.js        # Health + maintenance endpoints
-│   │   ├───components/              # ResetReasonBadge
-│   │   └───pages/MonitoringPage.jsx # Monitoreo de salud del dispositivo
+│   ├───events/
+│   │   └───pages/EventsPage.jsx    # Feed SSE en vivo (/operations/events)
 │   │
 │   ├───logs/
 │   │   ├───api/audit.js            # Audit logs
@@ -180,16 +175,14 @@ Rutas protegidas (requieren autenticación):
 /overview                               → Dashboard
 /fleet/provision                        → Provisioning
 /fleet/devices/:id                      → DeviceDetail
+/fleet/devices/:id/analytics            → DeviceAnalytics
 /cultivation/recipes                    → Recipes
 /cultivation/recipes/compare            → RecipeComparator
 /cultivation/species                    → SpeciesLibrary
 /cultivation/cycles                     → Cycles
 /cultivation/cycles/:id/bioactives      → BioactiveDashboard
-/operations/analytics                   → Analytics
 /operations/alarms                      → Alarms
 /operations/logs                        → Logs
-/operations/diagnostics                 → Diagnostics
-/operations/monitoring                  → Monitoring
 /system/settings                        → Settings (layout con children)
 /system/settings/user                   → UserSettings
 /system/settings/device                 → DeviceSettings
@@ -206,11 +199,9 @@ Aliases de ruta (redirects):
 /recipes            → /cultivation/recipes
 /species            → /cultivation/species
 /cycles             → /cultivation/cycles
-/analytics          → /operations/analytics
+/analytics          → /fleet/devices
 /alarms             → /operations/alarms
 /logs               → /operations/logs
-/diagnostics        → /operations/diagnostics
-/monitoring         → /operations/monitoring
 /settings           → /system/settings
 /provisioning       → /fleet/provision
 /devices/:id        → /fleet/devices/:id

@@ -34,12 +34,9 @@ export const NAV_SECTIONS = [
     icon: 'monitoring',
     collapsible: true,
     items: [
-      { to: '/operations/analytics', icon: 'analytics', label: 'Analítica' },
       { to: '/operations/alarms', icon: 'warning', label: 'Alertas', hasBadge: true },
       { to: '/operations/events', icon: 'bolt', label: 'Eventos' },
       { to: '/operations/logs', icon: 'history', label: 'Registro de auditoría' },
-      { to: '/operations/diagnostics', icon: 'diagnosis', label: 'Diagnóstico' },
-      { to: '/operations/monitoring', icon: 'monitoring', label: 'Monitoreo' },
     ],
   },
   {

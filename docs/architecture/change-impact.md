@@ -90,7 +90,7 @@
 | Health checks del dispositivo | DeviceHealth model | 🔴 |
 | Mantenimiento preventivo | DeviceMaintenance model | 🟡 |
 | Notificaciones de salud | notificationService | 🟡 |
-| Frontend monitoring page | MonitoringPage.jsx | 🟡 |
+| Frontend (estado/conectividad del dispositivo) | DeviceConnectivityPanel.jsx + DeviceAnalyticsPage.jsx | 🟡 |
 
 ---
 

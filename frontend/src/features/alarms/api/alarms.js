@@ -10,11 +10,6 @@ export async function getAlarms(params = {}) {
   return data
 }
 
-export async function getAlarmById(id) {
-  const { data } = await client.get(`/alarms/${id}`)
-  return data
-}
-
 export async function acknowledgeAlarm(id) {
   const { data } = await client.patch(`/alarms/${id}/acknowledge`)
   return data
