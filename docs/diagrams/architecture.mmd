@@ -43,7 +43,7 @@ graph TB
     subgraph Frontend["Frontend (React 18 / Vite)"]
         direction TB
         FE_DASH["DashboardPage"]
-        FE_MONITOR["MonitoringPage<br/>Health + Maintenance"]
+        FE_ANALYTICS["DeviceAnalyticsPage<br/>Riesgos + condiciones ambientales"]
         FE_DEVICE["DeviceDetailPage"]
         FE_CYCLES["CyclesPage"]
         FE_RECIPES["RecipesPage"]
@@ -95,5 +95,5 @@ graph TB
     class FW_MAIN,FW_WIFI,FW_HTTP,FW_MQTT,FW_SENSOR,FW_SSR,FW_HYSTERESIS,FW_STATE,FW_HEALTH,FW_SMFB,FW_OTA,FW_TS,FW_TELEMETRY firmware
     class BE_API,BE_SSE,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_THINGSPEAK,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
     class DB db
-    class FE_DASH,FE_MONITOR,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
+    class FE_DASH,FE_ANALYTICS,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
     class TS,MQTT_BROKER external

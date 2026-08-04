@@ -2,6 +2,8 @@
 
 Guía operacional del sistema de observabilidad de Mush2.
 
+> **Nota (refactor de Operations, 2026-08):** la página frontend de monitoreo (`MonitoringPage` en `/operations/monitoring`) fue **retirada de la UI**. Los endpoints backend `/monitoring/*` y los servicios de observabilidad **permanecen** disponibles para tooling, CLI y healthchecks de infraestructura. El estado y la salud de cada dispositivo se consumen desde la UI en el detalle de dispositivo (`DeviceConnectivityPanel`).
+
 ## Arquitectura
 
 ```
@@ -16,11 +18,11 @@ Backend (Node.js + Express)
   ├── pino-http (request/response logging)
   ├── NotificationService (Telegram + Email + Webhook)
   ├── DeviceHealthService (modelo multidimensional: connectivity/health/lifecycle)
-  └── Monitoring endpoints (metrics, logs, health)
+  └── Monitoring endpoints (metrics, logs, health) — sin UI dedicada
   │
   v
 Frontend (React)
-  └── MonitoringPage (/operations/monitoring)
+  └── DeviceConnectivityPanel (/fleet/devices/:id) + DeviceAnalyticsPage (/fleet/devices/:id/analytics)
 ```
 
 ## Estados de Salud del Dispositivo (Modelo Multidimensional — ADR-025)
