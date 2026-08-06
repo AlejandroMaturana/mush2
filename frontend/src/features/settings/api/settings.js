@@ -32,31 +32,10 @@ export async function unlinkTelegram() {
   return data
 }
 
-// API Keys
-export async function getApiKeys() {
-  const { data } = await client.get('/settings/api-keys')
-  return data
-}
-
-export async function createApiKey(payload) {
-  const { data } = await client.post('/settings/api-keys', payload)
-  return data
-}
-
-export async function rotateApiKey(id) {
-  const { data } = await client.post(`/settings/api-keys/${id}/rotate`)
-  return data
-}
-
-export async function deleteApiKey(id) {
-  const { data } = await client.delete(`/settings/api-keys/${id}`)
-  return data
-}
-
 // System
 export async function getSystemSettings() {
   const { data } = await client.get('/settings/system')
-  return data
+  return data.data ?? data
 }
 
 export async function updateSystemSettings(payload) {
@@ -76,32 +55,5 @@ export async function configureTelegramBot(payload) {
 
 export async function getTelegramBotStatus() {
   const { data } = await client.get('/settings/telegram/bot-status')
-  return data
-}
-
-// ThingSpeak
-export async function validateThingSpeak(deviceId, apiKey) {
-  const { data } = await client.post(`/devices/${deviceId}/thingSpeak/validate`, { apiKey })
-  return data
-}
-
-// Subscription
-export async function getSubscription() {
-  const { data } = await client.get('/settings/subscription')
-  return data
-}
-
-export async function getSubscriptionUsage() {
-  const { data } = await client.get('/settings/subscription/usage')
-  return data
-}
-
-export async function upgradePlan(payload) {
-  const { data } = await client.post('/settings/subscription/upgrade', payload)
-  return data
-}
-
-export async function cancelSubscription() {
-  const { data } = await client.delete('/settings/subscription')
   return data
 }

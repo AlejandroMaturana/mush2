@@ -1,12 +1,8 @@
 import { NavLink } from 'react-router-dom'
 
 const SECTIONS = [
-  { to: '/system/settings', icon: 'hub', label: 'Resumen', end: true },
   { to: '/system/settings/user', icon: 'fingerprint', label: 'Usuario' },
   { to: '/system/settings/device', icon: 'developer_board', label: 'Dispositivo' },
-  { to: '/system/settings/cultivation', icon: 'potted_plant', label: 'Cultivo' },
-  { to: '/system/settings/api-keys', icon: 'vpn_key', label: 'Claves de API' },
-  { to: '/system/settings/subscription', icon: 'workspace_premium', label: 'Suscripción' },
   { to: '/system/settings/system', icon: 'settings', label: 'Sistema' },
 ]
 

@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { Op } from 'sequelize';
-import { UserPreference, Device, TelegramDeviceConfig, User } from '../models/index.js';
+import { UserPreference, User } from '../models/index.js';
 import { createChildLogger } from '../config/pino.js';
 
 let bot = null;
@@ -19,7 +19,7 @@ export function getBotStatus() {
 
 export async function reconfigureBot(token, botUsername) {
   if (bot) {
-    try { bot.stopPolling(); } catch {}
+    try { await bot.stopPolling(); } catch {}
     bot = null;
     isReady = false;
   }
@@ -162,41 +162,4 @@ export async function sendAlarm(chatId, alarm, device) {
     `_${alarm.message}_`;
 
   return sendMessage(chatId, text);
-}
-
-export async function notifyDeviceAlarm(deviceId, alarm) {
-  try {
-    const config = await TelegramDeviceConfig.findOne({ where: { deviceId, enabled: true } });
-    if (!config) return;
-
-    const severityOrder = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 };
-    const minSev = severityOrder[config.minSeverity] ?? 1;
-    const alarmSev = severityOrder[alarm.severity] ?? 0;
-    if (alarmSev < minSev) return;
-
-    const typeMap = {
-      SENSOR_FAULT: config.alertOnFault,
-      OUT_OF_RANGE: config.alertOnRange,
-      DISCONNECTED: config.alertOnDisconnect,
-      SYSTEM_ERROR: config.alertOnSystem,
-      THRESHOLD_CROSSED: config.alertOnRange,
-    };
-    if (typeMap[alarm.type] === false) return;
-
-    const device = await Device.findByPk(deviceId);
-    if (!device) return;
-
-    const ownerId = device.userId;
-    if (!ownerId) return;
-
-    const prefs = await UserPreference.findOne({
-      where: { userId: ownerId, telegramEnabled: true, telegramChatId: { [Op.ne]: null } },
-    });
-
-    if (prefs?.telegramChatId) {
-      await sendAlarm(prefs.telegramChatId, alarm, device);
-    }
-  } catch (err) {
-    log.error({ module: 'TELEGRAM', event: 'NOTIFY_ERROR', error: err.message }, 'Error in notifyDeviceAlarm');
-  }
 }

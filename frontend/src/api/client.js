@@ -15,9 +15,6 @@ export { getAuditLogs } from '../features/logs/api/audit'
 export {
   getProfile, updateProfileSettings, changePassword,
   linkTelegram, getTelegramStatus, unlinkTelegram,
-  getApiKeys, createApiKey, rotateApiKey, deleteApiKey,
   getSystemSettings, updateSystemSettings, seedSystemSettings,
   configureTelegramBot, getTelegramBotStatus,
-  validateThingSpeak,
-  getSubscription, getSubscriptionUsage, upgradePlan, cancelSubscription,
 } from '../features/settings/api/settings'

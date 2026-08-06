@@ -40,12 +40,14 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    id: 'system',
-    label: 'SISTEMA',
+    id: 'settings',
+    label: 'CONFIGURACIÓN',
     icon: 'settings',
     collapsible: true,
     items: [
-      { to: '/system/settings', icon: 'tune', label: 'Configuración' },
+      { to: '/system/settings/user', icon: 'fingerprint', label: 'Usuario' },
+      { to: '/system/settings/device', icon: 'developer_board', label: 'Dispositivo' },
+      { to: '/system/settings/system', icon: 'settings', label: 'Sistema' },
     ],
   },
 ]

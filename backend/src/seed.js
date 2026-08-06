@@ -458,12 +458,11 @@ async function seed() {
       await device.update({
         thingSpeakEnabled: true,
         thingSpeakChannelId: '123456',
-        thingSpeakReadKey: 'ABCDEFGHIJKLMNOP',
-        thingSpeakWriteKey: 'ZYXWVUTSRQPONMLK',
         thingSpeakSyncInterval: 300000,
       });
       await IntegrationCredentials.setCredentials(device.id, 'THINGSPEAK', {
-        channelId: '123456', readKey: 'ABCDEFGHIJKLMNOP', writeKey: 'ZYXWVUTSRQPONMLK', syncInterval: 300000,
+        readKey: 'ABCDEFGHIJKLMNOP',
+        writeKey: 'ZYXWVUTSRQPONMLK',
       });
     }
 

@@ -214,7 +214,7 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
 router.patch('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = req.device;
-    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'thingSpeakEnabled', 'thingSpeakChannelId', 'thingSpeakReadKey', 'thingSpeakWriteKey', 'thingSpeakSyncInterval', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
+    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'thingSpeakEnabled', 'thingSpeakChannelId', 'thingSpeakSyncInterval', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
     const updates = {};
     for (const field of allowed) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -574,17 +574,13 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
     }
 
     const instance = await IntegrationCredentials.setCredentials(req.device.id, 'THINGSPEAK', {
-      channelId,
       readKey: readKey || '',
       writeKey: writeKey || '',
-      syncInterval: syncInterval || 300000,
     });
 
     await Device.update({
       thingSpeakEnabled: true,
       thingSpeakChannelId: channelId,
-      thingSpeakReadKey: readKey || null,
-      thingSpeakWriteKey: writeKey || null,
       thingSpeakSyncInterval: syncInterval || 300000,
     }, { where: { id: req.device.id } });
 

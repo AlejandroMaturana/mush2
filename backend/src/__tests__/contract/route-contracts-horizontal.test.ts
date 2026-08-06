@@ -207,6 +207,11 @@ describe('Horizontal: actuators.js (device-facing)', () => {
     expect(source).toContain('Device.findOrCreate');
     expect(source).toContain('Actuator.findOrCreate');
   });
+
+  it('ssrActiveLow siempre presente en respuesta del poller (ambas ramas)', () => {
+    const occurrences = source.match(/ssrActiveLow: device\.ssrActiveLow/g) || [];
+    expect(occurrences).toHaveLength(2);
+  });
 });
 
 describe('Horizontal: settings.js', () => {
@@ -230,10 +235,11 @@ describe('Horizontal: settings.js', () => {
     expect(source).toContain("router.get('/system/public'");
   });
 
-  it('subscripción proxy rutas', () => {
-    expect(source).toContain("router.get('/subscription'");
-    expect(source).toContain("router.post('/subscription/upgrade'");
-    expect(source).toContain("router.delete('/subscription'");
+  it('no expone proxies de suscripción (retirados en ISSUE-042)', () => {
+    expect(source).not.toContain("router.get('/subscription'");
+    expect(source).not.toContain("router.get('/subscription/usage'");
+    expect(source).not.toContain("router.post('/subscription/upgrade'");
+    expect(source).not.toContain("router.delete('/subscription'");
   });
 
   it('mounts telegram y api-keys como submódulos', () => {

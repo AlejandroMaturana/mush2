@@ -17,13 +17,9 @@ const Logs = lazy(() => import('../features/logs/pages/LogsPage.jsx'))
 const Events = lazy(() => import('../features/events/pages/EventsPage.jsx'))
 const DeviceAnalytics = lazy(() => import('../features/analytics/pages/DeviceAnalyticsPage.jsx'))
 const Settings = lazy(() => import('../features/settings/pages/SettingsPage.jsx'))
-const SettingsHub = lazy(() => import('../features/settings/pages/SettingsHub.jsx'))
 const UserSettings = lazy(() => import('../features/settings/pages/UserSettings.jsx'))
 const DeviceSettings = lazy(() => import('../features/settings/pages/DeviceSettings.jsx'))
-const CultivationSettings = lazy(() => import('../features/settings/pages/CultivationSettings.jsx'))
-const ApiKeysSettings = lazy(() => import('../features/settings/pages/ApiKeysSettings.jsx'))
 const SystemSettings = lazy(() => import('../features/settings/pages/SystemSettings.jsx'))
-const SubscriptionSettings = lazy(() => import('../features/settings/pages/SubscriptionSettings.jsx'))
 const Provisioning = lazy(() => import('../features/devices/pages/ProvisioningPage.jsx'))
 
 export const publicRoutes = [
@@ -54,13 +50,10 @@ export const protectedRoutes = [
     path: '/system/settings',
     element: Settings,
     children: [
-      { index: true, element: SettingsHub },
+      { index: true, element: <Navigate to="/system/settings/user" replace /> },
       { path: 'user', element: UserSettings },
       { path: 'device', element: DeviceSettings },
-      { path: 'cultivation', element: CultivationSettings },
-      { path: 'api-keys', element: ApiKeysSettings },
       { path: 'system', element: SystemSettings },
-      { path: 'subscription', element: SubscriptionSettings },
     ],
   },
 
