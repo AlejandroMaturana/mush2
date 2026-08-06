@@ -1,5 +1,42 @@
 # Changelog — Mush2
 
+## 2026-08-06
+
+### Backend — Notificaciones & API - v1.5.2
+
+- **fix(notifications)**: Unifica severidad y política de distribución
+  - `notifyAlarm` usa `minAlertSeverity` real
+  - Extrae `buildDistributionPlan` a `distributionPolicy`
+  - `sendAlarm` queda como único punto de entrega Telegram
+  - +47 tests
+- **fix(api)**: Retira proxies de suscripción rotos de `/settings/subscription*`
+- **fix(thingspeak)**: Unifica fuente de verdad de claves cifradas
+  - Secretos solo en `IntegrationCredentials`
+  - Elimina leak de keys vía `toJSON`
+  - Backfill + tests de contrato
+
+### Frontend — Settings & Navigation - v1.15.2
+
+- **refactor(settings)**: Elimina secciones obsoletas (`Cultivation`, `ApiKeys`, `Subscription`, `SettingsHub`) y reestructura navegación
+  - SISTEMA pasa a módulo CONFIGURACIÓN (Usuario / Dispositivo / Sistema)
+  - Index de settings redirige a `/user`
+- **fix(settings)**: Estabiliza `DeviceSettings` y simplifica `SystemSettings`
+  - Usa `deviceId` string + persistencia en `localStorage`
+  - Elimina UI/API de ThingSpeak de DeviceSettings
+  - SystemSettings se limita a Seguridad y Telegram Bot
+
+### Firmware (ESP32-S3) — v0.23.1
+
+- **fix(firmware)**: Backend como autoridad de `ssrActiveLow`
+  - Primer poll fuerza sync (`_ssrFirstSync`)
+  - Elimina característica BLE `ssr_mode`
+  - Limpieza de caché en `reProvision`
+
+### Docs — v0.2.2
+
+- **docs(adr)**: Añade **ADR-032** — Gobernanza de Configuración
+  - Dominios propietarios, fuente única de verdad y reglas R01–R06
+
 ## 2026-08-03
 
 ### Backend — v1.5.1
