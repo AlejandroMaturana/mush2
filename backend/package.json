@@ -7,6 +7,7 @@
     "dev": "node --watch --watch-path=src src/server.js",
     "start": "node src/server.js",
     "db:sync": "node src/sync-db.js",
+    "db:migrate:thingspeak": "node src/migrate-thingspeak-keys.js",
     "db:seed": "node src/seed.js",
     "db:seed:dev": "node src/seed-dev.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",

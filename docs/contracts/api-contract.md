@@ -136,10 +136,13 @@ Requiere acceso al dispositivo.
 ## 7. Integraciones
 
 ### `GET /devices/:id/integrations`
-- Response: credenciales de integración del dispositivo
+- Response: credenciales de integración del dispositivo (sin exponer secretos)
 
 ### `POST /devices/:id/integrations/thingspeak`
 Configura integración con ThingSpeak.
+- `readKey`/`writeKey` se almacenan **cifrados** en `IntegrationCredentials` (única fuente de secretos, ISSUE-043).
+- `channelId` y `syncInterval` se persisten en el dispositivo (config operacional no secreta).
+- Nunca se devuelven las claves vía `GET /devices*` ni el PATCH de device acepta claves en claro.
 
 ### `POST /devices/:id/thingSpeak/validate`
 ```json
