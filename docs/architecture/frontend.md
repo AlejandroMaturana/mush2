@@ -189,7 +189,6 @@ Rutas protegidas (requieren autenticación):
 /system/settings/cultivation            → CultivationSettings
 /system/settings/api-keys               → ApiKeysSettings
 /system/settings/system                 → SystemSettings
-/system/settings/subscription           → SubscriptionSettings
 ```
 
 Aliases de ruta (redirects):

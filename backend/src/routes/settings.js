@@ -144,49 +144,4 @@ router.get('/system/public', async (req, res) => {
 router.use('/telegram', authenticate, telegramRouter);
 router.use('/api-keys', authenticate, apiKeysRouter);
 
-// Subscription proxies (frontend /subscription → backend /subscriptions/mine)
-router.get('/subscription', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    res.json({ data: sub });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.get('/subscription/usage', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    if (!sub) return res.json({ data: { plan: 'FREE', used: 0, limit: 50000 } });
-    res.json({ data: { plan: sub.plan, used: sub.apiCallsUsed || 0, limit: sub.apiCallsLimit || 50000 } });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.post('/subscription/upgrade', authenticate, async (req, res) => {
-  try {
-    const { plan } = req.body;
-    const { Subscription } = await import('../models/index.js');
-    const [sub] = await Subscription.findOrCreate({ where: { userId: req.user.id }, defaults: { plan: 'FREE' } });
-    await sub.update({ plan });
-    res.json({ data: sub });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.delete('/subscription', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    if (sub) await sub.update({ plan: 'FREE' });
-    res.json({ message: 'Suscripción cancelada' });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
 export default router;
