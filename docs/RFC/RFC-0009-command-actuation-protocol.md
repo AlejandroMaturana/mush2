@@ -301,7 +301,7 @@ Respuesta actual del fallback HTTP (routes/actuators.js). No transporta `command
 
 - `actuators`: estado deseado actual (incluye mode LOCAL/REMOTE para que el firmware sepa si debe obedecer)
 - `setpoints`: umbrales de la fase activa (para que el firmware pueda operar en LOCAL si pierde conexión)
-- `ssrActiveLow`: flag de polaridad del SSR, obtenido del modelo Device
+- `ssrActiveLow`: flag de polaridad del SSR, obtenido del modelo Device. **Única fuente de verdad** (ADR-032-R01/R02); el firmware replica en NVS como caché local y lo aplica en el primer poll exitoso tras el arranque.
 - `commands`: NO presente — array de comandos pendientes diferido (H-103, command_queue)
 
 ### 6. Compatibilidad con firmware legacy

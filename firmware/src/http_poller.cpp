@@ -14,6 +14,7 @@ HTTPPoller::HTTPPoller() : client() {
   memset(hdrBuf, 0, 4);
   _ssrActiveLow = true;
   _ssrActiveLowPrev = true;
+  _ssrFirstSync = true;
   _hasActiveCycle = false;
   _hasSetpoints = false;
   _setpointsChanged = false;
@@ -451,6 +452,10 @@ bool HTTPPoller::getSsrActiveLow() {
 }
 
 bool HTTPPoller::ssrActiveLowChanged() {
+  if (_ssrFirstSync) {
+    _ssrFirstSync = false;
+    return true;
+  }
   return _ssrActiveLow != _ssrActiveLowPrev;
 }
 
