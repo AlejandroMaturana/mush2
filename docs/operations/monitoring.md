@@ -132,7 +132,7 @@ Timeout: 10s por intento. Reintentos: 3 con 5s de delay. SLA worst-case: ~40s.
 En la página de Configuración > Sistema, el usuario puede:
 - Habilitar/deshabilitar alertas por email (`emailAlerts`)
 - Habilitar/deshabilitar notificaciones Telegram (`telegramEnabled`)
-- Configurar severidad mínima para notificaciones (`minNotificationSeverity`)
+- Configurar severidad mínima para notificaciones (`minAlertSeverity`, valores `info|warning|critical`)
 
 ## Reset Reason (Reboot Cause)
 
