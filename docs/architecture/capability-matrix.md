@@ -111,7 +111,9 @@
 | Audit Service | `backend/src/services/auditService.js` | 🟢 | ❌ | 🟢 |
 | Alarm Model | `backend/src/models/Alarm.js` | 🟡 | ❌ | 🟡 |
 | Alarm Routes | `backend/src/routes/alarms.js` | 🟡 | ❌ | 🟡 |
-| Telegram Service | `backend/src/services/telegramService.js` | 🟢 | ❌ | 🟢 |
+| Telegram Bot | `backend/src/services/telegramBotService.js` | 🟢 | ✅ | 🟢 |
+| Telegram Config | `backend/src/services/telegramConfigurationService.js` | 🟢 | ✅ | 🟢 |
+| Telegram Errors | `backend/src/services/telegramErrors.js` | 🟢 | ✅ | 🟢 |
 | Health Monitor (FW) | `firmware/src/health_monitor.cpp` | 🟡 | ❌ | 🟡 |
 | Predictive Maint (FW) | `firmware/src/predictive_maintenance.cpp` | 🟢 | ❌ | 🟢 |
 | Boot Test (FW) | `firmware/src/boot_test.cpp` | 🟢 | ❌ | 🟢 |

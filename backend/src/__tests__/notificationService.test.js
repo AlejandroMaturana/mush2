@@ -18,7 +18,7 @@ jest.unstable_mockModule('../models/index.js', () => ({
   TelegramDeviceConfig: { findOne: mockTelegramDeviceConfigFindOne },
 }));
 
-jest.unstable_mockModule('../services/telegramService.js', () => ({
+jest.unstable_mockModule('../services/telegramBotService.js', () => ({
   sendAlarm: mockSendAlarm,
 }));
 

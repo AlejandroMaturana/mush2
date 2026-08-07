@@ -56,7 +56,7 @@ Requiere auth. Actualiza perfil del usuario.
 ### `POST /devices`
 Requiere auth.
 ```json
-{ "deviceId": "esp8266_001", "macAddress": "AA:BB:CC:DD:EE:FF", "chamberName": "...", "chamberLocation": "..." }
+{ "deviceId": "Mush_001", "macAddress": "AA:BB:CC:DD:EE:FF", "chamberName": "...", "chamberLocation": "..." }
 ```
 
 ### `POST /devices/register`
@@ -155,6 +155,8 @@ Configura integración con ThingSpeak.
 
 ## 8. Telegram
 
+> **Nota interna (ISSUE-048):** el subsistema se dividió en `telegramConfigurationService.js`, `telegramBotService.js` y `telegramErrors.js`. Este contrato NO cambia: los endpoints, payloads y códigos de error documentados a continuación son idénticos a la versión previa.
+
 ### `POST /telegram/link`
 Requiere auth. Vincula cuenta de Telegram al usuario.
 ```json
@@ -174,10 +176,48 @@ Requiere auth. Configuración Telegram de un dispositivo.
 Requiere auth. Actualiza configuración Telegram de un dispositivo.
 
 ### `POST /telegram/configure`
-Requiere rol ADMIN. Configura el bot de Telegram.
+Requiere rol ADMIN. Configura el bot de Telegram. Idempotente y libre de carrera (serializa init/reconfigure/stop).
+```json
+// Request
+{ "token": "string", "username": "string" }
+// Response 200
+{ "data": {
+    "configured": true,
+    "state": "disabled|starting|ready|degraded|stopped|failed",
+    "running": "boolean",
+    "username": "string",
+    "lastError": "string|null",
+    "metrics": {
+      "messagesSent": "number", "messagesFailed": "number", "pollingErrors": "number",
+      "lastDeliveryAt": "string|null", "uptimeSeconds": "number", "reconfigures": "number"
+    }
+} }
+// Response 400
+{ "error": "Token requerido" }
+```
 
 ### `GET /telegram/bot-status`
-Requiere rol ADMIN. Estado del bot de Telegram.
+Requiere rol ADMIN. Estado del ciclo de vida del bot de Telegram.
+```json
+// Response 200
+{ "data": {
+    "state": "disabled|starting|ready|degraded|stopped|failed",
+    "running": "boolean",
+    "username": "string",
+    "lastError": "string|null",
+    "lastStateChangeAt": "string|null",
+    "startedAt": "string|null",
+    "stoppedAt": "string|null",
+    "lastErrorAt": "string|null",
+    "tokenConfigured": "boolean",
+    "configuredUsername": "string",
+    "metrics": {
+      "messagesSent": "number", "messagesFailed": "number", "pollingErrors": "number",
+      "lastDeliveryAt": "string|null", "uptimeSeconds": "number", "reconfigures": "number"
+    }
+} }
+```
+`state` es un enum de ciclo de vida (ISSUE-047): `disabled`, `starting`, `ready`, `degraded`, `stopped`, `failed`. Un `polling_error` degrada el estado a `degraded` sin detener el envío (`running` permanece `true`).
 
 ---
 

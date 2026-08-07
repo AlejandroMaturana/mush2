@@ -2,6 +2,30 @@
 
 ## 2026-08-06
 
+### Backend — Telegram Subsystem Refactor - v1.6.1
+
+- **refactor(telegram)**: Separación de responsabilidades del subsistema Telegram (ISSUE-048)
+  - `telegramService.js` se divide en `telegramConfigurationService.js` (configuración), `telegramBotService.js` (runtime/lifecycle/polling/handlers/envío) y `telegramErrors.js` (clasificación de errores)
+  - `telegramBotService` ya no lee `SystemSetting`: la configuración se resuelve en el caller y se inyecta por parámetro
+  - `classifyTelegramError` centraliza la clasificación (401/403/409/429/timeout/red/5xx/internos) y enriquece logs con `errorKind`/`errorCode`/`retryable`; sin retries ni cambios de semántica de envío
+  - Eliminado el servicio legacy: importadores actualizados (`routes/telegram.js`, `server.js`, `notifications/notificationService.js`) y tests migrados
+  - Comportamiento observable idéntico: sin endpoints nuevos, sin cambios de payload
+  - `+17` tests (config, clasificación de errores) manteniendo toda la suite existente
+- **docs(telegram)**: `ADR-033-telegram-subsystem-split.md` y `docs/architecture/telegram-subsystem-architecture.md`; actualizados `telegram-bot-lifecycle.md`, `api-contract.md`, `backend.md`, `capability-matrix.md`, `change-impact.md`
+
+### Backend — Telegram Bot Lifecycle - v1.6.0
+
+- **feat(telegram)**: Ciclo de vida explícito y observabilidad (ISSUE-047)
+  - Máquina de estados `disabled/starting/ready/degraded/stopped/failed` expuesta en `GET /telegram/bot-status`
+  - Serialización de `initBot`/`reconfigureBot`/`stopBot` (promise queue) + Generation Guard — elimina el origen del error 409 `terminated by other getUpdates request`
+  - `await stopPolling()` antes de liberar la instancia; invariante de una sola instancia con polling activo
+  - Polling y envío desacoplados: un `polling_error` degrada el estado (`running` permanece `true` y los envíos siguen operativos)
+  - Métricas: `messagesSent`, `messagesFailed`, `pollingErrors`, `lastDeliveryAt`, `uptimeSeconds`, `reconfigures`
+  - Configuración sin cambios: `SystemSetting` + fallback `TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME` (sin variables nuevas)
+  - Sin retry policy: se mantiene un intento por envío (decisión documentada)
+  - `+10` tests de ciclo de vida (init/reconfigure/stop, degradación, métricas)
+- **docs(telegram)**: Documenta `docs/architecture/telegram-bot-lifecycle.md` (Mermaid, tabla de transiciones, Runtime Context, Generation Guard)
+
 ### Backend — Notificaciones & API - v1.5.2
 
 - **fix(notifications)**: Unifica severidad y política de distribución

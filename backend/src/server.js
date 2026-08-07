@@ -96,16 +96,11 @@ async function initSecondaryServices(httpServer) {
 
   // Telegram Bot
   try {
-    const { initBot } = await import('./services/telegramService.js');
-    const SystemSetting = (await import('./models/SystemSetting.js')).default;
-    const [tgToken, tgUsername] = await Promise.all([
-      SystemSetting.findOne({ where: { key: 'telegram_bot_token' } }),
-      SystemSetting.findOne({ where: { key: 'telegram_bot_username' } }),
-    ]);
-    const botToken = tgToken?.value || env.TELEGRAM_BOT_TOKEN;
-    const botUsername = tgUsername?.value || env.TELEGRAM_BOT_USERNAME;
-    if (botToken) {
-      await initBot(botToken, botUsername);
+    const { initBot } = await import('./services/telegramBotService.js');
+    const { getBotConfig } = await import('./services/telegramConfigurationService.js');
+    const config = await getBotConfig();
+    if (config.token) {
+      await initBot(config.token, config.username);
       markServiceStarted('telegram');
       log.info({ module: 'TELEGRAM', event: 'STARTED' }, 'Telegram Bot started');
     } else {
@@ -217,13 +212,13 @@ function shutdown(signal) {
       const { stopControlEngine } = await import('./services/controlEngine.js');
       const { stopDataRetentionJob } = await import('./jobs/dataRetentionJob.js');
       const { stopOfflineWatchdog } = await import('./jobs/offlineWatchdog.js');
-      const { stopBot } = await import('./services/telegramService.js');
+      const { stopBot } = await import('./services/telegramBotService.js');
       const { stopMqttBridge } = await import('./services/mqttBridge.js');
       const { stopWebSocketServer } = await import('./services/webSocketServer.js');
       stopControlEngine();
       stopDataRetentionJob();
       stopOfflineWatchdog();
-      stopBot();
+      await stopBot();
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();
