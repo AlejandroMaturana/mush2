@@ -1,4 +1,4 @@
-import { sendAlarm } from '../telegramService.js';
+import { sendAlarm } from '../telegramBotService.js';
 import { sendEmail, isEmailConfigured } from './emailProvider.js';
 import { sendWebhook } from './webhookProvider.js';
 import { buildDistributionPlan } from './distributionPolicy.js';
