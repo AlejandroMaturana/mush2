@@ -98,7 +98,7 @@
 
 | Afecta | Componente | Severidad |
 |---|---|---|
-| Notificaciones de alarmas | emailProvider, webhookProvider, telegramService | 🟡 |
+| Notificaciones de alarmas | emailProvider, webhookProvider, telegramBotService | 🟡 |
 | Alertas críticas | Frontend AlarmContext | 🟡 |
 
 ---
@@ -129,7 +129,7 @@
 
 | Afecta | Componente | Severidad |
 |---|---|---|
-| Todos los servicios que emiten/consumen eventos | Backend (controlEngine, mqttBridge, webSocketServer, telegramService) | 🔴 |
+| Todos los servicios que emiten/consumen eventos | Backend (controlEngine, mqttBridge, webSocketServer, telegramBotService) | 🔴 |
 | SSE → Frontend | Frontend | 🟡 |
 
 ---

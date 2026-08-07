@@ -9,6 +9,24 @@ const SAFETY_CONFIG = {
   temp_recovery: { label: 'Temperatura de recuperación (°C)', description: 'Temperatura a la que el dispositivo retoma la operación normal tras un fallo crítico.' },
 }
 
+const TG_STATE_LABELS = {
+  disabled: 'Deshabilitado',
+  starting: 'Inicializando',
+  ready: 'Listo',
+  degraded: 'Degradado',
+  stopped: 'Detenido',
+  failed: 'Error',
+}
+
+const TG_STATE_COLORS = {
+  ready: 'var(--spore-green)',
+  degraded: '#f59e0b',
+  starting: 'var(--accent-blue, #60a5fa)',
+  disabled: 'var(--outline)',
+  stopped: 'var(--outline)',
+  failed: 'var(--error-red)',
+}
+
 function SystemSettings() {
   const [settings, setSettings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +47,7 @@ function SystemSettings() {
 
   useEffect(() => { fetchSettings() }, [])
 
-  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st) } catch {} }
+  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st.data || st) } catch {} }
 
   useEffect(() => {
     if (!loading) {
@@ -44,8 +62,9 @@ function SystemSettings() {
     e.preventDefault(); if (!tgToken) return; setTgSaving(true); setTgMsg(null)
     try {
       const result = await configureTelegramBot({ token: tgToken, username: tgUsername })
-      setTgStatus({ running: result.running, username: result.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: result.lastError })
-      setTgMsg({ type: result.running ? 'ok' : 'err', text: result.running ? 'Bot inicializado correctamente' : `Bot falló: ${result.lastError || 'error desconocido'}` })
+      const st = result.data || result
+      setTgStatus({ state: st.state, running: st.running, username: st.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: st.lastError, metrics: st.metrics })
+      setTgMsg({ type: st.running ? 'ok' : 'err', text: st.running ? 'Bot inicializado correctamente' : `Bot falló: ${st.lastError || 'error desconocido'}` })
     } catch (err) { setTgMsg({ type: 'err', text: err.response?.data?.error || err.message }) }
     finally { setTgSaving(false) }
   }
@@ -124,10 +143,18 @@ function SystemSettings() {
 
         {tgStatus && (
           <div className={`alert-banner ${tgStatus.running ? 'alert-banner-success' : 'alert-banner-error'}`} style={{ marginBottom: '16px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: tgStatus.running ? 'var(--spore-green)' : 'var(--error-red)', boxShadow: tgStatus.running ? '0 0 8px var(--spore-green)' : 'none' }} />
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{tgStatus.running ? 'Bot en ejecución' : 'Bot detenido'}</span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: TG_STATE_COLORS[tgStatus.state] || 'var(--outline)', boxShadow: `0 0 8px ${TG_STATE_COLORS[tgStatus.state] || 'transparent'}`, flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>
+                Estado: {TG_STATE_LABELS[tgStatus.state] || tgStatus.state || (tgStatus.running ? 'En ejecución' : 'Detenido')}
+              </span>
               {tgStatus.username && <span style={{ fontSize: '11px', color: 'var(--outline)', display: 'block' }}>@{tgStatus.username}</span>}
+              {tgStatus.metrics && (
+                <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', display: 'block' }}>
+                  Mensajes enviados: {tgStatus.metrics.messagesSent ?? 0}
+                  {' · '}Última entrega: {tgStatus.metrics.lastDeliveryAt ? new Date(tgStatus.metrics.lastDeliveryAt).toLocaleString() : '—'}
+                </span>
+              )}
               {tgStatus.lastError && <span style={{ fontSize: '11px', color: 'var(--error-red)', display: 'block' }}>Error: {tgStatus.lastError}</span>}
             </div>
           </div>

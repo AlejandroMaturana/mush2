@@ -83,11 +83,14 @@ backend/
 │   │   ├── mqttProvisioningService.js  # Provisión de credenciales MQTT
 │   │   ├── mosquittoProvisioningService.js  # Provisioning Mosquitto
 │   │   ├── deviceHealthService.js  # Health + maintenance (ADR-025)
+│   │   ├── telegramConfigurationService.js  # Config Telegram (SystemSetting + env)
+│   │   ├── telegramBotService.js   # Bot Telegram: runtime, lifecycle, polling, envío
+│   │   ├── telegramErrors.js       # Taxonomía de errores Telegram
 │   │   ├── notificationService.js  # Servicio centralizado de notificaciones
 │   │   ├── notifications/         # Proveedores de notificación
 │   │   │   ├── emailProvider.js
 │   │   │   ├── webhookProvider.js
-│   │   │   └── telegramService.js  # Proveedor Telegram (interno)
+│   │   │   └── notificationService.js  # Orquestador de canales
 │   │   ├── thingSpeakSync.js      # Sincronización TS
 │   │   ├── eventBus.js            # Event bus in-memory (ADR-017)
 │   │   ├── webSocketServer.js     # Server para eventos SSE
@@ -185,8 +188,8 @@ User 1──N AuditLog
 
 ### notificationService.js
 - Servicio centralizado de notificaciones
-- Proveedores internos: emailProvider, webhookProvider, telegramService
-- Patrón: notificationService → TelegramProvider (`telegramService`)
+- Proveedores internos: emailProvider, webhookProvider, telegramBotService
+- Patrón: notificationService → TelegramBotService (`sendAlarm`)
 
 ### thingSpeakSync.js
 - Sincroniza datos desde ThingSpeak cuando backend estuvo caído
@@ -202,9 +205,11 @@ User 1──N AuditLog
 - Detección de dispositivos sin reportar por más de 5 minutos
 - Marca estado incierto y notifica
 
-### Telegram Service (notifications/telegramService.js)
-- Proveedor interno de `notificationService`
-- Notificaciones de alarmas y eventos vía bot (`@Mush2_bot`)
+### Telegram Subsystem (ISSUE-048)
+- `telegramConfigurationService.js` — token/username en `SystemSetting` con fallback de entorno; no conoce el bot.
+- `telegramBotService.js` — bot singleton: runtime, máquina de estados, promise queue, Generation Guard, polling, handlers `/link`/`/status`/`/unlink`, `sendMessage`/`sendAlarm`. No lee `SystemSetting`.
+- `telegramErrors.js` — `classifyTelegramError` (401/403/409/429/red/timeout/5xx/internos), centraliza la clasificación.
+- Detalle completo en `docs/architecture/telegram-subsystem-architecture.md`.
 
 ## Server-Sent Events (SSE)
 
