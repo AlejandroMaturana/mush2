@@ -1,5 +1,77 @@
 # Changelog — Mush2
 
+## 2026-08-08
+
+### Backend — v1.7.0
+
+- feat(authz): Fundación de autorización con denegación por defecto (deny-by-default). (ISSUE-002/004/005/106)
+- **deny-by-default**: el tenant guard rechaza con `401 { error: "Autenticación requerida" }` todo request anónimo fuera de la whitelist del firmware (`POST /devices/register`, `GET /actuators`); `/recipes`, `/species`, `/cycles`, `events` y `analytics` pasan de `optionalAuth` a `authenticate`.
+- **ownership**: `assertCycleAccess` en todas las rutas de ciclos y verificación de acceso al dispositivo en ack/resolve de alarmas (403 para no propietario); `events`/`analytics` filtran por propietario vía `canAccessDevice`/`getAccessibleDeviceIds`.
+- **roles**: POST/PUT/DELETE de especies exigen `requireMinRole('ADMIN')`.
+- **fix(actuators)**: eliminados `Device.findOrCreate`/`Actuator.findOrCreate` en `PATCH /actuators/:channel` y `PATCH /devices/:id/actuators/:channel` → 404 si no existe (sin auto-registro).
+- **tests**: suite negativa `authorization-negative.test.js` (35 tests: 10 casos anónimos → 401/403 + whitelist firmware preservada + 19 tests de propiedad/roles contra `mush2_test`) y contract tests horizontal/rest alineados al patrón `authenticate`.
+
+## 2026-08-06
+
+### Backend — Telegram Subsystem Refactor - v1.6.1
+
+- **refactor(telegram)**: Separación de responsabilidades del subsistema Telegram (ISSUE-048)
+  - `telegramService.js` se divide en `telegramConfigurationService.js` (configuración), `telegramBotService.js` (runtime/lifecycle/polling/handlers/envío) y `telegramErrors.js` (clasificación de errores)
+  - `telegramBotService` ya no lee `SystemSetting`: la configuración se resuelve en el caller y se inyecta por parámetro
+  - `classifyTelegramError` centraliza la clasificación (401/403/409/429/timeout/red/5xx/internos) y enriquece logs con `errorKind`/`errorCode`/`retryable`; sin retries ni cambios de semántica de envío
+  - Eliminado el servicio legacy: importadores actualizados (`routes/telegram.js`, `server.js`, `notifications/notificationService.js`) y tests migrados
+  - Comportamiento observable idéntico: sin endpoints nuevos, sin cambios de payload
+  - `+17` tests (config, clasificación de errores) manteniendo toda la suite existente
+- **docs(telegram)**: `ADR-033-telegram-subsystem-split.md` y `docs/architecture/telegram-subsystem-architecture.md`; actualizados `telegram-bot-lifecycle.md`, `api-contract.md`, `backend.md`, `capability-matrix.md`, `change-impact.md`
+
+### Backend — Telegram Bot Lifecycle - v1.6.0
+
+- **feat(telegram)**: Ciclo de vida explícito y observabilidad (ISSUE-047)
+  - Máquina de estados `disabled/starting/ready/degraded/stopped/failed` expuesta en `GET /telegram/bot-status`
+  - Serialización de `initBot`/`reconfigureBot`/`stopBot` (promise queue) + Generation Guard — elimina el origen del error 409 `terminated by other getUpdates request`
+  - `await stopPolling()` antes de liberar la instancia; invariante de una sola instancia con polling activo
+  - Polling y envío desacoplados: un `polling_error` degrada el estado (`running` permanece `true` y los envíos siguen operativos)
+  - Métricas: `messagesSent`, `messagesFailed`, `pollingErrors`, `lastDeliveryAt`, `uptimeSeconds`, `reconfigures`
+  - Configuración sin cambios: `SystemSetting` + fallback `TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME` (sin variables nuevas)
+  - Sin retry policy: se mantiene un intento por envío (decisión documentada)
+  - `+10` tests de ciclo de vida (init/reconfigure/stop, degradación, métricas)
+- **docs(telegram)**: Documenta `docs/architecture/telegram-bot-lifecycle.md` (Mermaid, tabla de transiciones, Runtime Context, Generation Guard)
+
+### Backend — Notificaciones & API - v1.5.2
+
+- **fix(notifications)**: Unifica severidad y política de distribución
+  - `notifyAlarm` usa `minAlertSeverity` real
+  - Extrae `buildDistributionPlan` a `distributionPolicy`
+  - `sendAlarm` queda como único punto de entrega Telegram
+  - +47 tests
+- **fix(api)**: Retira proxies de suscripción rotos de `/settings/subscription*`
+- **fix(thingspeak)**: Unifica fuente de verdad de claves cifradas
+  - Secretos solo en `IntegrationCredentials`
+  - Elimina leak de keys vía `toJSON`
+  - Backfill + tests de contrato
+
+### Frontend — Settings & Navigation - v1.15.2
+
+- **refactor(settings)**: Elimina secciones obsoletas (`Cultivation`, `ApiKeys`, `Subscription`, `SettingsHub`) y reestructura navegación
+  - SISTEMA pasa a módulo CONFIGURACIÓN (Usuario / Dispositivo / Sistema)
+  - Index de settings redirige a `/user`
+- **fix(settings)**: Estabiliza `DeviceSettings` y simplifica `SystemSettings`
+  - Usa `deviceId` string + persistencia en `localStorage`
+  - Elimina UI/API de ThingSpeak de DeviceSettings
+  - SystemSettings se limita a Seguridad y Telegram Bot
+
+### Firmware (ESP32-S3) — v0.23.1
+
+- **fix(firmware)**: Backend como autoridad de `ssrActiveLow`
+  - Primer poll fuerza sync (`_ssrFirstSync`)
+  - Elimina característica BLE `ssr_mode`
+  - Limpieza de caché en `reProvision`
+
+### Docs — v0.2.2
+
+- **docs(adr)**: Añade **ADR-032** — Gobernanza de Configuración
+  - Dominios propietarios, fuente única de verdad y reglas R01–R06
+
 ## 2026-08-03
 
 ### Backend — v1.5.1

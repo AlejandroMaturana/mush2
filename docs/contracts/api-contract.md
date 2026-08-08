@@ -3,7 +3,8 @@
 > Base URL: `/api/v1`
 > Formato: JSON
 > Autenticación: JWT via header `Authorization: Bearer <token>`
-> Auth opcional en rutas de lectura (dispositivos legacy accesibles sin login)
+> Denegación por defecto (ISSUE-002/004/005): sin credenciales válidas, toda ruta distinta de la whitelist anónima del firmware devuelve `401 { "error": "Autenticación requerida" }`. Whitelist anónima (solo firmware): `POST /devices/register` y `GET /actuators?deviceId=`.
+> Propiedad de recursos (ISSUE-002/004/005): los endpoints de tenant filtran/deniegan por propietario y vía `UserChamberAccess`; mutaciones del catálogo de especies exigen rol `ADMIN`; `PATCH /actuators/:channel` y `/devices/:id/actuators/:channel` NO auto-crean el dispositivo (404 si no existe).
 
 ---
 
@@ -56,7 +57,7 @@ Requiere auth. Actualiza perfil del usuario.
 ### `POST /devices`
 Requiere auth.
 ```json
-{ "deviceId": "esp8266_001", "macAddress": "AA:BB:CC:DD:EE:FF", "chamberName": "...", "chamberLocation": "..." }
+{ "deviceId": "Mush_001", "macAddress": "AA:BB:CC:DD:EE:FF", "chamberName": "...", "chamberLocation": "..." }
 ```
 
 ### `POST /devices/register`
@@ -136,10 +137,13 @@ Requiere acceso al dispositivo.
 ## 7. Integraciones
 
 ### `GET /devices/:id/integrations`
-- Response: credenciales de integración del dispositivo
+- Response: credenciales de integración del dispositivo (sin exponer secretos)
 
 ### `POST /devices/:id/integrations/thingspeak`
 Configura integración con ThingSpeak.
+- `readKey`/`writeKey` se almacenan **cifrados** en `IntegrationCredentials` (única fuente de secretos, ISSUE-043).
+- `channelId` y `syncInterval` se persisten en el dispositivo (config operacional no secreta).
+- Nunca se devuelven las claves vía `GET /devices*` ni el PATCH de device acepta claves en claro.
 
 ### `POST /devices/:id/thingSpeak/validate`
 ```json
@@ -151,6 +155,8 @@ Configura integración con ThingSpeak.
 ---
 
 ## 8. Telegram
+
+> **Nota interna (ISSUE-048):** el subsistema se dividió en `telegramConfigurationService.js`, `telegramBotService.js` y `telegramErrors.js`. Este contrato NO cambia: los endpoints, payloads y códigos de error documentados a continuación son idénticos a la versión previa.
 
 ### `POST /telegram/link`
 Requiere auth. Vincula cuenta de Telegram al usuario.
@@ -171,10 +177,48 @@ Requiere auth. Configuración Telegram de un dispositivo.
 Requiere auth. Actualiza configuración Telegram de un dispositivo.
 
 ### `POST /telegram/configure`
-Requiere rol ADMIN. Configura el bot de Telegram.
+Requiere rol ADMIN. Configura el bot de Telegram. Idempotente y libre de carrera (serializa init/reconfigure/stop).
+```json
+// Request
+{ "token": "string", "username": "string" }
+// Response 200
+{ "data": {
+    "configured": true,
+    "state": "disabled|starting|ready|degraded|stopped|failed",
+    "running": "boolean",
+    "username": "string",
+    "lastError": "string|null",
+    "metrics": {
+      "messagesSent": "number", "messagesFailed": "number", "pollingErrors": "number",
+      "lastDeliveryAt": "string|null", "uptimeSeconds": "number", "reconfigures": "number"
+    }
+} }
+// Response 400
+{ "error": "Token requerido" }
+```
 
 ### `GET /telegram/bot-status`
-Requiere rol ADMIN. Estado del bot de Telegram.
+Requiere rol ADMIN. Estado del ciclo de vida del bot de Telegram.
+```json
+// Response 200
+{ "data": {
+    "state": "disabled|starting|ready|degraded|stopped|failed",
+    "running": "boolean",
+    "username": "string",
+    "lastError": "string|null",
+    "lastStateChangeAt": "string|null",
+    "startedAt": "string|null",
+    "stoppedAt": "string|null",
+    "lastErrorAt": "string|null",
+    "tokenConfigured": "boolean",
+    "configuredUsername": "string",
+    "metrics": {
+      "messagesSent": "number", "messagesFailed": "number", "pollingErrors": "number",
+      "lastDeliveryAt": "string|null", "uptimeSeconds": "number", "reconfigures": "number"
+    }
+} }
+```
+`state` es un enum de ciclo de vida (ISSUE-047): `disabled`, `starting`, `ready`, `degraded`, `stopped`, `failed`. Un `polling_error` degrada el estado a `degraded` sin detener el envío (`running` permanece `true`).
 
 ---
 
@@ -465,7 +509,7 @@ SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
 // 400 Bad Request
 { "error": "VALIDATION", "message": "..." }
 // 401 Unauthorized
-{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" }
+{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" } | { "error": "Autenticación requerida" } (denegación por defecto — ISSUE-002)
 // 403 Forbidden
 { "error": "Sin acceso a este dispositivo" } | { "error": "Sin acceso a este ciclo" }
 // 404 Not Found

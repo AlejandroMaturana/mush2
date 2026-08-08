@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { authenticate, optionalAuth } from '../middlewares/auth.js';
+import { authenticate } from '../middlewares/auth.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { Device, Telemetry, CultivationCycle, CycleState, Actuator } from '../models/index.js';
 import { getStatusFromDevice, getLatestHealth } from '../services/deviceHealthService.js';
 import { createChildLogger } from '../config/pino.js';
@@ -44,13 +45,16 @@ function calcRisks(temp, rh, vpd) {
 
 const router = Router();
 
-router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
+router.get('/:chamberId/analytics', authenticate, async (req, res) => {
   try {
     const device = await Device.findOne({
       where: { [Op.or]: [{ id: req.params.chamberId }, { deviceId: req.params.chamberId }] },
       include: [{ model: Actuator, attributes: ['channel', 'state', 'mode'] }],
     });
     if (!device) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (!(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
 
     const latestTelemetry = await Telemetry.findAll({
       where: { deviceId: device.id },

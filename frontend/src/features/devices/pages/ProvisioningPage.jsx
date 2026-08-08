@@ -8,7 +8,6 @@ const PROV_CHAR_WIFI_SSID = 'a7c3d6e2-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 const PROV_CHAR_WIFI_PASS = 'a7c3d6e3-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 const PROV_CHAR_CMD = 'a7c3d6e4-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 const PROV_CHAR_STATUS = 'a7c3d6e5-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
-const PROV_CHAR_SSR_MODE = 'a7c3d6e6-f1b2-4a5b-8c9d-0e1f2a3b4c5d'
 
 const STEPS = { SCAN: 0, CONFIG: 1, PROVISIONING: 2, DONE: 3, ERROR: -1 }
 const STEP_LABELS = ['ESCANEO', 'CONFIGURACIÓN', 'ENVIAR', 'LISTO']
@@ -22,7 +21,6 @@ function Provisioning() {
   const [deviceInfo, setDeviceInfo] = useState(null)
   const [ssid, setSsid] = useState('')
   const [password, setPassword] = useState('')
-  const [ssrActiveLow, setSsrActiveLow] = useState(true)
   const [statusMsg, setStatusMsg] = useState('')
   const [bleNotSupported, setBleNotSupported] = useState(false)
   const serverRef = useRef(null)
@@ -44,9 +42,6 @@ function Provisioning() {
       try { setDeviceInfo(JSON.parse(infoStr)) } catch { setDeviceInfo({ raw: infoStr }) }
       statusCharRef.current = await service.getCharacteristic(PROV_CHAR_STATUS)
       await statusCharRef.current.startNotifications()
-      const ssrModeChar = await service.getCharacteristic(PROV_CHAR_SSR_MODE)
-      const ssrModeValue = await ssrModeChar.readValue()
-      setSsrActiveLow(new TextDecoder().decode(ssrModeValue) === '1')
       statusCharRef.current.addEventListener('characteristicvaluechanged', (event) => {
         const val = new TextDecoder().decode(event.target.value)
         try {
@@ -73,11 +68,10 @@ function Provisioning() {
       const cmdChar = await service.getCharacteristic(PROV_CHAR_CMD)
       const encoder = new TextEncoder()
       await ssidChar.writeValue(encoder.encode(ssid)); await passChar.writeValue(encoder.encode(password))
-      await (await service.getCharacteristic(PROV_CHAR_SSR_MODE)).writeValue(encoder.encode(ssrActiveLow ? '1' : '0'))
       await cmdChar.writeValue(encoder.encode('provision'))
       setStatusMsg('Credenciales enviadas. El dispositivo se reiniciará...')
     } catch (err) { setStep(STEPS.ERROR); setError(err.message || 'Error al enviar credenciales') }
-  }, [ssid, password, ssrActiveLow])
+  }, [ssid, password])
 
   const handleFactoryReset = useCallback(async () => {
     if (!confirm('¿Restablecer el dispositivo? Se borrarán todas las credenciales.')) return
@@ -209,31 +203,6 @@ function Provisioning() {
                 <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '4px' }}>Contraseña</label>
                 <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
               </div>
-            </div>
-          </div>
-
-          {/* SSR Config */}
-          <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>electrical_services</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>Configuración SSR</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ fontSize: '13px', color: 'var(--on-surface)', marginBottom: '2px' }}>SSR Active Low</p>
-                <p style={{ fontSize: '11px', color: 'var(--outline)' }}>
-                  {ssrActiveLow ? 'ALTO=APAGADO, BAJO=ENCENDIDO (nivel bajo)' : 'ALTO=ENCENDIDO, BAJO=APAGADO (nivel alto)'}
-                </p>
-              </div>
-              <button type="button" role="switch" aria-checked={ssrActiveLow} onClick={() => setSsrActiveLow(v => !v)} style={{
-                width: '48px', height: '28px', borderRadius: '14px', border: 'none', cursor: 'pointer', position: 'relative', padding: 0, transition: 'background 0.2s',
-                background: ssrActiveLow ? 'var(--spore-green)' : 'var(--surface-container-high)',
-              }}>
-                <span style={{
-                  position: 'absolute', top: '3px', width: '22px', height: '22px', borderRadius: '50%', background: 'var(--bg-primary, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'transform 0.2s',
-                  transform: ssrActiveLow ? 'translateX(23px)' : 'translateX(3px)',
-                }} />
-              </button>
             </div>
           </div>
 

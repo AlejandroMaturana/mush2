@@ -55,8 +55,13 @@ void reProvision() {
   prefs.clear();
   prefs.end();
 
-  // Clear main NVS (SSR mode, reboot count, FSM state)
+  // Clear main NVS (reboot count, FSM state)
   prefs.begin("mush2", false);
+  prefs.clear();
+  prefs.end();
+
+  // Clear SSR polarity cache (mush2_ssr) — reinicia al default hasta el primer sync
+  prefs.begin("mush2_ssr", false);
   prefs.clear();
   prefs.end();
 

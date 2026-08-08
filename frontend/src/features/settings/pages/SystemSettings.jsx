@@ -1,9 +1,31 @@
 import { useState, useEffect } from 'react'
-import { getSystemSettings, updateSystemSettings, seedSystemSettings, configureTelegramBot, getTelegramBotStatus } from '../../../api/client.js'
+import { getSystemSettings, updateSystemSettings, configureTelegramBot, getTelegramBotStatus } from '../../../api/client.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 
-const CATEGORY_LABELS = { installation: 'Instalación', timing: 'Temporización', storage: 'Almacenamiento', environment: 'Entorno', states: 'Estados', alarms: 'Alarmas', integration: 'Integración', ota: 'OTA' }
-const CATEGORY_ORDER = ['installation', 'timing', 'storage', 'environment', 'states', 'alarms', 'integration', 'ota']
+const SAFETY_KEYS = ['temp_critical', 'temp_recovery']
+
+const SAFETY_CONFIG = {
+  temp_critical: { label: 'Temperatura crítica (°C)', description: 'Umbral de temperatura que dispara el estado de fallo crítico (control engine).' },
+  temp_recovery: { label: 'Temperatura de recuperación (°C)', description: 'Temperatura a la que el dispositivo retoma la operación normal tras un fallo crítico.' },
+}
+
+const TG_STATE_LABELS = {
+  disabled: 'Deshabilitado',
+  starting: 'Inicializando',
+  ready: 'Listo',
+  degraded: 'Degradado',
+  stopped: 'Detenido',
+  failed: 'Error',
+}
+
+const TG_STATE_COLORS = {
+  ready: 'var(--spore-green)',
+  degraded: '#f59e0b',
+  starting: 'var(--accent-blue, #60a5fa)',
+  disabled: 'var(--outline)',
+  stopped: 'var(--outline)',
+  failed: 'var(--error-red)',
+}
 
 function SystemSettings() {
   const [settings, setSettings] = useState([])
@@ -11,7 +33,6 @@ function SystemSettings() {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
-  const [seedMsg, setSeedMsg] = useState(null)
   const [tgToken, setTgToken] = useState('')
   const [tgUsername, setTgUsername] = useState('')
   const [tgStatus, setTgStatus] = useState(null)
@@ -26,7 +47,7 @@ function SystemSettings() {
 
   useEffect(() => { fetchSettings() }, [])
 
-  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st) } catch {} }
+  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st.data || st) } catch {} }
 
   useEffect(() => {
     if (!loading) {
@@ -40,9 +61,10 @@ function SystemSettings() {
   async function handleConfigureTelegram(e) {
     e.preventDefault(); if (!tgToken) return; setTgSaving(true); setTgMsg(null)
     try {
-      const result = await configureTelegramBot(tgToken, tgUsername)
-      setTgStatus({ running: result.running, username: result.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: result.lastError })
-      setTgMsg({ type: result.running ? 'ok' : 'err', text: result.running ? 'Bot inicializado correctamente' : `Bot falló: ${result.lastError || 'error desconocido'}` })
+      const result = await configureTelegramBot({ token: tgToken, username: tgUsername })
+      const st = result.data || result
+      setTgStatus({ state: st.state, running: st.running, username: st.username, tokenConfigured: true, configuredUsername: tgUsername, lastError: st.lastError, metrics: st.metrics })
+      setTgMsg({ type: st.running ? 'ok' : 'err', text: st.running ? 'Bot inicializado correctamente' : `Bot falló: ${st.lastError || 'error desconocido'}` })
     } catch (err) { setTgMsg({ type: 'err', text: err.response?.data?.error || err.message }) }
     finally { setTgSaving(false) }
   }
@@ -50,22 +72,16 @@ function SystemSettings() {
   function handleChange(key, value) { setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s)) }
 
   async function handleSave() {
+    const safetySettings = settings.filter(s => SAFETY_KEYS.includes(s.key))
     setSaving(true); setMsg(null)
-    try { await updateSystemSettings(settings.map(s => ({ key: s.key, value: s.value }))); setMsg({ type: 'ok', text: 'Configuración del sistema guardada' }) }
+    try { await updateSystemSettings(safetySettings.map(s => ({ key: s.key, value: s.value }))); setMsg({ type: 'ok', text: 'Configuración del sistema guardada' }) }
     catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
   }
 
-  async function handleSeed() {
-    if (!window.confirm('¿Restaurar configuración del sistema predeterminada?')) return; setSeedMsg(null)
-    try { await seedSystemSettings(); await fetchSettings(); setSeedMsg({ type: 'ok', text: 'Valores predeterminados restaurados' }) }
-    catch (err) { setSeedMsg({ type: 'err', text: err.message || 'Falló' }) }
-  }
-
   if (loading) return <LoadingState message="Cargando configuración del sistema..." icon="settings" />
 
-  const grouped = {}
-  for (const s of settings) { const cat = s.category || 'other'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(s) }
+  const safetySettings = settings.filter(s => SAFETY_KEYS.includes(s.key))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -76,56 +92,45 @@ function SystemSettings() {
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--outline)' }}>Parámetros de configuración global (solo SUPER_ADMIN)</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-secondary" style={{ fontSize: '10px' }} onClick={handleSeed}>RESTABLECER VALORES</button>
-          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSave} disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR TODO'}</button>
+          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSave} disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR'}</button>
         </div>
       </div>
 
-      {[msg, seedMsg].filter(Boolean).map((m, i) => (
-        <div key={i} className={`alert-banner ${m.type === 'ok' ? 'alert-banner-success' : 'alert-banner-error'}`}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: m.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)' }}>{m.text}</span>
+      {msg && (
+        <div className={`alert-banner ${msg.type === 'ok' ? 'alert-banner-success' : 'alert-banner-error'}`}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: msg.type === 'ok' ? 'var(--spore-green)' : 'var(--error-red)' }}>{msg.text}</span>
         </div>
-      ))}
+      )}
 
       {settings.length === 0 ? (
         <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--outline)', marginBottom: '16px', display: 'block' }}>settings</span>
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '8px' }}>Sin configuración</h3>
-          <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>Inicializa la configuración del sistema para comenzar.</p>
-          <button className="btn btn-glow" style={{ fontSize: '10px' }} onClick={handleSeed}>INICIALIZAR VALORES</button>
+          <p style={{ fontSize: '13px', color: 'var(--outline)', marginBottom: '16px' }}>No se pudieron cargar los parámetros de seguridad.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {CATEGORY_ORDER.filter(c => grouped[c]).map(cat => (
-            <div key={cat} className="glass-card" style={{ padding: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>category</span>
-                <span className="section-label">{CATEGORY_LABELS[cat] || cat}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {grouped[cat].map(s => (
-                  <div key={s.key} className="settings-row">
-                    <div style={{ flex: 1, marginRight: '16px' }}>
-                      <span className="form-label">{s.label || s.key}</span>
-                      {s.description && <span style={{ fontSize: '10px', color: 'var(--on-surface-variant)', display: 'block', marginTop: '2px' }}>{s.description}</span>}
-                      <span style={{ fontSize: '9px', color: 'var(--outline)', fontFamily: 'var(--font-mono)', display: 'block', marginTop: '2px' }}>{s.key}</span>
-                    </div>
-                    <div style={{ width: '180px', flexShrink: 0 }}>
-                      {s.type === 'boolean' ? (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <input type="checkbox" className="toggle-checkbox" checked={s.value === 'true' || s.value === true} onChange={e => handleChange(s.key, String(e.target.checked))} />
-                        </div>
-                      ) : s.type === 'number' ? (
-                        <input type="number" className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={s.value} onChange={e => handleChange(s.key, e.target.value)} />
-                      ) : (
-                        <input className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={s.value} onChange={e => handleChange(s.key, e.target.value)} />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Seguridad */}
+          <div className="glass-card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--spore-green)' }}>shield</span>
+              <span className="section-label">Seguridad</span>
             </div>
-          ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {safetySettings.map(s => (
+                <div key={s.key} className="settings-row">
+                  <div style={{ flex: 1, marginRight: '16px' }}>
+                    <span className="form-label">{SAFETY_CONFIG[s.key]?.label || s.label || s.key}</span>
+                    {SAFETY_CONFIG[s.key]?.description && <span style={{ fontSize: '10px', color: 'var(--on-surface-variant)', display: 'block', marginTop: '2px' }}>{SAFETY_CONFIG[s.key].description}</span>}
+                    <span style={{ fontSize: '9px', color: 'var(--outline)', fontFamily: 'var(--font-mono)', display: 'block', marginTop: '2px' }}>{s.key}</span>
+                  </div>
+                  <div style={{ width: '180px', flexShrink: 0 }}>
+                    <input type="number" className="form-input" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }} value={s.value} onChange={e => handleChange(s.key, e.target.value)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -138,10 +143,18 @@ function SystemSettings() {
 
         {tgStatus && (
           <div className={`alert-banner ${tgStatus.running ? 'alert-banner-success' : 'alert-banner-error'}`} style={{ marginBottom: '16px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: tgStatus.running ? 'var(--spore-green)' : 'var(--error-red)', boxShadow: tgStatus.running ? '0 0 8px var(--spore-green)' : 'none' }} />
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{tgStatus.running ? 'Bot en ejecución' : 'Bot detenido'}</span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: TG_STATE_COLORS[tgStatus.state] || 'var(--outline)', boxShadow: `0 0 8px ${TG_STATE_COLORS[tgStatus.state] || 'transparent'}`, flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>
+                Estado: {TG_STATE_LABELS[tgStatus.state] || tgStatus.state || (tgStatus.running ? 'En ejecución' : 'Detenido')}
+              </span>
               {tgStatus.username && <span style={{ fontSize: '11px', color: 'var(--outline)', display: 'block' }}>@{tgStatus.username}</span>}
+              {tgStatus.metrics && (
+                <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', display: 'block' }}>
+                  Mensajes enviados: {tgStatus.metrics.messagesSent ?? 0}
+                  {' · '}Última entrega: {tgStatus.metrics.lastDeliveryAt ? new Date(tgStatus.metrics.lastDeliveryAt).toLocaleString() : '—'}
+                </span>
+              )}
               {tgStatus.lastError && <span style={{ fontSize: '11px', color: 'var(--error-red)', display: 'block' }}>Error: {tgStatus.lastError}</span>}
             </div>
           </div>

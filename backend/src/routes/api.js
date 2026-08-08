@@ -214,7 +214,7 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
 router.patch('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = req.device;
-    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'thingSpeakEnabled', 'thingSpeakChannelId', 'thingSpeakReadKey', 'thingSpeakWriteKey', 'thingSpeakSyncInterval', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
+    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'thingSpeakEnabled', 'thingSpeakChannelId', 'thingSpeakSyncInterval', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
     const updates = {};
     for (const field of allowed) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -389,10 +389,10 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
       return res.status(400).json({ error: 'VALIDATION', message: 'command debe ser ON u OFF' });
     }
 
-    const [actuator] = await Actuator.findOrCreate({
-      where: { deviceId: device.id, channel },
-      defaults: { deviceId: device.id, channel, state: command, mode: 'REMOTE' },
-    });
+    let actuator = await Actuator.findOne({ where: { deviceId: device.id, channel } });
+    if (!actuator) {
+      actuator = await Actuator.create({ deviceId: device.id, channel, state: command, mode: 'REMOTE' });
+    }
     await actuator.update({
       state: command === 'ON' ? 'ON' : 'OFF',
       mode: 'REMOTE',
@@ -574,17 +574,13 @@ router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (re
     }
 
     const instance = await IntegrationCredentials.setCredentials(req.device.id, 'THINGSPEAK', {
-      channelId,
       readKey: readKey || '',
       writeKey: writeKey || '',
-      syncInterval: syncInterval || 300000,
     });
 
     await Device.update({
       thingSpeakEnabled: true,
       thingSpeakChannelId: channelId,
-      thingSpeakReadKey: readKey || null,
-      thingSpeakWriteKey: writeKey || null,
       thingSpeakSyncInterval: syncInterval || 300000,
     }, { where: { id: req.device.id } });
 

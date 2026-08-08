@@ -35,19 +35,16 @@ export async function syncDeviceFromThingSpeak(deviceId) {
     const interval = device.thingSpeakSyncInterval || 300000;
     if (now - lastSync < interval) return;
 
-    let channelId = device.thingSpeakChannelId;
-    let apiKey = device.thingSpeakReadKey;
+    const channelId = device.thingSpeakChannelId;
+    let apiKey = null;
 
-    if (!channelId || !apiKey) {
-      const creds = await IntegrationCredentials.findOne({
-        where: { deviceId, provider: 'THINGSPEAK', status: 'ACTIVE' },
-      });
-      if (creds) {
-        const decrypted = creds.getDecryptedCredentials();
-        if (decrypted) {
-          channelId = decrypted.channelId || channelId;
-          apiKey = decrypted.readKey || apiKey;
-        }
+    const creds = await IntegrationCredentials.findOne({
+      where: { deviceId, provider: 'THINGSPEAK', status: 'ACTIVE' },
+    });
+    if (creds) {
+      const decrypted = creds.getDecryptedCredentials();
+      if (decrypted) {
+        apiKey = decrypted.readKey || null;
       }
     }
 

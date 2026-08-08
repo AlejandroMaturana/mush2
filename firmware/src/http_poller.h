@@ -65,6 +65,7 @@ private:
 
   bool _ssrActiveLow;
   bool _ssrActiveLowPrev;
+  bool _ssrFirstSync;
 
   bool _hasActiveCycle;
   char _phase[16];

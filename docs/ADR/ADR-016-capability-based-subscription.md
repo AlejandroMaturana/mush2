@@ -99,7 +99,7 @@ Toda capacidad en la plataforma se clasifica en una de las siguientes categoría
 - Middleware de cuota: `backend/src/middlewares/subscriptionRateLimit.js`
 - Rutas de suscripción: `backend/src/routes/subscriptions.js`
 - Job de retención: `backend/src/jobs/dataRetentionJob.js`
-- Frontend: `frontend/src/pages/settings/SubscriptionSettings.jsx`
+- Frontend: página `SubscriptionSettings` retirada (refactor Settings 2026-08). Sin consumidor de UI; el consumo real lo informa `GET /subscriptions/mine/usage` para tooling/clientes. Los proxies `/settings/subscription/*` fueron retirados en ISSUE-042.
 
 ---
 
