@@ -2122,20 +2122,22 @@ GitHub Issue creado (Fase 6 §5.1) + ejecutor toma (orquestador Ciclo 0). Los 15
 | ISSUE-068 (INF-009) | 2026-08-08 | READY → IN_PROGRESS | GitHub #181 · toma Ciclo 0 (PR-B) |
 | ISSUE-106 (TST-002) | 2026-08-08 | READY → IN_PROGRESS | GitHub #182 · toma Ciclo 0 (PR-A) |
 
-### 9.3 Ciclo 0 — PR-A "Authorization Foundation" (I002/I004/I005/I106) implementado y verificado (2026-08-08)
+### 9.3 Ciclo 0 — PR-A "Authorization Foundation" (I002/I004/I005/I106) implementado, mergeado y versionado (2026-08-08)
 
-Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite roja escrita primero (`authorization-negative.test.js`, 10 casos anónimos fallando contra el baseline) → implementación → suite verde.
+Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite roja escrita primero (`authorization-negative.test.js`, 10 casos anónimos fallando contra el baseline) → implementación → suite verde. PR-A mergeado a `develop` (merge commit `b8cd5b3`) y release `v1.8.5` taggeado.
 
 | ISSUE | Fecha | Transición | Evidencia |
 |---|---|---|---|
-| ISSUE-002 (BE-002) | 2026-08-08 | IN_PROGRESS (PR-A listo) | deny-by-default `tenantScope` (whitelist firmware `POST /devices/register`, `GET /actuators`); `/recipes`/`/species`/`/cycles` → `authenticate`; events/analytics scoped por propietario; api-contract §1/§22 actualizado |
-| ISSUE-004 (BE-004) | 2026-08-08 | IN_PROGRESS (PR-A listo) | `Device.findOrCreate`/`Actuator.findOrCreate` eliminados en PATCH actuators.js y api.js (`/devices/:id/actuators/:channel`) — 404 si el dispositivo no existe; contract tests actualizados |
-| ISSUE-005 (BE-005) | 2026-08-08 | IN_PROGRESS (PR-A listo) | `assertCycleAccess` en todas las rutas de cycles.js; alarms ack/resolve con acceso al dispositivo; especies POST/PUT/DELETE `requireMinRole('ADMIN')` |
-| ISSUE-106 (TST-002) | 2026-08-08 | IN_PROGRESS (PR-A listo) | Suite negativa 35/35 con `DATABASE_URL=mush2_test` (16 anónimos/whitelist + 19 propiedad/roles); jest completo 155 + vitest 358 en verde |
+| ISSUE-002 (BE-002) | 2026-08-08 | IN_PROGRESS → DONE | PR #183 mergeado (`b8cd5b3`); deny-by-default `tenantScope` (whitelist firmware `POST /devices/register`, `GET /actuators`); `/recipes`/`/species`/`/cycles` → `authenticate`; events/analytics scoped por propietario; api-contract §1/§22 actualizado |
+| ISSUE-004 (BE-004) | 2026-08-08 | IN_PROGRESS → DONE | PR #183 mergeado (`b8cd5b3`); `Device.findOrCreate`/`Actuator.findOrCreate` eliminados en PATCH actuators.js y api.js (`/devices/:id/actuators/:channel`) — 404 si el dispositivo no existe; contract tests actualizados |
+| ISSUE-005 (BE-005) | 2026-08-08 | IN_PROGRESS → DONE | PR #183 mergeado (`b8cd5b3`); `assertCycleAccess` en todas las rutas de cycles.js; alarms ack/resolve con acceso al dispositivo; especies POST/PUT/DELETE `requireMinRole('ADMIN')` |
+| ISSUE-106 (TST-002) | 2026-08-08 | IN_PROGRESS → DONE | PR #183 mergeado (`b8cd5b3`); suite negativa 35/35 con `DATABASE_URL=mush2_test` (16 anónimos/whitelist + 19 propiedad/roles); jest completo 174 + vitest 358 en verde |
 
-**Verificación local:** `jest` 12/12 suites (19 tests de BD saltados sin `DATABASE_URL`, 35/35 con la BD de test en `localhost:5544`) · `vitest run` 34 archivos / 358 tests · probe firmware: `POST /devices/register` → 201 y `GET /actuators?deviceId=` → 200.
+**Verificación local post-merge (`b8cd5b3`):** `jest` 12/12 suites / 174 tests · `vitest run` 34 archivos / 358 tests · probe firmware: `POST /devices/register` → 201 y `GET /actuators?deviceId=` → 200.
 
-**Pendiente para `DONE` (9/9 DoD, Fase 6):** CI verde en PR, PR mergeado a `develop` y versionado SemVer — se registra la transición `IN_PROGRESS → DONE` al completarse.
+**CI (run #31259923147):** frontend build ✅. Backend test y firmware build ❌ por fallos **preexistentes** a PR-A (idénticos en el run previo #167): `REG-002` (falta `.env.development`, gitignored, en CI) y `ble_provisioning.cpp:105` (`HW_REVISION`). No hay regresión de PR-A.
+
+**Release SemVer:** tag `v1.8.5` · backend v1.7.0 · commit `chore(release): mush2 v1.8.5` (`b85b30d`).
 
 ---
 
