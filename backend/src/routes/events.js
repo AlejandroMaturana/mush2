@@ -1,18 +1,27 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { authenticate, optionalAuth } from '../middlewares/auth.js';
+import { authenticate } from '../middlewares/auth.js';
+import { canAccessDevice, getAccessibleDeviceIds } from '../middlewares/tenant.js';
 import { Event, Device } from '../models/index.js';
 import { createChildLogger } from '../config/pino.js';
 
 const logger = createChildLogger('EVENTS');
 const router = Router();
 
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 50, type, deviceId, from, to } = req.query;
-    const where = {};
+    let where = { deviceId: { [Op.in]: await getAccessibleDeviceIds(req.user.id) } };
+    if (deviceId) {
+      const device = await Device.findOne({
+        where: { [Op.or]: [{ id: deviceId }, { deviceId }] },
+      });
+      if (!device || !(await canAccessDevice(req.user, device))) {
+        return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+      }
+      where = { deviceId: device.id };
+    }
     if (type) where.type = type;
-    if (deviceId) where.deviceId = deviceId;
     if (from || to) {
       where.timestamp = {};
       if (from) where.timestamp[Op.gte] = new Date(from);
@@ -36,10 +45,16 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
-router.get('/device/:deviceId', optionalAuth, async (req, res) => {
+router.get('/device/:deviceId', authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 50, type, from, to } = req.query;
-    const where = { deviceId: req.params.deviceId };
+    const device = await Device.findOne({
+      where: { [Op.or]: [{ id: req.params.deviceId }, { deviceId: req.params.deviceId }] },
+    });
+    if (!device || !(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
+    const where = { deviceId: device.id };
     if (type) where.type = type;
     if (from || to) {
       where.timestamp = {};

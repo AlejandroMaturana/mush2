@@ -3,7 +3,8 @@
 > Base URL: `/api/v1`
 > Formato: JSON
 > Autenticación: JWT via header `Authorization: Bearer <token>`
-> Auth opcional en rutas de lectura (dispositivos legacy accesibles sin login)
+> Denegación por defecto (ISSUE-002/004/005): sin credenciales válidas, toda ruta distinta de la whitelist anónima del firmware devuelve `401 { "error": "Autenticación requerida" }`. Whitelist anónima (solo firmware): `POST /devices/register` y `GET /actuators?deviceId=`.
+> Propiedad de recursos (ISSUE-002/004/005): los endpoints de tenant filtran/deniegan por propietario y vía `UserChamberAccess`; mutaciones del catálogo de especies exigen rol `ADMIN`; `PATCH /actuators/:channel` y `/devices/:id/actuators/:channel` NO auto-crean el dispositivo (404 si no existe).
 
 ---
 
@@ -508,7 +509,7 @@ SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
 // 400 Bad Request
 { "error": "VALIDATION", "message": "..." }
 // 401 Unauthorized
-{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" }
+{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" } | { "error": "Autenticación requerida" } (denegación por defecto — ISSUE-002)
 // 403 Forbidden
 { "error": "Sin acceso a este dispositivo" } | { "error": "Sin acceso a este ciclo" }
 // 404 Not Found

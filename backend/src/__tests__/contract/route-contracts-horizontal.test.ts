@@ -203,9 +203,10 @@ describe('Horizontal: actuators.js (device-facing)', () => {
     expect(source).toContain('5 * 60 * 1000');
   });
 
-  it('findOrCreate usado para device y actuator', () => {
-    expect(source).toContain('Device.findOrCreate');
-    expect(source).toContain('Actuator.findOrCreate');
+  it('no hay findOrCreate en la ruta de comandos (ISSUE-004: sin auto-registro)', () => {
+    expect(source).not.toContain('Device.findOrCreate');
+    expect(source).not.toContain('Actuator.findOrCreate');
+    expect(source).toContain('canAccessDevice');
   });
 
   it('ssrActiveLow siempre presente en respuesta del poller (ambas ramas)', () => {
@@ -293,13 +294,13 @@ describe('Horizontal: events.js', () => {
   const source = readSource('routes/events.js');
   const routes = extractRoutes(source);
 
-  it('rutas son GET con optionalAuth', () => {
+  it('rutas son GET con authenticate (denegación por defecto — ISSUE-002)', () => {
     const list = routes.find(r => r.path === '/');
     expect(list?.method).toBe('GET');
-    expect(source).toContain("router.get('/', optionalAuth");
+    expect(source).toContain("router.get('/', authenticate");
     const device = routes.find(r => r.path === '/device/:deviceId');
     expect(device?.method).toBe('GET');
-    expect(source).toContain("router.get('/device/:deviceId', optionalAuth");
+    expect(source).toContain("router.get('/device/:deviceId', authenticate");
   });
 });
 
@@ -347,8 +348,9 @@ describe('Horizontal: analytics.js (chamber)', () => {
   const source = readSource('routes/analytics.js');
   const routes = extractRoutes(source);
 
-  it('analytics es GET con optionalAuth', () => {
+  it('analytics es GET con authenticate (denegación por defecto — ISSUE-002)', () => {
     const analytics = routes.find(r => r.path === '/:chamberId/analytics');
     expect(analytics?.method).toBe('GET');
+    expect(source).toContain("router.get('/:chamberId/analytics', authenticate");
   });
 });
