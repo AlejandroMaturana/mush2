@@ -1,7 +1,7 @@
 {
   "system": {
     "name": "mush2",
-    "version": "1.8.4"
+    "version": "1.8.5"
   },
   "components": {
     "backend": "1.7.0",

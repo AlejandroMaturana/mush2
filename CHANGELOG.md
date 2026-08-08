@@ -2,18 +2,14 @@
 
 ## 2026-08-08
 
-### Backend — Authorization Foundation - v1.9.0 (PR-A: ISSUE-002/004/005/106)
+### Backend — v1.7.0
 
-- **feat(authz)**: Denegación por defecto en el tenant guard (ISSUE-002)
-  - `tenantScope` devuelve `401 { error: "Autenticación requerida" }` a cualquier request anónimo fuera de la whitelist del firmware (`POST /devices/register`, `GET /actuators`)
-  - Routers de `/recipes`, `/species` y `/cycles` pasan de `optionalAuth` a `authenticate`
-  - `events` y `analytics` (chambers) exigen `authenticate` y filtran/deniegan por propietario vía `canAccessDevice`/`getAccessibleDeviceIds` (`UserChamberAccess` + legacy)
-- **feat(ownership)**: Aislamiento por propietario en ciclos y alarmas (ISSUE-005)
-  - `assertCycleAccess` en todas las rutas de `cycles.js` (GET/PATCH/transition/abort/bioactives/sub-recursos → 403 para no propietario)
-  - `acknowledge`/`resolve` de alarmas verifican acceso al dispositivo del propietario
-- **feat(roles)**: Catálogo de especies con `requireMinRole('ADMIN')` en POST/PUT/DELETE (ISSUE-005)
-- **fix(actuators)**: Eliminado `Device.findOrCreate`/`Actuator.findOrCreate` en `PATCH /actuators/:channel` y `PATCH /devices/:id/actuators/:channel` (ISSUE-004): 404 si el dispositivo no existe, sin auto-registro
-- **test(authz)**: Suite negativa `authorization-negative.test.js` (ISSUE-106): 10 casos anónimos → 401/403, whitelist firmware preservada, y 19 tests de propiedad/roles contra `mush2_test` (35 en total); contract tests horizontal actualizados al patrón `authenticate`
+- feat(authz): Fundación de autorización con denegación por defecto (deny-by-default). (ISSUE-002/004/005/106)
+- **deny-by-default**: el tenant guard rechaza con `401 { error: "Autenticación requerida" }` todo request anónimo fuera de la whitelist del firmware (`POST /devices/register`, `GET /actuators`); `/recipes`, `/species`, `/cycles`, `events` y `analytics` pasan de `optionalAuth` a `authenticate`.
+- **ownership**: `assertCycleAccess` en todas las rutas de ciclos y verificación de acceso al dispositivo en ack/resolve de alarmas (403 para no propietario); `events`/`analytics` filtran por propietario vía `canAccessDevice`/`getAccessibleDeviceIds`.
+- **roles**: POST/PUT/DELETE de especies exigen `requireMinRole('ADMIN')`.
+- **fix(actuators)**: eliminados `Device.findOrCreate`/`Actuator.findOrCreate` en `PATCH /actuators/:channel` y `PATCH /devices/:id/actuators/:channel` → 404 si no existe (sin auto-registro).
+- **tests**: suite negativa `authorization-negative.test.js` (35 tests: 10 casos anónimos → 401/403 + whitelist firmware preservada + 19 tests de propiedad/roles contra `mush2_test`) y contract tests horizontal/rest alineados al patrón `authenticate`.
 
 ## 2026-08-06
 
