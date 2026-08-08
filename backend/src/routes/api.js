@@ -389,10 +389,10 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
       return res.status(400).json({ error: 'VALIDATION', message: 'command debe ser ON u OFF' });
     }
 
-    const [actuator] = await Actuator.findOrCreate({
-      where: { deviceId: device.id, channel },
-      defaults: { deviceId: device.id, channel, state: command, mode: 'REMOTE' },
-    });
+    let actuator = await Actuator.findOne({ where: { deviceId: device.id, channel } });
+    if (!actuator) {
+      actuator = await Actuator.create({ deviceId: device.id, channel, state: command, mode: 'REMOTE' });
+    }
     await actuator.update({
       state: command === 'ON' ? 'ON' : 'OFF',
       mode: 'REMOTE',

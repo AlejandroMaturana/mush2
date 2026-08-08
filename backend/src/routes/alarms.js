@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { Alarm, Device } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('ALARMS');
@@ -89,6 +90,10 @@ router.patch('/:id/acknowledge', authenticate, async (req, res) => {
     if (!alarm) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Alarma no encontrada' });
     }
+    const device = await Device.findByPk(alarm.deviceId);
+    if (!device || !(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
     if (alarm.resolvedAt) {
       return res.status(400).json({ error: 'Alarma ya resuelta' });
     }
@@ -111,6 +116,10 @@ router.patch('/:id/resolve', authenticate, async (req, res) => {
     const alarm = await Alarm.findByPk(req.params.id);
     if (!alarm) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Alarma no encontrada' });
+    }
+    const device = await Device.findByPk(alarm.deviceId);
+    if (!device || !(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
     }
     if (alarm.resolvedAt) {
       return res.status(400).json({ error: 'Alarma ya resuelta' });

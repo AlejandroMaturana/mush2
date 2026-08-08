@@ -1,5 +1,20 @@
 # Changelog — Mush2
 
+## 2026-08-08
+
+### Backend — Authorization Foundation - v1.9.0 (PR-A: ISSUE-002/004/005/106)
+
+- **feat(authz)**: Denegación por defecto en el tenant guard (ISSUE-002)
+  - `tenantScope` devuelve `401 { error: "Autenticación requerida" }` a cualquier request anónimo fuera de la whitelist del firmware (`POST /devices/register`, `GET /actuators`)
+  - Routers de `/recipes`, `/species` y `/cycles` pasan de `optionalAuth` a `authenticate`
+  - `events` y `analytics` (chambers) exigen `authenticate` y filtran/deniegan por propietario vía `canAccessDevice`/`getAccessibleDeviceIds` (`UserChamberAccess` + legacy)
+- **feat(ownership)**: Aislamiento por propietario en ciclos y alarmas (ISSUE-005)
+  - `assertCycleAccess` en todas las rutas de `cycles.js` (GET/PATCH/transition/abort/bioactives/sub-recursos → 403 para no propietario)
+  - `acknowledge`/`resolve` de alarmas verifican acceso al dispositivo del propietario
+- **feat(roles)**: Catálogo de especies con `requireMinRole('ADMIN')` en POST/PUT/DELETE (ISSUE-005)
+- **fix(actuators)**: Eliminado `Device.findOrCreate`/`Actuator.findOrCreate` en `PATCH /actuators/:channel` y `PATCH /devices/:id/actuators/:channel` (ISSUE-004): 404 si el dispositivo no existe, sin auto-registro
+- **test(authz)**: Suite negativa `authorization-negative.test.js` (ISSUE-106): 10 casos anónimos → 401/403, whitelist firmware preservada, y 19 tests de propiedad/roles contra `mush2_test` (35 en total); contract tests horizontal actualizados al patrón `authenticate`
+
 ## 2026-08-06
 
 ### Backend — Telegram Subsystem Refactor - v1.6.1

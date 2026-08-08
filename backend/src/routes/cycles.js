@@ -5,12 +5,28 @@ import { logAudit } from '../services/auditService.js';
 import { getCorrelation, getEnvironmentSummary } from '../services/bioactiveAnalyzer.js';
 import { getPhaseThresholds } from '../services/controlEngine.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { createChildLogger } from '../config/pino.js';
 
 const logger = createChildLogger('CYCLE');
 const router = express.Router();
 
 const CYCLE_STATUSES = ['PLANNED', 'ACTIVE', 'COMPLETED', 'ABORTED'];
+
+async function assertCycleAccess(req, res, cycle) {
+  if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+  if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
+  if (cycle.userId) {
+    if (cycle.userId === req.user.id) return true;
+    return res.status(403).json({ error: 'Sin acceso a este ciclo' });
+  }
+  // Ciclo legacy (sin dueño): acceso vía el dispositivo al que pertenece
+  if (cycle.deviceId) {
+    const device = await Device.findByPk(cycle.deviceId);
+    if (device && (await canAccessDevice(req.user, device))) return true;
+  }
+  return res.status(403).json({ error: 'Sin acceso a este ciclo' });
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -49,7 +65,8 @@ router.get('/:id', async (req, res) => {
         { model: PhaseTransition, order: [['createdAt', 'DESC']], limit: 10 },
       ],
     });
-    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     res.json(cycle);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -98,10 +115,8 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const cycle = await CultivationCycle.findByPk(req.params.id);
-    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
-    if (req.tenant && req.tenant.userId && cycle.userId && cycle.userId !== req.tenant.userId) {
-      return res.status(403).json({ error: 'Sin acceso a este ciclo' });
-    }
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
 
     const allowedFields = ['notes', 'adaptationConfig', 'status', 'currentPhase', 'endDate'];
     const updates = {};
@@ -149,7 +164,8 @@ router.post('/:id/transition', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
     const cycle = await CultivationCycle.findByPk(req.params.id, { include: [{ model: Recipe }] });
-    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     if (cycle.currentPhase === 'COMPLETED') {
       return res.status(400).json({ error: 'El ciclo ya está completado' });
     }
@@ -193,6 +209,9 @@ router.post('/:id/transition', async (req, res) => {
 
 router.get('/:id/transitions', async (req, res) => {
   try {
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     const transitions = await PhaseTransition.findAll({
       where: { cycleId: req.params.id },
       order: [['createdAt', 'DESC']],
@@ -209,7 +228,8 @@ router.post('/:id/abort', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
     const cycle = await CultivationCycle.findByPk(req.params.id);
-    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     if (cycle.status === 'COMPLETED' || cycle.status === 'ABORTED') {
       return res.status(400).json({ error: `El ciclo ya está ${cycle.status.toLowerCase()}` });
     }
@@ -240,6 +260,9 @@ router.post('/:id/abort', async (req, res) => {
 
 router.get('/:id/states', async (req, res) => {
   try {
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     const states = await CycleState.findAll({
       where: { cycleId: req.params.id },
       order: [['snapshotDate', 'DESC']],
@@ -253,6 +276,9 @@ router.get('/:id/states', async (req, res) => {
 
 router.get('/:id/bioactives', async (req, res) => {
   try {
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     const { compoundName, from, to, limit = 100 } = req.query;
     const where = { cycleId: req.params.id };
     if (compoundName) where.compoundName = compoundName;
@@ -277,7 +303,8 @@ router.post('/:id/bioactives', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
 
     const cycle = await CultivationCycle.findByPk(req.params.id);
-    if (!cycle) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
 
     const { compoundName, concentration, unit, analysisDate, labSource, notes } = req.body;
     if (!compoundName || concentration === undefined) {
@@ -311,6 +338,9 @@ router.post('/:id/bioactives', async (req, res) => {
 
 router.get('/:id/bioactives/correlation', async (req, res) => {
   try {
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     const result = await getCorrelation(req.params.id);
     if (!result) return res.status(404).json({ error: 'NOT_FOUND', message: 'Ciclo no encontrado' });
     res.json(result);
@@ -321,6 +351,9 @@ router.get('/:id/bioactives/correlation', async (req, res) => {
 
 router.get('/:id/environment-summary', async (req, res) => {
   try {
+    const cycle = await CultivationCycle.findByPk(req.params.id);
+    const allowed = await assertCycleAccess(req, res, cycle);
+    if (allowed !== true) return;
     const summary = await getEnvironmentSummary(req.params.id);
     res.json(summary);
   } catch (err) {

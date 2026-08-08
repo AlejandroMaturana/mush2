@@ -1,10 +1,23 @@
-import { Device } from '../models/index.js';
+import { Op } from 'sequelize';
+import { Device, UserChamberAccess } from '../models/index.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('TENANT');
 
+// Flujos legítimos del firmware que operan anónimos por HTTP hasta que
+// aterriza la transición con token (ISSUE-001 / PR-E) y las credenciales
+// de dispositivo en NVS (ISSUE-050 / PR-C).
+const PUBLIC_ANONYMOUS = new Set([
+  'POST /api/v1/devices/register',
+  'GET /api/v1/actuators',
+]);
+
 export async function tenantScope(req, res, next) {
   if (!req.user) {
+    const key = `${req.method} ${(req.originalUrl || '').split('?')[0]}`;
+    if (!PUBLIC_ANONYMOUS.has(key)) {
+      return res.status(401).json({ error: 'Autenticación requerida' });
+    }
     req.tenant = { userId: null, filter: {} };
     return next();
   }
@@ -15,6 +28,30 @@ export async function tenantScope(req, res, next) {
   };
 
   next();
+}
+
+export async function canAccessDevice(user, device) {
+  if (!user || !device) return false;
+  // Dispositivos legacy (sin dueño) accesibles por cualquier usuario autenticado
+  if (!device.userId) return true;
+  if (device.userId === user.id) return true;
+  const access = await UserChamberAccess.findOne({
+    where: { userId: user.id, deviceId: device.id },
+  });
+  return Boolean(access);
+}
+
+export async function getAccessibleDeviceIds(userId) {
+  const [owned, shared] = await Promise.all([
+    Device.findAll({
+      where: { [Op.or]: [{ userId }, { userId: null }] },
+      attributes: ['id'],
+    }),
+    UserChamberAccess.findAll({ where: { userId }, attributes: ['deviceId'] }),
+  ]);
+  const ids = new Set(owned.map(d => d.id));
+  shared.forEach(s => ids.add(s.deviceId));
+  return [...ids];
 }
 
 export async function checkDeviceAccess(req, res, next) {
