@@ -170,6 +170,7 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 | ADR-029-R05 | El docker-compose.dev.yml es independiente del docker-compose.yml |
 | ADR-029-R06 | Ninguna variable de entorno puede asumir valores de otro ambiente por defecto |
 | ADR-029-R07 | La DB setting `app_environment` se deriva de `NODE_ENV` en el seed; no se define manualmente |
+| ADR-029-R08 | El seed de desarrollo (`seed.js` / `seed-dev.js`) solo se ejecuta con `NODE_ENV !== 'production'`; el catálogo referencial idempotente (`db:seed:catalog`) y el admin (`admin:create`) se ejecutan explícitamente, nunca desde el CMD del contenedor (DECISION-008 · ISSUE-060/068) |
 
 ---
 
@@ -223,6 +224,7 @@ El proyecto actualmente opera con Docker Desktop (local) y Render (producción).
 | 1.0 | 2026-07-27 | Creación del documento (ACEPTADO) |
 | 1.1 | 2026-07-28 | `app_environment` se deriva de `NODE_ENV` (regla R07) |
 | 1.2 | 2026-07-28 | Hardening: cross-env DB+MQTT con extracción de hostname, tests, docs clarificados |
+| 1.3 | 2026-08-08 | Regla R08: seed solo desarrollo, catálogo/admin explícitos y fuera del CMD (DECISION-008 · ISSUE-060/068); migraciones versionadas como único mecanismo de esquema en prod (DECISION-004 · ISSUE-061) |
 
 ---
 

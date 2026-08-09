@@ -7,9 +7,13 @@
     "dev": "node --watch --watch-path=src src/server.js",
     "start": "node src/server.js",
     "db:sync": "node src/sync-db.js",
+    "db:migrate": "sequelize-cli db:migrate --config config/config.cjs --migrations-path src/db/migrations",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo --config config/config.cjs --migrations-path src/db/migrations",
+    "db:seed:catalog": "node src/db/seed-catalog.js",
+    "db:seed:dev": "node src/seed-dev.js",
     "db:migrate:thingspeak": "node src/migrate-thingspeak-keys.js",
     "db:seed": "node src/seed.js",
-    "db:seed:dev": "node src/seed-dev.js",
+    "admin:create": "node src/scripts/create-admin.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --watch",
     "test:ddd": "vitest run --config vitest.config.ts",
@@ -36,6 +40,7 @@
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "sequelize": "^6.37.5",
+    "sequelize-cli": "^6.6.5",
     "ws": "^8.21.0"
   },
   "devDependencies": {
