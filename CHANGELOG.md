@@ -1,20 +1,18 @@
 # Changelog — Mush2
 
+## 2026-08-09
+
+### Backend — v1.7.1
+
+- d1723e1: feat(bootstrap): Production Bootstrap Hardening (ISSUE-060/061/068)
+- Migraciones versionadas (Sequelize CLI) como único mecanismo de esquema en producción (DECISION-004 · ISSUE-061).
+- Snapshot inicial versionado en `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs` (26 tablas + índices + FKs + enums).
+- Scripts: `db:migrate`, `db:migrate:undo`, `db:seed:catalog`, `admin:create`.
+- Dockerfile CMD: `cd backend && pnpm db:migrate && node src/server.js` (sin `sync-db.js` ni `seed.js`).
+- Guard de `NODE_ENV` para seed (DECISION-008 · ISSUE-060/068): `sync-db.js` y `seed.js` rechazan ejecución en producción; catálogo idempotente separado de fixtures.
+- CLI `create-admin.js` para bootstrap de usuario administrador.
+
 ## 2026-08-08
-
-### Backend — Production Bootstrap Hardening - v1.7.1 (PR-B: ISSUE-060/061/068)
-
-- **feat(migraciones)**: Migraciones versionadas (Sequelize CLI) como único mecanismo de esquema en producción (DECISION-004 · ISSUE-061)
-  - Snapshot inicial `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs` (26 tablas + índices + FKs + enums, 1:1 con modelos), generado desde los modelos y verificado con migrate/undo idempotente
-  - `sequelize.sync({ alter: true })` queda prohibido en producción: `sync-db.js` rechaza ejecución con `NODE_ENV=production`; solo `pnpm db:sync` en desarrollo
-  - Scripts: `pnpm db:migrate`, `pnpm db:migrate:undo`, `pnpm db:seed:catalog`, `pnpm admin:create`
-  - Dockerfile CMD pasa a `cd backend && pnpm db:migrate && node src/server.js` (sin `sync-db.js` ni `seed.js` en el arranque)
-- **feat(seed)**: Guard de entorno para seed (DECISION-008 · ISSUE-060/068)
-  - `seed.js` no ejecuta fixtures con `NODE_ENV=production`; sin credenciales `admin/admin123` por defecto en prod
-  - Catálogo referencial idempotente separado de fixtures de test: `db:seed:catalog` (`seed-catalog.js`)
-  - Bootstrap de usuario administrador por CLI explícita: `admin:create` (`create-admin.js`)
-- **test(bootstrap)**: Suite REG-007 (8 tests) — migraciones presentes, CMD sin seed/sync, guards y CLI verificados
-- **docs(adr)**: Nota de supersesión en ADR-005 (sync → migraciones), regla ADR-029-R08 (seed solo desarrollo), `database.md` (Sincronización + Datos de arranque), changeset y CHANGELOG
 
 ### Backend — v1.7.0
 
