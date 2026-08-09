@@ -2139,6 +2139,20 @@ Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite 
 
 **Release SemVer:** tag `v1.8.5` · backend v1.7.0 · commit `chore(release): mush2 v1.8.5` (`b85b30d`).
 
+### 9.4 Ciclo 0 — PR-B "Production Bootstrap Hardening" (I060/I061/I068) implementado y mergeado (2026-08-08)
+
+Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite REG-007 roja primero (Dockerfile CMD con seed/sync y ausencia de migraciones fallaban) → implementación (guards, migraciones, scripts) → suite verde. PR-B mergeado a `develop` (merge commit `82d4828`).
+
+| ISSUE | Fecha | Transición | Evidencia |
+|---|---|---|---|
+| ISSUE-060 (INF-001) | 2026-08-08 | IN_PROGRESS → DONE | PR #184 mergeado (`82d4828`); `seed.js` con guard `isSeedAllowed()` (rechaza `NODE_ENV=production` con exit 1); sin credenciales `admin/admin123` por defecto en prod; CMD sin seed; bootstrap de admin por CLI `pnpm admin:create` (`create-admin.js`) |
+| ISSUE-061 (INF-002) | 2026-08-08 | IN_PROGRESS → DONE | PR #184 mergeado (`82d4828`); migraciones versionadas (Sequelize CLI) — snapshot inicial `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs` (26 tablas + 27 índices + 27 FKs + 30 enums, 1:1 con modelos) generado desde modelos y verificado con migrate/undo idempotente; `sync-db.js` con guard (prohibido en prod); `backend/config/config.cjs` reutiliza `env.js`; scripts `db:migrate`/`db:migrate:undo`; Dockerfile CMD `cd backend && pnpm db:migrate && node src/server.js` |
+| ISSUE-068 (INF-009) | 2026-08-08 | IN_PROGRESS → DONE | PR #184 mergeado (`82d4828`); `seed.js` delega catálogo a `catalog-seed.js`/`seed-catalog.js` (`db:seed:catalog`, idempotente) y no inyecta credenciales ThingSpeak falsas; fixtures solo desarrollo |
+
+**Verificación local post-merge (`82d4828`):** `jest` 12/12 suites / 174 tests · `vitest run` 35 archivos / 366 tests (incluye REG-007 8/8) · migración verificada end-to-end contra Postgres local (migrate crea esquema completo, undo deja solo `SequelizeMeta` y limpia los 30 enums).
+
+**Docs:** nota de supersesión ADR-005 (sync → migraciones versionadas), regla ADR-029-R08 (seed solo desarrollo), `database.md` (Sincronización + Datos de arranque), changeset `.changeset/production-bootstrap-hardening.md`, CHANGELOG v1.7.1.
+
 ---
 
 *Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED (ver `architecture-decisions-pending.md`).
