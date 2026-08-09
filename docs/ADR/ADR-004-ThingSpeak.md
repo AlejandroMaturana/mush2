@@ -1,6 +1,6 @@
 # ADR-004: Uso de ThingSpeak como canal secundario de telemetría
 
-**Fecha**: 2026-06-10 (actualizado 2026-06-14)
+**Fecha**: 2026-06-10 (actualizado 2026-08-09)
 **Estado**: Aceptado
 
 ## Contexto
@@ -8,6 +8,8 @@ El sistema necesita un canal de telemetría de respaldo. El canal principal es H
 
 ## Decisión
 Usar ThingSpeak como canal secundario. El firmware envía un HTTP GET a ThingSpeak API en cada ciclo de telemetría (cada 20 segundos). El backend puede sincronizar datos históricos desde ThingSpeak cuando el dispositivo se recupera.
+
+> **Actualización 2026-08-09 (DECISION-007 / ISSUE-051):** el transporte del mismo diseño pasa de HTTP plano (puerto 80) a **HTTPS obligatorio** (puerto 443) con `WiFiClientSecure` + CA root embebida (`thingspeak_ca_root.h`), y la API key viaja en el header `X-ApiKey` en lugar del query string. No se modifica el rol de ThingSpeak ni se sustituye este ADR; solo se endurece el canal. La clave se migrará a NVS en ISSUE-050.
 
 ## Motivos
 1. **Independencia**: ThingSpeak no depende del backend HTTP.
@@ -33,11 +35,13 @@ Usar ThingSpeak como canal secundario. El firmware envía un HTTP GET a ThingSpe
 // thingspeak_client.cpp
 // Envía cada TS_INTERVAL (20 segundos)
 // Campos: field1=temperatura, field2=humedad, field3=eCO2, field4=TVOC
-String url = "http://api.thingspeak.com/update?api_key=" + TS_API_KEY
-           + "&field1=" + String(temperature, 1)
+// DECISION-007: HTTPS (443) + CA root embebida; la clave va en el header X-ApiKey.
+String uri = "/update?field1=" + String(temperature, 1)
            + "&field2=" + String(humidity, 1)
            + "&field3=" + String(co2, 0)
            + "&field4=" + String(voc, 0);
+// http.begin(wc, TS_HOST, TS_PORT, uri, true);  // wc = WiFiClientSecure + setCACert(TS_CA_ROOT)
+// http.addHeader("X-ApiKey", TS_API_KEY);
 ```
 
 ### Sincronización desde backend
@@ -51,7 +55,9 @@ String url = "http://api.thingspeak.com/update?api_key=" + TS_API_KEY
 | Parámetro | Valor |
 |-----------|-------|
 | Host | api.thingspeak.com |
-| Puerto | 80 (HTTP) |
+| Puerto | 443 (HTTPS) |
+| CA root | DigiCert Global Root G2 + intermedio (embebida en `thingspeak_ca_root.h`) |
+| Autenticación | Header `X-ApiKey` (no en query string) |
 | Intervalo | 20 segundos |
 | API Key | Configurada en `TS_API_KEY` |
 

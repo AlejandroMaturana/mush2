@@ -35,7 +35,7 @@ Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 cap
 ```
 Sensor AHT21/ENS160 → Firmware (lectura cada 10s)
     ├── MQTT publish → Broker → Backend → PostgreSQL
-    └── HTTP GET → ThingSpeak (campo de respaldo)
+    └── HTTPS GET → ThingSpeak (campo de respaldo)
 ```
 
 ### 2. Control (Usuario → Actuador)
@@ -67,7 +67,7 @@ Firmware (Reglas locales)
 
 | Origen | Destino | Protocolo | Puerto | Frecuencia | Payload |
 |---|---|---|---|---|---|
-| Firmware | ThingSpeak | HTTP GET | 80 | Cada 20s | `field1=temp&field2=hum&field3=CO2` |
+| Firmware | ThingSpeak | HTTPS GET | 443 | Cada 20s | `field1=temp&field2=hum&field3=CO2` |
 | Firmware | Broker MQTT | MQTT 3.1.1 | 1883 | Cada 20s | JSON telemetría |
 | Firmware | Broker MQTT | MQTT 3.1.1 | 1883 | Bajo demanda | JSON estado SSR |
 | Broker | Backend | MQTT 3.1.1 | 1883 | Tiempo real | JSON telemetría/eventos |
