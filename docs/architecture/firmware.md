@@ -57,7 +57,7 @@ firmware/
 │   ├── ota_executor.h/.cpp    # OTA download, SHA-256 verify, flash inactive partition
 │   ├── ota_shutdown.h/.cpp    # Safe shutdown: SSR off + sensor pause before OTA
 │   ├── ota_postboot.h/.cpp    # Post-OTA self-test + mark_valid() or rollback
-│   ├── thingspeak_client.h/.cpp # HTTP GET T/HR/CO₂/VOC cada 20s
+│   ├── thingspeak_client.h/.cpp # HTTPS (TLS) T/HR/CO₂/VOC cada 20s
 │   ├── device_manager.h/.cpp  # Device ID derivado de MAC address
 │   ├── event_bus.h/.cpp       # In-memory pub/sub (FreeRTOS Queue), 10 event types
 │   ├── logger.h/.cpp          # Multi-sink logger (Serial, SPIFFS, MQTT) + ring buffer
@@ -91,7 +91,7 @@ firmware/
 | OTA Executor | `ota_executor.h/.cpp` | OTA download, SHA-256 verify, flash |
 | OTA Shutdown | `ota_shutdown.h/.cpp` | Safe shutdown before OTA |
 | OTA Post-Boot | `ota_postboot.h/.cpp` | Self-test + mark_valid() or rollback |
-| ThingSpeak | `thingspeak_client.h/.cpp` | HTTP GET T/HR/CO₂/VOC cada 20s |
+| ThingSpeak | `thingspeak_client.h/.cpp` | HTTPS GET T/HR/CO₂/VOC cada 20s |
 | Device Manager | `device_manager.h/.cpp` | Device ID desde MAC address |
 | Event Bus | `event_bus.h/.cpp` | In-memory pub/sub (FreeRTOS Queue), 10 event types |
 | Logger | `logger.h/.cpp` | Multi-sink (Serial, SPIFFS, MQTT), ring buffer 64 entries |
@@ -282,9 +282,9 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 #define BACKEND_PORT   3797
 #define API_KEY        "****"  // X-Device-Key
 
-// ThingSpeak
+// ThingSpeak (DECISION-007: HTTPS 443, CA en thingspeak_ca_root.h, X-ApiKey header)
 #define TS_HOST        "api.thingspeak.com"
-#define TS_PORT        80
+#define TS_PORT        443
 #define TS_API_KEY     "****"
 
 // MQTT (ADR-028: preferir credenciales provisionadas en NVS)

@@ -1242,7 +1242,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** placeholders; NVS; otaPassword por dispositivo.
 
 #### ISSUE-051 — API key ThingSpeak en claro por HTTP (FW-002) — P0
-`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9`
+`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9` · Estado: **IN_PROGRESS** (avance parcial PR-D · cierre diferido a Ciclo 1, ver Fase 9 §9.6)
 - **Objetivo:** HTTPS (`TS_PORT 443` + `WiFiClientSecure` con CA) o consolidar por MQTT.
 - **Problema actual:** `thingspeak_client.cpp:11-12` clave en query string de `http://`.
 - **Impacto:** clave expuesta; telemetría falsa.
@@ -1256,6 +1256,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Decisión:** DECISION-007 · ACCEPTED
 - **DoD:** sin clave en claro; tráfico cifrado.
 - **Tasks:** HTTPS+CA; o canal MQTT; test.
+- **PR-D (2026-08-09, avance parcial):** HTTPS obligatorio en `thingspeak_client.cpp` (`WiFiClientSecure` + `TS_CA_ROOT` embebida en `thingspeak_ca_root.h`), `TS_PORT` 443, clave en header `X-ApiKey` fuera del query string, ADR-004/013 y firmware.md actualizados. Pendiente para cierre: ISSUE-050 (clave a NVS), ISSUE-015/075 (CA) — consolidación MQTT no se realiza (DECISION-007).
 
 #### ISSUE-052 — OTA sin TLS ni hash (FW-003) — P1
 `Programa 6 · EPIC-OTA-SECURITY · Ini 6.1`

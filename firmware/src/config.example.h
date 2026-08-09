@@ -22,10 +22,14 @@
 #endif
 
 // ---- ThingSpeak ----
+// DECISION-007: transporte HTTPS obligatorio con CA embebida
+// (thingspeak_ca_root.h). La clave viaja en el header X-ApiKey.
 #ifndef TS_HOST
 #define TS_HOST "api.thingspeak.com"
 #endif
-#define TS_PORT 80
+#ifndef TS_PORT
+#define TS_PORT 443
+#endif
 #ifndef TS_API_KEY
 #define TS_API_KEY "your_ts_api_key"
 #endif
