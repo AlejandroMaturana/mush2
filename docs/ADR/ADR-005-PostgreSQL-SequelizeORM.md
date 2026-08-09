@@ -20,14 +20,14 @@ Usar **PostgreSQL** como motor de base de datos relacional y **Sequelize v6** co
 
 ### Sequelize ORM
 6. **Abstracción del dialecto SQL**: Reduce errores y vulnerabilidades de inyección SQL.
-7. **Sincronización automática de esquema**: El proyecto usa `sync-db.js` en lugar de migraciones CLI.
+7. **Migraciones versionadas**: `sequelize-cli` para gestión de esquema en producción; `sync` solo como herramienta de desarrollo (ver SUPERSESIÓN más abajo).
 8. **Validación de modelos integrada**: Tipos, restricciones y asociaciones en código JavaScript.
 9. **Promesas y async/await nativos**: Alineado con Node.js moderno.
 
 ## Consecuencias
 - **PostgreSQL requiere mantenimiento**: Servicio corriendo, backups, configuración de conexiones.
 - **Sequelize añade overhead**: Consultas pueden no ser óptimas para grandes volúmenes.
-- **Sincronización automática vs migraciones**: El proyecto usa `sequelize.sync()` en lugar de migraciones versionadas.
+- **Sincronización automática vs migraciones**: El proyecto usa migraciones versionadas (Sequelize CLI) para producción; `sync` queda restringido a desarrollo.
 - **Modelo de datos normalizado**: Telemetría almacenada como filas individuales por sensor (no columnas por variable).
 
 ## Alternativas descartadas
@@ -83,11 +83,20 @@ El sistema usa un modelo normalizado con las siguientes tablas principales:
 // Permite desarrollo rápido pero menos control que migraciones versionadas
 ```
 
+> **SUPERSESIÓN (2026-08-08)**: este punto queda **supersedido** por la adopción de
+> **migraciones versionadas (Sequelize CLI)** como mecanismo de gestión de esquema en
+> producción (DECISION-004 · ISSUE-061). `sequelize.sync({ alter: true })` se conserva
+> únicamente como script manual de desarrollo (`pnpm db:sync`) y está **prohibido** en
+> producción; el esquema productivo solo cambia vía migración explícita
+> (`pnpm db:migrate`). El snapshot inicial está versionado en
+> `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs`.
+
 ### Índices
 - `telemetry(deviceId, timestamp)` — consultas por dispositivo y rango temporal
 - `telemetry(deviceId, sensorType, timestamp)` — consultas por tipo de sensor
 
 ## Referencias
 - Implementación: `backend/src/models/`, `backend/src/config/database.js`
-- Sincronización: `backend/src/sync-db.js`
+- Migraciones versionadas: `backend/config/config.cjs`, `backend/src/db/migrations/` (DECISION-004 · ISSUE-061)
+- Sincronización (solo desarrollo): `backend/src/sync-db.js`
 - Ver también: ADR-004 (ThingSpeak), ADR-008 (protocolo HTTP)
