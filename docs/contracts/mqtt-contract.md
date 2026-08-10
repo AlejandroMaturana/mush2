@@ -20,7 +20,7 @@
 | Parámetro | Valor | Notas |
 |---|---|---|
 | Protocolo | MQTT 3.1.1 | TCP/IP, no WebSocket |
-| Puerto | 1883 | Sin TLS (desarrollo), 8883 (producción) |
+| Puerto | 1883 (desarrollo), 8883 (producción, TLS) | Ver §2.3 Entorno de producción |
 | Keep Alive | 30 segundos | Configurable en firmware |
 | Clean Session | `true` | Firmware no necesita sesión persistente |
 | Tamaño máximo de payload | 2048 bytes | Suficiente para JSON de telemetría |
@@ -37,6 +37,19 @@
 | Persistencia en firmware | NVS (`mush2_prov` namespace, keys `mqtt_user` / `mqtt_pass`) |
 | Fallback | Si no hay credenciales provisionadas, usa `MQTT_USER`/`MQTT_PASS` de `config.h` |
 | Broker auth | `mosquitto_passwd` password_file, reinicio automático del container |
+
+### 2.3 Entorno de producción
+
+| Parámetro | Valor |
+|---|---|
+| Broker | Contenedor Mosquitto 2.x (DECISION-006) — plan de despliegue en `docs/operations/broker-deployment.md` (PR-G, ISSUE-065) |
+| Listener TLS | Puerto `8883` (MQTTS) para firmware; `cafile`/`certfile`/`keyfile` montados en `/mosquitto/certs` (ISSUE-075) |
+| Listener interno | Puerto `1883` solo dentro de la red del PaaS/Docker (bridge backend sin TLS) |
+| Backend bridge env | `MQTT_BROKER_URL` (p.ej. `mqtts://mush2-mqtt.<host>:8883`), `MQTT_BROKER_USER` (`backend_bridge`), `MQTT_BROKER_PASS` (secret, nunca en el repo) |
+| ACL | `docker/mosquitto/prod/acl.conf` — por `client_id` (`%c`) y por usuario bridge; incluye `alarm`, `ota/#`, `actuators` (contrato §6.2/§9.1) |
+| Persistencia | Volúmenes `/mosquitto/data` (mensajes retain, sesiones) y `/mosquitto/log` |
+
+> **Nota de versión (PR-G):** sin cambio de versión del contrato. El broker pasa a ser el de producción con TLS 8883; topics, payloads y protocolo (MQTT 3.1.1) permanecen intactos.
 
 ## 3. Calidad de Servicio (QoS)
 

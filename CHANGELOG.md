@@ -2,6 +2,19 @@
 
 ## 2026-08-10
 
+### Backend — v1.7.3
+
+- infra(broker): plan de despliegue del broker MQTT (ISSUE-065/INF-006 · PR-G)
+- `docs/operations/broker-deployment.md`: plan de despliegue del broker Mosquitto 2.x (DECISION-006) — arquitectura, pasos, gestión de secretos, rollback, migración y verificación; ejecución diferida a ISSUE-075 (TLS) e ISSUE-081 (provisioning). Sin deploy en el ciclo.
+- `docker/mosquitto/prod/acl.conf` alineado con el contrato MQTT §2.3: añade `alarm`, `ota/#` y `actuators` para firmware y `alarm` para el bridge.
+- `docker/mosquitto/prod/mosquitto.conf`: bloque TLS listener 8883 documentado (comentado, listo para activar con certs reales).
+- `docs/contracts/mqtt-contract.md` §2.3: nuevo "Entorno de producción" (broker, TLS 8883, env vars backend, ACL, persistencia) sin cambio de versión del contrato.
+- ADR-023: anexo SUPERSESIÓN con la autoridad de despliegue (DECISION-006 · ISSUE-065 · PR-G).
+- `render.yaml` sin cambios: `MQTT_BROKER_URL/PASS` se fijan al ejecutar el plan (no inventar valores).
+- REG-008 (13 tests) verde: valida la presencia y coherencia de los artefactos del plan de despliegue.
+
+## 2026-08-10
+
 ### Backend — v1.7.2
 
 - **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**

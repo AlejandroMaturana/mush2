@@ -32,6 +32,7 @@ Actualiza estos documentos cuando:
 ```text id="f3i3h7"
 docs/operations/
 ├── README.md             # Este archivo
+├── broker-deployment.md  # Plan de despliegue del broker MQTT (PR-G, ISSUE-065)
 ├── debug-runbook.md      # Diagnóstico rápido de problemas comunes
 ├── deployment.md         # Procedimientos de despliegue
 └── runbook.md            # Guía operacional completa
@@ -41,6 +42,7 @@ docs/operations/
 
 | Documento                         | Descripción                                                                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Broker Deployment | Plan de despliegue del broker MQTT Mosquitto (TLS 8883, secretos, rollback, migración) — PR-G, ISSUE-065.                           |
 | Debug Runbook | Guía rápida de resolución de errores frecuentes en backend, frontend, firmware, MQTT y base de datos.                                |
 | [Deployment](deployment.md)       | Procedimientos de instalación, configuración y despliegue del sistema en distintos entornos.                                         |
 | [Runbook](runbook.md)             | Guía operacional completa con monitoreo, troubleshooting, mantenimiento preventivo, incident response y recuperación ante desastres. |

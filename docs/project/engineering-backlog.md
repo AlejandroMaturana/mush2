@@ -1429,7 +1429,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** unificar 22; docs.
 
 #### ISSUE-065 — Broker MQTT no desplegado (INF-006) — P0
-`Programa 1 · EPIC-BROKER · Ini 1.6`
+`Programa 1 · EPIC-BROKER · Ini 1.6` · Estado: **IN_PROGRESS** (PR-G ✅ plan de despliegue 2026-08-10 · cierre diferido a ISSUE-075/081, ver Fase 9 §9.6/F9-3)
 - **Objetivo:** desplegar Mosquitto; poblar `MQTT_BROKER_URL/PASS`; TLS.
 - **Problema actual:** `render.yaml:39-48` envVars comentadas; `env.js:80` default localhost.
 - **Impacto:** núcleo del producto inoperativo en prod.
@@ -1443,6 +1443,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Decisión:** DECISION-006 · ACCEPTED
 - **DoD:** broker operativo con TLS; bridge conecta.
 - **Tasks:** desplegar broker; env vars; TLS; verificar.
+- **PR-G (2026-08-10, plan de despliegue):** `docs/operations/broker-deployment.md` (arquitectura, pasos, secretos, rollback, migración, verificación; host condicionado a DECISION-011); `docker/mosquitto/prod/acl.conf` alineado con contrato (`alarm`, `ota/#`, `actuators`); `mosquitto.prod.conf` con bloque TLS 8883 documentado/comentado listo para activar (I75); `mqtt-contract.md` §2.3 Entorno de producción; ADR-023 anexo SUPERSESIÓN (autoridad de despliegue DECISION-006); REG-008 (13 tests) verde; `render.yaml` sin cambios (envVars MQTT se fijan al ejecutar el plan — no inventar valores). Sin deploy en el ciclo; ISSUE-065 permanece `IN_PROGRESS` (F9-3).
 
 #### ISSUE-066 — Sin script test en raíz (INF-007) — P3
 `Programa 2 · EPIC-CI-GATES · Ini 2.6`
