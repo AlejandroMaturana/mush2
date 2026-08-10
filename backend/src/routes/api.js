@@ -1,19 +1,38 @@
 import { Op } from 'sequelize';
 import crypto from 'crypto';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
+import { requireProvisioningAuth } from '../middlewares/provisioningAuth.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, recordOutgoing } from '../services/deviceHealthService.js';
 import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
+import { refundProvisioningToken } from '../services/provisioningTokenService.js';
 import { createChildLogger } from '../config/pino.js';
 import { env } from '../config/env.js';
 
 const log = createChildLogger('API');
 const router = express.Router();
 const mqttProvisioner = new MosquittoProvisioningService();
+
+// Rate limit por IP para el registro de dispositivos anónimos (ISSUE-001).
+// Los usuarios autenticados quedan gobernados por su plan (checkApiRateLimit).
+// La cuota del token de aprovisionamiento es la protección primaria contra la
+// acuñación; este límite por IP solo mitiga el martilleo de peticiones.
+const registerRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  limit: parseInt(process.env.REGISTER_RATE_LIMIT_PER_MINUTE || '100', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => Boolean(req.user),
+  handler: (req, res) => res.status(429).json({
+    error: 'Demasiados intentos de registro',
+    code: 'RATE_LIMIT_EXCEEDED',
+  }),
+});
 
 router.get('/devices', async (req, res) => {
   try {
@@ -88,10 +107,12 @@ router.post('/devices', async (req, res) => {
   }
 });
 
-router.post('/devices/register', async (req, res) => {
+router.post('/devices/register', registerRateLimit, requireProvisioningAuth, async (req, res) => {
+  const provisionToken = req.provisionToken;
   try {
     const { deviceId, macAddress, firmwareVersion, hwRevision } = req.body;
     if (!deviceId) {
+      if (provisionToken) await refundProvisioningToken(provisionToken.id);
       return res.status(400).json({ error: 'deviceId requerido' });
     }
 
@@ -120,12 +141,9 @@ router.post('/devices/register', async (req, res) => {
         mqttCredentials = { user: mqttUser, pass: mqttPass };
         log.info({ event: 'MQTT_PROVISIONED', deviceId, mqttUser }, `MQTT credentials generated for ${deviceId}`);
 
-        // Mosquitto no hot-reloada password_file: sin reload el broker sigue
-        // rechazando al usuario recién provisionado (ADR-029).
-        const reloadResult = await mqttProvisioner.reload();
-        if (!reloadResult.ok) {
-          log.error({ event: 'MQTT_RELOAD_FAILED', deviceId, error: reloadResult.error }, 'Credentials provisioned but broker reload failed');
-        }
+        // Mosquitto 2.x recarga password_file y acl_file con SIGHUP sin
+        // reiniciar (recarga idempotente en job con debounce, ISSUE-001).
+        mqttProvisioner.scheduleReload();
       } else {
         log.error({ event: 'MQTT_PROVISION_FAILED', deviceId, error: provResult.error }, 'Failed to provision MQTT credentials');
       }
@@ -147,6 +165,7 @@ router.post('/devices/register', async (req, res) => {
 
     res.status(created ? 201 : 200).json(response);
   } catch (err) {
+    if (provisionToken) await refundProvisioningToken(provisionToken.id);
     log.error({ module: 'REGISTER', event: 'REGISTER_ERROR', error: err.message }, 'Error registering device');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }

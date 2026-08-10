@@ -3,7 +3,7 @@
 > Base URL: `/api/v1`
 > Formato: JSON
 > Autenticación: JWT via header `Authorization: Bearer <token>`. Access token en memoria (1h); refresh token por cookie `refresh_token` httpOnly (7d). Ver `POST /auth/refresh` y `POST /auth/logout`.
-> Denegación por defecto (ISSUE-002/004/005): sin credenciales válidas, toda ruta distinta de la whitelist anónima del firmware devuelve `401 { "error": "Autenticación requerida" }`. Whitelist anónima (solo firmware): `POST /devices/register` y `GET /actuators?deviceId=`.
+> Denegación por defecto (ISSUE-002/004/005): sin credenciales válidas, toda ruta distinta de la whitelist anónima del firmware devuelve `401 { "error": "Autenticación requerida" }`. Whitelist anónima (solo firmware, ISSUE-001): `POST /devices/register` exige **sesión o token de aprovisionamiento de un solo uso** (header `X-Provision-Token`, ver §2) — la entrada en whitelist solo permite llegar al gate de la ruta, no acuñar anónimamente; `GET /actuators?deviceId=` es el polling legítimo del firmware.
 > Propiedad de recursos (ISSUE-002/004/005): los endpoints de tenant filtran/deniegan por propietario y vía `UserChamberAccess`; mutaciones del catálogo de especies exigen rol `ADMIN`; `PATCH /actuators/:channel` y `/devices/:id/actuators/:channel` NO auto-crean el dispositivo (404 si no existe).
 
 ---
@@ -72,7 +72,18 @@ Requiere auth.
 ```
 
 ### `POST /devices/register`
-Registro de dispositivo desde el firmware.
+Registro de dispositivo desde el firmware. Requiere **sesión autenticada** o **token de aprovisionamiento de un solo uso** (ISSUE-001 / ADR-028, ver §23).
+
+- Header opcional: `X-Provision-Token: musht_<raw>` (token emitido por el operador, ver §9.1). Es consumido atómicamente al registrar (`usesRemaining` decrementado); no es reutilizable.
+- Sin sesión ni header → `401 { "error": "Autenticación requerida", "code": "AUTH_REQUIRED" }`.
+- Token inválido → `401 { "code": "INVALID_TOKEN" }`; expirado → `401 { "code": "TOKEN_EXPIRED" }`; revocado → `401 { "code": "TOKEN_REVOKED" }`; agotado → `401 { "code": "TOKEN_EXHAUSTED" }`.
+- Token vinculado a otro `deviceId` → `403 { "code": "TOKEN_DEVICE_MISMATCH" }`.
+- Request:
+```json
+{ "deviceId": "Mush_001", "macAddress": "AA:BB:CC:DD:EE:FF", "chamberName": "...", "chamberLocation": "..." }
+```
+- Response `201`: crea el device y devuelve credenciales MQTT (`{ device, mqtt: { user, pass, host, port } }`); `mqtt.user` = `mush_<deviceId>`.
+- Reintento con el mismo token: si el body no incluye `deviceId` o el flujo falla con 5xx, la cuota se reintegra (`refundProvisioningToken`). Si el registro ya fue acuñado, el dispositivo se devuelve idempotente.
 
 ### `POST /devices/:id/claim`
 Requiere auth. Reclama un dispositivo para el usuario actual.
@@ -520,15 +531,41 @@ SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
 // 400 Bad Request
 { "error": "VALIDATION", "message": "..." }
 // 401 Unauthorized
-{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" } | { "error": "Autenticación requerida" } (denegación por defecto — ISSUE-002)
+{ "error": "Token requerido" } | { "error": "Token expirado", "code": "TOKEN_EXPIRED" } | { "error": "Autenticación requerida", "code": "AUTH_REQUIRED" } (denegación por defecto — ISSUE-002)
+// 401 Aprovisionamiento (ISSUE-001)
+{ "code": "AUTH_REQUIRED" } | { "code": "INVALID_TOKEN" } | { "code": "TOKEN_EXPIRED" } | { "code": "TOKEN_REVOKED" } | { "code": "TOKEN_EXHAUSTED" }
 // 403 Forbidden
-{ "error": "Sin acceso a este dispositivo" } | { "error": "Sin acceso a este ciclo" }
+{ "error": "Sin acceso a este dispositivo" } | { "error": "Sin acceso a este ciclo" } | { "code": "TOKEN_DEVICE_MISMATCH" } (token vinculado a otro deviceId)
 // 404 Not Found
 { "error": "NOT_FOUND", "message": "..." }
 // 429 Too Many Requests
-{ "error": "Demasiadas solicitudes, intente más tarde" }
+{ "error": "Demasiadas solicitudes, intente más tarde" } | { "error": "Demasiados intentos de registro", "code": "RATE_LIMIT_EXCEEDED" } (register anónimo por IP)
 // 500 Server Error
 { "error": "SERVER_ERROR", "message": "..." }
 // 503 Service Unavailable
 { "error": "MQTT_DISCONNECTED", "message": "MQTT no conectado" }
 ```
+
+---
+
+## 23. Aprovisionamiento de Dispositivos
+
+Los dispositivos se registran contra el broker MQTT a través de `POST /devices/register`. Para impedir la acuñación anónima de credenciales (ISSUE-001), la ruta exige sesión autenticada o un **token de aprovisionamiento de un solo uso** emitido por el operador.
+
+### 23.1 Emisión del token (operador, fuera de banda)
+
+- CLI: `npm run provision:token` en `backend/` (ver `backend/src/scripts/create-provisioning-token.js`).
+- Producción exige `PROVISION_TOKEN_CREATE_SECRET` + `--secret` (guard contra uso accidental).
+- Opciones: `--device-id <id>` (vincula el token a un único `deviceId`), `--max-uses <n>` (cuota; default 1), `--expires-in <days>`, `--label "<text>"`.
+- Formato: `musht_<raw>` (32 bytes aleatorios, base64url). El servidor **solo guarda el hash SHA-256** (`tokenHash`); el raw se muestra una única vez en stdout y no es recuperable.
+
+### 23.2 Consumo
+
+- El firmware envía `X-Provision-Token: musht_<raw>` en el registro.
+- `usesRemaining` se decrementa atómicamente (UPDATE con condición `usesRemaining > 0`); si llega a 0 el token queda exhausto y no reutilizable.
+- El token se reintegra (refund) si el body no incluye `deviceId` o el flujo falla con 5xx.
+- Tabla `provisioning_tokens`: `tokenHash` (único), `label`, `maxUses`, `usesRemaining`, `deviceId` (opcional), `expiresAt`, `revokedAt`, `createdAt`.
+
+### 23.3 Recarga del broker (idempotente)
+
+- La ACL/password de Mosquitto se recargan con **SIGHUP** al contenedor (`docker kill --signal HUP mush2-mosquitto`), sin `docker restart` (ADR-028-R01). El backend lo encola con debounce (500 ms) vía `scheduleReload()`.

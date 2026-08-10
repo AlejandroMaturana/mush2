@@ -610,6 +610,8 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-001 — Registro de dispositivo no autenticado (BE-001) — P0
 `Programa 1 · EPIC-PROVISIONING · Ini 1.4`
+- **Estado:** IN_PROGRESS (PR-E "Provisioning Foundation"; ver `dor-readiness-review.md` y `phase-6-issue-procedure.md`).
+- **Evidencia de implementación:** suite `backend/src/__tests__/authz/authorization-negative.test.js` (43 tests: sin token → `401 AUTH_REQUIRED`, token inexistente/expirado/revocado/exhausto → `401`, device-mismatch → `403`, token de un solo uso 201 + credenciales, cuota>1, refund) y `backend/src/__tests__/regression/REG-009_provisioning-security.test.ts` (11 aserciones estáticas: middleware, ruta, rate limit, ADR-028, hash SHA-256, SIGHUP sin `docker restart`, debounce, CLI guard, migración, contrato). Verificación end-to-end contra Postgres local (`mush2_test`).
 - **Objetivo:** que `/devices/register` exija autenticación o token de aprovisionamiento de un solo uso con rate limit y cuota, y que la recarga de ACL sea idempotente sin `docker restart`.
 - **Problema actual:** `routes/api.js:91-153` expone `POST /devices/register` sin `authenticate` (montado en `routes/index.js:34`); devuelve `{mqttUser, mqttPass}`; `mosquittoProvisioningService.js` `reload()` ejecuta `docker restart mush2-mosquitto`.
 - **Impacto:** acuñación ilimitada de credenciales MQTT y DoS no autenticado del broker.
@@ -621,7 +623,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Verificación (verde→rojo→verde):** verde: test actual que registra sin auth pasa (hoy `/devices/register` anónimo en `routes/api.js:91-153`); rojo: test negativo que llama `POST /devices/register` sin sesión ni token debe devolver 401/403 → hoy falla (200); verde: tras corrección el test negativo pasa y el registro legítimo con token/CLI sigue funcionando.
 - **Dependencias:** ISSUE-050/051 (firmware registro), ISSUE-065 (broker).
 - **DoD:** sin llamador anónimo capaz de registrar/acreditar; recarga en job; test de autorización negativa en el PR.
-- **Tasks:** exigir sesión o token de un solo uso; vincular credenciales a clave de dispositivo; job de recarga de ACL idempotente; test negativo.
+- **Tasks:** exigir sesión o token de un solo uso (hecho); vincular credenciales a clave de dispositivo (hecho); job de recarga de ACL idempotente (hecho); test negativo (hecho). Pendiente de merge de PR-E y validación en staging.
 
 #### ISSUE-002 — Exposición anónima multi-tenant (BE-002) — P0
 `Programa 1 · EPIC-AUTHZ · Ini 1.3`
@@ -2113,6 +2115,7 @@ GitHub Issue creado (Fase 6 §5.1) + ejecutor toma (orquestador Ciclo 0). Los 15
 | ISSUE | Fecha | Transición | Evidencia |
 |---|---|---|---|
 | ISSUE-001 (BE-001) | 2026-08-08 | READY → IN_PROGRESS | GitHub #168 · toma Ciclo 0 (PR-E) |
+| ISSUE-001 (BE-001) | 2026-08-09 | IN_PROGRESS → PR READY (PR-E) | Implementación + 43 tests negativos/DB + REG-009 (11) verdes · pendiente merge y validación staging |
 | ISSUE-002 (BE-002) | 2026-08-08 | READY → IN_PROGRESS | GitHub #169 · toma Ciclo 0 (PR-A) |
 | ISSUE-003 (BE-003) | 2026-08-08 | READY → IN_PROGRESS | GitHub #170 · toma Ciclo 0 (PR-F) |
 | ISSUE-004 (BE-004) | 2026-08-08 | READY → IN_PROGRESS | GitHub #171 · toma Ciclo 0 (PR-A) |

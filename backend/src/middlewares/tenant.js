@@ -4,9 +4,12 @@ import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('TENANT');
 
-// Flujos legítimos del firmware que operan anónimos por HTTP hasta que
-// aterriza la transición con token (ISSUE-001 / PR-E) y las credenciales
-// de dispositivo en NVS (ISSUE-050 / PR-C).
+// Rutas alcanzables por el firmware sin sesión HTTP. `POST /devices/register`
+// se mantiene aquí SOLO para que el flujo de token de aprovisionamiento llegue
+// a la ruta, donde el middleware `requireProvisioningAuth` exige sesión o
+// `X-Provision-Token` de un solo uso (ISSUE-001 / PR-E) — ningún llamador
+// anónimo puede acuñar credenciales MQTT sin token. `GET /actuators` es el
+// polling legítimo del firmware (credenciales en NVS vía ISSUE-050).
 const PUBLIC_ANONYMOUS = new Set([
   'POST /api/v1/devices/register',
   'GET /api/v1/actuators',

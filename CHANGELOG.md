@@ -2,6 +2,19 @@
 
 ## 2026-08-10
 
+### Backend — v1.7.4
+
+- **PR-E "Provisioning Foundation" (ISSUE-001 / BE-001)**
+- `POST /api/v1/devices/register` exige **sesión autenticada o token de aprovisionamiento de un solo uso** (header `X-Provision-Token`). Sin sesión ni token → `401 { code: 'AUTH_REQUIRED' }`; token inválido/expirado/revocado/exhausto → `401` (`INVALID_TOKEN`/`TOKEN_EXPIRED`/`TOKEN_REVOKED`/`TOKEN_EXHAUSTED`); token vinculado a otro `deviceId` → `403 { code: 'TOKEN_DEVICE_MISMATCH' }`. El payload de respuesta (`mqtt.user`/`mqtt.pass`) no cambia (cambio compatible, ADR-028).
+- Nueva tabla `provisioning_tokens` (migración `20260809000002`): solo se persiste el hash SHA-256 del token (`tokenHash`), `maxUses`/`usesRemaining` con consumo atómico, `deviceId` opcional (binding), `expiresAt`, `revokedAt`.
+- Rate limit por IP anónima en `register` (`REGISTER_RATE_LIMIT_PER_MINUTE`, default 100/min, código `RATE_LIMIT_EXCEEDED`); cuota reintegrable (`refundProvisioningToken`) si el body no trae `deviceId` o el flujo falla 5xx.
+- Recarga del broker **idempotente sin `docker restart`**: SIGHUP al contenedor Mosquitto (`docker kill --signal HUP`) encolado con debounce 500 ms (`scheduleReload()`); reemplaza el `docker restart` de `mosquittoProvisioningService`.
+- CLI `npm run provision:token` (`backend/src/scripts/create-provisioning-token.js`) con guard de producción (`PROVISION_TOKEN_CREATE_SECRET` + `--secret`), patrón `create-admin.js`.
+- Tests: suite negativa `authorization-negative.test.js` (43 tests, 7 de integración DB-gated) + REG-009 (11 aserciones estáticas) verdes; verificación end-to-end contra Postgres (`mush2_test`).
+- Contrato: `api-contract.md` documenta whitelist §1, `POST /devices/register`, códigos de error y §23 Aprovisionamiento. Backlog ISSUE-001 con evidencia. `render.yaml` sin cambios (la migración se ejecuta vía `db:migrate` en deploy).
+
+## 2026-08-10
+
 ### Backend — v1.7.3
 
 - infra(broker): plan de despliegue del broker MQTT (ISSUE-065/INF-006 · PR-G)
