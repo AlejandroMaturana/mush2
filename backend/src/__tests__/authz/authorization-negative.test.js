@@ -7,6 +7,7 @@ import sequelize from '../../config/database.js';
 import { env } from '../../config/env.js';
 import { markReady } from '../../config/readiness.js';
 import { tenantScope } from '../../middlewares/tenant.js';
+import { createProvisioningToken, revokeProvisioningToken } from '../../services/provisioningTokenService.js';
 import {
   User, Device, CultivationCycle, Alarm, SpeciesProfile, Event, Recipe,
 } from '../../models/index.js';
@@ -85,7 +86,6 @@ describe('ISSUE-002/I106: anónimo NO puede leer/mutar datos de tenant', () => {
 
 describe('ISSUE-002: whitelist pública preserva flujos del firmware', () => {
   const publicCases = [
-    { method: 'post', path: '/api/v1/devices/register', body: { deviceId: 'whitelist-test' } },
     { method: 'get', path: '/api/v1/actuators?deviceId=whitelist-test' },
   ];
 
@@ -101,6 +101,24 @@ describe('ISSUE-002: whitelist pública preserva flujos del firmware', () => {
 
 const HAS_TEST_DB = /mush2_test/.test(process.env.DATABASE_URL || '');
 const itDb = HAS_TEST_DB ? it : it.skip;
+
+describe('ISSUE-001: POST /devices/register exige sesión o token de aprovisionamiento', () => {  it('anónimo sin token → 401 (AUTH_REQUIRED), sin acuñar credenciales', async () => {
+    const res = await request(app)
+      .post('/api/v1/devices/register')
+      .send({ deviceId: 'anon-no-token', macAddress: 'AA:00:00:00:00:01' });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_REQUIRED');
+  });
+
+  itDb('anónimo con token inexistente → 401 (INVALID_TOKEN)', async () => {
+    const res = await request(app)
+      .post('/api/v1/devices/register')
+      .set('X-Provision-Token', 'musht_does-not-exist')
+      .send({ deviceId: 'anon-bad-token', macAddress: 'AA:00:00:00:00:02' });
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('INVALID_TOKEN');
+  });
+});
 
 describe('ISSUE-004/I005/I106: propiedad y roles (requiere DATABASE_URL mush2_test)', () => {
   let userA, userB, deviceA, recipeA, cycleA, alarmA, speciesA, tokenA, tokenB;
@@ -241,5 +259,115 @@ describe('ISSUE-004/I005/I106: propiedad y roles (requiere DATABASE_URL mush2_te
     expect(res.status).toBe(200);
     const ids = (res.body.data || []).map(c => c.id);
     expect(ids).toContain(cycleA.id);
+  });
+
+  describe('ISSUE-001: token de aprovisionamiento de un solo uso (integración)', () => {
+    let deviceCounter = 0;
+    const nextDevice = () => `reg-token-${Date.now()}-${deviceCounter++}`;
+
+    itDb('token válido de un solo uso → 201 y devuelve credenciales MQTT (ADR-028)', async () => {
+      const deviceId = nextDevice();
+      const { raw } = await createProvisioningToken({ label: 'issu-001-ok', maxUses: 1 });
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId, macAddress: 'AA:BB:CC:DD:EE:F0', firmwareVersion: '0.24.0' });
+      expect([200, 201]).toContain(res.status);
+      if (res.body.mqtt) {
+        expect(res.body.mqtt.user).toBe(`dev_${deviceId}`);
+      }
+      const device = await Device.findOne({ where: { deviceId } });
+      expect(device).not.toBeNull();
+    });
+
+    itDb('el mismo token NO puede registrar un segundo dispositivo (TOKEN_EXHAUSTED)', async () => {
+      const { raw } = await createProvisioningToken({ label: 'issu-001-reuse', maxUses: 1 });
+      const first = nextDevice();
+      const second = nextDevice();
+      await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: first });
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: second });
+      expect(res.status).toBe(401);
+      expect(res.body.code).toBe('TOKEN_EXHAUSTED');
+      const device = await Device.findOne({ where: { deviceId: second } });
+      expect(device).toBeNull();
+    });
+
+    itDb('token con cuota > 1 permite N registros y luego rechaza', async () => {
+      const { raw } = await createProvisioningToken({ label: 'issu-001-quota', maxUses: 2 });
+      const a = nextDevice();
+      const b = nextDevice();
+      const c = nextDevice();
+      const r1 = await request(app)
+        .post('/api/v1/devices/register').set('X-Provision-Token', raw).send({ deviceId: a });
+      const r2 = await request(app)
+        .post('/api/v1/devices/register').set('X-Provision-Token', raw).send({ deviceId: b });
+      const r3 = await request(app)
+        .post('/api/v1/devices/register').set('X-Provision-Token', raw).send({ deviceId: c });
+      expect([200, 201]).toContain(r1.status);
+      expect([200, 201]).toContain(r2.status);
+      expect(r3.status).toBe(401);
+      expect(r3.body.code).toBe('TOKEN_EXHAUSTED');
+    });
+
+    itDb('token vinculado a un deviceId NO sirve para otro dispositivo (TOKEN_DEVICE_MISMATCH)', async () => {
+      const boundDevice = nextDevice();
+      const otherDevice = nextDevice();
+      const { raw } = await createProvisioningToken({
+        label: 'issu-001-bound',
+        maxUses: 1,
+        deviceId: boundDevice,
+      });
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: otherDevice });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('TOKEN_DEVICE_MISMATCH');
+      const legit = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: boundDevice });
+      expect([200, 201]).toContain(legit.status);
+    });
+
+    itDb('token revocado → 401 (TOKEN_REVOKED)', async () => {
+      const { id, raw } = await createProvisioningToken({ label: 'issu-001-revoked', maxUses: 1 });
+      await revokeProvisioningToken(id);
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: nextDevice() });
+      expect(res.status).toBe(401);
+      expect(res.body.code).toBe('TOKEN_REVOKED');
+    });
+
+    itDb('token expirado → 401 (TOKEN_EXPIRED)', async () => {
+      const { raw } = await createProvisioningToken({
+        label: 'issu-001-expired',
+        maxUses: 1,
+        ttlDays: -1,
+      });
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('X-Provision-Token', raw)
+        .send({ deviceId: nextDevice() });
+      expect(res.status).toBe(401);
+      expect(res.body.code).toBe('TOKEN_EXPIRED');
+    });
+
+    itDb('registro con sesión válida (sin token) sigue funcionando', async () => {
+      const deviceId = nextDevice();
+      const res = await request(app)
+        .post('/api/v1/devices/register')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ deviceId });
+      expect([200, 201]).toContain(res.status);
+    });
   });
 });
