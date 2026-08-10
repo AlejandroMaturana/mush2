@@ -1,5 +1,31 @@
 # Changelog — Mush2
 
+## 2026-08-10
+
+### Backend — v1.7.2
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
+### Frontend — v1.15.4
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
+### Firmware (ESP32-S3) — v0.23.3
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
 ## 2026-08-09
 
 ### Firmware (ESP32-S3) — v0.23.2

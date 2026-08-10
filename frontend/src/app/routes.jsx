@@ -1,5 +1,6 @@
 import { lazy } from 'react'
 import { Navigate } from 'react-router-dom'
+import RequireRole, { ForbiddenPage } from '../shared/components/RequireRole'
 
 const Landing = lazy(() => import('../features/auth/pages/LandingPage.jsx'))
 const Home = lazy(() => import('../features/auth/pages/HomeRedirect.jsx'))
@@ -29,6 +30,7 @@ export const publicRoutes = [
 export const protectedRoutes = [
   { path: '/', element: Home },
   { path: '/overview', element: Dashboard },
+  { path: '/forbidden', element: ForbiddenPage },
 
   { path: '/fleet/provision', element: Provisioning },
   { path: '/fleet/devices', element: DeviceList },
@@ -44,7 +46,7 @@ export const protectedRoutes = [
 
   { path: '/operations/alarms', element: Alarms },
   { path: '/operations/events', element: Events },
-  { path: '/operations/logs', element: Logs },
+  { path: '/operations/logs', element: () => <RequireRole allowed={['ADMIN', 'SUPER_ADMIN']}><Logs /></RequireRole> },
 
   {
     path: '/system/settings',
@@ -53,7 +55,7 @@ export const protectedRoutes = [
       { index: true, element: <Navigate to="/system/settings/user" replace /> },
       { path: 'user', element: UserSettings },
       { path: 'device', element: DeviceSettings },
-      { path: 'system', element: SystemSettings },
+      { path: 'system', element: () => <RequireRole allowed={['SUPER_ADMIN']}><SystemSettings /></RequireRole> },
     ],
   },
 

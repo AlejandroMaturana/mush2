@@ -830,6 +830,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Decisión:** DECISION-005 · ACCEPTED
 - **DoD:** hash + revocación por `jti`; logout revoca.
 - **Tasks:** hash; revocación; vida acotada; tests.
+- **PR-C (2026-08-09):** `tokenService.js` (signAccessToken con `jti`; signRefreshToken; issueRefreshToken persiste hash SHA-256; verifyAndRotate revoca previo y rechaza replay/revocado/expirado con `REFRESH_EXPIRED`; revokeAllForUser; parseRefreshToken body/cookie; setRefreshCookie/clearRefreshCookie Path=`/api/v1/auth` HttpOnly SameSite=Strict Secure en prod); modelo `RefreshToken` (userId, jti, tokenHash, expiresAt, revokedAt, replacedByJti); migración `20260809000001-create-refresh-tokens.cjs`; `routes/auth.js` register/login/refresh/logout alineados; sin storage en claro en `users.refreshToken`; tests unit 10/10 + E2E (gate `mush2_test`); contract test actualizado. Ver ADR-007 anexo DECISION-005.
 
 #### ISSUE-018 — API keys `update()` por petición (BE-018) — P2
 `Programa 4 · EPIC-PERF · Ini 4.6`
@@ -980,6 +981,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Decisión:** DECISION-005 · ACCEPTED
 - **DoD:** sin JWT en `localStorage`; refresh por cookie; tests actualizados.
 - **Tasks:** access en memoria; interceptor; cookie httpOnly; actualizar tests.
+- **PR-C (2026-08-09):** `tokenStore.js` (access en memoria, sin localStorage); `AuthProvider.jsx` (login persiste solo `mush2_user`, logout llama API + limpia); `axiosInstance.js` (Bearer desde memoria, refresh por cookie en 401 con single-flight, fallback limpia y redirige a `/`); `AuthModal.jsx` y `features/auth/api/auth.js` (logout) alineados; tests AuthProvider 5 + axiosInstance 4 PASS.
 
 #### ISSUE-030 — Sin RBAC en UI (FE-002) — P0
 `Programa 1 · EPIC-RBAC-UI · Ini 1.11`
@@ -995,6 +997,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Dependencias:** ISSUE-029 (sesión).
 - **DoD:** RequireRole activo; pantalla 403; ítems ocultos por rol.
 - **Tasks:** RequireRole; guards; 403; ocultar por rol; tests.
+- **PR-C (2026-08-09):** `shared/components/RequireRole.jsx` (+ `ForbiddenPage`); ruta `/forbidden` en `protectedRoutes`; guards en rutas (`/operations/logs` → ADMIN/SUPER_ADMIN, `/system/settings/system` → SUPER_ADMIN); `SettingsNav.jsx` oculta "Sistema" salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`; tests RequireRole 4 PASS + suite frontend completa 9 suites/63 tests + `pnpm build` OK.
 
 #### ISSUE-031 — Registro roto + escalada de rol (FE-003) — P1
 `Programa 1 · EPIC-RBAC-UI · Ini 1.11`
@@ -1227,7 +1230,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 ### 4.3 Firmware (FW-001…FW-010) → ISSUE-050…059
 
 #### ISSUE-050 — Secretos reales en config.h (FW-001) — P0
-`Programa 1 · EPIC-CREDENTIALS · Ini 1.8`
+`Programa 1 · EPIC-CREDENTIALS · Ini 1.8` · Estado: **IN_PROGRESS** (PR-C · avance parcial, cierre con ISSUE-059/052, ver Fase 9 §9.6)
 - **Objetivo:** `config.h` con placeholders; credenciales en NVS vía registro; OTA password por dispositivo.
 - **Problema actual:** SSIDs reales, `TS_API_KEY`, `MQTT_USER device_001`, `MQTT_PASS mush2device`, `DEVICE_ID` en disco; `ota_handler.cpp:13` password `"mush2ota"`.
 - **Impacto:** compromiso total del dispositivo/broker.
@@ -1240,9 +1243,10 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Dependencias:** ISSUE-059 (FW-010 NVS), ISSUE-052 (FW-003 OTA TLS).
 - **DoD:** sin secretos reales en el árbol; placeholders.
 - **Tasks:** placeholders; NVS; otaPassword por dispositivo.
+- **PR-C (2026-08-09, avance parcial):** `ota_handler.cpp` sin password OTA hardcodeada — lee de NVS (`nvsGetOtaPass`) con fallback a placeholder `OTA_PASSWORD`; `ota_nvs` con `nvsGetOtaPass`/`nvsSetOtaPass`/`nvsClearOtaPass`; `platformio.ini` `--auth` a placeholder; `device_manager` persiste/lee credenciales MQTT provisionadas en NVS (ADR-028); `main.ino` usa NVS → registro → defaults al init de MQTT. Pendiente para cierre: ISSUE-059 (NVS completa), ISSUE-052 (OTA TLS), ISSUE-076 (scan de secretos en CI).
 
 #### ISSUE-051 — API key ThingSpeak en claro por HTTP (FW-002) — P0
-`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9` · Estado: **IN_PROGRESS** (avance parcial PR-D · cierre diferido a Ciclo 1, ver Fase 9 §9.6)
+`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9` · Estado: **IN_PROGRESS** (avance parcial PR-D ✅ mergeado 2026-08-09 · cierre diferido a Ciclo 1, ver Fase 9 §9.6)
 - **Objetivo:** HTTPS (`TS_PORT 443` + `WiFiClientSecure` con CA) o consolidar por MQTT.
 - **Problema actual:** `thingspeak_client.cpp:11-12` clave en query string de `http://`.
 - **Impacto:** clave expuesta; telemetría falsa.
@@ -2112,9 +2116,9 @@ GitHub Issue creado (Fase 6 §5.1) + ejecutor toma (orquestador Ciclo 0). Los 15
 | ISSUE-003 (BE-003) | 2026-08-08 | READY → IN_PROGRESS | GitHub #170 · toma Ciclo 0 (PR-F) |
 | ISSUE-004 (BE-004) | 2026-08-08 | READY → IN_PROGRESS | GitHub #171 · toma Ciclo 0 (PR-A) |
 | ISSUE-005 (BE-005) | 2026-08-08 | READY → IN_PROGRESS | GitHub #172 · toma Ciclo 0 (PR-A) |
-| ISSUE-017 (BE-017) | 2026-08-08 | READY → IN_PROGRESS | GitHub #173 · toma Ciclo 0 (PR-C) |
-| ISSUE-029 (FE-001) | 2026-08-08 | READY → IN_PROGRESS | GitHub #174 · toma Ciclo 0 (PR-C) |
-| ISSUE-030 (FE-002) | 2026-08-08 | READY → IN_PROGRESS | GitHub #175 · toma Ciclo 0 (PR-C) |
+| ISSUE-017 (BE-017) | 2026-08-09 | IN_PROGRESS → DONE | PR-C; tokenService + RefreshToken + migración + auth.js; 10 unit + E2E gate; contract test OK |
+| ISSUE-029 (FE-001) | 2026-08-09 | IN_PROGRESS → DONE | PR-C; access en memoria + refresh cookie httpOnly + interceptor; tests 5+4 PASS |
+| ISSUE-030 (FE-002) | 2026-08-09 | IN_PROGRESS → DONE | PR-C; RequireRole + 403 + ocultar por rol; tests 4 PASS + build OK |
 | ISSUE-050 (FW-001) | 2026-08-08 | READY → IN_PROGRESS | GitHub #176 · toma Ciclo 0 (PR-C) |
 | ISSUE-051 (FW-002) | 2026-08-08 | READY → IN_PROGRESS | GitHub #177 · toma Ciclo 0 (PR-D) |
 | ISSUE-060 (INF-001) | 2026-08-08 | READY → IN_PROGRESS | GitHub #178 · toma Ciclo 0 (PR-B) |

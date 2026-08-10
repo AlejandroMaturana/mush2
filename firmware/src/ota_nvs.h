@@ -6,10 +6,14 @@
 #define NVS_NAMESPACE "ota_mush2"
 #define NVS_KEY_SCHEMA "schema"
 #define NVS_KEY_FW_VER "fw_ver"
+#define NVS_KEY_OTA_PASS "ota_pass"
 #define NVS_SCHEMA_VER 1
 
 void nvsInit();
 String nvsGetFwVer();
 void nvsSetFwVer(const String& ver);
+String nvsGetOtaPass();
+void nvsSetOtaPass(const String& pass);
+void nvsClearOtaPass();
 
 #endif

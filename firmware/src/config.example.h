@@ -269,6 +269,13 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 #define BLE_DEVICE_NAME_PREFIX "Mush2"
 #endif
 
+// ---- OTA (ISSUE-050) ----
+// Placeholder — la contraseña OTA real por dispositivo se entrega por
+// provisioning/registro y se persiste en NVS (ota_nvs). Nunca un secreto real aquí.
+#ifndef OTA_PASSWORD
+#define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+#endif
+
 // ---- WiFi Re-provisioning ----
 #ifndef WIFI_FAIL_REPROVISION_THRESHOLD
 #define WIFI_FAIL_REPROVISION_THRESHOLD 5

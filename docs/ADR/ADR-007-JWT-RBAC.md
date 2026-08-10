@@ -320,3 +320,65 @@ CREATE TABLE user_chamber_access (
 ```
 
 ---
+
+## Anexo — Implementación vigente de refresh tokens (DECISION-005, ISSUE-017/029)
+
+**Fecha:** 2026-08-09 · **Estado:** Aceptado (DECISION-005 · ACCEPTED)
+
+Este anexo documenta la implementación real desplegada, que difiere en varios puntos del pseudocódigo de diseño de la sección anterior. Prevalecen los contratos (`api-contract.md`) y el código (`backend/src/services/tokenService.js`).
+
+### Diseño adoptado
+
+- **Access token**: JWT con expiración de 1 hora, incluye `jti` (único por emisión). Se transporta en `Authorization: Bearer` y vive **solo en memoria** en el frontend (`tokenStore.js`), nunca en `localStorage`.
+- **Refresh token**: opaco (64 bytes aleatorios), expiración 7 días, transportado **solo por cookie httpOnly** (`refresh_token`) con `Path=/api/v1/auth`, `SameSite=Strict` y `Secure` en producción. Nunca se expone al JS ni en el body de respuestas.
+- **Almacenamiento**: en `refresh_tokens` se persiste el **hash SHA-256** del token (`tokenHash`), su `jti`, `expiresAt`, `revokedAt` y `replacedByJti` (rotación). No se guarda el token en claro (principio de ADR-023: nunca shared secrets ni storage en claro).
+- **Rotación**: `POST /auth/refresh` valida el hash, revoca el token anterior (`replacedByJti` apunta al nuevo) y emite un par nuevo. Un token ya rotado/reinyectado (replay) se rechaza con `{ code: 'REFRESH_EXPIRED' }`.
+- **Logout**: `POST /auth/logout` revoca **todos** los refresh tokens del usuario (`revokeAllForUser`) y limpia la cookie. El acceso revocado es durable (fila `revokedAt`), no una blacklist en memoria.
+- **Fallback sin cookie**: `parseRefreshToken(req)` acepta el refresh token por cookie o por body, y configura `secure`/`sameSite` según `NODE_ENV`.
+
+### Esquema de la tabla `refresh_tokens`
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | UUID PK | |
+| `userId` | UUID FK → users | ON DELETE CASCADE |
+| `jti` | STRING(64) UNIQUE | Id del refresh token (opaco) |
+| `tokenHash` | STRING(64) UNIQUE | SHA-256 del token |
+| `expiresAt` | TIMESTAMPTZ | |
+| `revokedAt` | TIMESTAMPTZ NULL | Null = vigente |
+| `replacedByJti` | STRING(64) NULL | Rotación: jti del token sucesor |
+| `createdAt`/`updatedAt` | TIMESTAMPTZ | |
+
+### Flujo de refresco por cookie (sin body)
+
+```
+Frontend                          Backend
+  │  401 TOKEN_EXPIRED             │
+  │  POST /auth/refresh            │  (cookie refresh_token httpOnly)
+  │───────────────────────────────>│
+  │                                │  verifyAndRotate():
+  │                                │   - sha256(cookie) → busca fila
+  │                                │   - rechaza si no existe/revocado/rotado/expirado
+  │                                │   - revoca anterior + crea nuevo
+  │<─ { token: { accessToken } } ──│  (Set-Cookie: nueva refresh_token)
+  │  access en memoria             │
+```
+
+### Reglas derivadas
+
+| ID | Regla | Severidad |
+|---|---|---|
+| ADR-007-A01 | El refresh token nunca se persiste en claro en DB ni se expone a JS | HIGH |
+| ADR-007-A02 | Cada refresco rota el token (revoca el anterior) | HIGH |
+| ADR-007-A03 | Un token rotado/replay se rechaza con `REFRESH_EXPIRED` | HIGH |
+| ADR-007-A04 | El access token se guarda solo en memoria en el frontend | HIGH |
+| ADR-007-A05 | El logout revoca todos los refresh tokens del usuario | MEDIUM |
+| ADR-007-A06 | La cookie `refresh_token` es httpOnly + SameSite=Strict + Secure (prod) | HIGH |
+
+### Tests
+
+- `backend/src/__tests__/auth/refresh-token-service.test.js` (10 unit).
+- `backend/src/__tests__/auth/refresh-token-e2e.test.js` (E2E, gate `mush2_test`).
+- `frontend/src/shared/api/__tests__/axiosInstance.test.js`, `frontend/src/app/providers/__tests__/AuthProvider.test.jsx`.
+
+---

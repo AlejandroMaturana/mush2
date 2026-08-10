@@ -1,15 +1,18 @@
 import { NavLink } from 'react-router-dom'
-
-const SECTIONS = [
-  { to: '/system/settings/user', icon: 'fingerprint', label: 'Usuario' },
-  { to: '/system/settings/device', icon: 'developer_board', label: 'Dispositivo' },
-  { to: '/system/settings/system', icon: 'settings', label: 'Sistema' },
-]
+import { useAuth } from '../../../app/providers/AuthProvider'
 
 function SettingsNav() {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+  const sections = [
+    { to: '/system/settings/user', icon: 'fingerprint', label: 'Usuario' },
+    { to: '/system/settings/device', icon: 'developer_board', label: 'Dispositivo' },
+    ...(isSuperAdmin ? [{ to: '/system/settings/system', icon: 'settings', label: 'Sistema' }] : []),
+  ]
+
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-      {SECTIONS.map(item => (
+      {sections.map(item => (
         <NavLink
           key={item.to}
           to={item.to}
