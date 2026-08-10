@@ -2,7 +2,7 @@
 
 > Base URL: `/api/v1`
 > Formato: JSON
-> Autenticación: JWT via header `Authorization: Bearer <token>`
+> Autenticación: JWT via header `Authorization: Bearer <token>`. Access token en memoria (1h); refresh token por cookie `refresh_token` httpOnly (7d). Ver `POST /auth/refresh` y `POST /auth/logout`.
 > Denegación por defecto (ISSUE-002/004/005): sin credenciales válidas, toda ruta distinta de la whitelist anónima del firmware devuelve `401 { "error": "Autenticación requerida" }`. Whitelist anónima (solo firmware): `POST /devices/register` y `GET /actuators?deviceId=`.
 > Propiedad de recursos (ISSUE-002/004/005): los endpoints de tenant filtran/deniegan por propietario y vía `UserChamberAccess`; mutaciones del catálogo de especies exigen rol `ADMIN`; `PATCH /actuators/:channel` y `/devices/:id/actuators/:channel` NO auto-crean el dispositivo (404 si no existe).
 
@@ -10,12 +10,15 @@
 
 ## 1. Autenticación
 
+> DECISION-005 (ISSUE-017/029): el access token vive solo en memoria del cliente y el refresh token viaja únicamente por cookie `httpOnly` (`SameSite=Strict`, `Secure` en producción, `Path=/api/v1/auth`). El backend persiste el **hash SHA-256** del refresh (nunca en claro), rota en cada refresco y revoca durablemente en logout.
+
 ### `POST /auth/register`
 ```json
 // Request
 { "username": "string", "email": "string", "password": "string" }
 // Response 201
-{ "token": { "accessToken": "jwt...", "refreshToken": "..." }, "user": { "id","username","email","role" } }
+{ "token": { "accessToken": "jwt..." }, "user": { "id","username","email","role" } }
+// Set-Cookie: refresh_token=<jti>; Path=/api/v1/auth; HttpOnly; SameSite=Strict; [Secure]
 ```
 
 ### `POST /auth/login`
@@ -23,19 +26,27 @@
 // Request
 { "username": "string", "password": "string" }
 // Response 200
-{ "token": { "accessToken": "jwt...", "refreshToken": "..." }, "user": { "id","username","email","role" } }
+{ "token": { "accessToken": "jwt..." }, "user": { "id","username","email","role" } }
+// Set-Cookie: refresh_token=<jti>; Path=/api/v1/auth; HttpOnly; SameSite=Strict; [Secure]
 ```
 
 ### `POST /auth/refresh`
 ```json
 // Request
-{ "refreshToken": "string" }
+// Sin body: el refresh token se lee de la cookie httpOnly `refresh_token`.
+// (Backward-compat: si no hay cookie, se acepta { "refreshToken": "string" }.)
 // Response 200
-{ "token": { "accessToken": "jwt...", "refreshToken": "..." } }
+{ "token": { "accessToken": "jwt..." } }
+// Set-Cookie: refresh_token=<nuevo jti>; Path=/api/v1/auth; HttpOnly; SameSite=Strict; [Secure]
+// (rotación: el token anterior queda revocado)
+//
+// Error 401
+{ "code": "REFRESH_EXPIRED", "error": "Refresh token inválido o expirado" }
+// (aplica a token inexistente, revocado, rotado/replay o expirado)
 ```
 
 ### `POST /auth/logout`
-Requiere auth. Invalida refresh token.
+Requiere auth. Invalida **todos** los refresh tokens del usuario (revocación durable) y limpia la cookie `refresh_token`. No requiere body.
 
 ### `GET /auth/me`
 Requiere auth. Devuelve usuario actual.

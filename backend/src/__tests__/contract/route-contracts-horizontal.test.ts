@@ -55,7 +55,8 @@ describe('Horizontal: auth.js', () => {
   });
 
   it('refresh token maneja token inválido', () => {
-    expect(source).toContain("error: 'Refresh token inválido o expirado'");
+    expect(source).toContain("code: 'REFRESH_EXPIRED'");
+    expect(source).toContain('parseRefreshToken(req)');
   });
 });
 

@@ -34,3 +34,27 @@ void nvsSetFwVer(const String& ver) {
   prefs.end();
   Serial.printf("[OTA] NVS fw_ver actualizado a: %s\n", ver.c_str());
 }
+
+String nvsGetOtaPass() {
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, true);
+  String pass = prefs.getString(NVS_KEY_OTA_PASS, "");
+  prefs.end();
+  return pass;
+}
+
+void nvsSetOtaPass(const String& pass) {
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, false);
+  prefs.putString(NVS_KEY_OTA_PASS, pass);
+  prefs.end();
+  Serial.println("[OTA] NVS ota_pass actualizado (valor oculto)");
+}
+
+void nvsClearOtaPass() {
+  Preferences prefs;
+  prefs.begin(NVS_NAMESPACE, false);
+  prefs.remove(NVS_KEY_OTA_PASS);
+  prefs.end();
+  Serial.println("[OTA] NVS ota_pass eliminado");
+}

@@ -44,7 +44,7 @@ function AuthModal({ isOpen, onClose }) {
       const fn = mode === 'LOGIN' ? login : register
       const args = mode === 'LOGIN' ? [username, password] : [username, email, password]
       const result = await fn(...args)
-      authLogin(result.user, result.token.accessToken, result.token.refreshToken)
+      authLogin(result.user, result.token.accessToken)
       onClose()
     } catch (err) {
       setError(err.response?.data?.error || 'Error de conexión')

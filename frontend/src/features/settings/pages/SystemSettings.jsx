@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getSystemSettings, updateSystemSettings, configureTelegramBot, getTelegramBotStatus } from '../../../api/client.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
+import { useAuth } from '../../../app/providers/AuthProvider'
 
 const SAFETY_KEYS = ['temp_critical', 'temp_recovery']
 
@@ -28,6 +29,7 @@ const TG_STATE_COLORS = {
 }
 
 function SystemSettings() {
+  const { user } = useAuth()
   const [settings, setSettings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -77,6 +79,15 @@ function SystemSettings() {
     try { await updateSystemSettings(safetySettings.map(s => ({ key: s.key, value: s.value }))); setMsg({ type: 'ok', text: 'Configuración del sistema guardada' }) }
     catch (err) { setMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Falló' }) }
     finally { setSaving(false) }
+  }
+
+  if (user?.role !== 'SUPER_ADMIN') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <span className="material-symbols-outlined text-64px text-error mb-4">lock</span>
+        <p className="text-body-md text-error font-semibold">Acceso denegado: se requiere rol SUPER_ADMIN</p>
+      </div>
+    )
   }
 
   if (loading) return <LoadingState message="Cargando configuración del sistema..." icon="settings" />

@@ -282,8 +282,16 @@ void setup() {
       vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
-    // ADR-028: Init MQTT with provisioned credentials (or fallback to defaults)
+    // ADR-028: persist provisioned MQTT credentials to NVS (survive reboot)
     if (httpPoller.hasMqttCredentials()) {
+      deviceManager.saveMqttCredentials(httpPoller.getMqttUser(), httpPoller.getMqttPass());
+    }
+
+    // ADR-028: Init MQTT with NVS credentials, else registration, else defaults
+    String nvsUser, nvsPass;
+    if (deviceManager.loadMqttCredentials(nvsUser, nvsPass)) {
+      mqtt.init(deviceManager.getDeviceId().c_str(), nvsUser.c_str(), nvsPass.c_str());
+    } else if (httpPoller.hasMqttCredentials()) {
       mqtt.init(deviceManager.getDeviceId().c_str(), httpPoller.getMqttUser(), httpPoller.getMqttPass());
     } else {
       mqtt.init(deviceManager.getDeviceId().c_str());

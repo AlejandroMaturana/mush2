@@ -9,6 +9,10 @@ public:
   void init();
   const String& getDeviceId() const;
 
+  // ADR-028: credenciales MQTT provisionadas se persisten en NVS.
+  bool loadMqttCredentials(String& user, String& pass);
+  void saveMqttCredentials(const String& user, const String& pass);
+
 private:
   String deviceId;
   bool firstBoot;
