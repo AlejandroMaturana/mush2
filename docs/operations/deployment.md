@@ -57,3 +57,8 @@ node src/scripts/seed.js  # Crea usuario admin / admin123 (SUPER_ADMIN)
 - ThingSpeak: HTTPS ✅ (TS_PORT=443, WiFiClientSecure + CA embebida, header X-ApiKey — ISSUE-051, 2026-08-09)
 - Backend: TLS con Let's Encrypt (futuro)
 - MQTT: deshabilitar bridge público o asegurar con TLS (ADR-013 Fase 1)
+- **Broker MQTT (Mosquitto 2.x):** plan de despliegue en [`broker-deployment.md`](broker-deployment.md) (PR-G, ISSUE-065) — contenedor + TLS 8883 + ACL por dispositivo (DECISION-006); ejecución diferida a ISSUE-075/081.
+
+## Broker MQTT de producción
+
+El despliegue del broker Mosquitto de producción está **planificado pero no ejecutado** (PR-G, Ciclo 0). Ver [`broker-deployment.md`](broker-deployment.md) para: arquitectura, pasos, gestión de secretos, rollback, migración y verificación. No poblar `MQTT_BROKER_URL`/`MQTT_BROKER_PASS` en Render hasta cerrar ISSUE-075 (TLS) e ISSUE-081 (provisioning).
