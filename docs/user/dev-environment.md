@@ -206,9 +206,10 @@ Fuente de verdad: `backend/src/config/env.js` y `.env.development.example`.
 | `DB_PASSWORD` | Contraseña DB | `''` | según `.env.development` | Sí |
 | `DATABASE_URL` | URL completa DB | `undefined` | `postgresql://...@localhost:5433/mush2_dev` | Alternativa |
 | `JWT_SECRET` | Secreto JWT | `'dev-secret-change-in-production'` | cualquiera distinto del default | Sí |
-| `MQTT_BROKER_URL` | URL del broker | `'mqtt://localhost:1883'` | `mqtt://localhost:1884` | Sí |
+| `MQTT_BROKER_URL` | URL del broker | `'mqtt://localhost:1883'` (dev) / `'mqtts://localhost:8883'` (prod, TLS) | `mqtt://localhost:1884` | Sí |
 | `MQTT_BROKER_USER` | Usuario MQTT bridge | `'backend_bridge'` | `backend_bridge` | Sí |
 | `MQTT_BROKER_PASS` | Contraseña bridge | `''` | según `.env.development` | Sí |
+| `MQTT_REJECT_UNAUTHORIZED` | Validar cert TLS del broker | `true` | `true` (dev no-TLS lo ignora) | No |
 | `MOSQUITTO_CONTAINER` | Container para restart | `'mush2-mosquitto'` | `mush2-dev-mosquitto` | Sugerida |
 | `MOSQUITTO_PASSWORD_FILE` | Ruta password_file | env-aware (dev/prod) | `docker/mosquitto/dev/password_file` | Sugerida |
 | `CORS_ORIGIN` | Origen CORS | `'http://localhost:5173'` | `http://localhost:5173` | Sí |

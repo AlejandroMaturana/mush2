@@ -34,6 +34,14 @@ function cleanupClient() {
 
 function createClient() {
   const clientId = `mush2_backend_${Date.now()}`;
+  const scheme = (broker.url.match(/^([a-z]+):\/\//i) || [])[1] || '';
+
+  // ISSUE-015 / ADR-023: nunca conectar en claro en producción. validate(env)
+  // ya falla al arrancar; este log defensivo cubre inicios independientes.
+  if (env.NODE_ENV === 'production' && !['mqtts', 'tls', 'ssl'].includes(scheme)) {
+    log.warn({ event: 'NON_TLS_BROKER_IN_PRODUCTION', url: broker.url }, 'MQTT broker sin TLS en producción — conexión en claro');
+  }
+
   const c = mqtt.connect(broker.url, {
     clientId,
     clean: true,
@@ -41,6 +49,7 @@ function createClient() {
     password: broker.password,
     reconnectPeriod: 5000,
     connectTimeout: 10000,
+    rejectUnauthorized: env.MQTT.rejectUnauthorized,
   });
 
   c.on('connect', () => {

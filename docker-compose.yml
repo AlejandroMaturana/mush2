@@ -55,7 +55,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://mush2:${DB_PASSWORD}@postgres:5432/mush2
-      MQTT_BROKER_URL: mqtt://mosquitto:1883
+      # TLS obligatorio para el bridge en prod (ISSUE-015/PR-L). Requiere el
+      # listener 8883 activo con certs en docker/mosquitto/certs (I074/I075).
+      MQTT_BROKER_URL: mqtts://mosquitto:8883
       MQTT_BROKER_USER: backend_bridge
       MQTT_BROKER_PASS: ${MQTT_BROKER_PASS:?Set MQTT_BROKER_PASS in .env.production or shell}
     depends_on:
