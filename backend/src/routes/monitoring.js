@@ -8,6 +8,7 @@ import sequelize from '../config/database.js';
 import { getReadiness } from '../config/readiness.js';
 import { getStatusFromDevice, getLatestHealth } from '../services/deviceHealthService.js';
 import { readLogs } from '../services/logReaderService.js';
+import { createChildLogger } from '../config/pino.js';
 import os from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,7 @@ const backendPkg = JSON.parse(readFileSync(join(__dirname, '../../package.json')
 const rootPkg = JSON.parse(readFileSync(join(__dirname, '../../../package.json'), 'utf-8'));
 
 const router = Router();
+const log = createChildLogger('MONITORING');
 
 router.get('/metrics', async (req, res) => {
   try {
@@ -70,7 +72,8 @@ router.get('/metrics', async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    log.error({ module: 'MONITORING', event: 'METRICS_ERROR', error: err.message }, 'Error fetching monitoring metrics');
+    res.status(500).json({ error: 'SERVER_ERROR', message: 'Error interno del servidor' });
   }
 });
 
@@ -94,7 +97,8 @@ router.get('/logs', async (req, res) => {
     });
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    log.error({ module: 'MONITORING', event: 'LOGS_ERROR', error: err.message }, 'Error reading server logs');
+    res.status(500).json({ error: 'SERVER_ERROR', message: 'Error interno del servidor' });
   }
 });
 

@@ -329,7 +329,7 @@ describe('Horizontal: monitoring.js', () => {
   const source = readSource('routes/monitoring.js');
   const routes = extractRoutes(source);
 
-  it('rutas de monitoreo son GET públicas', () => {
+  it('rutas de monitoreo son GET y se montan tras authenticate + ADMIN (ISSUE-003)', () => {
     const metrics = routes.find(r => r.path === '/metrics');
     expect(metrics?.method).toBe('GET');
     const dbHealth = routes.find(r => r.path === '/health/db');
@@ -338,6 +338,9 @@ describe('Horizontal: monitoring.js', () => {
     expect(logs?.method).toBe('GET');
     const stream = routes.find(r => r.path === '/stream');
     expect(stream?.method).toBe('GET');
+
+    const index = readSource('routes/index.js');
+    expect(index).toContain("router.use('/monitoring', authenticate, requireMinRole('ADMIN'), monitoringRouter)");
   });
 
   it('DB health usa sequelize.authenticate', () => {

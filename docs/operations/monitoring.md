@@ -3,6 +3,8 @@
 Guía operacional del sistema de observabilidad de Mush2.
 
 > **Nota (refactor de Operations, 2026-08):** la página frontend de monitoreo (`MonitoringPage` en `/operations/monitoring`) fue **retirada de la UI**. Los endpoints backend `/monitoring/*` y los servicios de observabilidad **permanecen** disponibles para tooling, CLI y healthchecks de infraestructura. El estado y la salud de cada dispositivo se consumen desde la UI en el detalle de dispositivo (`DeviceConnectivityPanel`).
+>
+> **Control de acceso (ISSUE-003/BE-003):** desde la v1.7.5 del backend, `/monitoring/*` requiere **Bearer JWT + rol ADMIN**. La única ruta pública es `GET /health`. Tooling/CLI que consumía `/monitoring` anónimo debe autenticarse con una sesión ADMIN. El acceso a `/monitoring/logs` queda registrado en el access log HTTP.
 
 ## Arquitectura
 
@@ -81,6 +83,7 @@ logger.info({
 
 ```
 GET /api/v1/monitoring/logs?level=error&module=MQTT&limit=100&offset=0
+Authorization: Bearer <ADMIN_JWT>
 ```
 
 Parámetros:
@@ -175,9 +178,10 @@ El mapper centralizado está en `backend/src/config/resetReasons.js`.
 
 ## API Reference
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/api/v1/monitoring/metrics` | GET | Métricas del sistema (uptime, memoria, DB stats) |
-| `/api/v1/monitoring/health/db` | GET | Health check de PostgreSQL |
-| `/api/v1/monitoring/logs` | GET | Logs estructurados con filtros |
-| `/health` | GET | Readiness del backend |
+| Endpoint | Método | Auth | Descripción |
+|----------|--------|------|-------------|
+| `/api/v1/monitoring/metrics` | GET | Bearer + ADMIN | Métricas del sistema (uptime, memoria, DB stats) |
+| `/api/v1/monitoring/health/db` | GET | Bearer + ADMIN | Health check de PostgreSQL |
+| `/api/v1/monitoring/logs` | GET | Bearer + ADMIN | Logs estructurados con filtros |
+| `/api/v1/monitoring/stream` | GET | Bearer + ADMIN | SSE de monitoreo |
+| `/health` | GET | Público | Readiness del backend |

@@ -99,6 +99,27 @@ describe('ISSUE-002: whitelist pública preserva flujos del firmware', () => {
   }
 });
 
+describe('ISSUE-003/I106: /monitoring/* requiere auth + rol ADMIN (PR-F)', () => {
+  const monitoringDenyCases = [
+    { method: 'get', path: '/api/v1/monitoring/metrics' },
+    { method: 'get', path: '/api/v1/monitoring/health/db' },
+    { method: 'get', path: '/api/v1/monitoring/logs' },
+    { method: 'get', path: '/api/v1/monitoring/stream' },
+  ];
+
+  for (const c of monitoringDenyCases) {
+    it(`${c.method.toUpperCase()} ${c.path} anónimo → 401/403`, async () => {
+      const res = await request(app)[c.method](c.path);
+      expect([401, 403]).toContain(res.status);
+    });
+  }
+
+  it('GET /health sigue siendo público → 200', async () => {
+    const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
+  });
+});
+
 const HAS_TEST_DB = /mush2_test/.test(process.env.DATABASE_URL || '');
 const itDb = HAS_TEST_DB ? it : it.skip;
 
@@ -368,6 +389,36 @@ describe('ISSUE-004/I005/I106: propiedad y roles (requiere DATABASE_URL mush2_te
         .set('Authorization', `Bearer ${tokenA}`)
         .send({ deviceId });
       expect([200, 201]).toContain(res.status);
+    });
+  });
+
+  describe('ISSUE-003: /monitoring/* positivo (ADMIN 200, OPERATOR 403)', () => {
+    itDb('ADMIN accede a /monitoring/metrics → 200', async () => {
+      const res = await request(app)
+        .get('/api/v1/monitoring/metrics')
+        .set('Authorization', `Bearer ${tokenA}`);
+      expect(res.status).toBe(200);
+    });
+
+    itDb('ADMIN accede a /monitoring/health/db → 200', async () => {
+      const res = await request(app)
+        .get('/api/v1/monitoring/health/db')
+        .set('Authorization', `Bearer ${tokenA}`);
+      expect(res.status).toBe(200);
+    });
+
+    itDb('OPERATOR NO accede a /monitoring/metrics → 403', async () => {
+      const res = await request(app)
+        .get('/api/v1/monitoring/metrics')
+        .set('Authorization', `Bearer ${tokenB}`);
+      expect(res.status).toBe(403);
+    });
+
+    itDb('OPERATOR NO accede a /monitoring/logs → 403', async () => {
+      const res = await request(app)
+        .get('/api/v1/monitoring/logs')
+        .set('Authorization', `Bearer ${tokenB}`);
+      expect(res.status).toBe(403);
     });
   });
 });

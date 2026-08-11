@@ -26,7 +26,7 @@ router.use('/auth', authRouter);
 
 router.use('/admin', authenticate, checkApiRateLimit, requireMinRole('ADMIN'), adminRouter);
 
-router.use('/monitoring', monitoringRouter);
+router.use('/monitoring', authenticate, requireMinRole('ADMIN'), monitoringRouter);
 
 router.use('/settings', settingsRouter);
 router.use('/api-keys', apiKeysRouter);

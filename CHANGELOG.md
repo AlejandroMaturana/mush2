@@ -1,5 +1,16 @@
 # Changelog — Mush2
 
+## 2026-08-11
+
+### Backend — v1.7.5
+
+- **PR-F "Monitoring Security" (ISSUE-003 / BE-003)**
+- `/api/v1/monitoring/*` ahora exige **autenticación (Bearer JWT) + rol ADMIN** (`authenticate, requireMinRole('ADMIN')` en `routes/index.js`). `GET /health` permanece **pública** (única ruta pública del subsistema de monitoreo). Sin sesión → `401 AUTH_REQUIRED`; token con rol inferior a ADMIN → `403`.
+- El `autoLogging.ignore` de `app.js` deja de excluir `/monitoring/logs` (endpoint ADMIN-only queda registrado en el access log HTTP); `GET /health` sigue excluido por healthchecks de infraestructura.
+- `monitoring.js` y `admin.js` usan child logger (`createChildLogger`); los catches de error responden `500 { error: 'SERVER_ERROR', message: 'Error interno del servidor' }` (mensaje genérico) y loguean `err.message` solo en servidor.
+- Tests: suite negativa `authorization-negative.test.js` +bloque ISSUE-003 (401/403/200 + casos DB-gated ADMIN→200, OPERATOR→403); `REG-010_monitoring-security.test.ts` (5 aserciones estáticas); `monitoring-error-paths.test.ts` (8 tests vitest de las rutas de error, con `vi.mock`). Regresión completa verde: jest 232/232, vitest 405/405.
+- Contrato: `api-contract.md` §19 y §22 documentan el control de acceso ADMIN y el error `500` genérico. Docs operacionales `monitoring.md` y `runbook.md` actualizadas (Bearer + rol ADMIN en curls y tablas).
+
 ## 2026-08-10
 
 ### Backend — v1.7.4
