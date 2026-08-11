@@ -10,6 +10,7 @@ import { env } from './config/env.js';
 import { getReadiness } from './config/readiness.js';
 import { events } from './services/eventBus.js';
 import router from './routes/index.js';
+import errorHandler from './middlewares/errorHandler.js';
 import logger from './config/pino.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -141,6 +142,8 @@ if (env.NODE_ENV === 'production') {
     });
   }
 }
+
+app.use(errorHandler);
 
 export default app;
 
