@@ -43,13 +43,14 @@
 | Parámetro | Valor |
 |---|---|
 | Broker | Contenedor Mosquitto 2.x (DECISION-006) — plan de despliegue en `docs/operations/broker-deployment.md` (PR-G, ISSUE-065) |
-| Listener TLS | Puerto `8883` (MQTTS) para firmware; `cafile`/`certfile`/`keyfile` montados en `/mosquitto/certs` (ISSUE-075) |
-| Listener interno | Puerto `1883` solo dentro de la red del PaaS/Docker (bridge backend sin TLS) |
-| Backend bridge env | `MQTT_BROKER_URL` (p.ej. `mqtts://mush2-mqtt.<host>:8883`), `MQTT_BROKER_USER` (`backend_bridge`), `MQTT_BROKER_PASS` (secret, nunca en el repo) |
+| Listener TLS | Puerto `8883` (MQTTS) para firmware y backend bridge; `cafile`/`certfile`/`keyfile` montados en `/mosquitto/certs` (ISSUE-075) |
+| Listener interno | Puerto `1883` solo dentro de la red del PaaS/Docker — ops/legacy; el backend bridge NO lo usa en producción (exige TLS, ISSUE-015/PR-L) |
+| Backend bridge env | `MQTT_BROKER_URL` (p.ej. `mqtts://mush2-mqtt.<host>:8883`), `MQTT_BROKER_USER` (`backend_bridge`), `MQTT_BROKER_PASS` (secret, nunca en el repo), `MQTT_REJECT_UNAUTHORIZED` (default `true`; solo `false` para certs self-signed en staging) |
+| TLS enforcement | `ConfigurationService.validate()` falla (fail-fast) si `MQTT_BROKER_URL` no es `mqtts://`/`tls://`/`ssl://` con `NODE_ENV=production` (ISSUE-015/PR-L); default de `env.js` en prod = `mqtts://localhost:8883` |
 | ACL | `docker/mosquitto/prod/acl.conf` — por `client_id` (`%c`) y por usuario bridge; incluye `alarm`, `ota/#`, `actuators` (contrato §6.2/§9.1) |
 | Persistencia | Volúmenes `/mosquitto/data` (mensajes retain, sesiones) y `/mosquitto/log` |
 
-> **Nota de versión (PR-G):** sin cambio de versión del contrato. El broker pasa a ser el de producción con TLS 8883; topics, payloads y protocolo (MQTT 3.1.1) permanecen intactos.
+> **Nota de versión (PR-L):** sin cambio de versión del contrato. El backend exige TLS (`mqtts://`) en producción desde ISSUE-015 (fail-fast en `ConfigurationService.validate`); topics, payloads y protocolo (MQTT 3.1.1) permanecen intactos. El broker TLS (I074/I075) y el despliegue siguen documentados en `docs/operations/broker-deployment.md`.
 
 ## 3. Calidad de Servicio (QoS)
 

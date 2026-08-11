@@ -1,5 +1,5 @@
 @echo off
-echo === Release mush2 v1.8.14 ===
+echo === Release mush2 v1.8.15 ===
 echo.
 git add VERSION package.json CHANGELOG.md
 git add scripts/release.bat simulator/package.json
@@ -8,10 +8,10 @@ git add backend/VERSION backend/package.json
 git add firmware/VERSION firmware/package.json firmware/platformio.ini
 git add docs/VERSION docs/package.json
 echo.
-git commit -m "chore(release): mush2 v1.8.14" -m "
+git commit -m "chore(release): mush2 v1.8.15" -m "
 - frontend → v1.15.4
-- backend → v1.7.8
+- backend → v1.7.9
 - firmware → v0.23.3
 - docs → v0.2.3"
 echo.
-echo === Release mush2 v1.8.14 complete ===
+echo === Release mush2 v1.8.15 complete ===
