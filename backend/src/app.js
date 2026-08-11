@@ -20,7 +20,7 @@ const app = express();
 const httpLogger = pinoHttp({
   logger,
   autoLogging: {
-    ignore: (req) => req.url === '/health' || req.url === '/api/v1/monitoring/logs',
+    ignore: (req) => req.url === '/health',
   },
 });
 

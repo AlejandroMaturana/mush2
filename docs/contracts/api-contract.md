@@ -469,14 +469,22 @@ Activa/desactiva usuario.
 
 ## 19. Monitoreo
 
+> **Control de acceso (ISSUE-003/BE-003):** las rutas `/monitoring/*` requieren **autenticación (Bearer JWT) + rol ADMIN** (RBAC, ADR-007). La única ruta pública del subsistema de monitoreo es `GET /health`. Sin token → `401 { "error": "Autenticación requerida", "code": "AUTH_REQUIRED" }`; token de rol inferior a ADMIN (OPERATOR/VIEWER) → `403 { "error": "Se requiere rol ADMIN o superior" }`.
+
 ### `GET /health`
-Health check básico.
+Health check básico. **Única ruta pública** del subsistema de monitoreo (ISSUE-003).
 
 ### `GET /monitoring/metrics`
-Métricas del sistema (uptime, memoria, etc.).
+Métricas del sistema (uptime, memoria, etc.). **Requiere auth + rol ADMIN.**
 
 ### `GET /monitoring/health/db`
-Health check de la base de datos.
+Health check de la base de datos. **Requiere auth + rol ADMIN.**
+
+### `GET /monitoring/logs`
+Logs estructurados filtrables (`level`, `module`, `limit`, `offset`). **Requiere auth + rol ADMIN.** El acceso a este endpoint queda registrado en el access log HTTP (no se excluye del `autoLogging.ignore` — ISSUE-003).
+
+### `GET /monitoring/stream`
+SSE de monitoreo. **Requiere auth + rol ADMIN.**
 
 ---
 
@@ -542,6 +550,8 @@ SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
 { "error": "Demasiadas solicitudes, intente más tarde" } | { "error": "Demasiados intentos de registro", "code": "RATE_LIMIT_EXCEEDED" } (register anónimo por IP)
 // 500 Server Error
 { "error": "SERVER_ERROR", "message": "..." }
+// 500 Server Error — /monitoring/* y /admin/* (ISSUE-003): detalle interno SOLO en logs de servidor; el cliente recibe mensaje genérico sin err.message
+{ "error": "SERVER_ERROR", "message": "Error interno del servidor" }
 // 503 Service Unavailable
 { "error": "MQTT_DISCONNECTED", "message": "MQTT no conectado" }
 ```
