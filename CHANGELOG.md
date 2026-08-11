@@ -2,6 +2,16 @@
 
 ## 2026-08-11
 
+### Backend — v1.7.9
+
+- **PR-L "MQTT Security: TLS + Identidad por Dispositivo" (ISSUE-015 / BE-015 · ISSUE-024 / BE-024)**
+- TLS obligatorio para el bridge en producción (I15, ADR-028): `ConfigurationService.validate()` lanza (fail-fast) si `MQTT_BROKER_URL` no es `mqtts://`/`tls://`/`ssl://` con `NODE_ENV=production`; default de `env.js` en prod = `mqtts://localhost:8883` (dev sin cambio: `mqtt://localhost:1883`). Nuevo `MQTT_REJECT_UNAUTHORIZED` (default `true`; solo `false` para certs self-signed en staging). `docker-compose.yml` actualizado a `mqtts://mosquitto:8883`.
+- Hash `$7$` nativo sin argv (I24): `mosquittoProvisioningService` reimplementa el formato `$7$` (PBKDF2-SHA512, mosquitto_passwd v2) en Node nativo — exporta `mosquittoPasswordHash(password)` y `verifyMosquittoHash(password, storedHash)` (comparación `timingSafeEqual`) — eliminando el subproceso `mosquitto_passwd`, el password en argv y el plaintext temporal en disco. `provisionDevice`/`revokeDevice` reescritos con read-modify-write serializado del `password_file` (upsert sin duplicar líneas); recarga SIGHUP (debounce 500 ms) intacta.
+- Tests: `REG-014_mqtt-tls-identity.test.ts` (13 aserciones: fail-fast TLS prod, default mqtts, `rejectUnauthorized`, ACL `%c`/`backend_bridge`, compose mqtts) + `REG-015_mqtt-provisioning-argv.test.ts` (10: golden vector real `$7$`, round-trip hash, provision/revoke sobre temp password_file). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 449/449 (426 baseline + 23 REG-014/015).
+- Contrato: `mqtt-contract.md` §2.3 — TLS enforcement del backend, listener 8883 para firmware+bridge, `MQTT_REJECT_UNAUTHORIZED`; sin cambio de versión del contrato (topics/payloads/protocolo intactos).
+
+## 2026-08-11
+
 ### Backend — v1.7.8
 
 - **PR-K "Generic Error Responses" (ISSUE-027 / BE-027)**
