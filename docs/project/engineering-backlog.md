@@ -610,7 +610,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-001 — Registro de dispositivo no autenticado (BE-001) — P0
 `Programa 1 · EPIC-PROVISIONING · Ini 1.4`
-- **Estado:** IN_PROGRESS (PR-E "Provisioning Foundation"; ver `dor-readiness-review.md` y `phase-6-issue-procedure.md`).
+- **Estado:** DONE (PR-E "Provisioning Foundation" mergeado — PR #188, merge commit `039d16e`; versionado backend 1.7.4 / root 1.8.10). Cierre formal del Ciclo 0: ver §9.5.
 - **Evidencia de implementación:** suite `backend/src/__tests__/authz/authorization-negative.test.js` (43 tests: sin token → `401 AUTH_REQUIRED`, token inexistente/expirado/revocado/exhausto → `401`, device-mismatch → `403`, token de un solo uso 201 + credenciales, cuota>1, refund) y `backend/src/__tests__/regression/REG-009_provisioning-security.test.ts` (11 aserciones estáticas: middleware, ruta, rate limit, ADR-028, hash SHA-256, SIGHUP sin `docker restart`, debounce, CLI guard, migración, contrato). Verificación end-to-end contra Postgres local (`mush2_test`).
 - **Objetivo:** que `/devices/register` exija autenticación o token de aprovisionamiento de un solo uso con rate limit y cuota, y que la recarga de ACL sea idempotente sin `docker restart`.
 - **Problema actual:** `routes/api.js:91-153` expone `POST /devices/register` sin `authenticate` (montado en `routes/index.js:34`); devuelve `{mqttUser, mqttPass}`; `mosquittoProvisioningService.js` `reload()` ejecuta `docker restart mush2-mosquitto`.
@@ -623,7 +623,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Verificación (verde→rojo→verde):** verde: test actual que registra sin auth pasa (hoy `/devices/register` anónimo en `routes/api.js:91-153`); rojo: test negativo que llama `POST /devices/register` sin sesión ni token debe devolver 401/403 → hoy falla (200); verde: tras corrección el test negativo pasa y el registro legítimo con token/CLI sigue funcionando.
 - **Dependencias:** ISSUE-050/051 (firmware registro), ISSUE-065 (broker).
 - **DoD:** sin llamador anónimo capaz de registrar/acreditar; recarga en job; test de autorización negativa en el PR.
-- **Tasks:** exigir sesión o token de un solo uso (hecho); vincular credenciales a clave de dispositivo (hecho); job de recarga de ACL idempotente (hecho); test negativo (hecho). Pendiente de merge de PR-E y validación en staging.
+- **Tasks:** exigir sesión o token de un solo uso (hecho); vincular credenciales a clave de dispositivo (hecho); job de recarga de ACL idempotente (hecho); test negativo (hecho). Pendiente: validación en staging (Ciclo 1).
 
 #### ISSUE-002 — Exposición anónima multi-tenant (BE-002) — P0
 `Programa 1 · EPIC-AUTHZ · Ini 1.3`
@@ -642,6 +642,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-003 — Monitoring público (BE-003) — P0
 `Programa 1 · EPIC-OBSERVABILITY-SECURITY · Ini 1.5`
+- **Estado:** DONE (PR-F "Monitoring Security" mergeado — PR #189, merge commit `ad0f3a3`; versionado backend 1.7.5 / root 1.8.11). Cierre formal del Ciclo 0: ver §9.5.
 - **Objetivo:** montar `/monitoring` tras `authenticate` + rol ADMIN; dejar solo `/health` público; quitar `err.message` del cliente.
 - **Problema actual:** `routes/index.js:29` monta `/monitoring` sin auth; `app.js:23` excluye logs de `/monitoring`; `routes/monitoring.js` sirve logs/métricas/SSE públicos.
 - **Impacto:** divulgación de logs, métricas e internals.
@@ -2116,8 +2117,10 @@ GitHub Issue creado (Fase 6 §5.1) + ejecutor toma (orquestador Ciclo 0). Los 15
 |---|---|---|---|
 | ISSUE-001 (BE-001) | 2026-08-08 | READY → IN_PROGRESS | GitHub #168 · toma Ciclo 0 (PR-E) |
 | ISSUE-001 (BE-001) | 2026-08-09 | IN_PROGRESS → PR READY (PR-E) | Implementación + 43 tests negativos/DB + REG-009 (11) verdes · pendiente merge y validación staging |
+| ISSUE-001 (BE-001) | 2026-08-11 | IN_PROGRESS → DONE | PR #188 mergeado (`039d16e`); suite negativa + REG-009 verdes; versionado backend 1.7.4 / root 1.8.10 · pendiente validación staging (Ciclo 1) |
 | ISSUE-002 (BE-002) | 2026-08-08 | READY → IN_PROGRESS | GitHub #169 · toma Ciclo 0 (PR-A) |
 | ISSUE-003 (BE-003) | 2026-08-08 | READY → IN_PROGRESS | GitHub #170 · toma Ciclo 0 (PR-F) |
+| ISSUE-003 (BE-003) | 2026-08-11 | IN_PROGRESS → DONE | PR #189 mergeado (`ad0f3a3`); auth+ADMIN en `/monitoring/*`, `/health` público, errores genéricos; REG-010 (5) + monitoring-error-paths (8) + bloque ISSUE-003 en suite negativa; jest 232/232 · vitest 405/405; versionado backend 1.7.5 / root 1.8.11 |
 | ISSUE-004 (BE-004) | 2026-08-08 | READY → IN_PROGRESS | GitHub #171 · toma Ciclo 0 (PR-A) |
 | ISSUE-005 (BE-005) | 2026-08-08 | READY → IN_PROGRESS | GitHub #172 · toma Ciclo 0 (PR-A) |
 | ISSUE-017 (BE-017) | 2026-08-09 | IN_PROGRESS → DONE | PR-C; tokenService + RefreshToken + migración + auth.js; 10 unit + E2E gate; contract test OK |
@@ -2161,6 +2164,51 @@ Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite 
 **Verificación local post-merge (`82d4828`):** `jest` 12/12 suites / 174 tests · `vitest run` 35 archivos / 366 tests (incluye REG-007 8/8) · migración verificada end-to-end contra Postgres local (migrate crea esquema completo, undo deja solo `SequelizeMeta` y limpia los 30 enums).
 
 **Docs:** nota de supersesión ADR-005 (sync → migraciones versionadas), regla ADR-029-R08 (seed solo desarrollo), `database.md` (Sincronización + Datos de arranque), changeset `.changeset/production-bootstrap-hardening.md`, CHANGELOG v1.7.1.
+
+### 9.5 Ciclo 0 — Cierre formal (2026-08-11)
+
+**PRs del Ciclo 0 mergeados a `develop` (7/7):**
+
+| PR | ISSUEs | Merge commit | Release | Estado ISSUEs |
+|---|---|---|---|---|
+| PR-A #183 "Authorization Foundation" | I002/I004/I005/I106 | `b8cd5b3` | v1.8.5 | DONE |
+| PR-B #184 "Production Bootstrap Hardening" | I060/I061/I068 | `82d4828` | v1.7.1 | DONE |
+| PR-C #186 "Credentials & Session / RBAC UI" | I017/I029/I030 | `6bd4894` | — | DONE |
+| PR-D #185 "ThingSpeak HTTPS" | — (prepara I051) | `9fd2ccd` | — | — |
+| PR-G #187 "Device Status & Production Policies" | I065 (parcial) | `2fd2ac9` | v1.8.9 | IN_PROGRESS |
+| PR-E #188 "Provisioning Foundation" | I001 | `039d16e` | backend 1.7.4 / root 1.8.10 | DONE |
+| PR-F #189 "Monitoring Security" | I003 | `ad0f3a3` | backend 1.7.5 / root 1.8.11 | DONE |
+
+**Estado final de los 15 ISSUEs del ciclo (110 total):** 12 `DONE` · 3 `IN_PROGRESS` (I050, I051, I065 — cierre diferido cross-ciclo, ver F9-3) · 1 `BLOCKED` (I070, DECISION-011) · 94 `BACKLOG`.
+
+#### Runbook de gate check (Fase 5 §6) aplicado al Ciclo 0
+
+1. **Estado de ISSUEs:** P1 no tiene todos sus primarios en `DONE` (4 P0 abiertos: I050/I051/I065 `IN_PROGRESS` + I070 `BLOCKED`) → **Exit Gate P1 ⛔ `PENDING`** (no `FAIL`; bloqueo de decisión DECISION-011 vigente, F5-2).
+2. **Métricas de gate:** no aplica completar las métricas de §2 — ningún programa alcanza la condición de todos-DONE; ninguna métrica se marca como comprobada para gate.
+3. **Transversales (Fase 5 §5):** 4/5 verificadas sobre los cambios del ciclo — cobertura Security 100 % (tests en el mismo PR, DoD §2), secretos sin nuevas fugas, contratos sincronizados y versionados (api-contract §1/§19/§22, MQTT v2), ADR con notas de supersesión (ADR-005 → migraciones; ADR-029-R08). **CI verde: ❌** (fallo preexistente en `develop`: `REG-002` falta `.env.development` en CI + `ble_provisioning.cpp:105` `HW_REVISION`; idéntico antes de PR-A, sin regresión del ciclo).
+4. **Ruta crítica:** dependencia `INF-011`/`INF-012` (DECISION-011) sin cerrar bloquea el Exit Gate P1; I065 (broker) avanza con plan de despliegue (PR-G) pero requiere decisión de infra para su despliegue.
+5. **Registro:** snapshot comparado contra Fase 0 y contra el t=0 del dashboard en `phase-8-executive-dashboard.md` (sección §8 post-Ciclo 0).
+6. **Regla:** ningún programa se declara finalizado (0/11 gates); P1 queda `PENDING` por decisión, no por métricas.
+
+#### Re-computo del dashboard (Fase 8 §5, t=0 vs post-Ciclo 0)
+
+| Indicador | t=0 (Fase 8) | Post-Ciclo 0 |
+|---|---|---|
+| Avance P1 Seguridad | 0/28 (0 %) | 11/28 ≈ **39 %** → Madurez **Media** |
+| Avance P2 Testing | 0/11 (0 %) | 1/11 ≈ 9 % → **Baja** (computable; cualitativo Media por F8-2) |
+| Avance global | 0/110 (0 %) | 12/110 ≈ 11 % |
+| P0 en P1 | 14 abiertos | **10 DONE** · 4 abiertos (I050/I051/I065 + I070) |
+| Riesgo Seguridad | 🔴 Alto | 🟠 **Medio** (ISSUE-070 P0 sigue abierto + DECISION-011) |
+| Bloqueador Seguridad | 14 P0 + DECISION-011 | `DECISION-011 (I070/I071)` · I050/I051/I065 cross-ciclo |
+| Gates | 0/11 | 0/11 (P1 ⛔ PENDING, idéntico) |
+
+#### Snapshot comparado vs Fase 0
+
+- Seguridad pasó de madurez **Baja → Media** (10 de 14 P0 cerrados; avance computable 39 %); el riesgo baja de 🔴 a 🟠 (bloqueo residual: DECISION-011).
+- Testing avanza 1 ISSUE (I106, suite negativa en CI de PRs); el resto de áreas sin cambios (0 DONE computable, cualitativo intacto — F8-2).
+- La **desviación frente a la proyección §7.1** del plan Fase 9 (13 DONE en P1) se explica por F9-3: I050/I051 permanecen `IN_PROGRESS` (avance parcial de PR-C/PR-D, cierre diferido con I059/I052), en línea con las entradas de ISSUE-050/051 del backlog.
+
+**Siguiente ciclo:** el Exit Gate P1 se re-evalúa tras (a) resolución de DECISION-011 (I070/I071) y (b) cierre de I050/I051/I065 (F9-3, cross-ciclo). El dashboard queda actualizado (§8 de Fase 8) como línea base para Ciclo 1.
 
 ---
 
