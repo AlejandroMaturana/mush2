@@ -2,6 +2,16 @@
 
 ## 2026-08-11
 
+### Backend — v1.7.6
+
+- **PR-I "Bootstrap Hardening II" (ISSUE-016 / BE-016 · ISSUE-072 / INF-013)**
+- Seed hardening (I16): bcrypt cost **10 → 12** en `seed.js` (constante exportada `SEED_BCRYPT_ROUNDS`) y en `create-admin.js` (CLI/secret), alineado con `auth.js`/`settings.js`. Guard `isSeedAllowed` (dev-only, I060) intacto; admin sigue creándose por CLI, nunca por default.
+- Fail-fast de configuración (I72): `ConfigurationService.validate(env)` ahora se ejecuta al inicio de `sync-db.js` y `seed.js`, antes de tocar la BD — aborta con error claro si la configuración es inválida (p. ej. `JWT_SECRET` default en producción) en lugar de modificar el esquema o sembrar datos.
+- Tests: `REG-011_bootstrap-config-failfast.test.ts` (7 aserciones estáticas: bcrypt cost en seed/create-admin, `validate(env)` en sync/seed, fallback de `JWT_SECRET` marcado como dev). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 412/412.
+- Contrato: N/A (sin cambio de wire API/MQTT/BLE).
+
+## 2026-08-11
+
 ### Backend — v1.7.5
 
 - **PR-F "Monitoring Security" (ISSUE-003 / BE-003)**

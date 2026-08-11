@@ -45,7 +45,7 @@ export async function createAdmin({ username, email, password }) {
     throw new Error('create-admin requires a password of at least 8 characters.');
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
   const [user, created] = await User.findOrCreate({
     where: { username },
     defaults: { username, email, passwordHash, role: 'SUPER_ADMIN' },

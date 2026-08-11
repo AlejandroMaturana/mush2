@@ -6,6 +6,8 @@
  * It never runs `alter: true` against a production database.
  */
 import sequelize from './config/database.js';
+import { env } from './config/env.js';
+import { validate } from './config/ConfigurationService.js';
 import './models/index.js';
 
 export function isSyncAllowed(nodeEnv = process.env.NODE_ENV || 'development') {
@@ -18,6 +20,14 @@ async function sync() {
       `[DB] REFUSED: sync-db.js cannot run in production (NODE_ENV="${process.env.NODE_ENV}"). ` +
       'Use versioned migrations: pnpm db:migrate'
     );
+    process.exit(1);
+  }
+
+  // ── Fail-fast configuration validation (I72, ADR-029) ─────────
+  try {
+    validate(env);
+  } catch (err) {
+    console.error(`[DB] Configuration validation failed:\n${err.message}`);
     process.exit(1);
   }
 

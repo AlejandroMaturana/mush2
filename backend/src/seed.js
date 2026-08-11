@@ -11,6 +11,8 @@
  *  - Production must use migrations + seed-catalog + create-admin.
  */
 import sequelize from './config/database.js';
+import { env } from './config/env.js';
+import { validate } from './config/ConfigurationService.js';
 import bcrypt from 'bcryptjs';
 import { User, Chamber, UserChamberAccess, AuditLog, Device } from './models/index.js';
 import { seedCatalog } from './db/catalog-seed.js';
@@ -21,6 +23,9 @@ const TEST_USERS = [
   { username: 'tecno', email: 'tecno@mush2.local', role: 'OPERATOR', password: 'tecno123' },
   { username: 'invitado', email: 'invitado@mush2.local', role: 'VIEWER', password: 'invitado123' },
 ];
+
+// Bcrypt cost for bootstrap hashes (I16). Matches auth.js/settings.js.
+export const SEED_BCRYPT_ROUNDS = 12;
 
 const TEST_CHAMBERS = [
   { name: 'Cámara Este — Ostra', volume: 2.5, location: 'Edificio A, Piso 1' },
@@ -42,6 +47,14 @@ async function seed() {
     process.exit(1);
   }
 
+  // ── Fail-fast configuration validation (I72, ADR-029) ─────────
+  try {
+    validate(env);
+  } catch (err) {
+    console.error(`[Seed] Configuration validation failed:\n${err.message}`);
+    process.exit(1);
+  }
+
   try {
     await sequelize.authenticate();
     console.log('[Seed] DB conectada');
@@ -51,7 +64,7 @@ async function seed() {
 
     const createdUsers = {};
     for (const u of TEST_USERS) {
-      const passwordHash = await bcrypt.hash(u.password, 10);
+      const passwordHash = await bcrypt.hash(u.password, SEED_BCRYPT_ROUNDS);
       const [user, userCreated] = await User.findOrCreate({
         where: { username: u.username },
         defaults: { username: u.username, email: u.email, passwordHash, role: u.role },
