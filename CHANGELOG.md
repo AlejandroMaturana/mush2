@@ -2,6 +2,17 @@
 
 ## 2026-08-11
 
+### Backend — v1.7.8
+
+- **PR-K "Generic Error Responses" (ISSUE-027 / BE-027)**
+- Nuevo middleware global de error `backend/src/middlewares/errorHandler.js` montado al final de la pila en `app.js` (tras `router` y el static de producción): cualquier error propagado con `next(err)` responde `500 { error: 'SERVER_ERROR', message: 'Error interno del servidor' }` — sin `err.message` al cliente — y loguea el detalle (`err.message` + `stack`) solo en servidor con child logger `ERROR_HANDLER`.
+- Preserva `err.status` explícito (4xx/5xx controlado, p. ej. 409) y respeta `res.headersSent` (delega a `next(err)` si la respuesta ya empezó).
+- Residual re-baselineado (F10-3): `monitoring.js`/`admin.js` ya eran genéricos (PR-F #189); este PR solo añade la cobertura global. Regresión de monitoring/admin verificada.
+- Tests: `REG-013_error-handler.test.ts` (6 aserciones estáticas: middleware 4 args, body genérico, detalle solo en servidor, montaje al final de la pila, regresión monitoring/admin) + `error-handler-global.test.ts` (2 tests funcionales: `next(err)` → 500 genérico sin detalle; `err.status=409` → 409). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 426/426 (405 baseline + 7 REG-011 + 6 REG-012 + 6 REG-013 + 2 funcionales).
+- Contrato: N/A (sin cambio de wire API/MQTT/BLE); el shape `{ error: 'SERVER_ERROR', message: 'Error interno del servidor' }` ya es el documentado (PR-F).
+
+## 2026-08-11
+
 ### Backend — v1.7.7
 
 - **PR-J "Rate Limit Coverage" (ISSUE-019 / BE-019)**
