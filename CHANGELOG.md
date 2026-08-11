@@ -21,8 +21,6 @@
 - Tests: `REG-012_rate-limit-coverage.test.ts` (6 aserciones estáticas: sin skip de `/devices` ni `/actuators`, limiter activo con `max`/`windowMs`, franquicia autenticada intacta, contrato documenta throttling). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 411/412 (405 baseline + 6 REG-012).
 - Contrato: `api-contract.md` §429 documenta que el límite global aplica a todos los endpoints incluidos `/devices` y `/actuators` (sin skip de polling anónimo) y la migración a identidad (I59/PR-M).
 
-## 2026-08-11
-
 ### Backend — v1.7.6
 
 - **PR-I "Bootstrap Hardening II" (ISSUE-016 / BE-016 · ISSUE-072 / INF-013)**
