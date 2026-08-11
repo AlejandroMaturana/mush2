@@ -51,10 +51,7 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes, intente más tarde' },
-  skip: (req) => isDev || (req.method === 'GET' && (
-    req.originalUrl.startsWith('/api/v1/actuators') ||
-    req.originalUrl.startsWith('/api/v1/devices')
-  )),
+  skip: (req) => isDev,
 });
 app.use('/api/', limiter);
 

@@ -548,6 +548,8 @@ SSE filtrado por dispositivo específico (mismo stream, filtro server-side).
 { "error": "NOT_FOUND", "message": "..." }
 // 429 Too Many Requests
 { "error": "Demasiadas solicitudes, intente más tarde" } | { "error": "Demasiados intentos de registro", "code": "RATE_LIMIT_EXCEEDED" } (register anónimo por IP)
+
+> **Rate limiting (ISSUE-019):** el límite global por IP se aplica a **todos** los endpoints `/api/v1/*` — incluidos `GET /devices` y `GET /actuators` (ya no hay skip para polling anónimo). Los usuarios autenticados se rigen además por la cuota de su plan (`rate_limit_exceeded`, ver `subscriptionRateLimit.js`). El polling anónimo del firmware queda sujeto al límite global hasta que migre a credenciales/identidad (ISSUE-059/PR-M).
 // 500 Server Error
 { "error": "SERVER_ERROR", "message": "..." }
 // 500 Server Error — /monitoring/* y /admin/* (ISSUE-003): detalle interno SOLO en logs de servidor; el cliente recibe mensaje genérico sin err.message
