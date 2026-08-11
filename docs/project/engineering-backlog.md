@@ -801,8 +801,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** streams legibles/inyectables.
 - **Archivos afectados:** `config/env.js`, `services/mqttBridge.js`, `docker/mosquitto/*/acl.conf`, `mosquitto.prod.conf`.
 - **Contratos afectados:** `mqtt-contract.md`.
-- **ADR/DDD:** ADR-023, ADR-028.
-- **Dependencias:** ISSUE-065/074/075 (broker), ISSUE-050 (firmware).
+- **ADR/DDD:** ADR-023 (INFORMATIVE — infraestructura MQTT segura; contexto) · ADR-028 (REQUIRED — identidad MQTT por dispositivo; condiciona ACL/credenciales por dispositivo). DDD: NOT_APPLICABLE (cambio de transporte/config de broker; no altera el modelo de dominio). Decisión: NONE (no DECISION-NNN asociada; ADR-028/023 aceptados son las decisiones rectoras).
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1) — **cambio restrictivo de transporte**: default `mqtt://localhost:1883` → `mqtts://` con TLS obligatorio en prod; identidad por dispositivo en lugar de credencial única `backend_bridge`. Se evalúa bump de versión/nota del contrato en el PR-L. Estado: **compatible a nivel de payloads** (temas/topics y JSON sin cambio); el transporte y la autenticación cambian.
+- **Riesgos:** tránsito mqtt→mqtts durante migración → mitigación: soporte temporal de ambos + fallo explícito ante no-TLS en prod (test de conectividad sin TLS que debe fallar); broker TLS no desplegado (I074/I075 F1) → mitigación: cierre diferido documentado (hallazgo de fase), no se falsea `DONE`; credencial compartida `backend_bridge` filtrada → mitigación: identidad por dispositivo (ADR-028).
+- **Verificación (verde→rojo→verde):** verde: `env.js:80` default `mqtt://localhost:1883` y `mqttBridge.js` usa credencial única (hoy pasa); rojo: test que arranca con `NODE_ENV=production` y `MQTT_URL` no-TLS debe fallar → hoy no falla; verde: tras `mqtts://` + TLS obligatorio + identidad por dispositivo, el arranque en prod falla sin TLS y cada dispositivo autentica con su credencial.
+- **Dependencias:** ISSUE-065/074/075 (broker), ISSUE-050 (firmware). **Plan de desbloqueo cross-ciclo:** PR-L entrega código (`mqtts://` + ACL + identidad); cierre diferido a I074/I075 (F1).
 - **DoD:** TLS obligatorio; identidad por dispositivo; fallo ante no-TLS en prod.
 - **Tasks:** TLS; identidad por dispositivo; config; test.
 
@@ -813,8 +816,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** compromiso total si corre fuera de local.
 - **Archivos afectados:** `backend/src/seed.js`, `Dockerfile`, `config/env.js`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-029 · DDD-009.
-- **Dependencias:** ISSUE-060 (INF-001), ISSUE-068 (INF-009).
+- **ADR/DDD:** ADR-029 (REQUIRED — aislamiento de ambientes y `ConfigurationService` fail-fast; el guard de `NODE_ENV` para seed es parte de esta política) · DDD-009 (INFORMATIVE — modelo de configuración/entorno; contexto). Decisión: NONE (no DECISION-NNN asociada; DECISION-008 ACCEPTED del ISSUE-060 es la decisión rectora).
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: cambio de arranque/seed (quién y cuándo corre, coste de hash), no de protocolo.
+- **Riesgos:** subir bcrypt de 10 a 12 ralentiza el seed → mitigación: solo en `development` vía CLI (I060 ya sacó seed del CMD); admin perdido si seed no corre → mitigación: `create-admin.js` (CLI/secret) documentado; hash más caro en CI/tests → mitigación: coste configurable vía env en tests.
+- **Verificación (verde→rojo→verde):** verde: `seed.js:54` bcrypt cost 10 (hoy pasa); rojo: test que verifica que el hash de seed usa `cost >= 12` → hoy falla; verde: tras bcrypt 12 + guard NODE_ENV efectivo, el hash usa cost 12 y el seed rechaza `NODE_ENV=production`.
+- **Dependencias:** ISSUE-060 (INF-001), ISSUE-068 (INF-009). **Satisfechas** (ambas `DONE`).
 - **DoD:** guard efectivo; bcrypt 12; admin por CLI/secret.
 - **Tasks:** guard NODE_ENV; bcrypt 12; forzar cambio password.
 
@@ -854,8 +860,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** enumeración/sondas sin throttling.
 - **Archivos afectados:** `app.js`, `middlewares/subscriptionRateLimit.js`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
-- **Dependencias:** ISSUE-002.
+- **ADR/DDD:** N/A — sin ADR/DDD afectado. Justificación: cambio de configuración del rate limiter (skip de rutas); no altera contratos, modelo de dominio ni ADRs vigentes. Decisión: NONE.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el rate limit no cambia el wire contract (mismo endpoint, misma respuesta; solo cambia el throttling). Comportamiento restrictivo documentado en la sección de límites del `api-contract.md`.
+- **Riesgos:** límites anónimos estrictos rompen el firmware que consulta `GET /devices`/`GET /actuators` sin auth → mitigación: franquicia autenticada y revisión de los clientes firmware (I050/I051); 429 legítimos en operadores → mitigación: franquicia autenticada más amplia; cambio de skip rompe polling de dispositivos en campo → mitigación: confirmar identidad/whitelist antes del cambio.
+- **Verificación (verde→rojo→verde):** verde: `app.js:54-57` omite `/devices` y `/actuators` del rate limit (hoy pasa); rojo: test que dispara N peticiones anónimas a `GET /devices` esperando 429 al superar el límite → hoy no se throttlea; verde: tras eliminar el skip y fijar límite estricto anónimo + franquicia autenticada, el test 429 pasa y los clientes autenticados no se bloquean.
+- **Dependencias:** ISSUE-002. **Satisfecha** (`DONE`).
 - **DoD:** rutas sensibles con límite.
 - **Tasks:** revisar skip; límites anónimos; test.
 
@@ -914,8 +923,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** captura desde `ps`/argv.
 - **Archivos afectados:** `services/mosquittoProvisioningService.js`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-028.
-- **Dependencias:** ISSUE-001, ISSUE-015.
+- **ADR/DDD:** ADR-028 (REQUIRED — identidad MQTT por dispositivo y manejo de credenciales; el provisioning no debe exponer secretos en argv). DDD: NOT_APPLICABLE (cambio de mecanismo de entrega de credenciales; no altera el modelo de dominio). Decisión: NONE.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es en cómo se pasa la credencial a `mosquitto_passwd` (argv → env/archivo), no en el protocolo.
+- **Riesgos:** password en argv expuesta en `ps` durante la migración → mitigación: migración rápida a env/archivo de permisos restringidos en el mismo PR; archivo temporal con credenciales → mitigación: permisos `0600` + borrado tras uso; compatibilidad con `docker exec` → mitigación: leer de archivo dentro del contenedor o env por variable.
+- **Verificación (verde→rojo→verde):** verde: `mosquittoProvisioningService.js:51-55` interpola la password en `execFile(mosquitto_passwd, ['-b', file, user, pass])` (hoy pasa, visible en argv/`ps`); rojo: test que ejecuta la provisión y verifica que la password NO aparece en el argv del proceso hijo → hoy falla; verde: tras pasar la credencial por env/archivo, el test pasa y no hay secretos en argv.
+- **Dependencias:** ISSUE-001, ISSUE-015. **Satisfecha** (I001 `DONE`; I015 en el mismo ciclo, PR-L).
 - **DoD:** sin credenciales en argv.
 - **Tasks:** env/archivos; test.
 
@@ -950,8 +962,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** divulgación de internals.
 - **Archivos afectados:** `routes/monitoring.js`, `routes/admin.js`, middleware de error.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
-- **Dependencias:** ISSUE-003.
+- **ADR/DDD:** N/A — sin ADR/DDD nuevo; contexto de observabilidad/seguridad cubierto por ADR-006/007 ya aplicados en PR-F (I003). Justificación: el residual re-baselineado (F10-3) es solo el middleware global de error; monitoring/admin ya genéricos. Decisión: NONE.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el `error` y `message` genéricos ya son el shape documentado (PR-F); el middleware solo asegura cobertura uniforme en el resto de rutas. Comportamiento **restrictivo** (errores internos dejan de filtrar `err.message`).
+- **Riesgos:** mapear `err.message` a genérico puede ocultar errores de validación útiles → mitigación: mantener mensajes específicos para errores de cliente conocidos (validation) y genérico para 500; regresión en monitoring/admin ya genéricos → mitigación: test de regresión en el mismo PR; doble forma de error si el middleware no reemplaza al de ruta → mitigación: middleware único al final de la pila y eliminar respuestas ad-hoc.
+- **Verificación (verde→rojo→verde):** verde: monitoring/admin ya genéricos (PR-F #189) pero **no existe** middleware global `(err, req, res, next)`; otras rutas filtran `err.message` (hoy pasa); rojo: test que fuerza un error interno en una ruta cualquiera y verifica que el body es `{ error: 'SERVER_ERROR', message: 'Error interno del servidor' }` y NO incluye `err.message` → hoy falla en rutas sin mapeo; verde: tras el middleware global, el test pasa para toda ruta y monitoring/admin mantienen regresión genérica.
+- **Dependencias:** ISSUE-003. **Satisfecha** (`DONE`, PR-F #189).
 - **DoD:** errores genéricos.
 - **Tasks:** mapear errores; tests.
 
@@ -1356,8 +1371,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** credenciales interceptables; identidad compartida.
 - **Archivos afectados:** `firmware/src/http_poller.h`, `firmware/src/*` (NVS), registro.
 - **Contratos afectados:** `mqtt-contract.md`, `ble-contract.md`.
-- **ADR/DDD:** ADR-028.
-- **Dependencias:** ISSUE-050, ISSUE-001.
+- **ADR/DDD:** ADR-028 (REQUIRED — credenciales MQTT por dispositivo entregadas por registro y persistidas en NVS; fallback solo primer arranque). DDD: NOT_APPLICABLE (cambio de persistencia de credenciales en firmware; no altera el modelo de dominio). Decisión: NONE.
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1) + `ble-contract` — sin cambio de payloads; el registro sigue bajo el flujo ADR-028. Comportamiento: la credencial se persiste en NVS tras el primer registro y no se re-registra por HTTP claro cada boot. Se documenta la nota de transición en `mqtt-contract.md`.
+- **Riesgos:** credenciales en RAM interceptables → mitigación: NVS con fallback solo primer arranque (PR-C avanzó `device_manager`/NVS); re-registro por HTTP claro durante transición → mitigación: TLS en registro (task, requiere PR-L I15) y token de aprovisionamiento (I001); firmware en campo con credenciales viejas → mitigación: re-registro con token de aprovisionamiento (I001) y fallback primer arranque.
+- **Verificación (verde→rojo→verde):** verde: `http_poller.h:78-79` declara `_mqttUser/_mqttPass` en RAM y re-registra por HTTP cada boot (hoy pasa); rojo: test nativo que verifica que las credenciales se leen de NVS y que el fallback solo ocurre en el primer arranque → hoy falla; verde: tras NVS + fallback-first-boot, el test pasa y no hay credenciales MQTT en RAM tras el registro.
+- **Dependencias:** ISSUE-050, ISSUE-001. **Plan de desbloqueo:** I050 `IN_PROGRESS` (PR-C avanzó NVS parcial); **I59 NO cierra I50 — I52 (F2) sigue obligatorio** (F10-5). I001 `DONE`.
 - **DoD:** credenciales en NVS; fallback solo primer arranque.
 - **Tasks:** NVS persist; fallback; TLS en registro.
 
@@ -1536,8 +1554,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** forja de JWT; BD modificada antes de fallar.
 - **Archivos afectados:** `config/env.js`, `services/ConfigurationService.js`, `sync-db.js`, `seed.js`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-029, ADR-032.
-- **Dependencias:** ISSUE-060, ISSUE-061.
+- **ADR/DDD:** ADR-029 (REQUIRED — `ConfigurationService` fail-fast y aislamiento de ambientes; `validate()` debe correr antes de sync/seed) · ADR-032 (INFORMATIVE — validación de configuración; contexto). Decisión: NONE.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: cambio de bootstrap (fail-fast de configuración), no de protocolo.
+- **Riesgos:** fallar antes de sync/seed rompe arranques con config incompleta en dev → mitigación: defaults seguros solo para desarrollo (guard de ambiente) y mensaje claro con la variable faltante; BD modificada antes de fallar → mitigación: `validate()` ejecutado al inicio de `sync-db.js`/`seed.js` antes de tocar el esquema; CI sin `JWT_SECRET` → mitigación: `.env.development`/defaults de desarrollo permitidos por el guard.
+- **Verificación (verde→rojo→verde):** verde: `env.js:58` fallback `'dev-secret-change-in-production'` y `validate()` solo se llama en `server.js:18` (hoy pasa); rojo: test que ejecuta `sync-db.js`/`seed.js` con `NODE_ENV=production` y JWT_SECRET default esperando fallo antes de tocar BD → hoy no falla; verde: tras `validate()` al inicio de sync/seed, el proceso aborta con error claro y no modifica la BD.
+- **Dependencias:** ISSUE-060, ISSUE-061. **Satisfechas** (ambas `DONE`).
 - **DoD:** fail-fast de config.
 - **Tasks:** validate al inicio; tests.
 
@@ -1681,8 +1702,11 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Impacto:** leak accidental.
 - **Archivos afectados:** `firmware/src/config.h`, `.gitignore`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
-- **Dependencias:** ISSUE-076.
+- **ADR/DDD:** N/A — sin ADR/DDD nuevo; contexto de manejo de credenciales cubierto por ADR-028. Justificación: el cambio es de gestión de secretos locales (gitignore + NVS + checklist), no de modelo de dominio. Decisión: NONE.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: cambio de almacenamiento de secretos en el working tree, no de protocolo.
+- **Riesgos:** credenciales ya committeadas en git history → mitigación: checklist + `.gitignore`; scanning automático no disponible hasta I076 (F1) → mitigación: checklist documentado como evidencia del avance parcial; `.env*` ignorado rompe entorno local dev → mitigación: `.env.example` con placeholders documentado.
+- **Verificación (verde→rojo→verde):** verde: `.env*` y `config.h` con credenciales en el working tree (gitignored) (hoy pasa); rojo: test/scan de secretos que verifica que no existen credenciales reales en el árbol → hoy falla; verde: tras `.gitignore` + checklist (y NVS de I59 en PR-M), el scan manual pasa y el avance queda documentado; scanning automático pendiente de I076 (F1).
+- **Dependencias:** ISSUE-076. **Plan de desbloqueo cross-ciclo:** avance parcial en PR-M (NVS + `.gitignore` + checklist); scanning automático con I076 (F1).
 - **DoD:** sin secretos locales; scanning.
 - **Tasks:** NVS; scanning; checklist.
 
@@ -2209,6 +2233,23 @@ Verde→rojo→verde (DoD: test de regresión en el mismo PR para P0/P1): suite 
 - La **desviación frente a la proyección §7.1** del plan Fase 9 (13 DONE en P1) se explica por F9-3: I050/I051 permanecen `IN_PROGRESS` (avance parcial de PR-C/PR-D, cierre diferido con I059/I052), en línea con las entradas de ISSUE-050/051 del backlog.
 
 **Siguiente ciclo:** el Exit Gate P1 se re-evalúa tras (a) resolución de DECISION-011 (I070/I071) y (b) cierre de I050/I051/I065 (F9-3, cross-ciclo). El dashboard queda actualizado (§8 de Fase 8) como línea base para Ciclo 1.
+
+### 9.6 Ciclo 1 — promoción inicial autorizada (2026-08-11)
+
+Autorización formal del usuario (condición 1, `phase-10-cycle-1-plan.md` §11) + gate del ciclo aprobado + DoR 9/9 (`dor-readiness-review-cycle-1.md` — campos checks 2–6 completados en el backlog, patrón Ciclo 0 Revisión 2).
+
+| ISSUE | Fecha | Transición | Evidencia |
+|---|---|---|---|
+| ISSUE-015 (BE-015) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · plan desbloqueo cross-ciclo (cierre diferido I074/I075, F1) · gate Ciclo 1 aprobado |
+| ISSUE-016 (BE-016) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · gate Ciclo 1 aprobado |
+| ISSUE-019 (BE-019) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · gate Ciclo 1 aprobado |
+| ISSUE-024 (BE-024) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · gate Ciclo 1 aprobado |
+| ISSUE-027 (BE-027) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · residual re-baselineado (F10-3) · gate Ciclo 1 aprobado |
+| ISSUE-059 (FW-010) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · plan desbloqueo I050 (I59 no cierra I50; I52 F2, F10-5) · gate Ciclo 1 aprobado |
+| ISSUE-072 (INF-013) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · gate Ciclo 1 aprobado |
+| ISSUE-084 (INF-025) | 2026-08-11 | BACKLOG → READY | DoR 9/9 · plan desbloqueo cross-ciclo (scanning I076, F1) · gate Ciclo 1 aprobado |
+
+**Sin transición:** ISSUE-070 (INF-011) permanece `BLOCKED` (DECISION-011 PENDING — no es prerequisito del Ciclo 1, F10-2); el resto del backlog (86) `BACKLOG`.
 
 ---
 
