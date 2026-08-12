@@ -14,19 +14,25 @@ MQTTClient::MQTTClient()
   _topicBase[0] = '\0';
 }
 
-void MQTTClient::init(const char* deviceId, const char* mqttUser, const char* mqttPass) {
+void MQTTClient::init(const char* deviceId, const char* mqttUser, const char* mqttPass, bool allowDefaultFallback) {
   snprintf(_deviceId, sizeof(_deviceId), "%s", deviceId);
   snprintf(_topicBase, sizeof(_topicBase), "mush2/%s", deviceId);
 
-  // ADR-028: Use provisioned credentials if provided, else fallback to compile-time defaults
+  // ADR-028 / ISSUE-059: credenciales provisionadas (NVS o registro) si se
+  // entregan; fallback a defaults de config.h SOLO si allowDefaultFallback
+  // (primer arranque). En cualquier otro caso, sin identidad compartida.
   if (mqttUser && mqttUser[0] != '\0') {
     snprintf(_mqttUser, sizeof(_mqttUser), "%s", mqttUser);
     snprintf(_mqttPass, sizeof(_mqttPass), "%s", mqttPass);
     Serial.printf("[MQTT] Credenciales provisionadas para %s\n", _mqttUser);
-  } else {
+  } else if (allowDefaultFallback) {
     snprintf(_mqttUser, sizeof(_mqttUser), "%s", MQTT_USER);
     snprintf(_mqttPass, sizeof(_mqttPass), "%s", MQTT_PASS);
-    Serial.printf("[MQTT] Usando credenciales por defecto (fallback)\n");
+    Serial.printf("[MQTT] Usando credenciales por defecto (fallback primer arranque)\n");
+  } else {
+    _mqttUser[0] = '\0';
+    _mqttPass[0] = '\0';
+    Serial.printf("[MQTT] Sin credenciales (no fallback) — identidad requerida por ADR-028\n");
   }
 
   #if MQTT_USE_TLS == 1

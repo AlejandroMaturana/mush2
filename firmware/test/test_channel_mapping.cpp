@@ -2,9 +2,6 @@
 
 #include "channel_mapping.h"
 
-void setUp(void) {}
-void tearDown(void) {}
-
 // CH-T08 (EDD-006 §8): cada GPIO (11, 12, 13, 14) se asigna a exactamente un CH.
 void test_CH_T08_gpio_unique_per_channel(void) {
   const uint8_t pins[CHANNEL_PINS_COUNT] = {
@@ -38,11 +35,4 @@ void test_CH_T09_gpio_bijective(void) {
     }
     TEST_ASSERT_EQUAL_INT(1, count);
   }
-}
-
-int main(int argc, char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_CH_T08_gpio_unique_per_channel);
-  RUN_TEST(test_CH_T09_gpio_bijective);
-  return UNITY_END();
 }
