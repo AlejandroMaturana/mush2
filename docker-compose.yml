@@ -10,14 +10,14 @@
 
 services:
   # ── MQTT Broker ────────────────────────────────────────────────
-  # Port 8883 (MQTTS) expuesto al host para firmware.
-  # Port 1883 (MQTT) solo accesible dentro de la red Docker.
+  # Port 8883 (MQTTS, TLS) expuesto al host para firmware.
+  # Port 1883 (MQTT) NO se publica al host — solo accesible dentro de la
+  # red Docker (ISSUE-075/PR-A): el backend bridge usa MQTTS en 8883.
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mush2-mosquitto
     restart: unless-stopped
     ports:
-      - "1883:1883"
       - "8883:8883"
     volumes:
       - ./docker/mosquitto/prod:/mosquitto/config:ro

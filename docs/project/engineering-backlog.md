@@ -687,13 +687,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** guard de propiedad central; tests negativos.
 
 #### ISSUE-006 — DELETE /devices sin cascada ni transacción (BE-006) — P1
-`Programa 4 · EPIC-DATA-INTEGRITY · Ini 4.1`
+`Programa 4 · EPIC-DATA-INTEGRITY · Ini 4.1` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-C)
 - **Objetivo:** borrado transaccional con cascada de `Event`/`Alarm`/`Sensor` + test de integración.
 - **Problema actual:** `routes/api.js:488-519` borra Device sin transacción; `sync-db.js` sin cascada FK.
 - **Impacto:** huérfanos y fallos parciales.
 - **Archivos afectados:** `routes/api.js`, modelos, migración.
 - **Contratos afectados:** `api-contract.md`.
-- **ADR/DDD:** ADR-005 · DDD-003.
+- **ADR/DDD:** ADR-005 (REQUIRED — PostgreSQL/Sequelize; la integridad referencial y transaccional es parte del modelo de datos) · DDD-003 (INFORMATIVE — entidades Device/Event/Alarm/Sensor; la cascada preserva el agregado).
+- **Contrato/versión:** `api-contract v1` — `DELETE /devices/{id}`; el fix cumple el comportamiento ya documentado (borrado del dispositivo con su historial). Sin cambio de versión.
+- **Riesgos:** borrado masivo con Event/Alarm/Sensor → mitigación: transacción + cascada explícita (`onDelete:'CASCADE'` o borrado ordenado); FK huérfanas ya presentes en datos → mitigación: verificación previa a aplicar restricción; regresión en lecturas de eventos tras el borrado → mitigación: test de integración en el mismo PR.
+- **Verificación (verde→rojo→verde):** verde: `routes/api.js:488-519` borra Device sin transacción y `sync-db.js` sin cascada FK (hoy pasa); rojo: test de integración que borra un Device con Event/Alarm/Sensor y verifica atomicidad (fallo parcial → rollback total) y ausencia de huérfanos → hoy falla; verde: tras transacción + cascada, el test pasa.
 - **Dependencias:** ISSUE-012 (tipos), ISSUE-061 (migraciones P1.2).
 - **DoD:** transacción + cascada + test de integración.
 - **Tasks:** transacción; `onDelete:'CASCADE'` o borrado explícito; migración; test.
@@ -759,13 +762,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** cifrar; enmascarar; test.
 
 #### ISSUE-012 — Desajuste deviceId string vs INTEGER (BE-012) — P1
-`Programa 2 · EPIC-CONTRACTS · Ini 2.2` (prioridad real P1; etiqueta de roadmap corregida, ver Fase 1 §7)
+`Programa 2 · EPIC-CONTRACTS · Ini 2.2` (prioridad real P1; etiqueta de roadmap corregida, ver Fase 1 §7) · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-C)
 - **Objetivo:** alinear tipos en el boundary; tests de conformidad de filtros.
 - **Problema actual:** `models/Event.js`/`Alarm.js` INTEGER; rutas pasan strings; SQL crudo castea inconsistente.
 - **Impacto:** filtros `deviceId` vacíos/erróneos.
 - **Archivos afectados:** `models/Event.js`, `models/Alarm.js`, `routes/api.js`, tests de conformidad.
 - **Contratos afectados:** `api-contract.md`.
-- **ADR/DDD:** — · DDD-001.
+- **ADR/DDD:** DDD-001 (INFORMATIVE — el agregado Device/Event/Alarm; el tipo del identificador en el boundary es una decisión de modelado). ADR: NOT_APPLICABLE — cambio de tipos en el boundary de API, sin nueva decisión de arquitectura.
+- **Contrato/versión:** `api-contract v1` — filtros `deviceId` en query string como cadena; el fix alinea el tipo en el boundary. Sin cambio de versión (la representación wire no cambia).
+- **Riesgos:** SQL crudo con casteo inconsistente → mitigación: tipar en el boundary (parseo a INTEGER en modelos) + tests de conformidad de filtros; deviceId existente como INTEGER en BD → mitigación: Sequelize cast; filtros vacíos/erróneos en clientes → mitigación: test de filtro por `?deviceId=1`.
+- **Verificación (verde→rojo→verde):** verde: `models/Event.js`/`Alarm.js` INTEGER y rutas pasan strings → filtros vacíos/erróneos (hoy pasa); rojo: test de conformidad que filtra `?deviceId=1` y espera los eventos del device 1 → hoy devuelve vacío; verde: tras alinear tipos en el boundary, el filtro devuelve los eventos correctos.
 - **Dependencias:** ISSUE-006.
 - **DoD:** tipos alineados; filtros correctos; tests de conformidad.
 - **Tasks:** alinear tipos; test de filtros.
@@ -795,7 +801,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** acotar limit; joins; índices.
 
 #### ISSUE-015 — MQTT en claro y sin ACL por dispositivo (BE-015) — P1
-`Programa 1 · EPIC-BROKER · Ini 1.6`
+`Programa 1 · EPIC-BROKER · Ini 1.6` · Estado: **DONE** (PR-A, 2026-08-12 — cierre cross-ciclo; broker TLS 8883 activo + ACL alarm + compose solo 8883; evidencia handshake TLS local)
 - **Objetivo:** `mqtts://` por defecto, TLS obligatorio, identidad por dispositivo, fallar ante no-TLS en prod.
 - **Problema actual:** `env.js:80` default `mqtt://localhost:1883`; `mqttBridge.js` credencial única `backend_bridge`; ACL no acotadas.
 - **Impacto:** streams legibles/inyectables.
@@ -1018,13 +1024,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **PR-C (2026-08-09):** `shared/components/RequireRole.jsx` (+ `ForbiddenPage`); ruta `/forbidden` en `protectedRoutes`; guards en rutas (`/operations/logs` → ADMIN/SUPER_ADMIN, `/system/settings/system` → SUPER_ADMIN); `SettingsNav.jsx` oculta "Sistema" salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`; tests RequireRole 4 PASS + suite frontend completa 9 suites/63 tests + `pnpm build` OK.
 
 #### ISSUE-031 — Registro roto + escalada de rol (FE-003) — P1
-`Programa 1 · EPIC-RBAC-UI · Ini 1.11`
+`Programa 1 · EPIC-RBAC-UI · Ini 1.11` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-D)
 - **Objetivo:** corregir llamada `[username,password]`; role asignado en backend.
 - **Problema actual:** `AuthModal.jsx:44-46` invoca `register(username,email,password)` vs firma `register(username,password,role)`.
 - **Impacto:** registro roto o escalada SUPER_ADMIN.
 - **Archivos afectados:** `frontend/src/features/auth/AuthModal.jsx`, `frontend/src/shared/api/auth.js`, `backend/src/routes/api.js` (registro).
 - **Contratos afectados:** `api-contract.md`.
-- **ADR/DDD:** ADR-007.
+- **ADR/DDD:** ADR-007 (INFORMATIVE — RBAC/JWT; el registro no debe aceptar `role` del cliente; el rol lo asigna el servidor). DDD: NOT_APPLICABLE (corrección de firma de llamada; sin cambio de modelo de dominio).
+- **Contrato/versión:** `api-contract v1` — `POST /auth/register` con `{username, email, password}`; sin `role` del cliente. El fix alinea el frontend al contrato (firma y orden de argumentos). Sin cambio de versión.
+- **Riesgos:** cambiar la firma del front rompe otros call sites de `register` → mitigación: búsqueda de usos + test de flujo de registro; escalada de rol → mitigación: backend ya rechaza `role` (verificado: `/register` no lo acepta) y el fix elimina el argumento del front; solape de 3 capas → mitigación: alinear `AuthModal.jsx` ↔ `api/auth.js` ↔ backend en el mismo PR (F11-2).
+- **Verificación (verde→rojo→verde):** verde: `AuthModal.jsx:44-46` invoca `register(username,email,password)` vs firma `register(username,password,role)` → el registro falla o crea sesión inválida (hoy pasa el bug); rojo: test frontend que completa el registro y espera sesión autenticada correcta → hoy falla; verde: tras alinear la firma, el registro funciona y `role` nunca viaja del cliente.
 - **Dependencias:** backend rechaza `role` en registro.
 - **DoD:** registro correcto; role nunca del cliente.
 - **Tasks:** corregir firma; backend rechaza role; tests.
@@ -1042,13 +1051,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** singleton; backoff; heartbeat; tests con mock EventSource.
 
 #### ISSUE-033 — Refresh sin single-flight (FE-005) — P1
-`Programa 5 · EPIC-AUTH-FLOW · Ini 5.2`
+`Programa 5 · EPIC-AUTH-FLOW · Ini 5.2` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-D)
 - **Objetivo:** memorizar promesa de refresh; logout controlado.
 - **Problema actual:** `axiosInstance.js:19-34` N llamadas a `/auth/refresh`; redirect hard.
 - **Impacto:** logouts aleatorios.
 - **Archivos afectados:** `frontend/src/shared/api/axiosInstance.js`, `app/providers/AuthProvider.jsx`.
 - **Contratos afectados:** `api-contract.md`.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — corrección de cliente HTTP (single-flight de refresh); sin ADR/DDD nuevo. Contexto: ADR-007 (INFORMATIVE — sesión JWT; el refresh forma parte del flujo de auth).
+- **Contrato/versión:** `api-contract v1` — `POST /auth/refresh`; comportamiento del cliente (una llamada en vuelo). Sin cambio de versión (el endpoint no cambia).
+- **Riesgos:** llamadas concurrentes durante logout → mitigación: cola de fallidos + logout controlado (una promesa compartida); token expirado durante el vuelo → mitigación: invalidar caché y re-redirect; regresión en otros interceptores → mitigación: test del interceptor en el mismo PR.
+- **Verificación (verde→rojo→verde):** verde: `axiosInstance.js:19-34` dispara N llamadas a `/auth/refresh` ante 401 concurrentes (hoy pasa); rojo: test que dispara 3 llamadas con 401 y espera exactamente 1 llamada a `/auth/refresh` → hoy hace 3; verde: tras single-flight + logout controlado, solo 1 llamada en vuelo y logout explícito.
 - **Dependencias:** ISSUE-029.
 - **DoD:** una sola llamada de refresh en vuelo; logout controlado.
 - **Tasks:** single-flight; cola fallida; tests.
@@ -1126,13 +1138,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** eslint; script; gate CI.
 
 #### ISSUE-040 — Tests escasos e inseguros (FE-012) — P2
-`Programa 2 · EPIC-FE-TESTS · Ini 2.5`
+`Programa 2 · EPIC-FE-TESTS · Ini 2.5` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-F)
 - **Objetivo:** tests de auth/refresh/SSE; corregir los que codifican el patrón inseguro.
 - **Problema actual:** 7 archivos; `AuthProvider.test.jsx` valida localStorage.
 - **Impacto:** refactors sin red.
 - **Archivos afectados:** `frontend/src/**/*.test.jsx`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — ampliación de tests de frontend; sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: los tests conforman contra `api-contract v1` vigente (auth/refresh/SSE).
+- **Riesgos:** tests que codifican el patrón inseguro pasan en verde → mitigación: corregir asserts + mocks (token en memoria, no localStorage); flakiness con EventSource → mitigación: mock determinista de EventSource; solape con TST-004 (I108) → mitigación: misma PR (F11-4).
+- **Verificación (verde→rojo→verde):** verde: `AuthProvider.test.jsx` valida localStorage (hoy pasa); rojo: test de flujo auth/SSE que verifica token en memoria y reconexión → hoy falla/ausente; verde: tras cubrir auth/refresh/SSE con patrón seguro, la suite pasa.
 - **Dependencias:** ISSUE-029, ISSUE-033.
 - **DoD:** tests de flujo auth/SSE; patrones seguros.
 - **Tasks:** tests; mock EventSource.
@@ -1427,25 +1442,31 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** tags retroactivos; merge; automatizar.
 
 #### ISSUE-063 — PG18 en CI vs PG16 runtime (INF-004) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3`
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
 - **Objetivo:** PG16 en CI, compose y docs.
 - **Problema actual:** `ci.yml:71` postgres:18; compose/docs postgres:16.
 - **Impacto:** tests verdes que fallan en prod.
 - **Archivos afectados:** `.github/workflows/ci.yml`, `docker-compose.yml`, `deployment.md`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — consistencia de entorno (versión de PostgreSQL); sin ADR/DDD nuevo. Contexto: ADR-029 (INFORMATIVE — aislamiento de ambientes; runtime validado = runtime de prod).
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de versión de la base de datos de CI/entorno, no de protocolo.
+- **Riesgos:** features de PG18 usadas en migraciones → mitigación: validar suite completa contra PG16 local; drift entre CI y prod → mitigación: una sola versión PG (16) en CI, compose y docs; migraciones no reversibles → mitigación: verificar con la versión objetivo.
+- **Verificación (verde→rojo→verde):** verde: `ci.yml:71` `postgres:18` y compose/docs `postgres:16` (hoy pasa, inconsistente); rojo: check de CI/compose que exige una única versión PG → hoy falla; verde: tras fijar 16 en todos los lugares, un solo PG.
 - **Dependencias:** ISSUE-064 (Node).
 - **DoD:** una sola versión PG.
 - **Tasks:** fijar 16; actualizar docs.
 
 #### ISSUE-064 — Node 24 CI / 22 Docker / 20+ docs (INF-005) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3`
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
 - **Objetivo:** unificar Node 22 LTS.
 - **Problema actual:** `ci.yml:12` 24; `Dockerfile:2,19` node:22-alpine; docs 20+.
 - **Impacto:** runtime validado ≠ prod.
 - **Archivos afectados:** `.github/workflows/ci.yml`, `Dockerfile`, docs.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — consistencia de entorno (versión de Node); sin ADR/DDD nuevo. Contexto: ADR-029 (INFORMATIVE — runtime validado = runtime de prod).
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de versión de Node de CI/Docker/docs, no de protocolo.
+- **Riesgos:** features de Node 24 usadas en el código → mitigación: validar suite completa con Node 22; CI en 24 vs Docker 22 → mitigación: unificar a 22 LTS en todos los lugares; dependencias con engines 20+ → mitigación: docs actualizadas a 20+ con runtime recomendado 22.
+- **Verificación (verde→rojo→verde):** verde: `ci.yml` `NODE_VERSION` 24 vs `Dockerfile` `node:22-alpine` y docs 20+ (hoy pasa, inconsistente); rojo: check de versión única de Node en CI/Docker/docs → hoy falla; verde: tras unificar 22, runtime validado = prod.
 - **Dependencias:** ISSUE-072 (lockfile).
 - **DoD:** Node 22 en todos lados.
 - **Tasks:** unificar 22; docs.
@@ -1468,13 +1489,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **PR-G (2026-08-10, plan de despliegue):** `docs/operations/broker-deployment.md` (arquitectura, pasos, secretos, rollback, migración, verificación; host condicionado a DECISION-011); `docker/mosquitto/prod/acl.conf` alineado con contrato (`alarm`, `ota/#`, `actuators`); `mosquitto.prod.conf` con bloque TLS 8883 documentado/comentado listo para activar (I75); `mqtt-contract.md` §2.3 Entorno de producción; ADR-023 anexo SUPERSESIÓN (autoridad de despliegue DECISION-006); REG-008 (13 tests) verde; `render.yaml` sin cambios (envVars MQTT se fijan al ejecutar el plan — no inventar valores). Sin deploy en el ciclo; ISSUE-065 permanece `IN_PROGRESS` (F9-3).
 
 #### ISSUE-066 — Sin script test en raíz (INF-007) — P3
-`Programa 2 · EPIC-CI-GATES · Ini 2.6`
+`Programa 2 · EPIC-CI-GATES · Ini 2.6` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-E)
 - **Objetivo:** script `test` en raíz (backend+frontend).
 - **Problema actual:** `package.json:7` echo error.
 - **Impacto:** sin puerta monorepo.
 - **Archivos afectados:** `package.json` (root).
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — orquestación de tests monorepo (script raíz); sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: script de raíz que orquesta suites existentes; no es protocolo.
+- **Riesgos:** suite backend y frontend rotas por separado → mitigación: arreglar deps del ciclo (I79, REG-002) antes de integrar el script; tiempo de CI → mitigación: orquestación con scripts paralelos/por paquete; dependencia de I079 (FE en CI) → mitigación: PR-E en Oleada 2 (F11-6).
+- **Verificación (verde→rojo→verde):** verde: `package.json:7` `echo "Error: no test specified"` (hoy pasa el echo); rojo: `pnpm test` en raíz que espera ejecutar las suites backend+frontend → hoy falla; verde: tras el script, `pnpm test` raíz ejecuta y pasa ambas suites.
 - **Dependencias:** ISSUE-079 (FE en CI).
 - **DoD:** `pnpm test` raíz verde.
 - **Tasks:** script; integración suites.
@@ -1564,50 +1588,62 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** validate al inicio; tests.
 
 #### ISSUE-073 — Lockfile no estricto (INF-014) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3`
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
 - **Objetivo:** `--frozen-lockfile` en Docker y CI; pnpm con corepack.
 - **Problema actual:** `Dockerfile:12,28` fallback; `ci.yml:96,120` install plano.
 - **Impacto:** builds no reproducibles.
 - **Archivos afectados:** `Dockerfile`, `.github/workflows/ci.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — reproducibilidad de builds (lockfile); sin ADR/DDD nuevo. Contexto: ADR-029 (INFORMATIVE — entorno reproducible).
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de instalación de dependencias (lockfile estricto), no de protocolo.
+- **Riesgos:** lockfile desactualizado rompe CI → mitigación: regenerar lockfiles con pnpm + corepack antes de aplicar `--frozen-lockfile`; pnpm no disponible → mitigación: `corepack enable`/`corepack use pnpm@version`; builds no reproducibles → mitigación: `--frozen-lockfile` en Docker y CI.
+- **Verificación (verde→rojo→verde):** verde: `Dockerfile:12,28` con fallback y `ci.yml:96,120` install plano (hoy pasa, no estricto); rojo: CI con `--frozen-lockfile` que falla si hay drift de lockfile → hoy no lo aplica; verde: tras frozen-lockfile + corepack, installs reproducibles.
 - **Dependencias:** ISSUE-064.
 - **DoD:** installs reproducibles.
 - **Tasks:** frozen-lockfile; corepack.
 
 #### ISSUE-074 — MQTT TLS deshabilitado y ACL sin alarm (INF-015) — P1
-`Programa 1 · EPIC-BROKER · Ini 1.6`
+`Programa 1 · EPIC-BROKER · Ini 1.6` · Estado: **DONE** (PR-A, 2026-08-12 — TLS 8883 activo + ACL alarm; verificado green→red→green y handshake local)
 - **Objetivo:** activar 8883 con certs reales; añadir `alarm` a ACL prod.
 - **Problema actual:** listener 8883 comentado; `acl.conf` prod sin `mush2/+/alarm`.
 - **Impacto:** tráfico en claro; alarmas no fluyen.
 - **Archivos afectados:** `docker/mosquitto/prod/mosquitto.prod.conf`, `docker/mosquitto/prod/acl.conf`, certs.
 - **Contratos afectados:** `mqtt-contract.md`.
-- **ADR/DDD:** ADR-023.
+- **ADR/DDD:** ADR-023 (REQUIRED — infraestructura MQTT segura: TLS 8883 obligatorio y ACL por topic) · ADR-028 (INFORMATIVE — identidad por dispositivo; condiciona el modelo de credenciales en ACL). DDD: NOT_APPLICABLE (configuración de broker; no altera el modelo de dominio). Decisión: DECISION-006 · ACCEPTED (contenedor Mosquitto + TLS 8883).
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1) — activación del transporte TLS 8883 definido en §2.3 (entorno de producción) y topic `mush2/+/alarm` ya documentado. Sin cambio de versión: topics y payloads intactos; se actualiza el estado del despliegue, no el contrato.
+- **Riesgos:** certs reales en el árbol → mitigación: certs se provisionan vía plan de despliegue/secretos (`broker-deployment.md`), nunca en repo; listener 8883 sin cert válido rompe el arranque de Mosquitto → mitigación: validar certs antes de activar el listener y test local de handshake TLS; tráfico en claro durante la transición → mitigación: activar TLS antes de retirar 1883 (I075); ACL `alarm` faltante → mitigación: alinear con `mqtt-contract` y verificar con mosquitto (REG-008).
+- **Verificación (verde→rojo→verde):** verde: `mosquitto.prod.conf` con listener 8883 comentado y `acl.conf` prod sin `mush2/+/alarm` (hoy pasa, falencias presentes); rojo: test local de Mosquitto que espera listener TLS 8883 funcional y ACL que permite `mush2/+/alarm` → hoy falla; verde: tras activar certs + listener + ACL, handshake TLS 8883 OK y `alarm` autorizado.
 - **Dependencias:** ISSUE-065.
 - **Decisión:** DECISION-006 · ACCEPTED
 - **DoD:** TLS 8883 activo; ACL con alarm.
 - **Tasks:** certs; listener; ACL.
 
 #### ISSUE-075 — compose expone 1883 al host (INF-016) — P2
-`Programa 1 · EPIC-BROKER · Ini 1.6`
+`Programa 1 · EPIC-BROKER · Ini 1.6` · Estado: **DONE** (PR-A, 2026-08-12 — compose solo 8883 TLS; verificado green→red→green)
 - **Objetivo:** no publicar 1883 al host; solo 8883 TLS.
 - **Problema actual:** `docker-compose.yml:20-21` `1883:1883`.
 - **Impacto:** broker en claro alcanzable.
 - **Archivos afectados:** `docker-compose.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-023.
+- **ADR/DDD:** ADR-023 (REQUIRED — infraestructura MQTT segura: no exponer el broker en claro al host). DDD: NOT_APPLICABLE (configuración de compose; no altera el modelo de dominio). Decisión: DECISION-006 · ACCEPTED.
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1) — §2.3 solo 8883 TLS expuesto. Sin cambio de versión (transporte ya definido; se elimina la exposición en claro).
+- **Riesgos:** clientes legacy aún en 1883 → mitigación: migrar a `mqtts://` antes de retirar el puerto (I15/I074); puerto 8883 ocupado en el host → mitigación: configuración explícita de bind; tráfico en claro alcanzable → mitigación: quitar `1883:1883` y publicar solo `8883`.
+- **Verificación (verde→rojo→verde):** verde: `docker-compose.yml:20-21` expone `1883:1883` al host (hoy pasa, inseguro); rojo: verificación de compose que exige que NO se publique 1883 y sí 8883 → hoy falla; verde: tras quitar 1883 y publicar 8883, solo TLS alcanzable.
 - **Dependencias:** ISSUE-074.
 - **DoD:** solo 8883 expuesto.
 - **Tasks:** quitar 1883; publicar 8883.
 
 #### ISSUE-076 — CI sin lint/scanning/audit (INF-017) — P3
-`Programa 2 · EPIC-CI-GATES · Ini 2.6`
+`Programa 2 · EPIC-CI-GATES · Ini 2.6` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-E)
 - **Objetivo:** `pnpm audit`/osv-scanner + gitleaks en PR + lint.
 - **Problema actual:** sin lint, sin gitleaks, sin Dependabot.
 - **Impacto:** secretos/vulnerabilidades no detectados.
 - **Archivos afectados:** `.github/workflows/ci.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — gates de CI (audit/scanning/lint); sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de política de CI (gates), no de protocolo.
+- **Riesgos:** gitleaks marca falsos positivos (placeholders/ejemplos) → mitigación: allowlist documentada para valores no secretos; `pnpm audit` con vulnerabilidades sin fix → mitigación: osv-scanner + Dependabot con política de severidad; CI más lento → mitigación: jobs separados y caché; secretos reales aún en `config.h` (I50) → mitigación: el gate de scanning se activa cuando I50 avanza a placeholders (PR-G).
+- **Verificación (verde→rojo→verde):** verde: CI sin lint, sin gitleaks, sin audit (hoy pasa, gates ausentes); rojo: gitleaks en PR que detecta secretos reales en el árbol → hoy no se ejecuta; verde: tras los gates, un PR con secreto real queda bloqueado y `pnpm audit`/osv-scanner corren en cada PR.
 - **Dependencias:** ISSUE-066.
 - **DoD:** gates de audit/scanning.
 - **Tasks:** audit; gitleaks; lint compartido.
@@ -1637,25 +1673,31 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** regenerar; validar CI.
 
 #### ISSUE-079 — Imágenes base con tags flotantes (INF-020) — P3
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3`
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
 - **Objetivo:** pin a digest o renovación programada.
 - **Problema actual:** `node:22-alpine`, `postgres:16-alpine`, `eclipse-mosquitto:2`.
 - **Impacto:** builds no reproducibles.
 - **Archivos afectados:** `Dockerfile`, `docker-compose.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — reproducibilidad de builds (digests de imágenes base); sin ADR/DDD nuevo. Contexto: ADR-029 (INFORMATIVE — entorno reproducible).
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de imágenes base de Docker, no de protocolo.
+- **Riesgos:** digest inexistente/retirado rompe build → mitigación: renovación programada (Dependabot) y verificación de que el digest existe; CVE en imagen pinneada → mitigación: schedule de actualización y alerta de seguridad; tags flotantes → mitigación: pin a digest o política de renovación explícita.
+- **Verificación (verde→rojo→verde):** verde: `node:22-alpine`, `postgres:16-alpine`, `eclipse-mosquitto:2` con tags flotantes (hoy pasa, no reproducible); rojo: check de digests en `Dockerfile`/`docker-compose.yml` → hoy falla; verde: tras pin a digest (o renovación programada), builds reproducibles.
 - **Dependencias:** ISSUE-073.
 - **DoD:** imágenes pinneadas.
 - **Tasks:** digests; renovación.
 
 #### ISSUE-080 — Frontend en CI solo compila (INF-021) — P2
-`Programa 2 · EPIC-CI-GATES · Ini 2.6`
+`Programa 2 · EPIC-CI-GATES · Ini 2.6` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-E; fusionado con ISSUE-109)
 - **Objetivo:** `pnpm test` en job frontend.
 - **Problema actual:** `ci.yml:122-123` solo build.
 - **Impacto:** regresiones UI sin detectar.
 - **Archivos afectados:** `.github/workflows/ci.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — tests de frontend en CI; sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de job de CI (ejecutar `pnpm test` FE), no de protocolo.
+- **Riesgos:** tests FE flakies en CI → mitigación: tests deterministas (mock de timers/EventSource); tiempo de CI → mitigación: job separado con caché; suite FE rota → mitigación: PR-F (I040/I108) antes o junto al job; fusión con TST-005 (I109) → mitigación: una sola implementación en PR-E (F11-5).
+- **Verificación (verde→rojo→verde):** verde: `ci.yml:122-123` job frontend solo build (hoy pasa, sin tests); rojo: CI frontend que exige `pnpm test` → hoy no se ejecuta; verde: tras añadir el test al job, regresiones UI se detectan en CI.
 - **Dependencias:** ISSUE-066.
 - **DoD:** tests frontend en CI.
 - **Tasks:** añadir test.
@@ -1685,13 +1727,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** changesets/action.
 
 #### ISSUE-083 — Toolchain firmware no pinneada (INF-024) — P3
-`Programa 8 · EPIC-FW-TOOLCHAIN · Ini 8.5`
+`Programa 8 · EPIC-FW-TOOLCHAIN · Ini 8.5` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
 - **Objetivo:** fijar PlatformIO/python; cache.
 - **Problema actual:** `ci.yml:24,27` python 3.12 + pip platformio latest.
 - **Impacto:** builds no reproducibles.
 - **Archivos afectados:** `.github/workflows/ci.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — reproducibilidad del toolchain firmware (PlatformIO/python); sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: el cambio es de versión del toolchain de CI, no de protocolo.
+- **Riesgos:** pin de versión que rompe builds → mitigación: fijar versión conocida y verificar build antes de subir; caché obsoleta → mitigación: key de caché con hash del entorno; python 3.12 vs 3.11 → mitigación: `setup-python` con versión fija (3.11).
+- **Verificación (verde→rojo→verde):** verde: `ci.yml:24,27` python 3.12 + `pip install platformio` latest (hoy pasa, no reproducible); rojo: check de versiones fijas de toolchain en CI → hoy falla; verde: tras fijar PlatformIO/python + cache, builds reproducibles.
 - **Dependencias:** ninguna.
 - **DoD:** toolchain pinneada.
 - **Tasks:** fijar versiones; cache.
@@ -1946,13 +1991,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** renombrar; actualizar docs.
 
 #### ISSUE-104 — Broker prod ausente / credenciales compartidas (DOC-020) — P2
-`Programa 1 · EPIC-BROKER · Ini 1.6` (fusionado en ISSUE-065)
+`Programa 1 · EPIC-BROKER · Ini 1.6` (fusionado en ISSUE-065) · Estado: **DONE** (PR-A, 2026-08-12 — §10 re-baseline + docs de broker al estado real)
 - **Objetivo:** tratado dentro de ISSUE-065.
 - **Problema actual:** ADR-023/028 no desplegados; credenciales compartidas.
 - **Impacto:** mismo defecto que INF-006.
 - **Archivos afectados:** `mosquitto.prod.conf`, `acl.conf`.
 - **Contratos afectados:** `mqtt-contract.md`.
-- **ADR/DDD:** ADR-023, ADR-028.
+- **ADR/DDD:** ADR-023 (REQUIRED — infraestructura MQTT segura: broker de producción con TLS e identidad por dispositivo) · ADR-028 (REQUIRED — identidad por dispositivo; condiciona el poblar de credenciales y ACL). DDD: NOT_APPLICABLE (configuración de broker y docs; sin impacto en el modelo de dominio).
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1) — §2.3 Entorno de producción; sin cambio de versión. Este ISSUE documental acompaña a ISSUE-065 (fusionado) y a I074/I075.
+- **Riesgos:** doc contradictoria con el plan de despliegue → mitigación: alinear con `broker-deployment.md` y PR-A; fusión con I065 → mitigación: tratado dentro de PR-A; drift tras el despliegue → mitigación: re-baseline de §10 (dashboard) en el mismo PR.
+- **Verificación (verde→rojo→verde):** verde: ADR-023/028 sin broker desplegado y docs de broker desactualizadas (hoy pasa, defecto presente); rojo: documentación que verifica broker prod TLS e identidad por dispositivo → hoy falla; verde: tras PR-A, `mosquitto.prod.conf`/`acl.conf` reflejan el estado real y el dashboard re-baselineado.
 - **Dependencias:** ISSUE-065.
 - **DoD:** broker con identidad por dispositivo.
 - **Tasks:** dentro de ISSUE-065.
@@ -1960,13 +2008,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 ### 4.6 Testing (TST-001…TST-006) → ISSUE-105…110
 
 #### ISSUE-105 — Firmware con 1 solo test file (TST-001) — P1
-`Programa 2 · EPIC-FW-NATIVE · Ini 2.4` (también P6.7)
+`Programa 2 · EPIC-FW-NATIVE · Ini 2.4` (también P6.7) · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-G)
 - **Objetivo:** tests nativos ≥60 % en módulos críticos.
 - **Problema actual:** 1 archivo para ~30 de producción.
 - **Impacto:** regresiones FW no detectadas.
 - **Archivos afectados:** `firmware/test/**`, `firmware/src/**`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-012 · DDD-005.
+- **ADR/DDD:** ADR-012 (INFORMATIVE — testing nativo del firmware; contexto de la estrategia de pruebas) · DDD-005 (INFORMATIVE — módulos de dominio de firmware; los críticos a cubrir). 
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: ampliación de tests nativos; no es protocolo.
+- **Riesgos:** suite Unity en native no cubre HW (sensores/actuadores) → mitigación: cobertura de módulos puros (control engine, NVS, parsers) ≥60 % en críticos; CI sin `pio test` → mitigación: integrar el runner en CI (PR-E/I109-I110, F11-8); tests lentos → mitigación: entorno native solo, sin dependencia de HW.
+- **Verificación (verde→rojo→verde):** verde: 1 solo archivo de test para ~30 módulos de producción (hoy pasa, cobertura baja); rojo: runner que falla si la cobertura en módulos críticos es <60 % → hoy falla; verde: tras ampliar la suite Unity, cobertura ≥60 % en críticos y CI ejecuta `pio test`.
 - **Dependencias:** ISSUE-109 (TST-006 gate), P6.7.
 - **DoD:** cobertura ≥60 % en críticos.
 - **Tasks:** suite Unity; CI.
@@ -1999,13 +2050,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** tests de ruta real.
 
 #### ISSUE-108 — FE tests codifican patrón inseguro (TST-004) — P2
-`Programa 2 · EPIC-FE-TESTS · Ini 2.5`
+`Programa 2 · EPIC-FE-TESTS · Ini 2.5` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-F)
 - **Objetivo:** corregir tests; cubrir useSSE/axiosInstance.
 - **Problema actual:** `AuthProvider.test.jsx` valida localStorage.
 - **Impacto:** red insegura.
 - **Archivos afectados:** `frontend/src/**/*.test.jsx`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — corrección de tests de frontend; sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: los tests conforman contra `api-contract v1` vigente; se corrige el patrón de almacenamiento, no el contrato.
+- **Riesgos:** asserts que validan el patrón inseguro → mitigación: patrón seguro (token en memoria, no localStorage) y asserts de estado, no de storage; solape con FE-012 (I040) → mitigación: misma PR (F11-4); flakiness de EventSource → mitigación: mock determinista.
+- **Verificación (verde→rojo→verde):** verde: `AuthProvider.test.jsx` valida localStorage (hoy pasa, patrón inseguro); rojo: test que verifica que el token NO se persiste en localStorage y que los flujos auth/SSE usan la ruta segura → hoy falla; verde: tras corregir, tests seguros y ampliados a useSSE/axiosInstance.
 - **Dependencias:** ISSUE-029.
 - **DoD:** tests seguros y ampliados.
 - **Tasks:** actualizar tests; cubrir flujos.
@@ -2023,13 +2077,16 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** dentro de ISSUE-080.
 
 #### ISSUE-110 — Sketches HW no corren en CI (TST-006) — P3
-`Programa 2 · EPIC-CI-GATES · Ini 2.6` (asignado; gates)
+`Programa 2 · EPIC-CI-GATES · Ini 2.6` (asignado; gates) · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-E)
 - **Objetivo:** 9 sketches `S3_test-*` en CI o declarados fuera de gate.
 - **Problema actual:** no corren en CI.
 - **Impacto:** sin regresión HW.
 - **Archivos afectados:** `firmware/S3_test-*`, `ci.yml`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** —.
+- **ADR/DDD:** NOT_APPLICABLE — compilación/ejecución de sketches HW en CI; sin ADR/DDD nuevo.
+- **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: política de CI para sketches; no es protocolo.
+- **Riesgos:** sketches requieren HW real (no ejecutables en runner) → mitigación: compilarlos en CI (build) y ejecutar solo los puros, o declararlos fuera de gate con política explícita; tiempo de CI → mitigación: job separado/opcional; fusionado con gates → mitigación: dep ISSUE-066 (PR-E).
+- **Verificación (verde→rojo→verde):** verde: 9 sketches `S3_test-*` sin correr en CI (hoy pasa, sin regresión HW); rojo: check CI que exige sketches compilados/ejecutados o política explícita → hoy falla; verde: tras añadirlos a CI (o excluirlos con nota documentada), la política es explícita.
 - **Dependencias:** ISSUE-066.
 - **DoD:** sketches en CI o política explícita.
 - **Tasks:** añadir a CI o excluir con nota.
@@ -2275,6 +2332,27 @@ Cierre de banda F0 vía PR-I…PR-M (`phase-10-cycle-1-plan.md` §3/§6/§7). PR
 - **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). Los 8 del ciclo son P1–P3; ningún P0 se cierra en el Ciclo 1 (re-computo en `phase-8-executive-dashboard.md` §10).
 - **Cobertura transversal:** 4/5 — cobertura del cambio Security 100 % en PRs del ciclo (tests negativos en PR-L/PR-M); secretos eliminados (BE-016, INF-013, FW-010/I59); contrato `mqtt-contract` sincronizado (I15/PR-L, I59/PR-M); ADR vía supersesión. **CI verde en `develop` ❌ (fallo preexistente, sin regresión del ciclo).**
 - **Versiones del ciclo:** backend 1.7.6→1.7.9, firmware 0.23.3→0.23.4, root 1.8.12→1.8.16.
+
+---
+
+### 9.8 Ciclo 2 — resultados de PR-A (2026-08-12)
+
+Ejecución de la Oleada 1 única PR: **PR-A "Broker MQTT TLS & ACL"** (`phase-11-cycle-2-plan.md` §3). Requisito previo atendido: por PR, **TDD rojo→verde** (nuevo `REG-016`) + regresión completa (jest 195/232 idéntico a baseline, vitest 458/458) + documentación + versionado SemVer.
+
+| ISSUE | Fecha | Transición | Evidencia |
+|---|---|---|---|
+| ISSUE-074 (INF-015) | 2026-08-12 | READY → DONE | PR-A: `mosquitto.prod.conf` listener TLS 8883 **activo** (descomentado, certs en `/mosquitto/certs`) + ACL `mush2/+/alarm` verificada; REG-016 9/9 (4 fallos iniciales → verde) |
+| ISSUE-075 (INF-016) | 2026-08-12 | READY → DONE | PR-A: `docker-compose.yml` publica solo `8883:8883`; 1883 solo red interna Docker (REG-016) |
+| ISSUE-104 (DOC-020) | 2026-08-12 | READY → DONE | PR-A: `phase-8-executive-dashboard.md` §10.1 re-baseline + `broker-deployment.md` §4.3/§7 al estado real |
+| ISSUE-015 (BE-015) | 2026-08-12 | IN_PROGRESS → DONE | PR-A (cierre cross-ciclo): handshake TLS 8883 local OK + conexión en claro al 8883 rechazada (`protocol error`); evidencia en §4.1 y CHANGELOG v1.7.10 |
+| ISSUE-065 (INF-006) | 2026-08-12 | IN_PROGRESS (avance) | PR-A: config TLS activa + verificación broker local (verde→rojo→verde); **cierre exige I081 (F2) + DECISION-011 → C3**, permanece IN_PROGRESS |
+
+**Cierre diferido (sin cierre falso, regla §6):** I65 → I081 + DECISION-011 (C3); I50 → I52 (F2); I84 → I076 (PR-E); I51 → PR-G (clave NVS + CA TLS).
+
+**Runbook de gates (PR-A):**
+- **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). PR-A cierra/avanza ISSUEs P1–P3, ningún P0 (I15 es P1).
+- **Cobertura transversal:** el cambio Broker queda cubierto por REG-016; contrato `mqtt-contract` sin cambio de versión (entorno prod TLS ya documentado §2.3); ADR-023/028 REQUIRED cubiertos (config TLS + ACL identidad). **CI verde en `develop` ❌ preexistente (F11-1), sin regresión del ciclo** — fix en PR-E/PR-G.
+- **Versiones PR-A:** backend 1.7.9→1.7.10, root 1.8.16→1.8.17.
 
 ---
 
