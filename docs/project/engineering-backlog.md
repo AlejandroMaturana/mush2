@@ -2271,6 +2271,11 @@ Cierre de banda F0 vía PR-I…PR-M (`phase-10-cycle-1-plan.md` §3/§6/§7). PR
 
 **Cierre diferido (sin cierre falso, regla §6):** I15 → I074/I075 (F1); I84 → I076 (F1); I50 → I52 (F2).
 
+**Runbook de gates al cierre (Fase 5 §6 / plan §9):**
+- **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). Los 8 del ciclo son P1–P3; ningún P0 se cierra en el Ciclo 1 (re-computo en `phase-8-executive-dashboard.md` §10).
+- **Cobertura transversal:** 4/5 — cobertura del cambio Security 100 % en PRs del ciclo (tests negativos en PR-L/PR-M); secretos eliminados (BE-016, INF-013, FW-010/I59); contrato `mqtt-contract` sincronizado (I15/PR-L, I59/PR-M); ADR vía supersesión. **CI verde en `develop` ❌ (fallo preexistente, sin regresión del ciclo).**
+- **Versiones del ciclo:** backend 1.7.6→1.7.9, firmware 0.23.3→0.23.4, root 1.8.12→1.8.16.
+
 ---
 
 *Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED (ver `architecture-decisions-pending.md`).
