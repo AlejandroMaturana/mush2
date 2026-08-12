@@ -8,15 +8,17 @@ const client = axios.create({
   withCredentials: true,
 })
 
+let refreshPromise = null
+let loggingOut = false
+
 client.interceptors.request.use((config) => {
   const token = getAccessToken()
   if (token) {
+    loggingOut = false
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
-
-let refreshPromise = null
 
 function refreshViaCookie() {
   if (!refreshPromise) {
@@ -33,6 +35,14 @@ function refreshViaCookie() {
   return refreshPromise
 }
 
+function handleSessionExpired() {
+  if (loggingOut) return
+  loggingOut = true
+  clearAccessToken()
+  localStorage.removeItem('mush2_user')
+  window.location.assign('/')
+}
+
 client.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -42,9 +52,7 @@ client.interceptors.response.use(
         err.config.headers.Authorization = `Bearer ${token}`
         return client(err.config)
       } catch {
-        clearAccessToken()
-        localStorage.removeItem('mush2_user')
-        window.location.assign('/')
+        handleSessionExpired()
       }
     }
     return Promise.reject(err)
