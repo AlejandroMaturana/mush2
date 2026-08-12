@@ -90,3 +90,66 @@ describe('axiosInstance (ISSUE-029: refresh por cookie httpOnly, sin JWT en loca
     }
   });
 });
+
+describe('axiosInstance (ISSUE-033: single-flight de refresh + logout controlado)', () => {
+  beforeEach(() => {
+    clearAccessToken();
+    window.localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    delete client.defaults.adapter;
+  });
+
+  it('con 3 peticiones concurrentes en 401 TOKEN_EXPIRED, solo dispara 1 llamada a /auth/refresh', async () => {
+    setAccessToken('expired');
+    let refreshCalls = 0;
+    installAdapter((config) => {
+      if (config.url === '/auth/refresh') {
+        refreshCalls += 1;
+        return { data: { token: { accessToken: 'fresh-token' } }, status: 200 };
+      }
+      if (config.headers?.Authorization === 'Bearer expired') {
+        throw axiosError(401, { code: 'TOKEN_EXPIRED' }, config);
+      }
+      return { data: { ok: true }, status: 200 };
+    });
+
+    const results = await Promise.allSettled([
+      client.get('/a'),
+      client.get('/b'),
+      client.get('/c'),
+    ]);
+
+    expect(refreshCalls).toBe(1);
+    expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
+    expect(getAccessToken()).toBe('fresh-token');
+  });
+
+  it('si el refresh falla con concurrentes, redirige SOLO 1 vez (logout controlado)', async () => {
+    setAccessToken('expired');
+    const assignMock = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, assign: assignMock },
+      writable: true,
+    });
+    try {
+      installAdapter((config) => {
+        if (config.url === '/auth/refresh') {
+          throw axiosError(401, { code: 'REFRESH_EXPIRED' }, config);
+        }
+        throw axiosError(401, { code: 'TOKEN_EXPIRED' }, config);
+      });
+
+      await Promise.allSettled([client.get('/a'), client.get('/b'), client.get('/c')]);
+
+      expect(assignMock).toHaveBeenCalledTimes(1);
+      expect(assignMock).toHaveBeenCalledWith('/');
+      expect(getAccessToken()).toBeNull();
+      expect(window.localStorage.getItem('mush2_user')).toBeNull();
+    } finally {
+      delete client.defaults.adapter;
+    }
+  });
+});
