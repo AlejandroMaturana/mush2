@@ -55,6 +55,7 @@ jobs:
           #define DEFAULT_HUM_MIN 85.0
           #define DEFAULT_HUM_MAX 95.0
           #define DEFAULT_CO2_MAX 1200
+          #define HW_REVISION "1.0"
           #endif' > src/config.h
 
       - name: Build firmware
@@ -62,6 +63,14 @@ jobs:
 
       - name: Firmware unit tests (native)
         run: cd firmware && pio test -c platformio.test.ini -e native
+
+      - name: Compile hardware sketches (I110)
+        run: |
+          cd firmware
+          for sk in test/S3_test-actuator-chain test/S3_test-button test/S3_test-http-poller test/S3_test-watchdog; do
+            echo "=== $sk ==="
+            pio run -d "$sk"
+          done
 
   backend:
     name: Backend test
@@ -103,7 +112,7 @@ jobs:
           LOG_LEVEL: silent
 
   frontend:
-    name: Frontend build
+    name: Frontend build & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -119,5 +128,45 @@ jobs:
       - name: Install dependencies
         run: cd frontend && pnpm install --frozen-lockfile
 
+      - name: Test (I080/I109)
+        run: cd frontend && pnpm run test
+
       - name: Build
         run: cd frontend && pnpm run build
+
+  security:
+    name: Security gates (audit + gitleaks + osv-scanner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: pnpm audit (umbral critical, política de severidad I076)
+        run: |
+          cd backend  && pnpm audit --audit-level=critical
+          cd ../frontend && pnpm audit --audit-level=critical
+
+      - name: gitleaks — detección de secretos en el árbol (I076/I84)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: osv-scanner — reporte de vulnerabilidades (I076)
+        uses: google/osv-scanner/actions/scanner@v1
+        with:
+          scan-args: |-
+            --recursive
+            .
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
