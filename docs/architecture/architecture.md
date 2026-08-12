@@ -109,7 +109,7 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 - **Configuración**: `config.h` generado desde `.env`
 
 ### Backend (Node.js)
-- **Runtime**: Node.js 20+
+- **Runtime**: Node.js 20+ (runtime validado: 22 LTS)
 - **Framework**: Express 5
 - **ORM**: Sequelize 6 + PostgreSQL 16
 - **Autenticación**: JWT (HS256) + API Key dual, bcryptjs

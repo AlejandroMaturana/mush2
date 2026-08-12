@@ -60,7 +60,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 | Capa | Tecnología |
 |---|---|
 | **Firmware** | C++ (PlatformIO / ESP32-S3) + FreeRTOS |
-| **Backend** | Node.js 20+ / Express 5 / Sequelize 6 |
+| **Backend** | Node.js 20+ (runtime validado: 22 LTS) / Express 5 / Sequelize 6 |
 | **Contenedores** | Docker / Docker Compose (Broker MQTT + Backend) |
 | **Frontend** | React 18 + Vite + Chart.js |
 | **Base de datos** | PostgreSQL 16 |
@@ -125,7 +125,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 ### Prerequisitos
 
-- Node.js 20+
+- Node.js 20+ (runtime validado: 22 LTS)
 - Docker Desktop
 - PostgreSQL 16 (opcional, se usa el contenedor Docker)
 

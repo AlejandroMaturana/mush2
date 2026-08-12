@@ -35,7 +35,7 @@ pio device monitor                 # logs serial 115200 baud
 
 Workflow en `.github/workflows/ci.yml`:
 - **Firmware**: `pio run` compila el ESP32-S3
-- **Backend**: Jest + Supertest con PostgreSQL 18
+- **Backend**: Jest + Supertest con PostgreSQL 16 (Node.js 22, alineado con runtime de prod)
 - **Frontend**: `pnpm build` con Vite
 
 ## Seed Data

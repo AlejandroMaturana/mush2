@@ -4,7 +4,7 @@
 
 | Capa | Tecnología |
 |---|---|
-| Runtime | Node.js 20+ |
+| Runtime | Node.js 20+ (runtime validado: 22 LTS) |
 | Framework | Express 5 |
 | ORM | Sequelize 6 |
 | Base de datos | PostgreSQL 16 |

@@ -2,6 +2,20 @@
 
 ## 2026-08-12
 
+### Backend — v1.7.11
+
+- **PR-B "Env Consistency" (ISSUE-064 / INF-005 · ISSUE-063 / INF-004 · ISSUE-073 / INF-014 · ISSUE-079 / INF-020 · ISSUE-083 / INF-024 · F11-1a REG-002)**
+- **I64 DONE — Node 22 en todos lados (runtime validado = prod):** `NODE_VERSION` de CI '24' → '22'; Dockerfile ya usaba `node:22-alpine` (hoy pinneado a digest); docs (README/architecture/backend/dev-environment) actualizadas a "Node.js 20+ (runtime validado: 22 LTS)".
+- **I63 DONE — PostgreSQL 16 única versión:** `ci.yml` postgres job `postgres:18` → `postgres:16-alpine@<digest>` (misma versión que compose y docs); `deployment.md` "PostgreSQL 18" → "PostgreSQL 16". CI valida contra el mismo runtime que prod.
+- **I73 DONE — lockfile estricto:** `ci.yml` instala backend/frontend con `pnpm install --frozen-lockfile`; `Dockerfile` elimina el fallback `|| pnpm install` (frozen-lockfile estricto en ambos stages). Verificado: `pnpm install --frozen-lockfile` exit 0 en root/backend/frontend (dockfile en sync).
+- **I79 DONE — imágenes base pinneadas a digest:** `node:22-alpine`, `postgres:16-alpine` y `eclipse-mosquitto:2` a `@sha256:<digest>` en Dockerfile, docker-compose.yml y docker-compose.dev.yml. `docker compose config` válido (exit 0 con envs de rigor).
+- **I83 DONE — toolchain firmware pinneada:** CI `python-version` '3.12' → '3.11' y `pip install platformio` → `pip install platformio==6.1.19` (versión validada en build local: esp32-s3-devkitc-1 + OTA SUCCESS).
+- **F11-1a — REG-002 no rompe CI:** el check de consistencia de `MQTT_BROKER_PASS` se ejecuta solo cuando `.env.development` (gitignored) existe localmente; en el runner de CI se salta limpiamente (fix del transversal CI 4/5 → 5/5; causa (a) resuelta en PR-B).
+- Tests: `REG-017_env-consistency.test.ts` (11 aserciones estáticas: Node 22, PG16 con digest, sin fallback de lockfile, digests pinneados, platformio/python fijos). **TDD rojo→verde** (11 fallos iniciales → 11/11). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 460/460.
+- Contrato: N/A — sin cambio de contrato API/MQTT/BLE (cambios de entorno/CI/Docker, no de protocolo).
+
+## 2026-08-12
+
 ### Backend — v1.7.10
 
 - **PR-A "Broker MQTT TLS & ACL" (ISSUE-074 / INF-015 · ISSUE-075 / INF-016 · ISSUE-104 / DOC-020 · cierre ISSUE-015 / BE-015 · avance ISSUE-065 / INF-006)**
