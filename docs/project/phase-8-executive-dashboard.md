@@ -179,6 +179,21 @@ Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo
 
 **Lectura ejecutiva:** el Ciclo 1 cerró la banda F0 (6 ISSUEs DONE: I016/I019/I024/I027/I059/I072), eliminó secretos de firmware/bootstrap (FW-010 en NVS, BE-016 dev-only, INF-013 sin default) y avanzó la cadena MQTT: I015 `IN_PROGRESS` con código `mqtts://` + ACL + identidad por dispositivo (cierre F1: I074/I075), I084 `IN_PROGRESS` con checklist documentado (cierre F1: I076). Seguridad sube a **Media-alta (61 %)** con riesgo 🟠 por DECISION-011; el Exit Gate P1 permanece ⛔ PENDING. Única transversal no verificada: CI verde en `develop` (fallo preexistente, sin regresión del ciclo).
 
+### 10.1 Re-baseline tras PR-A (Ciclo 2, 2026-08-12)
+
+PR-A (I074/I075/I104; cierre cross-ciclo I015; avance I065) cierra la cadena MQTT infraestructura del C1. Deltas medidos sobre §10 (no es el re-computo global de cierre, que se fija al finalizar el ciclo en Fase 8 §8):
+
+| Indicador | Post-Ciclo 1 | Tras PR-A (C2) | Δ |
+|---|---|---|---|
+| Avance global | 18/110 ≈ 16 % | 21/110 ≈ 19 % | +3 p.p. |
+| Estados ISSUEs | 18 D · 5 IP | **21 D · 5 IP (I050/I051/I065/I084 + I050)** · 1 BLOCKED · 84 B | +3 D |
+| P0 en P1 | 10 DONE · 4 abiertos | 10 DONE · 4 abiertos (I050/I051/I065 `IN_PROGRESS`, I070 `BLOCKED`; I015 no es P0) | — |
+| I015 (BE-015, P1) | `IN_PROGRESS` | **`DONE`** (broker TLS 8883 activo + ACL `alarm` + compose solo 8883; evidencia handshake TLS local) | cierre cross-ciclo |
+| I065 (INF-006, P0) | `IN_PROGRESS` | `IN_PROGRESS` — avance: config TLS activa y verificada (verde→rojo→verde); cierre exige I081 + DECISION-011 (C3) | avance |
+| Exit Gates | 0/11 | 0/11 (P1 ⛔ PENDING, DECISION-011) | — |
+
+> **Nota (§10 → cierre):** el re-computo definitivo del Ciclo 2 se aplica al cerrar el ciclo (luego de PR-G) según Fase 8 §8, incluyendo los cierres I051/I084 y el avance I050. Este apartado documenta el aporte específico de PR-A para I104 (DOC-020).
+
 ---
 
 ## 11. Hallazgos de fase (sin corrección)

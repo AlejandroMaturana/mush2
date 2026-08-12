@@ -1,10 +1,10 @@
 # Plan de Despliegue — Broker MQTT (Mosquitto 2.x)
 
-> **Estado:** PLAN DE DESPLIEGUE — ejecución diferida
+> **Estado:** PLAN DE DESPLIEGUE — configuración versionada lista para deploy (Ciclo 2, PR-A: I074/I075)
 > **ISSUE:** ISSUE-065 (INF-006) · EPIC-BROKER · Ini 1.6 · **P0**
 > **Decisión:** DECISION-006 · ACCEPTED — contenedor Mosquitto + volumen persistente + TLS 8883, ACL por dispositivo
-> **Cierre:** requiere ISSUE-075 (TLS/INF-015) e ISSUE-081 (provisioning/INF-022) — ciclos siguientes
-> **Última actualización:** 2026-08-10
+> **Cierre:** requiere ISSUE-081 (provisioning/INF-022) y DECISION-011 (plan free → pago/VPS) — Ciclo 3
+> **Última actualización:** 2026-08-12
 
 ---
 
@@ -82,7 +82,9 @@ En el PaaS objetivo (Render/Railway/Fly): crear el servicio de contenedor `eclip
 
 ### 4.3 Activar TLS en el listener 8883
 
-Descomentar en `mosquitto.prod.conf` el bloque `listener 8883` (ver §7 — PR-G lo deja comentado a propósito):
+> **Hecho en Ciclo 2 (PR-A, ISSUE-074/075):** el bloque `listener 8883` ya está **activo** en `mosquitto.prod.conf` y `docker-compose.yml` ya no publica el puerto 1883 al host (solo `8883:8883`). Verificado localmente: handshake TLS ok y conexión en claro al 8883 rechazada (evidencia ISSUE-015).
+
+Config actual en `docker/mosquitto/prod/mosquitto.conf`:
 
 ```ini
 listener 8883
@@ -94,6 +96,8 @@ allow_anonymous false
 password_file /mosquitto/config/password_file
 acl_file /mosquitto/config/acl.conf
 ```
+
+Al desplegar solo queda: montar los certs reales en `./docker/mosquitto/certs/` (o volumen del PaaS en `/mosquitto/certs`) antes de arrancar el contenedor.
 
 ### 4.4 Poblar credenciales
 
@@ -152,18 +156,19 @@ Reglas ADR-023-R01..R04 y ADR-028-R01..R04 aplican.
 
 ## 7. Qué deja este PR (Ciclo 0) vs. qué se ejecuta después
 
-| Hito | Estado tras PR-G | Dónde |
+| Hito | Estado tras PR-A (Ciclo 2) | Dónde |
 |---|---|---|
 | Plan de despliegue documentado | ✅ Entregado | este documento |
 | ACL prod alineado con contrato (`alarm`, `ota/#`, `actuators`) | ✅ Entregado | `docker/mosquitto/prod/acl.conf` |
-| Config prod con bloque TLS 8883 documentado | ✅ Entregado (comentado, listo para activar) | `docker/mosquitto/prod/mosquitto.conf` |
+| Config prod con bloque TLS 8883 **activo** | ✅ Entregado (listener TLS descomentado) | `docker/mosquitto/prod/mosquitto.conf` |
+| compose sin 1883 público (solo 8883 TLS) | ✅ Entregado | `docker-compose.yml` |
 | Contrato MQTT §2 con entorno prod | ✅ Entregado | `docs/contracts/mqtt-contract.md` |
-| `render.yaml` con envVars MQTT | ⏳ Diferido (no inventar valores) | I75/I81 |
-| Certs TLS 8883 reales | ⏳ **ISSUE-075 (INF-015)** | Ciclo siguiente |
-| Provisioning de credenciales por dispositivo en el contenedor | ⏳ **ISSUE-081 (INF-022)** | Ciclo siguiente |
-| Broker desplegado y bridge conectado | ⏳ Ejecución del plan | tras I75/I81 |
+| `render.yaml` con envVars MQTT | ⏳ Diferido (no inventar valores) | al desplegar |
+| Certs TLS 8883 reales | ⏳ **Provisioning en operación** (issue: montar en contenedor) | deploy (depende de DECISION-011) |
+| Provisioning de credenciales por dispositivo en el contenedor | ⏳ **ISSUE-081 (INF-022)** | Ciclo 3 |
+| Broker desplegado y bridge conectado | ⏳ Ejecución del plan | tras I081/DECISION-011 |
 
-**Estado del ISSUE:** ISSUE-065 permanece `IN_PROGRESS` tras PR-G (avance parcial por dependencias cross-ciclo I75/I81; ver F9-3 en `phase-9-cycle-0-plan.md`).
+**Estado del ISSUE:** ISSUE-065 permanece `IN_PROGRESS` tras PR-A (avance: config TLS activa y verificada localmente; cierre exige ISSUE-081 + DECISION-011 en C3).
 
 ---
 

@@ -1,5 +1,20 @@
 # Changelog — Mush2
 
+## 2026-08-12
+
+### Backend — v1.7.10
+
+- **PR-A "Broker MQTT TLS & ACL" (ISSUE-074 / INF-015 · ISSUE-075 / INF-016 · ISSUE-104 / DOC-020 · cierre ISSUE-015 / BE-015 · avance ISSUE-065 / INF-006)**
+- **I74 DONE — listener TLS 8883 activo:** `docker/mosquitto/prod/mosquitto.conf` descomenta el bloque `listener 8883` (cafile/certfile/keyfile → `/mosquitto/certs`, `require_certificate false`, `allow_anonymous false`, `password_file`/`acl_file` de prod). Backend bridge y firmware usan exclusivamente `mqtts://…:8883` (fail-fast desde PR-L, ISSUE-015).
+- **I75 DONE — compose sin 1883 público:** `docker-compose.yml` publica solo `8883:8883`; el puerto 1883 queda únicamente accesible en la red interna Docker (no se expone al host). Volumen de certs `/mosquitto/certs:ro` intacto.
+- **Cierre ISSUE-015 (BE-015):** verificación local con `mosquitto` 2.1.2: handshake TLS contra 8883 OK y conexión en claro al 8883 rechazada (`protocol error`) — evidencia de cierre del backlog.
+- **ACL alineada (I074):** `docker/mosquitto/prod/acl.conf` con `topic read mush2/+/alarm` (bridge) y `pattern write mush2/%c/alarm` (firmware), coherente con `mqtt-contract.md` §6.2/§9.1.
+- **I104 (DOC-020) — re-baseline §10:** `phase-8-executive-dashboard.md` §10.1 con deltas de PR-A (avance global 16 % → 19 %, I15 `DONE`, I65 avance); nota del re-computo definitivo al cierre del ciclo (Fase 8 §8).
+- **I65 avance (IN_PROGRESS):** `docs/operations/broker-deployment.md` §4.3 y §7 actualizados: config TLS activa y verificada; resta ISSUE-081 (provisioning) + DECISION-011 (plan free → pago/VPS) para el deploy en Ciclo 3.
+- Tests: `REG-016_broker-tls-acl.test.ts` (9 aserciones estáticas: listener 8883 activo, certs en `/mosquitto/certs`, sin 1883 público, compose `8883:8883` + volumen ro, ACL `alarm`). **TDD rojo→verde** (4 fallos iniciales → 9/9). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 458/458.
+- Contrato: `mqtt-contract.md` sin cambios (el entorno prod TLS ya estaba documentado en §2.3); sin cambio de versión del contrato.
+- Certs locales `docker/mosquitto/certs/*` y `docker/mosquitto/prod/password_file` generados solo para verificación (gitignored, nunca en el repo).
+
 ## 2026-08-11
 
 ### Firmware (ESP32-S3) — v0.23.4
