@@ -1366,7 +1366,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-059 — Credenciales MQTT en RAM (FW-010) — P1
 `Programa 1 · EPIC-CREDENTIALS · Ini 1.8`
-- **Estado:** DONE (PR-M "Firmware Secrets to NVS"; versionado firmware 0.23.4 / root 1.8.16). Cierre formal del Ciclo 1: ver §9.7.
+- **Estado:** DONE (PR-M "Firmware Secrets to NVS" mergeado — PR #204; versionado firmware 0.23.4 / root 1.8.16). Cierre formal del Ciclo 1: ver §9.7.
 - **Objetivo:** NVS tras primer registro; fallback solo primer arranque; TLS en registro.
 - **Problema actual:** `_mqttUser/_mqttPass` en `http_poller.h:78-79`; re-registro por HTTP claro cada boot.
 - **Impacto:** credenciales interceptables; identidad compartida.
@@ -1698,7 +1698,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-084 — Secretos locales en claro (INF-025) — P3
 `Programa 1 · EPIC-CREDENTIALS · Ini 1.8` (sub-tarea de FW-001; también INF-017)
-- **Estado:** IN_PROGRESS (PR-M "Firmware Secrets to NVS"; NVS migration + `.gitignore` + checklist `docs/security/secrets-checklist.md`). Cierre (scanning automático) diferido a ISSUE-076 (F1, CI gates) — ver §9.7.
+- **Estado:** IN_PROGRESS (PR-M "Firmware Secrets to NVS" mergeado — PR #204; NVS migration + `.gitignore` + checklist `docs/security/secrets-checklist.md`). Cierre (scanning automático) diferido a ISSUE-076 (F1, CI gates) — ver §9.7.
 - **Objetivo:** migrar firmware a NVS; secret scanning; checklist.
 - **Problema actual:** `.env*` y `config.h` con credenciales en el working tree (gitignored).
 - **Impacto:** leak accidental.
@@ -2265,8 +2265,8 @@ Cierre de banda F0 vía PR-I…PR-M (`phase-10-cycle-1-plan.md` §3/§6/§7). PR
 | ISSUE-027 (BE-027) | 2026-08-11 | READY → DONE | PR-K "Generic Error Responses" (PR #198, v1.7.8) |
 | ISSUE-015 (BE-015) | 2026-08-11 | READY → IN_PROGRESS | PR-L "MQTT Security" (PR #201, v1.7.9): código `mqtts://` + identidad por dispositivo; cierre broker TLS diferido a I074/I075 (F1) |
 | ISSUE-024 (BE-024) | 2026-08-11 | READY → DONE | PR-L (PR #201) — hash `$7$` nativo sin argv |
-| ISSUE-059 (FW-010) | 2026-08-11 | READY → DONE | PR-M "Firmware Secrets to NVS" (firmware 0.23.4): credenciales en NVS, fallback solo primer arranque, fuera de RAM (scan + tests nativos) |
-| ISSUE-084 (INF-025) | 2026-08-11 | READY → IN_PROGRESS | PR-M: NVS + `.gitignore` + checklist `docs/security/secrets-checklist.md`; scanning automático diferido a I076 (F1) |
+| ISSUE-059 (FW-010) | 2026-08-11 | READY → DONE | PR-M "Firmware Secrets to NVS" (PR #204, firmware 0.23.4): credenciales en NVS, fallback solo primer arranque, fuera de RAM (scan + tests nativos) |
+| ISSUE-084 (INF-025) | 2026-08-11 | READY → IN_PROGRESS | PR-M (PR #204): NVS + `.gitignore` + checklist `docs/security/secrets-checklist.md`; scanning automático diferido a I076 (F1) |
 | ISSUE-050 (FW-001) | 2026-08-11 | IN_PROGRESS (avance NVS) | Loop NVS completado vía I59; **DoD exige I52 (F2) + I076** → permanece IN_PROGRESS (F10-5, §7) |
 
 **Cierre diferido (sin cierre falso, regla §6):** I15 → I074/I075 (F1); I84 → I076 (F1); I50 → I52 (F2).
