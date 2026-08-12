@@ -122,7 +122,7 @@ password_file.example   # Template versionado en Git
 
 ## 5. Prerrequisitos
 
-- **Node.js 20+** (el repo usa pnpm como gestor de paquetes)
+- **Node.js 20+** (el repo usa pnpm como gestor de paquetes; runtime validado en CI y Docker: 22 LTS)
 - **pnpm 10.x** (`npm install -g pnpm` o via Corepack)
 - **Docker Desktop** con el motor Docker en ejecución
 - **Git**

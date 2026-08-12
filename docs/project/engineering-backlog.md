@@ -1442,7 +1442,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** tags retroactivos; merge; automatizar.
 
 #### ISSUE-063 — PG18 en CI vs PG16 runtime (INF-004) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **DONE** (PR-B, 2026-08-12 — PG16 única versión en CI/compose/docs; verificado green→red→green)
 - **Objetivo:** PG16 en CI, compose y docs.
 - **Problema actual:** `ci.yml:71` postgres:18; compose/docs postgres:16.
 - **Impacto:** tests verdes que fallan en prod.
@@ -1457,7 +1457,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** fijar 16; actualizar docs.
 
 #### ISSUE-064 — Node 24 CI / 22 Docker / 20+ docs (INF-005) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **DONE** (PR-B, 2026-08-12 — Node 22 en CI/Docker/docs; verificado green→red→green)
 - **Objetivo:** unificar Node 22 LTS.
 - **Problema actual:** `ci.yml:12` 24; `Dockerfile:2,19` node:22-alpine; docs 20+.
 - **Impacto:** runtime validado ≠ prod.
@@ -1588,7 +1588,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** validate al inicio; tests.
 
 #### ISSUE-073 — Lockfile no estricto (INF-014) — P2
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **DONE** (PR-B, 2026-08-12 — frozen-lockfile en CI y Docker, sin fallback; verificado green→red→green)
 - **Objetivo:** `--frozen-lockfile` en Docker y CI; pnpm con corepack.
 - **Problema actual:** `Dockerfile:12,28` fallback; `ci.yml:96,120` install plano.
 - **Impacto:** builds no reproducibles.
@@ -1673,7 +1673,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** regenerar; validar CI.
 
 #### ISSUE-079 — Imágenes base con tags flotantes (INF-020) — P3
-`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
+`Programa 8 · EPIC-ENV-CONSISTENCY · Ini 8.3` · Estado: **DONE** (PR-B, 2026-08-12 — imágenes pinneadas a digest en Dockerfile y compose; verificado green→red→green)
 - **Objetivo:** pin a digest o renovación programada.
 - **Problema actual:** `node:22-alpine`, `postgres:16-alpine`, `eclipse-mosquitto:2`.
 - **Impacto:** builds no reproducibles.
@@ -1727,7 +1727,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** changesets/action.
 
 #### ISSUE-083 — Toolchain firmware no pinneada (INF-024) — P3
-`Programa 8 · EPIC-FW-TOOLCHAIN · Ini 8.5` · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-B)
+`Programa 8 · EPIC-FW-TOOLCHAIN · Ini 8.5` · Estado: **DONE** (PR-B, 2026-08-12 — python 3.11 + platformio==6.1.19 fijos en CI; verificado green→red→green)
 - **Objetivo:** fijar PlatformIO/python; cache.
 - **Problema actual:** `ci.yml:24,27` python 3.12 + pip platformio latest.
 - **Impacto:** builds no reproducibles.
@@ -2335,9 +2335,9 @@ Cierre de banda F0 vía PR-I…PR-M (`phase-10-cycle-1-plan.md` §3/§6/§7). PR
 
 ---
 
-### 9.8 Ciclo 2 — resultados de PR-A (2026-08-12)
+### 9.8 Ciclo 2 — resultados de PR-A y PR-B (2026-08-12)
 
-Ejecución de la Oleada 1 única PR: **PR-A "Broker MQTT TLS & ACL"** (`phase-11-cycle-2-plan.md` §3). Requisito previo atendido: por PR, **TDD rojo→verde** (nuevo `REG-016`) + regresión completa (jest 195/232 idéntico a baseline, vitest 458/458) + documentación + versionado SemVer.
+Ejecución de la Oleada 1: **PR-A "Broker MQTT TLS & ACL"** y **PR-B "Env Consistency"** (`phase-11-cycle-2-plan.md` §3). Requisito previo atendido: por PR, **TDD rojo→verde** (REG-016 / REG-017) + regresión completa + documentación + versionado SemVer. PR-A mergeado por el usuario (PR #206).
 
 | ISSUE | Fecha | Transición | Evidencia |
 |---|---|---|---|
@@ -2346,13 +2346,19 @@ Ejecución de la Oleada 1 única PR: **PR-A "Broker MQTT TLS & ACL"** (`phase-11
 | ISSUE-104 (DOC-020) | 2026-08-12 | READY → DONE | PR-A: `phase-8-executive-dashboard.md` §10.1 re-baseline + `broker-deployment.md` §4.3/§7 al estado real |
 | ISSUE-015 (BE-015) | 2026-08-12 | IN_PROGRESS → DONE | PR-A (cierre cross-ciclo): handshake TLS 8883 local OK + conexión en claro al 8883 rechazada (`protocol error`); evidencia en §4.1 y CHANGELOG v1.7.10 |
 | ISSUE-065 (INF-006) | 2026-08-12 | IN_PROGRESS (avance) | PR-A: config TLS activa + verificación broker local (verde→rojo→verde); **cierre exige I081 (F2) + DECISION-011 → C3**, permanece IN_PROGRESS |
+| ISSUE-064 (INF-005) | 2026-08-12 | READY → DONE | PR-B: Node 22 en CI/Docker/docs; REG-017 11/11 (11 fallos iniciales → verde) |
+| ISSUE-063 (INF-004) | 2026-08-12 | READY → DONE | PR-B: PG16 única versión (CI job `postgres:16-alpine@digest`, compose, `deployment.md`); REG-017 |
+| ISSUE-073 (INF-014) | 2026-08-12 | READY → DONE | PR-B: `--frozen-lockfile` en CI + Docker sin fallback `\|\| pnpm install`; `pnpm install --frozen-lockfile` exit 0 verificado |
+| ISSUE-079 (INF-020) | 2026-08-12 | READY → DONE | PR-B: digests `node:22-alpine`/`postgres:16-alpine`/`eclipse-mosquitto:2` en Dockerfile y compose (prod+dev); `docker compose config` exit 0 |
+| ISSUE-083 (INF-024) | 2026-08-12 | READY → DONE | PR-B: CI python 3.11 + `platformio==6.1.19`; build local esp32-s3-devkitc-1 + OTA SUCCESS |
+| REG-002 (F11-1a, transversal CI) | 2026-08-12 | fix absorbido | PR-B: check de `.env.development` (gitignored) exitoso solo si el archivo existe; en CI se salta sin romper el pipeline |
 
-**Cierre diferido (sin cierre falso, regla §6):** I65 → I081 + DECISION-011 (C3); I50 → I52 (F2); I84 → I076 (PR-E); I51 → PR-G (clave NVS + CA TLS).
+**Cierre diferido (sin cierre falso, regla §6):** I65 → I081 + DECISION-011 (C3); I50 → I52 (F2); I84 → I076 (PR-E); I51 → PR-G (clave NVS + CA TLS). Transversal CI causa (b) — `HW_REVISION` en `ble_provisioning.cpp:105` — a resolver en PR-E/PR-G.
 
-**Runbook de gates (PR-A):**
-- **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). PR-A cierra/avanza ISSUEs P1–P3, ningún P0 (I15 es P1).
-- **Cobertura transversal:** el cambio Broker queda cubierto por REG-016; contrato `mqtt-contract` sin cambio de versión (entorno prod TLS ya documentado §2.3); ADR-023/028 REQUIRED cubiertos (config TLS + ACL identidad). **CI verde en `develop` ❌ preexistente (F11-1), sin regresión del ciclo** — fix en PR-E/PR-G.
-- **Versiones PR-A:** backend 1.7.9→1.7.10, root 1.8.16→1.8.17.
+**Runbook de gates:**
+- **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). PR-A/PR-B cierran ISSUEs P1–P3; ningún P0 (I15 es P1).
+- **Cobertura transversal:** Broker cubierto por REG-016; env-consistency por REG-017; contrato `mqtt-contract` sin cambio (PR-A) y N/A (PR-B). **CI verde en `develop` aún ❌ (causa b HW_REVISION pendiente de PR-E/PR-G); causa (a) REG-002 resuelta en PR-B.**
+- **Versiones:** backend 1.7.10→1.7.11, root 1.8.17→1.8.18.
 
 ---
 

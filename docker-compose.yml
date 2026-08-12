@@ -14,7 +14,7 @@ services:
   # Port 1883 (MQTT) NO se publica al host — solo accesible dentro de la
   # red Docker (ISSUE-075/PR-A): el backend bridge usa MQTTS en 8883.
   mosquitto:
-    image: eclipse-mosquitto:2
+    image: eclipse-mosquitto:2@sha256:6f8d8a947c506f8a2290ec65cd4bd2bc7cb4d43fb5f6271f861cb013e2ef9797
     container_name: mush2-mosquitto
     restart: unless-stopped
     ports:
@@ -31,7 +31,7 @@ services:
   # NO ports exposed to host — ADR-029 compliance.
   # Access only via Docker network (postgres:5432).
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: mush2-postgres
     restart: unless-stopped
     environment:

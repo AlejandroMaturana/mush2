@@ -14,7 +14,12 @@ describe('REG-002: MQTT password consistency', () => {
   const envDev = readProjectFile('.env.development');
   const setupScript = readProjectFile('scripts/dev-mqtt-setup.ps1');
 
+  // `.env.development` está gitignored: en CI (runner sin el archivo local) el
+  // check de consistencia dev se salta sin romper el pipeline (F11-1/PR-B).
+  const envDevPresent = existsSync(resolve(PROJECT_ROOT, '.env.development'));
+
   it('MQTT_BROKER_PASS en .env.development coincide con dev-mqtt-setup.ps1', () => {
+    if (!envDevPresent) return;
     const envPass = envDev.match(/MQTT_BROKER_PASS=(\S+)/)?.[1];
     expect(envPass).toBeDefined();
     const scriptPass = setupScript.match(/Pass\s*=\s*"([^"]+)";?\s*Desc\s*=\s*"Backend MQTT bridge service"/);
