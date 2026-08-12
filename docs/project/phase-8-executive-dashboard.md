@@ -160,6 +160,27 @@ Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo
 
 ---
 
+## 10. Re-computo post-Ciclo 1 (2026-08-11)
+
+Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo 1 (6 PRs mergeados: PR-I #193, PR-J #196, PR-K #198, PR-L #201, PR-M #204 y cierre PR-N). **Base:** estado medido post-Ciclo 0 (§9, 12 DONE). *La proyección del plan (§10.1) partía de 14 DONE y sobreestimaba (base real 12 DONE); el re-computo usa valores medidos.*
+
+| Indicador | Post-Ciclo 0 | Post-Ciclo 1 | Δ |
+|---|---|---|---|
+| Avance P1 Seguridad | 11/28 ≈ 39 % | 17/28 ≈ 61 % | +22 p.p. |
+| Avance P2 Testing | 1/11 ≈ 9 % | 1/11 ≈ 9 % | — |
+| Avance global | 12/110 ≈ 11 % | 18/110 ≈ 16 % | +5 p.p. |
+| P0 en P1 | 10 DONE · 4 abiertos (I050/I051/I065 `IN_PROGRESS`, I070 `BLOCKED`) | 10 DONE · 4 abiertos (el Ciclo 1 no cierra P0: I16/I19/I24/I27/I59/I72 son P1–P3) | — |
+| Estados ISSUEs | 12 D · 3 IP (I050/I051/I065) · 1 BLOCKED · 94 B | **18 D · 5 IP (I015/I050/I051/I065/I084) · 1 BLOCKED · 86 B** | +6 D · +2 IP |
+| Madurez Seguridad | Media (39 %) | **Media-alta** (61 %) | ⬆ |
+| Riesgo Seguridad | 🟠 Medio | 🟠 Medio (I070 P0 + DECISION-011; cierres diferidos I015/I084/I050) | — |
+| Bloqueador Seguridad | `DECISION-011 (I070/I071)` · I050/I051/I065 cross-ciclo | `DECISION-011 (I070/I071)` · I015→I074/I075 (F1) · I084→I076 (F1) · I050→I052 (F2) | — |
+| Exit Gates | 0/11 | 0/11 (P1 ⛔ PENDING, DECISION-011) | — |
+| Cobertura transversal | 4/5 (CI verde ❌) | 4/5 (CI verde ❌) | — |
+
+**Lectura ejecutiva:** el Ciclo 1 cerró la banda F0 (6 ISSUEs DONE: I016/I019/I024/I027/I059/I072), eliminó secretos de firmware/bootstrap (FW-010 en NVS, BE-016 dev-only, INF-013 sin default) y avanzó la cadena MQTT: I015 `IN_PROGRESS` con código `mqtts://` + ACL + identidad por dispositivo (cierre F1: I074/I075), I084 `IN_PROGRESS` con checklist documentado (cierre F1: I076). Seguridad sube a **Media-alta (61 %)** con riesgo 🟠 por DECISION-011; el Exit Gate P1 permanece ⛔ PENDING. Única transversal no verificada: CI verde en `develop` (fallo preexistente, sin regresión del ciclo).
+
+---
+
 ## 11. Hallazgos de fase (sin corrección)
 
 ### F8-1 — P9 sin ISSUEs primarios distorsiona la capa computable
