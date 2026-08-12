@@ -34,9 +34,11 @@
 | Username | `dev_{deviceId}` (e.g. `dev_mush2_A0F262E55CBC`) |
 | Password | Generada por backend (32 bytes, base64url) |
 | Provisión | `POST /api/v1/devices/register` → respuesta incluye `mqtt.user` y `mqtt.pass` |
-| Persistencia en firmware | NVS (`mush2_prov` namespace, keys `mqtt_user` / `mqtt_pass`) |
-| Fallback | Si no hay credenciales provisionadas, usa `MQTT_USER`/`MQTT_PASS` de `config.h` |
+| Persistencia en firmware | NVS (namespace `mush2`, keys `mqttUser` / `mqttPass` vía `device_manager`) — fuera de RAM |
+| Fallback | **Solo primer arranque** (ISSUE-059): sin credenciales en NVS y primer boot → `MQTT_USER`/`MQTT_PASS` de `config.h`. Arranques posteriores sin NVS → sin identidad compartida (no usa defaults) |
 | Broker auth | `mosquitto_passwd` password_file, reinicio automático del container |
+
+> **Nota de transición (PR-M / ISSUE-059):** el firmware registra por HTTP (`POST /devices/register`) **solo** cuando no tiene credenciales en NVS (primer aprovisionamiento); tras el registro las persiste en NVS y no vuelve a registrarse en cada boot. Las credenciales de la respuesta de registro se entregan en buffers transitorios y se limpian tras persistir — nunca quedan en RAM de `HTTPPoller`. El transporte MQTT en producción es `mqtts://` (ISSUE-015/PR-L, §2.3).
 
 ### 2.3 Entorno de producción
 

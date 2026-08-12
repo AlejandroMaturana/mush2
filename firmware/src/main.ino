@@ -23,6 +23,7 @@
 #include "thingspeak_client.h"
 #include "device_manager.h"
 #include "mqtt_client.h"
+#include "mqtt_credential_policy.h"
 #include "ble_provisioning.h"
 #include "actuator_nvs.h"
 #include "event_bus.h"
@@ -276,25 +277,44 @@ void setup() {
     strncpy(sharedFwVer, ota.getVersion(), sizeof(sharedFwVer) - 1);
     strncpy(sharedHwRev, HW_REVISION, sizeof(sharedHwRev) - 1);
 
-    // ADR-028: Register first to obtain MQTT credentials from backend
-    for (int i = 0; i < 5; i++) {
-      if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev)) break;
-      vTaskDelay(pdMS_TO_TICKS(2000));
-    }
-
-    // ADR-028: persist provisioned MQTT credentials to NVS (survive reboot)
-    if (httpPoller.hasMqttCredentials()) {
-      deviceManager.saveMqttCredentials(httpPoller.getMqttUser(), httpPoller.getMqttPass());
-    }
-
-    // ADR-028: Init MQTT with NVS credentials, else registration, else defaults
+    // ADR-028 / ISSUE-059: credenciales MQTT en NVS (fuera de RAM). Registro
+    // HTTP SOLO cuando no existen (primer aprovisionamiento) — no se re-registra
+    // en cada boot. Fallback a defaults de config.h SOLO en el primer arranque.
     String nvsUser, nvsPass;
-    if (deviceManager.loadMqttCredentials(nvsUser, nvsPass)) {
-      mqtt.init(deviceManager.getDeviceId().c_str(), nvsUser.c_str(), nvsPass.c_str());
-    } else if (httpPoller.hasMqttCredentials()) {
-      mqtt.init(deviceManager.getDeviceId().c_str(), httpPoller.getMqttUser(), httpPoller.getMqttPass());
-    } else {
-      mqtt.init(deviceManager.getDeviceId().c_str());
+    bool hasNvs = deviceManager.loadMqttCredentials(nvsUser, nvsPass);
+
+    if (!hasNvs) {
+      char regUser[64], regPass[64];
+      bool gotMqttCreds = false;
+      for (int i = 0; i < 5; i++) {
+        if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev,
+                                      regUser, sizeof(regUser), regPass, sizeof(regPass),
+                                      &gotMqttCreds)) break;
+        vTaskDelay(pdMS_TO_TICKS(2000));
+      }
+      if (gotMqttCreds) {
+        deviceManager.saveMqttCredentials(String(regUser), String(regPass));
+        nvsUser = regUser;
+        nvsPass = regPass;
+        hasNvs = true;
+      }
+      // Limpiar buffers transitorios: las credenciales quedan solo en NVS.
+      memset(regUser, 0, sizeof(regUser));
+      memset(regPass, 0, sizeof(regPass));
+    }
+
+    MqttCredentialMode mqttCredMode = resolveMqttCredentialMode(hasNvs, deviceManager.isFirstBoot());
+    switch (mqttCredMode) {
+      case MqttCredentialMode::PROVISIONED:
+        mqtt.init(deviceManager.getDeviceId().c_str(), nvsUser.c_str(), nvsPass.c_str());
+        break;
+      case MqttCredentialMode::DEFAULT_FALLBACK:
+        mqtt.init(deviceManager.getDeviceId().c_str());
+        break;
+      case MqttCredentialMode::NO_CREDENTIALS:
+      default:
+        mqtt.init(deviceManager.getDeviceId().c_str(), "", "", false);
+        break;
     }
     mqtt.setOtaCallback(otaMqttCallback);
     mqtt.setActuatorCallback(mqttActuatorCallback);

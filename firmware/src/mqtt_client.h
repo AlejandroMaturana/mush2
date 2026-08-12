@@ -40,7 +40,10 @@ struct MqttCommandMessage {
 class MQTTClient {
 public:
   MQTTClient();
-  void init(const char* deviceId, const char* mqttUser = nullptr, const char* mqttPass = nullptr);
+  // ISSUE-059: allowDefaultFallback=false → sin credenciales provisionadas, NO
+  // usar la identidad por defecto de config.h (solo primer arranque la permite).
+  void init(const char* deviceId, const char* mqttUser = nullptr, const char* mqttPass = nullptr,
+            bool allowDefaultFallback = true);
   void loop();
   bool isConnected();
 
