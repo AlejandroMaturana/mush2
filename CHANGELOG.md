@@ -2,6 +2,19 @@
 
 ## 2026-08-11
 
+### Firmware (ESP32-S3) — v0.23.4
+
+- **PR-M "Firmware Secrets to NVS" (ISSUE-059 / FW-010 · ISSUE-084 / INF-025 parcial)**
+- **I59 DONE — credenciales MQTT en NVS, fuera de RAM:** `HTTPPoller` ya no mantiene `_mqttUser/_mqttPass` en RAM; `registerDevice()` entrega las credenciales de la respuesta de registro en buffers transitorios del llamador (que `main.ino` persiste en NVS vía `device_manager` y luego limpia).
+- **Registro solo cuando falta credencial (no en cada boot):** `main.ino` carga credenciales de NVS primero; el registro HTTP (`POST /devices/register`) solo ocurre si no existen (primer aprovisionamiento). Se elimina el re-registro por HTTP claro en cada arranque.
+- **Fallback solo primer arranque:** nueva política pura `mqtt_credential_policy.h` (`resolveMqttCredentialMode`/`defaultFallbackAllowed`) + `MQTTClient::init(..., allowDefaultFallback)` — los defaults de `config.h` se usan únicamente en el primer arranque; arranques posteriores sin NVS conectan sin identidad compartida (ADR-028).
+- **I84 avance parcial (IN_PROGRESS):** migración NVS (compartida con I59) + `.gitignore` (ya ignoraba `**/config.h`, `**/secrets.h`, `.env*`, `password_file`, certs) + checklist documentado `docs/security/secrets-checklist.md`. **Scanning automático diferido a ISSUE-076 (F1, CI gates)** — no se inventa scanning en este ciclo.
+- Tests: `test_mqtt_credentials.cpp` (4 casos nativos: NVS gana, fallback solo primer boot, sin credenciales en boot posterior, fallback alcanzable exactamente una vez) + `test_main.cpp` (runner único Unity). **`pio test -c platformio.test.ini -e native` 6/6** (2 channel mapping + 4 I59) y **`pio run`** (flash 41.7 %, RAM 27.2 %).
+- Scan estático: `http_poller.h` sin `_mqttUser/_mqttPass`; `config.h` verificado como ignorado (`git check-ignore`).
+- Contrato: `mqtt-contract.md` §2.2 — persistencia en NVS (namespace `mush2`, keys `mqttUser`/`mqttPass`), fallback solo primer arranque y nota de transición (registro solo en primer aprovisionamiento; transporte MQTT prod `mqtts://`, I15/PR-L). Sin cambio de versión del contrato.
+
+## 2026-08-11
+
 ### Backend — v1.7.9
 
 - **PR-L "MQTT Security: TLS + Identidad por Dispositivo" (ISSUE-015 / BE-015 · ISSUE-024 / BE-024)**
