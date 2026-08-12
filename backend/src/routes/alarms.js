@@ -17,7 +17,19 @@ router.get('/', authenticate, async (req, res) => {
     if (severity) where.severity = severity.toUpperCase();
     if (status === 'active') where.resolvedAt = null;
     if (status === 'resolved') where.resolvedAt = { [Op.ne]: null };
-    if (deviceId) where.deviceId = deviceId;
+
+    // I012/PR-C — alinear tipos en el boundary: deviceId llega como string
+    // (id INTEGER o deviceId del Device); se resuelve el Device y se filtra
+    // por su id INTEGER, evitando comparar strings contra la columna INTEGER.
+    if (deviceId) {
+      const device = await Device.findOne({
+        where: { [Op.or]: [{ id: deviceId }, { deviceId }] },
+      });
+      if (!device) {
+        return res.json({ data: [], pagination: { page: 1, limit: 0, total: 0, pages: 0 } });
+      }
+      where.deviceId = device.id;
+    }
 
     if (req.tenant && req.tenant.userId) {
       const accessibleDevices = await Device.findAll({
