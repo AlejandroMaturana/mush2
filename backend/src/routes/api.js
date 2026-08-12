@@ -2,7 +2,8 @@ import { Op } from 'sequelize';
 import crypto from 'crypto';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
+import sequelize from '../config/database.js';
+import { Device, Event, Alarm, Sensor, Telemetry, Actuator, TelegramDeviceConfig, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
 import { requireProvisioningAuth } from '../middlewares/provisioningAuth.js';
 import { logAudit } from '../services/auditService.js';
@@ -508,18 +509,28 @@ router.delete('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = req.device;
 
-    const cycles = await CultivationCycle.findAll({ where: { deviceId: device.id }, attributes: ['id'] });
-    for (const cycle of cycles) {
-      await CycleState.destroy({ where: { cycleId: cycle.id } });
-    }
-    await CultivationCycle.destroy({ where: { deviceId: device.id } });
-    await Actuator.destroy({ where: { deviceId: device.id } });
-    await Telemetry.destroy({ where: { deviceId: device.id } });
-    await DeviceHealth.destroy({ where: { deviceId: device.id } });
-    await DeviceMaintenance.destroy({ where: { deviceId: device.id } });
-    await IntegrationCredentials.destroy({ where: { deviceId: device.id } });
-    await UserChamberAccess.destroy({ where: { deviceId: device.id } });
-    await device.destroy();
+    // Borrado transaccional (ISSUE-006/PR-C): atomicidad — si cualquier paso
+    // falla, el rollback deja el Device y su historial intactos. Cascada
+    // explícita en orden: los hijos de Device se eliminan antes que el padre,
+    // cubriendo TODAS las tablas con FK deviceId (contrato api-contract §4).
+    await sequelize.transaction(async (t) => {
+      const cycles = await CultivationCycle.findAll({ where: { deviceId: device.id }, attributes: ['id'], transaction: t });
+      for (const cycle of cycles) {
+        await CycleState.destroy({ where: { cycleId: cycle.id }, transaction: t });
+      }
+      await CultivationCycle.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Event.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Alarm.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Sensor.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Actuator.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Telemetry.destroy({ where: { deviceId: device.id }, transaction: t });
+      await DeviceHealth.destroy({ where: { deviceId: device.id }, transaction: t });
+      await DeviceMaintenance.destroy({ where: { deviceId: device.id }, transaction: t });
+      await IntegrationCredentials.destroy({ where: { deviceId: device.id }, transaction: t });
+      await TelegramDeviceConfig.destroy({ where: { deviceId: device.id }, transaction: t });
+      await UserChamberAccess.destroy({ where: { deviceId: device.id }, transaction: t });
+      await device.destroy({ transaction: t });
+    });
 
     if (req.user) {
       await logAudit({
