@@ -4,7 +4,7 @@
   "private": true,
   "description": "Full-stack application for the Mush2 appweb",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm --dir backend run test:ci && pnpm --dir frontend run test",
     "changeset": "changeset",
     "version-packages": "changeset version && node scripts/aggregate-changelog.cjs",
     "aggregate": "node scripts/aggregate-changelog.cjs"
