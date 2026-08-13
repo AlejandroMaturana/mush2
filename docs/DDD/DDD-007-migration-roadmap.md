@@ -197,7 +197,6 @@ backend/src/
 │   │   └── event-bus.ts
 │   └── external/
 │       ├── telegram-service.ts
-│       └── thingspeak-sync.ts
 │
 └── interfaces/                # Capa de presentación
     ├── http/

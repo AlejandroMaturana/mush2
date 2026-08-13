@@ -21,19 +21,6 @@
 #define WIFI_PASSWORD_2 "your_password_2"
 #endif
 
-// ---- ThingSpeak ----
-// DECISION-007: transporte HTTPS obligatorio con CA embebida
-// (thingspeak_ca_root.h). La clave viaja en el header X-ApiKey.
-#ifndef TS_HOST
-#define TS_HOST "api.thingspeak.com"
-#endif
-#ifndef TS_PORT
-#define TS_PORT 443
-#endif
-#ifndef TS_API_KEY
-#define TS_API_KEY "your_ts_api_key"
-#endif
-
 // ---- Environment ----
 #define ENV_DEVELOPMENT 0
 #define ENV_STAGING     1
@@ -201,7 +188,6 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 
 // ---- Intervals (ms) ----
 #define SENSOR_INTERVAL 10000
-#define TS_INTERVAL 20000
 #define POLL_INTERVAL 5000
 
 // ---- WDT ----

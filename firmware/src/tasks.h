@@ -21,7 +21,6 @@
 #include "ens160_sensor.h"
 #include "ssr_controller.h"
 #include "hysteresis_controller.h"
-#include "thingspeak_client.h"
 #include "mqtt_client.h"
 #include "event_bus.h"
 #include "logger.h"
@@ -51,7 +50,6 @@ extern AHTSensor aht;
 extern EnsSensor ens;
 extern SSRController ssr;
 extern HysteresisController hyst;
-extern ThingSpeakClient ts;
 extern MQTTClient mqtt;
 extern BLEProvisioning bleProv;
 extern Adafruit_NeoPixel led;

@@ -1,7 +1,9 @@
 # ADR-004: Uso de ThingSpeak como canal secundario de telemetría
 
-**Fecha**: 2026-06-10 (actualizado 2026-08-09)
-**Estado**: Aceptado
+**Fecha**: 2026-06-10 (actualizado 2026-08-09 y 2026-08-12)
+**Estado**: ~~Aceptado~~ → **SUPERSEDED** (DECISION-012, 2026-08-12)
+
+> **Actualización 2026-08-12 (DECISION-012 / SUPERsesión):** ThingSpeak queda fuera de la arquitectura objetivo. La telemetría se consolida por **MQTT como canal canónico** (canal primario existente). Este ADR queda **SUPERSEDED**; el canal auxiliar ThingSpeak (firmware `thingspeak_client.cpp` + backend `thingSpeakSync.js`) se depreca y elimina. La actualización previa del transporte HTTPS (2026-08-09) queda sin efecto operativo y será limpiada junto con el canal.
 
 ## Contexto
 El sistema necesita un canal de telemetría de respaldo. El canal principal es HTTP polling → Backend → PostgreSQL. Se requiere un segundo canal independiente que bufferé datos durante caídas del canal principal.

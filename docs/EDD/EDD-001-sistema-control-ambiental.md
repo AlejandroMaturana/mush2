@@ -100,11 +100,11 @@ El desafío de diseño es construir un sistema distribuido (firmware embebido + 
 │           │                        │  Broker   │          │
 │           │                        │  MQTT     │          │
 │           │                        └───────────┘          │
-│           │ HTTP GET                    │ SSE              │
-│           └──────► ThingSpeak     ┌────▼──────────┐       │
-│                                   │   Frontend    │       │
-│                                   │  React + Vite │       │
-│                                   └───────────────┘       │
+│           │ HTTP                        │ SSE              │
+│           │                             ┌────▼──────────┐       │
+│           │                             │   Frontend    │       │
+│           │                             │  React + Vite │       │
+│           │                             └───────────────┘       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -113,7 +113,7 @@ El desafío de diseño es construir un sistema distribuido (firmware embebido + 
 ```
 Sensor AHT21/ENS160 (cada 8s)
   └──► HTTP POST /api/v1/telemetry → Backend → PostgreSQL
-  └──► HTTP GET → ThingSpeak (respaldo visual)
+  └──► MQTT → Broker → Backend → PostgreSQL
        └──► SSE → Frontend (tiempo real)
 ```
 
@@ -188,7 +188,7 @@ La implementación sigue el principio **"contratos primero, slices verticales de
 | ---------------------------------------- | ----- | ------- | ---------------------------------------- |
 | Red inestable → firmware sin comandos    | Alta  | Medio   | Modo DEGRADED + histéresis local         |
 | Sensor falla → actuadores descontrolados | Media | Alto    | Fail-safe overheat (ADR-010), SAFE mode  |
-| Backend caído → frontend sin datos       | Baja  | Medio   | ThingSpeak como respaldo visual          |
+| Backend caído → frontend sin datos       | Baja  | Medio   | Buffer offline + replay MQTT             |
 | OTA falla → dispositivo inoperable       | Baja  | Crítico | Rollback nativo del bootloader (ADR-014) |
 | Credenciales expuestas                   | Baja  | Crítico | NVS, .env, config.h nunca commiteado     |
 

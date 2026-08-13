@@ -98,7 +98,6 @@ events.on('state', (data) => {
 
 events.on('telemetry', (data) => {
   // SSE endpoint → Frontend
-  // ThingSpeak sync
 });
 
 events.on('control_eval', (data) => {
@@ -229,7 +228,7 @@ events.on('control_eval', (data) => {
 | `unit` | string | Unidad de medida |
 
 **Disparador**: MQTT message from firmware  
-**Suscriptores**: ControlEngine, ThingSpeakSync, Frontend (SSE)  
+**Suscriptores**: ControlEngine, Frontend (SSE)  
 **Efecto**: Evaluación de umbrales y alarmas
 
 ### 5.2 AlarmaGenerada

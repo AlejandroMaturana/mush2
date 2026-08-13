@@ -45,8 +45,6 @@
 | Telemetry Model | `backend/src/models/Telemetry.js` | 🟢 | ❌ | 🟢 |
 | HTTP Telemetry | `backend/src/routes/api.js` | 🟡 | ⚠️ | 🟡 |
 | MQTT Bridge | `backend/src/services/mqttBridge.js` | 🔴 | ❌ | 🔴 |
-| ThingSpeak Sync | `backend/src/services/thingSpeakSync.js` | 🟢 | ❌ | 🟢 |
-| ThingSpeak Client | `firmware/src/thingspeak_client.cpp` | 🟢 | ❌ | 🟢 |
 
 **Contrato afectado**: `docs/contracts/api-contract.md` (telemetry endpoints), `docs/contracts/mqtt-contract.md` (topics de telemetría)
 

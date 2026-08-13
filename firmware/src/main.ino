@@ -20,7 +20,6 @@
 #include "ens160_sensor.h"
 #include "ssr_controller.h"
 #include "hysteresis_controller.h"
-#include "thingspeak_client.h"
 #include "device_manager.h"
 #include "mqtt_client.h"
 #include "mqtt_credential_policy.h"
@@ -53,7 +52,6 @@ AHTSensor aht;
 EnsSensor ens;
 SSRController ssr;
 HysteresisController hyst;
-ThingSpeakClient ts;
 MQTTClient mqtt;
 BLEProvisioning bleProv;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);

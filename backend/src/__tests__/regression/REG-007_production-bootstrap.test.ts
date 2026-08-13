@@ -47,12 +47,6 @@ describe('REG-007: Production bootstrap hardening (I60/I61/I68)', () => {
     expect(source).toContain('production');
   });
 
-  it('seed.js no inyecta credenciales ThingSpeak falsas', () => {
-    const seedSource = readProjectFile('backend/src/seed.js');
-    expect(seedSource).not.toContain('ABCDEFGHIJKLMNOP');
-    expect(seedSource).not.toContain('ZYXWVUTSRQPONMLK');
-  });
-
   it('existe seed-catalog.js separado de fixtures con guard explícito', () => {
     const catalogPath = resolve(PROJECT_ROOT, 'backend', 'src', 'db', 'seed-catalog.js');
     expect(existsSync(catalogPath)).toBe(true);

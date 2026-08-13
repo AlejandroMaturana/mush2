@@ -91,7 +91,6 @@ backend/
 │   │   │   ├── emailProvider.js
 │   │   │   ├── webhookProvider.js
 │   │   │   └── notificationService.js  # Orquestador de canales
-│   │   ├── thingSpeakSync.js      # Sincronización TS
 │   │   ├── eventBus.js            # Event bus in-memory (ADR-017)
 │   │   ├── webSocketServer.js     # Server para eventos SSE
 │   │   ├── auditService.js        # Servicio de auditoría
@@ -190,11 +189,6 @@ User 1──N AuditLog
 - Servicio centralizado de notificaciones
 - Proveedores internos: emailProvider, webhookProvider, telegramBotService
 - Patrón: notificationService → TelegramBotService (`sendAlarm`)
-
-### thingSpeakSync.js
-- Sincroniza datos desde ThingSpeak cuando backend estuvo caído
-- Batch de 5 minutos de datos perdidos
-- Evita duplicados por timestamp
 
 ### dataRetentionJob.js
 - Ejecución diaria vía node-cron

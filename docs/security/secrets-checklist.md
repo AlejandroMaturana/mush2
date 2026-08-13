@@ -14,7 +14,7 @@ Verifica que el working tree no contiene secretos reales commiteados ni credenci
 | `.env*` ignorado por git | ✅ | `.gitignore` incluye `.env`, `.env.local`, `.env.development`, `.env.production`, `.env.test` |
 | `password_file` de Mosquitto ignorado | ✅ | `.gitignore` incluye `docker/mosquitto/*/password_file` |
 | Claves TLS del broker ignoradas | ✅ | `.gitignore` incluye `docker/mosquitto/certs/*.key` y `*.crt` |
-| `config.example.h` con placeholders (sin secretos reales) | ✅ | `MQTT_USER=""`, `MQTT_PASS=""`, `TS_API_KEY="your_ts_api_key"`, `OTA_PASSWORD="CHANGE_ME_OTA_PASSWORD"` |
+| `config.example.h` con placeholders (sin secretos reales) | ✅ | `MQTT_USER=""`, `MQTT_PASS=""`, `OTA_PASSWORD="CHANGE_ME_OTA_PASSWORD"` |
 | Credenciales MQTT de firmware migradas a NVS (fuera de RAM) | ✅ | ISSUE-059/PR-M: `http_poller.h` sin `_mqttUser`/`_mqttPass`; credenciales persistidas en NVS (`device_manager`, namespace `mush2`) tras el primer registro |
 | Fallback a defaults solo primer arranque | ✅ | ISSUE-059/PR-M: `mqtt_credential_policy.h` + `MQTTClient::init(allowDefaultFallback)` |
 | Scanning automático en CI | ✅ | ISSUE-076/PR-E: job `security` en `ci.yml` — **gitleaks** en cada PR (gate duro de secretos, falla), `pnpm audit --audit-level=critical` (backend+frontend) y **osv-scanner** (reporte SARIF) |

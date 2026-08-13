@@ -186,7 +186,7 @@ pnpm --dir simulator run dev
 
 ### Orden de carga (backend)
 
-1. `.env` — base compartida (credenciales WiFi, ThingSpeak, DEVICE_ID)
+1. `.env` — base compartida (credenciales WiFi, DEVICE_ID)
 2. `.env.development` — valores específicos DEV (sobrescriben `.env`)
 
 Ambos en la **raíz del repositorio**. `NODE_ENV` se detecta de `process.env` y por defecto es `development`.

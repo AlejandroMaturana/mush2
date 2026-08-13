@@ -57,11 +57,6 @@ export const env = {
 
   JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-change-in-production',
 
-  TS: {
-    host: process.env.TS_HOST || 'api.thingspeak.com',
-    port: parseInt(process.env.TS_PORT || '80', 10),
-  },
-
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',

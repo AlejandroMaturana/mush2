@@ -4,7 +4,7 @@
  * Seeds test users, chambers, access rules and audit entries for
  * development/test environments. The reference catalog (species,
  * recipes) is delegated to catalog-seed.js (I68) and seeded via
- * seedCatalog(). seed.js does NOT inject fake ThingSpeak credentials.
+ * seedCatalog(). seed.js does NOT inject fake external credentials.
  *
  * Guards:
  *  - isSeedAllowed(): refuses to run in production (fail-fast).
