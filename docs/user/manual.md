@@ -61,9 +61,9 @@ Mush2 es un sistema IoT para monitorear y controlar el ambiente de cámaras de c
 └──────────┘    └────┬─────┘    └──────────┘    └──────────┘    └──────────┘
                      │                                │
                 ┌────▼─────┐                    ┌─────▼──────┐
-                │ SSR/     │                    │ ThingSpeak │
-                │ ACTUAD.  │                    │ (respaldo) │
-                └──────────┘                    └────────────┘
+│ SSR/     │
+                 │ ACTUAD.  │
+                 └──────────┘
 ```
 
 - **BLE Provisioning**: Configuración Wi-Fi inicial desde el navegador vía Bluetooth
@@ -71,7 +71,6 @@ Mush2 es un sistema IoT para monitorear y controlar el ambiente de cámaras de c
 - **MQTT**: Comandos de actuadores en tiempo real
 - **SSE**: Eventos en vivo del backend al frontend
 - **REST API**: Operaciones CRUD (dispositivos, recetas, ciclos)
-- **ThingSpeak**: Canal de respaldo con T/HR/CO₂/VOC cada 20s
 
 ---
 

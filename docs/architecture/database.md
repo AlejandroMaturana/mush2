@@ -42,8 +42,6 @@ Chamber ──1:N── Device
 | lifecycle | ENUM(INSTALLING,RUNNING,MAINTENANCE,DECOMMISSIONED) | Ciclo de vida (ADR-025) |
 | lastSeen | TIMESTAMP | Última conexión |
 | lastTelemetryAt | TIMESTAMP | Última telemetría recibida |
-| thingSpeakChannelId | VARCHAR(64) | Channel ID ThingSpeak |
-| thingSpeakReadKey | TEXT | Read key cifrada (AES-256-GCM) |
 | mqttUser | VARCHAR(100) | Usuario MQTT provisionado (ADR-028) |
 | mqttPass | TEXT | Password MQTT cifrada (ADR-028) |
 

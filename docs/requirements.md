@@ -8,7 +8,7 @@
 - [x] Reset + reinit automático del AHT21 si falla el trigger de medición
 - [x] Validar lecturas (rangos esperados, error de sensor)
 - [x] Enviar telemetría vía HTTP POST cada 8s a `/api/v1/telemetry`
-- [x] Enviar telemetría a ThingSpeak cada 20s con T/HR/CO₂/VOC
+- [x] Enviar telemetría vía MQTT (canal canónico) con T/HR/CO₂/VOC
 - [x] Mostrar telemetría en tiempo real en dashboard (SSE)
 
 ### Control de Actuadores

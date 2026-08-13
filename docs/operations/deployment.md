@@ -54,7 +54,6 @@ node src/scripts/seed.js  # Crea usuario admin / admin123 (SUPER_ADMIN)
 - JWT_SECRET y ENCRYPTION_KEY son variables separadas
 
 ### Transporte
-- ThingSpeak: HTTPS ✅ (TS_PORT=443, WiFiClientSecure + CA embebida, header X-ApiKey — ISSUE-051, 2026-08-09)
 - Backend: TLS con Let's Encrypt (futuro)
 - MQTT: deshabilitar bridge público o asegurar con TLS (ADR-013 Fase 1)
 - **Broker MQTT (Mosquitto 2.x):** plan de despliegue en [`broker-deployment.md`](broker-deployment.md) (PR-G, ISSUE-065) — contenedor + TLS 8883 + ACL por dispositivo (DECISION-006); ejecución diferida a ISSUE-075/081.

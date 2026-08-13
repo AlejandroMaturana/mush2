@@ -65,7 +65,7 @@ describe('Contract: estructura de rutas REST', () => {
           l.includes(`router.${route.method.toLowerCase()}(`) && l.includes(route.path)
         );
         for (const line of routeDeclaration) {
-          if (!route.path.includes('/claim') && !route.path.includes('/thingSpeak')) {
+          if (!route.path.includes('/claim')) {
             expect(
               line.includes('checkDeviceAccess') || route.path === '/devices'
             ).toBe(true);

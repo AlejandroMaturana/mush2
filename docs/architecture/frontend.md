@@ -107,7 +107,6 @@ frontend/src/
 │   │
 │   └───settings/
 │       ├───api/settings.js         # Profile, password, telegram, api-keys, system,
-│       │                           # subscription, thingSpeak
 │       └───pages/                  # SettingsHub, UserSettings, DeviceSettings,
 │                                   # CultivationSettings, ApiKeysSettings,
 │                                   # SystemSettings, SubscriptionSettings

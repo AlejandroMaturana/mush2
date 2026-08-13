@@ -3,7 +3,7 @@
  *
  * Seeds the reference catalog (species/recipes) independently from
  * development fixtures, without injecting test users, chambers or fake
- * ThingSpeak credentials.
+ * external credentials.
  *
  * Guards (double):
  *  1. NODE_ENV — allowed in development/test; in production it requires

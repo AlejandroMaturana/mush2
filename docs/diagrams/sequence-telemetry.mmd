@@ -35,12 +35,6 @@ sequenceDiagram
         HTTP->>DB: INSERT INTO device_health
     end
 
-    rect rgb(255, 243, 224)
-        Note right of FW: Respaldo ThingSpeak
-        FW->>TS: HTTP GET field1=T&field2=H&field3=CO2
-        TS-->>FW: 200 OK
-    end
-
     rect rgb(243, 229, 245)
         Note right of SSE: Tiempo real → Frontend
         HTTP->>SSE: eventBus.emit('telemetry', data)

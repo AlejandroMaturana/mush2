@@ -158,7 +158,7 @@
 | Afecta | Componente | Severidad |
 |---|---|---|
 | Startup de todos los servicios | Todo el backend | 🔴 |
-| HTTP server, WebSocket, MQTT, Control Engine, Telegram, ThingSpeak | Servicios | 🔴 |
+| HTTP server, WebSocket, MQTT, Control Engine, Telegram | Servicios | 🔴 |
 
 ---
 
@@ -295,7 +295,7 @@
 | Afecta | Componente | Severidad |
 |---|---|---|
 | Todos los módulos que usan defines | Todo el firmware | 🔴 |
-| WiFi, MQTT, ThingSpeak, GPIO pins | Configuración completa | 🔴 |
+| WiFi, MQTT, GPIO pins | Configuración completa | 🔴 |
 
 **Nota**: Este archivo se genera desde `.env` via `generate_config.py`. No editarlo directamente.
 

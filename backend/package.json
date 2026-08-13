@@ -11,7 +11,6 @@
     "db:migrate:undo": "sequelize-cli db:migrate:undo --config config/config.cjs --migrations-path src/db/migrations",
     "db:seed:catalog": "node src/db/seed-catalog.js",
     "db:seed:dev": "node src/seed-dev.js",
-    "db:migrate:thingspeak": "node src/migrate-thingspeak-keys.js",
     "db:seed": "node src/seed.js",
     "admin:create": "node src/scripts/create-admin.js",
     "provision:token": "node src/scripts/create-provisioning-token.js",

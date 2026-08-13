@@ -7,11 +7,6 @@ export interface DeviceInput {
   chamberLocation?: string;
   firmwareVersion?: string;
   hwRevision?: string;
-  thingSpeakEnabled?: boolean;
-  thingSpeakChannelId?: number | null;
-  thingSpeakReadKey?: string;
-  thingSpeakWriteKey?: string;
-  thingSpeakSyncInterval?: number;
   heartbeatInterval?: number;
   staleMultiplier?: number;
   offlineMultiplier?: number;
@@ -31,11 +26,6 @@ export function buildDeviceInput(overrides: Partial<DeviceInput> = {}): DeviceIn
     chamberLocation: 'Lab Bench',
     firmwareVersion: '0.22.0',
     hwRevision: 'esp32-s3-v1',
-    thingSpeakEnabled: false,
-    thingSpeakChannelId: null,
-    thingSpeakReadKey: '',
-    thingSpeakWriteKey: '',
-    thingSpeakSyncInterval: 300000,
     heartbeatInterval: 60000,
     staleMultiplier: 3,
     offlineMultiplier: 5,

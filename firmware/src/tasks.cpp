@@ -710,7 +710,6 @@ ota_skip:
 
 void taskTelemetry(void* pvParameters) {
   TickType_t lastWake = xTaskGetTickCount();
-  unsigned long lastTsSend = 0;
   unsigned long lastMqttTel = 0;
   unsigned long lastMqttStatus = 0;
   unsigned long lastReplay = 0;
@@ -736,15 +735,6 @@ void taskTelemetry(void* pvParameters) {
       }
       if (replayed > 0) {
         Serial.printf("[TELEMETRY] Replay: %d entradas enviadas\n", replayed);
-      }
-    }
-
-    if (now - lastTsSend >= TS_INTERVAL) {
-      lastTsSend = now;
-      if (wifiOk && sharedSensorsValid) {
-        ts.send(sharedTemp, sharedHum,
-          sharedEnsValid ? sharedEco2 : 0,
-          sharedEnsValid ? sharedTvoc : 0);
       }
     }
 

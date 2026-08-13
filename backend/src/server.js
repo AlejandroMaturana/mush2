@@ -8,8 +8,6 @@ import logger, { createChildLogger } from './config/pino.js';
 
 const log = createChildLogger('SERVER');
 
-let tsSyncHandle = null;
-
 async function start() {
   try {
     log.info({ event: 'STARTING', pid: process.pid }, 'Iniciando backend');
@@ -55,8 +53,6 @@ async function start() {
 
 // ── Secondary services (non-blocking) ─────────────────────────────
 async function initSecondaryServices(httpServer) {
-  const TS_CHECK_INTERVAL = 60000;
-
   // Schema sync removed from startup — use `npm run db:sync` when schema changes are needed.
   // Running sync({ alter: true }) on every startup adds 5-10 minutes to boot and saturates the DB pool.
   markServiceStarted('dbSync');
@@ -170,17 +166,7 @@ async function initSecondaryServices(httpServer) {
     log.error({ module: 'EVENTBUS', event: 'FAILED', error: err.message }, 'Event bus wiring failed');
   }
 
-  // ThingSpeak Sync
-  try {
-    const { syncAllFromThingSpeak } = await import('./services/thingSpeakSync.js');
-    syncAllFromThingSpeak().catch(() => {});
-    tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
-    markServiceStarted('thingSpeak');
-    log.info({ module: 'TS', event: 'STARTED', interval: TS_CHECK_INTERVAL / 1000 }, 'ThingSpeak Sync check');
-  } catch (err) {
-    markServiceFailed('thingSpeak', err);
-    log.error({ module: 'TS', event: 'FAILED', error: err.message }, 'ThingSpeak Sync failed');
-  }
+  // ThingSpeak Sync removed (DECISION-012: ThingSpeak deprecated, MQTT canonical)
 
   // Background Jobs
   try {
@@ -208,7 +194,6 @@ function shutdown(signal) {
   return async () => {
     log.info({ event: 'SHUTDOWN', signal }, 'Cerrando conexiones');
     try {
-      if (tsSyncHandle) clearInterval(tsSyncHandle);
       const { stopControlEngine } = await import('./services/controlEngine.js');
       const { stopDataRetentionJob } = await import('./jobs/dataRetentionJob.js');
       const { stopOfflineWatchdog } = await import('./jobs/offlineWatchdog.js');

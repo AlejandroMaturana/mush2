@@ -911,15 +911,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Tasks:** router `/chambers`; dedup; alias.
 
 #### ISSUE-023 — ThingSpeak sync re-inserta duplicados (BE-023) — P2
-`Programa 4 · EPIC-INPUT-VALIDATION · Ini 4.7`
+`Programa 4 · EPIC-INPUT-VALIDATION · Ini 4.7` · Estado: **SUPERSEDED** (DECISION-012, 2026-08-12 — ThingSpeak deprecado; `thingSpeakSync.js` se elimina)
 - **Objetivo:** omitir escrituras sin cambios; dedup por (device, channel, ventana).
 - **Problema actual:** `thingSpeakSync.js` re-inserta sin dedup.
 - **Impacto:** historial inflado; cuota desperdiciada.
 - **Archivos afectados:** `services/thingSpeakSync.js`.
 - **Contratos afectados:** —.
-- **ADR/DDD:** ADR-004.
+- **ADR/DDD:** ADR-004 (**SUPERSEDED** por DECISION-012).
 - **Dependencias:** ninguna.
-- **DoD:** sin re-inserción sin cambios.
+- **DoD:** sin re-inserción sin cambios → **SUPERSEDED:** eliminación de `thingSpeakSync.js` (canal ThingSpeak fuera de arquitectura; sin dedup necesaria).
 - **Tasks:** dedup; test.
 
 #### ISSUE-024 — Contraseña MQTT en argv (BE-024) — P2
@@ -1277,23 +1277,24 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **DoD:** sin secretos reales en el árbol; placeholders.
 - **Tasks:** placeholders; NVS; otaPassword por dispositivo.
 - **PR-C (2026-08-09, avance parcial):** `ota_handler.cpp` sin password OTA hardcodeada — lee de NVS (`nvsGetOtaPass`) con fallback a placeholder `OTA_PASSWORD`; `ota_nvs` con `nvsGetOtaPass`/`nvsSetOtaPass`/`nvsClearOtaPass`; `platformio.ini` `--auth` a placeholder; `device_manager` persiste/lee credenciales MQTT provisionadas en NVS (ADR-028); `main.ino` usa NVS → registro → defaults al init de MQTT. Pendiente para cierre: ISSUE-059 (NVS completa), ISSUE-052 (OTA TLS), ISSUE-076 (scan de secretos en CI).
+- **Ajuste de alcance (2026-08-12, DECISION-012):** `TS_API_KEY` **no se migra a NVS** — queda obsoleta y se elimina junto con el canal ThingSpeak (SUPERsesión de ADR-004 / deprecación). El resto del ISSUE (Wi-Fi creds, MQTT creds, DEVICE_ID, OTA password por dispositivo → placeholders/NVS) **se mantiene íntegro e incrementa su crítica**: MQTT es ahora el canal canónico de telemetría.
 
 #### ISSUE-051 — API key ThingSpeak en claro por HTTP (FW-002) — P0
-`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9` · Estado: **IN_PROGRESS** (avance parcial PR-D ✅ mergeado 2026-08-09 · cierre diferido a Ciclo 1, ver Fase 9 §9.6)
+`Programa 1 · EPIC-TELEMETRY-CHANNEL · Ini 1.9` · Estado: **SUPERSEDED** (DECISION-012, 2026-08-12 — ThingSpeak deprecado; MQTT canal canónico de telemetría; el objetivo se logra deprecando el canal, no endureciéndolo)
 - **Objetivo:** HTTPS (`TS_PORT 443` + `WiFiClientSecure` con CA) o consolidar por MQTT.
 - **Problema actual:** `thingspeak_client.cpp:11-12` clave en query string de `http://`.
 - **Impacto:** clave expuesta; telemetría falsa.
 - **Archivos afectados:** `firmware/src/thingspeak_client.cpp`, `firmware/src/config.h`.
 - **Contratos afectados:** `mqtt-contract.md`.
-- **ADR/DDD:** ADR-004 (REQUIRED — define ThingSpeak como canal secundario con `api_key` en GET HTTP; el fix modifica el transporte del mismo diseño; si se consolida por MQTT, ADR-004 se supersede explícitamente) · ADR-013 (INFORMATIVE — contexto de seguridad en el transporte firmware). DDD: NOT_APPLICABLE (canal de telemetría; sin impacto en el modelo de dominio). Decisión: DECISION-007 · ACCEPTED (HTTPS + CA; deprecar ThingSpeak tras broker estable).
-- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1; payloads con `protocol`) — sin cambio de versión si se consolida por MQTT (telemetría usa topics existentes); sin cambio si se mantiene ThingSpeak por HTTPS (canal externo). `api-contract` no afectado.
-- **Riesgos:** ThingSpeak exige CA real y hostname verificable → mitigación: CA root embebida + verificación de host en `WiFiClientSecure`; consolidar por MQTT cambia el canal → mitigación: supersesión de ADR-004 y fallback HTTPS durante transición; offline/latencia → mitigación: buffer existente en NVS/SPIFFS.
-- **Verificación (verde→rojo→verde):** verde: `thingspeak_client.cpp:11-12` construye `http://api.thingspeak.com/update?api_key=...` en claro (hoy presente); rojo: scan/test que falla si la api_key viaja en query string o el transporte es HTTP → hoy falla; verde: tras HTTPS+CA (o canal MQTT), el scan pasa y la telemetría va cifrada.
-- **Dependencias:** DECISION-007; TLS/CA (ISSUE-015/075).
-- **Decisión:** DECISION-007 · ACCEPTED
-- **DoD:** sin clave en claro; tráfico cifrado.
-- **Tasks:** HTTPS+CA; o canal MQTT; test.
-- **PR-D (2026-08-09, avance parcial):** HTTPS obligatorio en `thingspeak_client.cpp` (`WiFiClientSecure` + `TS_CA_ROOT` embebida en `thingspeak_ca_root.h`), `TS_PORT` 443, clave en header `X-ApiKey` fuera del query string, ADR-004/013 y firmware.md actualizados. Pendiente para cierre: ISSUE-050 (clave a NVS), ISSUE-015/075 (CA) — consolidación MQTT no se realiza (DECISION-007).
+- **ADR/DDD:** ADR-004 (REQUIRED — define ThingSpeak como canal secundario con `api_key` en GET HTTP; **SUPERSEDED por DECISION-012** · el fix modifica el transporte del mismo diseño; DECISION-012 deroga esa opción y la consolida por MQTT, ADR-004 se supersede explícitamente) · ADR-013 (INFORMATIVE — contexto de seguridad en el transporte firmware). DDD: NOT_APPLICABLE (canal de telemetría; sin impacto en el modelo de dominio). Decisión: DECISION-007 · ACCEPTED → **SUPERSEDED por DECISION-012 · ACCEPTED (deprecar ThingSpeak; MQTT como canal canónico)**.
+- **Contrato/versión:** `mqtt-contract` (MQTT 3.1.1; payloads con `protocol`) — sin cambio de versión (telemetría consolida por topics existentes; canal ThingSpeak se elimina). `api-contract` no afectado.
+- **Riesgos:** ~~ThingSpeak exige CA real y hostname verificable → mitigación: CA root embebida + verificación de host en `WiFiClientSecure`; consolidar por MQTT cambia el canal → mitigación: supersesión de ADR-004 y fallback HTTPS durante transición; offline/latencia → mitigación: buffer existente en NVS/SPIFFS.~~ **Sustituido por DECISION-012:** detección de dependencias de ThingSpeak residuales (firmware, `thingSpeakSync.js`, docs, DDD) → mitigación: eliminación del canal y limpieza asociada (ISSUE-023 SUPERSEDED, I105 alcance ajustado). Complejidad de deprecación → mitigación: telemetría ya consolidada por MQTT con broker TLS/ACL (I074/I075); sin fallback.
+- **Verificación (verde→rojo→verde):** verde: ~~`thingspeak_client.cpp:11-12` construye `http://api.thingspeak.com/update?api_key=...` en claro (hoy presente)~~; rojo: ~~scan/test que falla si la api_key viaja en query string o el transporte es HTTP → hoy falla~~; verde: tras HTTPS+CA (o canal MQTT), el scan pasa y la telemetría va cifrada. **SUPERSEDED:** el objetivo se alcanza eliminando `TS_API_KEY` y el canal ThingSpeak (DEPrecación); sin clave, no hay exposición. Deprecación formal fuera de PR-G.
+- **Dependencias:** DECISION-012; TLS/CA (ISSUE-015/075) — **ya aplicadas** (I15/I075 PR-A mergeada). **No depende de I050** para su supersesión.
+- **Decisión:** DECISION-012 · ACCEPTED
+- **DoD:** ~~sin clave en claro; tráfico cifrado.~~ **SUPERSEDED:** ausencia total del canal ThingSpeak (firmware + backend) en la arquitectura objetivo.
+- **Tasks:** ~~HTTPS+CA; o canal MQTT; test.~~ **DEPRECACIÓN (fuera de PR-G):** eliminar `thingspeak_client.cpp`/`TS_*` del firmware; eliminar `thingSpeakSync.js`; limpieza de `api-contract`/DDD/docs; verificación sin referencias.
+- **PR-D (2026-08-09, avance parcial):** HTTPS obligatorio en `thingspeak_client.cpp` (`WiFiClientSecure` + `TS_CA_ROOT` embebida en `thingspeak_ca_root.h`), `TS_PORT` 443, clave en header `X-ApiKey` fuera del query string, ADR-004/013 y firmware.md actualizados. **Este avance queda SIN EFECTO operativo por DECISION-012** (el canal se depreca; la clave se elimina). Se reubica el objetivo en la deprecación total.
 
 #### ISSUE-052 — OTA sin TLS ni hash (FW-003) — P1
 `Programa 6 · EPIC-OTA-SECURITY · Ini 6.1`
@@ -2008,7 +2009,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 ### 4.6 Testing (TST-001…TST-006) → ISSUE-105…110
 
 #### ISSUE-105 — Firmware con 1 solo test file (TST-001) — P1
-`Programa 2 · EPIC-FW-NATIVE · Ini 2.4` (también P6.7) · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promovido para PR-G)
+`Programa 2 · EPIC-FW-NATIVE · Ini 2.4` (también P6.7) · Estado: **READY** (Ciclo 2, 2026-08-12 — DoR 9/9; promotor **PR-H** "Firmware Native Test Suite ≥60 %", dep. PR-G+PR-E) · **ajuste DECISION-012 (2026-08-12):** la suite se limita a módulos vigentes (excluye ThingSpeak, deprecado; se enfoca en MQTT/NVS/control/parsers — canales canónicos)
 - **Objetivo:** tests nativos ≥60 % en módulos críticos.
 - **Problema actual:** 1 archivo para ~30 de producción.
 - **Impacto:** regresiones FW no detectadas.
@@ -2016,7 +2017,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** ADR-012 (INFORMATIVE — testing nativo del firmware; contexto de la estrategia de pruebas) · DDD-005 (INFORMATIVE — módulos de dominio de firmware; los críticos a cubrir). 
 - **Contrato/versión:** N/A — sin cambio de contrato API/MQTT/BLE. Justificación: ampliación de tests nativos; no es protocolo.
-- **Riesgos:** suite Unity en native no cubre HW (sensores/actuadores) → mitigación: cobertura de módulos puros (control engine, NVS, parsers) ≥60 % en críticos; CI sin `pio test` → mitigación: integrar el runner en CI (PR-E/I109-I110, F11-8); tests lentos → mitigación: entorno native solo, sin dependencia de HW.
+- **Riesgos:** suite Unity en native no cubre HW (sensores/actuadores) → mitigación: cobertura de módulos puros (control engine, NVS, parsers) ≥60 % en críticos; CI sin `pio test` → mitigación: integrar el runner en CI (PR-E/I109-I110, F11-8); tests lentos → mitigación: entorno native solo, sin dependencia de HW. **DECISION-012:** `thingspeak_client` deja de ser módulo a cubrir (deprecado); sin impacto en el resto del alcance.
 - **Verificación (verde→rojo→verde):** verde: 1 solo archivo de test para ~30 módulos de producción (hoy pasa, cobertura baja); rojo: runner que falla si la cobertura en módulos críticos es <60 % → hoy falla; verde: tras ampliar la suite Unity, cobertura ≥60 % en críticos y CI ejecuta `pio test`.
 - **Dependencias:** ISSUE-109 (TST-006 gate), P6.7.
 - **DoD:** cobertura ≥60 % en críticos.
@@ -2359,6 +2360,22 @@ Ejecución de la Oleada 1: **PR-A "Broker MQTT TLS & ACL"** y **PR-B "Env Consis
 - **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70). PR-A/PR-B cierran ISSUEs P1–P3; ningún P0 (I15 es P1).
 - **Cobertura transversal:** Broker cubierto por REG-016; env-consistency por REG-017; contrato `mqtt-contract` sin cambio (PR-A) y N/A (PR-B). **CI verde en `develop` aún ❌ (causa b HW_REVISION pendiente de PR-E/PR-G); causa (a) REG-002 resuelta en PR-B.**
 - **Versiones:** backend 1.7.10→1.7.11, root 1.8.17→1.8.18.
+
+### 9.9 Ciclo 2 — preparación técnica de los pendientes derivados de DECISION-012 (2026-08-12)
+
+Auditoría sin cambios de código ni merge (STOP a la espera de aprobación del plan de ejecución). Ver `phase-11-cycle-2-plan.md` §12 F11-10.
+
+**Vehículos mínimos definidos:**
+
+| PR | Contenido planificado | ISSUEs | Estado |
+|---|---|---|---|
+| **PR-G "ThingSpeak Deprecation (DECISION-012)"** | Eliminación transversal: firmware (`thingspeak_client.cpp/h`, `thingspeak_ca_root.h`, `config.example.h` bloque TS/`TS_INTERVAL`, `generate_config.py`, `main.ino`/`tasks.cpp/h`) + backend (`thingSpeakSync.js`, `migrate-thingspeak-keys.js`, rutas `thingSpeak/validate`+`integrations/thingspeak`, `env.TS`, `systemSettingsDefaults`, campos `Device`, migración + tests) + docs (api-contract, DDD-001/002, architecture, firmware, manual, dev-environment, deployment) | I051 → SUPERSEDED efectivo · I023 → SUPERSEDED efectivo · I050 avance (elimina `TS_API_KEY`) | **NO implementado** · requiere aprobación |
+| **PR-H "Firmware Native Test Suite ≥60%"** | Ampliar `firmware/test/` a módulos vigentes (hysteresis_controller, ota_decisor, actuator_nvs/ota_nvs con stub, telemetry_buffer) hasta ≥60 %; runner nativo ya en CI (PR-E) | I105 → DONE | **NO implementado** · depende de PR-G + PR-E |
+
+**Auditoría de dependencias (sin bloqueo):**
+- **I050:** NVS Wi-Fi/MQTT/DEVICE_ID/OTA **ya operativo** (PR-C/I059); resta solo eliminar `TS_API_KEY` del firmware/CI. Deps: I059 DONE, I076 (PR-E) ✅, I052 (F2). DoR 9/9.
+- **I105:** runner `pio test` nativo en CI (PR-E/I109-I110) ✅; suite actual 6/6 → **ampliar ≥60 %** en módulos vigentes, excluyendo ThingSpeak. DoR READY* (gate I109).
+- **Deprecación transversal:** 18 fragmentos inventariados; **frontend sin referencias** → sin riesgo de transición; verificación por grep sin coincidencias + regresión completa. DoR: DECISION-012 ACCEPTED (check 9 ✅).
 
 ---
 

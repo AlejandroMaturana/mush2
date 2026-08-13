@@ -38,7 +38,6 @@ export const SYSTEM_SETTINGS_DEFAULTS = [
   { key: 'max_alarms_per_device', value: '50', type: 'number', label: 'Max Alarms Per Device', category: 'alarms' },
 
   // === Integration ===
-  { key: 'thingspeak_enabled', value: 'true', type: 'boolean', label: 'ThingSpeak Integration Enabled', category: 'integration' },
   { key: 'telegram_bot_token', value: '', type: 'string', label: 'Telegram Bot Token', description: 'Token del bot obtenido de @BotFather en Telegram', category: 'integration' },
   { key: 'telegram_bot_username', value: '', type: 'string', label: 'Telegram Bot Username', description: 'Username del bot (sin @)', category: 'integration' },
   { key: 'telegram_bot_enabled', value: 'false', type: 'boolean', label: 'Telegram Bot Enabled', category: 'integration' },

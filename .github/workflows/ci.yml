@@ -35,15 +35,11 @@ jobs:
           #define WIFI_PASSWORD_1 ""
           #define WIFI_SSID_2 ""
           #define WIFI_PASSWORD_2 ""
-          #define TS_HOST "api.thingspeak.com"
-          #define TS_PORT 443
-          #define TS_API_KEY ""
           #define BACKEND_HOST "localhost"
           #define BACKEND_PORT 3797
           #define POLL_INTERVAL 3000
           #define DEVICE_ID "ci_build"
           #define SENSOR_INTERVAL 10000
-          #define TS_INTERVAL 15000
           #define SSR_ACTIVE_LOW 1
           #include "channel_mapping.h"
           #define SSR_CH1_PIN CHANNEL_1_PIN

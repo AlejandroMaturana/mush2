@@ -26,7 +26,6 @@ The MVP consists of exactly the following capabilities, mapped to the core flow:
 | General audit log (all actions) | Each domain entity self-records its own history |
 | Bioactive profiles | Lab analysis, outside MVP flow |
 | RBAC roles | Single user, roles added later |
-| ThingSpeak sync | External dependency, outside MVP |
 | OTA firmware management | Firmware features deferred to post-MVP |
 | Multi-chart analytics | Basic dashboard is sufficient MVP |
 | Recipe cloning | Nice-to-have, not essential for first run |

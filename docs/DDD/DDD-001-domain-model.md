@@ -369,12 +369,7 @@ Device (Raíz)
 │   ├── enabled: boolean
 │   └── chatId: string
 │
-├── ThingSpeakConfig (Value Object embebido)
-│   ├── enabled: boolean
-│   ├── channelId: string
-│   └── readKey: string
-│
-└── IntegrationCredentials[] (entidades internas)
+├── IntegrationCredentials[] (entidades internas)
     ├── service: string
     └── credentials: encrypted JSON
 ```
@@ -716,7 +711,7 @@ Los Eventos de Dominio representan hechos significativos que ocurrieron en el si
 
 | Evento | Descripción | Datos | Suscriptores |
 |--------|-------------|-------|--------------|
-| **LecturaSensorRecibida** | Nuevo dato de telemetría | deviceId, sensorType, value, unit, timestamp | ControlEngine, ThingSpeakSync |
+| **LecturaSensorRecibida** | Nuevo dato de telemetría | deviceId, sensorType, value, unit, timestamp | ControlEngine |
 | **AlarmaGenerada** | Condición fuera de rango detectada | alarmId, deviceId, type, severity, sensorType | Telegram, Frontend (SSE) |
 | **AlarmaReconocida** | Operador confirmó alarma | alarmId, deviceId, acknowledgedBy | AuditLog, Frontend (SSE) |
 | **AlarmaResuelta** | Condición normalizada | alarmId, deviceId, resolvedAt | AuditLog, Frontend (SSE) |
@@ -797,7 +792,6 @@ sequenceDiagram
 | **MQTTBridge** | Gestiona conexión bidireccional con hardware | Control + Monitoreo |
 | **SSEServer** | Push de estado a clientes en tiempo real (SSE) | Control |
 | **TelegramService** | Envía notificaciones y gestiona bot | Todos |
-| **ThingSpeakSync** | Sincroniza telemetría con ThingSpeak | Monitoreo |
 | **AuditService** | Registra acciones en audit trail | Usuarios |
 | **DataRetentionJob** | Purga datos según política de retención | Monitoreo + Usuarios |
 | **EncryptionService** | Cifra/descifra credenciales de integración | Monitoreo |
@@ -943,7 +937,6 @@ sequenceDiagram
                               │      EXTERNOS           │
                               │                         │
                               │  Telegram Bot API       │
-                              │  ThingSpeak API         │
                               │  Google Gemini API      │
                               └─────────────────────────┘
 ```

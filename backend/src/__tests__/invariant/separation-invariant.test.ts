@@ -50,7 +50,6 @@ describe('Invariant: separación de responsabilidades', () => {
       'services/mqttBridge.js',
       'services/eventBus.js',
       'services/auditService.js',
-      'services/thingSpeakSync.js',
     ];
 
     for (const file of serviceFiles) {
