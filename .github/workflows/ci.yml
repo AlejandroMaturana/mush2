@@ -60,6 +60,9 @@ jobs:
       - name: Firmware unit tests (native)
         run: cd firmware && pio test -c platformio.test.ini -e native
 
+      - name: Firmware coverage gate (I105, >=60%)
+        run: cd firmware && python test/scripts/coverage_gate.py
+
       - name: Compile hardware sketches (I110)
         run: |
           cd firmware
