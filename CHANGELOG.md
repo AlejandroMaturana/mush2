@@ -1,5 +1,11 @@
 # Changelog — Mush2
 
+## 2026-08-14
+
+### Backend — v1.9.0
+
+- ghghghg
+
 ## 2026-08-13
 
 ### Backend — v1.8.0 (MINOR)
