@@ -194,6 +194,27 @@ PR-A (I074/I075/I104; cierre cross-ciclo I015; avance I065) cierra la cadena MQT
 
 > **Nota (§10 → cierre):** el re-computo definitivo del Ciclo 2 se aplica al cerrar el ciclo (luego de PR-G) según Fase 8 §8, incluyendo los cierres I051/I084 y el avance I050. Este apartado documenta el aporte específico de PR-A para I104 (DOC-020).
 
+### 10.2 Re-computo definitivo post-Ciclo 2 (2026-08-13)
+
+Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo 2 (PR #206–#214; base: §10, post-Ciclo 1). Es el re-computo de cierre anunciado en §10.1, e incluye el aporte de PR-A (ya en §10.1) y de PR-B..H.
+
+| Indicador | Post-Ciclo 1 (§10) | Post-Ciclo 2 (§10.2) | Δ |
+|---|---|---|---|
+| Avance P1 Seguridad | 17/28 ≈ 61 % | **23/28 ≈ 82 %** (I015/I031/I074/I075/I084/I104 DONE) · I051 SUPERSEDED | +21 p.p. |
+| Avance P2 Testing | 1/11 ≈ 9 % | **10/11 ≈ 91 %** (I012/I040/I066/I076/I080/I105/I108/I109/I110 DONE + I106 C0) | +82 p.p. |
+| Avance global | 18/110 ≈ 16 % | **40/110 ≈ 36 %** | +20 p.p. |
+| P0 en P1 | 10 DONE · 4 abiertos (I050/I051/I065 `IN_PROGRESS`, I070 `BLOCKED`) | 10 DONE · 2 IP (I050/I065) · 1 SUPERSEDED (I051, DECISION-012) · 1 BLOCKED (I070) | −1 P0 abierto |
+| Estados ISSUEs | 18 D · 5 IP (I015/I050/I051/I065/I084) · 1 BLOCKED · 86 B | **40 D · 2 IP (I050/I065) · 2 SUPERSEDED (I051/I023) · 1 BLOCKED (I070) · 65 B** | +22 D · +2 SUPERSEDED |
+| Madurez Seguridad | Media-alta (61 %) | **Alta (82 %)** | ⬆ |
+| Madurez Testing | Media (9 %) | **Alta (91 %)** | ⬆ |
+| Riesgo Seguridad | 🟠 Medio | 🟠 Medio (DECISION-011 PENDING; I050/I065 cross-ciclo a C3) | — |
+| Bloqueador Seguridad | `DECISION-011 (I070/I071)` · I015→I074/I075 · I084→I076 | `DECISION-011 (I070/I071)` · I050→I052 (C3) · I065→I081 (C3) | — |
+| Exit Gates | 0/11 | **0/11** (P1 ⛔ PENDING, DECISION-011) | — |
+| Cobertura transversal | 4/5 (CI verde ❌) | **4/5** (CI verde ❌ — run `31663995397` rojo: 3 suites backend, 22 vulns npm, firmware build preexistente; clasificación en `cycle-2-closure/gate-check.md`) | — |
+| Decisiones de arquitectura | 10 ACCEPTED · 1 PENDING | **11 ACCEPTED · 1 PENDING** (DECISION-012 ACCEPTED; DECISION-007 SUPERSEDED; DECISION-011 sigue PENDING) | +1 ACCEPTED |
+
+**Lectura ejecutiva:** el Ciclo 2 ejecutó las 4 oleadas (PR-A..H, 8 PRs) y cerró **22 ISSUEs + 2 SUPERSEDED** (I051/I023 por DECISION-012), llevando el avance global a **36 %** (40/110). Seguridad sube a **Alta (82 %)** con riesgo 🟠 por DECISION-011; Testing salta de 9 % a **91 %** (banda F1 de testing y CI gates en PR-E/F/H). El objetivo transversal **CI verde (5/5) NO se cumple**: el run post-ciclo deja 3 suites backend rojas (authorization-negative preexistente; refresh-token-e2e y device-delete-cascade regresión), 22 vulnerabilidades npm en el security job y el build de firmware rojo preexistente — registrado como deuda de Ciclo 3, sin cierre falso (regla §6). Exit Gates permanecen 0/11 (P1 ⛔). Detalle: `engineering-backlog.md` §9.10 y `cycle-2-closure/`.
+
 ---
 
 ## 11. Hallazgos de fase (sin corrección)

@@ -2377,6 +2377,35 @@ Auditoría sin cambios de código ni merge (STOP a la espera de aprobación del 
 - **I105:** runner `pio test` nativo en CI (PR-E/I109-I110) ✅; suite actual 6/6 → **ampliar ≥60 %** en módulos vigentes, excluyendo ThingSpeak. DoR READY* (gate I109).
 - **Deprecación transversal:** 18 fragmentos inventariados; **frontend sin referencias** → sin riesgo de transición; verificación por grep sin coincidencias + regresión completa. DoR: DECISION-012 ACCEPTED (check 9 ✅).
 
+### 9.10 Ciclo 2 — resultados de PR-C a PR-H y cierre formal (2026-08-13)
+
+Ejecución de las Oleadas 2–4 (`phase-11-cycle-2-plan.md` §3): **PR-C** Data Integrity & Contracts, **PR-D** FE Auth Register/Refresh, **PR-E** CI Gates & Secrets Scanning, **PR-F** FE Secure Tests, **PR-G** ThingSpeak Deprecation (DECISION-012), **PR-H** Firmware Native Tests. Mergeados por el usuario: PR #208 (C), #209 (D), #211 (E; #210 cerrado sin merge, sustituido por #211), #212 (F), #213 (G), #214 (H).
+
+| ISSUE | Fecha | Transición | Evidencia |
+|---|---|---|---|
+| ISSUE-006 (BE-006) | 2026-08-13 | READY → DONE | PR-C: `DELETE /devices` transaccional con cascada (transacción + borrado de dependencias); 204 tras commit, 409 en violación de integridad; suite `device-delete-cascade` |
+| ISSUE-012 (BE-012) | 2026-08-13 | READY → DONE | PR-C: filtro `deviceId` tipado en la lista de dispositivos; 400 en entradas malformadas |
+| ISSUE-031 (FE-003) | 2026-08-13 | READY → DONE | PR-D: registro alineado a contrato REST v1 (payload + manejo de errores 4xx); `auth.test.js` |
+| ISSUE-033 (FE-005) | 2026-08-13 | READY → DONE | PR-D: refresh single-flight + logout controlado (revoca token, limpia estado); `axiosInstance.test.js` |
+| ISSUE-066/076/080 (F1) | 2026-08-13 | READY → DONE | PR-E: clúster CI gates — tests orquestados en job único, security job (osv-scanner + gitleaks + pnpm audit), firmware sketches nativos |
+| ISSUE-109/110 (INF) | 2026-08-13 | READY → DONE | PR-E: runner `pio test` nativo en CI + configuración de gates |
+| ISSUE-084 (INF-025) | 2026-08-13 | IN_PROGRESS → DONE | PR-E (cierre cross-ciclo): fix `HW_REVISION` en la generación de config; checklist `docs/security/secrets-checklist.md` completado |
+| ISSUE-040 (FE-012) | 2026-08-13 | READY → DONE | PR-F: suite `useSSE` con mock determinista de `EventSource` |
+| ISSUE-108 (TST-004) | 2026-08-13 | READY → DONE | PR-F: cobertura de la capa SSE del frontend elevada |
+| ISSUE-051 (F2) | 2026-08-13 | READY → **SUPERSEDED** | PR-G (DECISION-012 ACCEPTED): ThingSpeak deprecado; MQTT canónico única vía de telemetría |
+| ISSUE-023 (F2) | 2026-08-13 | READY → **SUPERSEDED** | PR-G (DECISION-012): canal ThingSpeak eliminado de la arquitectura |
+| ISSUE-050 (F2) | 2026-08-13 | IN_PROGRESS (avance) | PR-G: sync server-side ThingSpeak removido del backend (19 archivos) + firmware (8 archivos); **cierre exige I052 (F2) → C3**, permanece IN_PROGRESS |
+| ISSUE-105 (TST-001) | 2026-08-13 | READY → DONE | PR-H: suite nativa host sin ThingSpeak (stubs FreeRTOS/`esp_timer.h`) + gate cobertura ≥60 % |
+
+**Estado global post-Ciclo 2 (medido):** 22 ISSUEs del ciclo cerrados (PR-A..H) → **40 DONE · 2 SUPERSEDED (I051/I023) · 2 IN_PROGRESS (I050/I065) · 1 BLOCKED (I070, DECISION-011) · 65 BACKLOG** (detalle en `phase-8-executive-dashboard.md` §10.2; avance global **36.4 %** = 40/110).
+
+**Cierre diferido (sin cierre falso, regla §6):** I65 → I081 (F2) + DECISION-011 (C3); I50 → I52 (F2); I70/I71 → DECISION-011 (BLOCKED, inamovibles).
+
+**Runbook de gates:**
+- **Exit Gates:** 0/11 — P1 ⛔ PENDING (DECISION-011 PENDING, I70).
+- **Cobertura transversal:** Broker (REG-016), env (REG-017), data-integrity (PR-C), auth (PR-D), CI gates (REG-019), ThingSpeak (PR-G), firmware host (PR-H). **CI post-ciclo en `develop` ❌ rojo:** 3 suites backend (authorization-negative preexistente; refresh-token-e2e y device-delete-cascade regresión PR-D/PR-C por `require` ESM + `sync({force:true})` interferente) · 22 vulns npm en security job (osv-scanner exit 1) · firmware build preexistente (defines BLE/BUTTON ausentes en config.h de CI). Clasificación y deuda: `docs/project/cycle-2-closure/gate-check.md`.
+- **Versiones:** backend **1.7.11 → 1.8.0 (MINOR)**, frontend 1.15.4 → 1.15.5, firmware 0.23.4 → 0.23.5, docs 0.2.3 → 0.2.4, root **1.8.18 → 1.8.19**. Derivados sincronizados por primera vez desde 1.8.16/1.7.9.
+
 ---
 
 *Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED (ver `architecture-decisions-pending.md`).

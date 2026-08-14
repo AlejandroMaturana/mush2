@@ -1,5 +1,35 @@
 # Changelog — Mush2
 
+## 2026-08-13
+
+### Backend — v1.8.0 (MINOR)
+
+**Release consolidado del Ciclo 2 (PR-C a PR-H).** Bump MINOR por cambios de comportamiento en `DELETE /devices` (transaccional con cascada) y en el flujo de auth (registro alineado a contrato v1). PR-A (v1.7.10) y PR-B (v1.7.11) ya documentados el 2026-08-12 quedan absorbidos en este release; los derivados (VERSION files, version-manifest.json, release.bat, platformio.ini) se sincronizan aquí por primera vez desde 1.8.16/1.7.9.
+
+- **PR-C "Data Integrity & Contracts" (ISSUE-006 / BE-006 · ISSUE-012 / BE-012)** — **I006 DONE — DELETE /devices transaccional con cascada:** eliminación de dispositivo envuelta en transacción con borrado en cascada de dependencias (devices → provisioning_tokens, recipes, etc.); el contrato de la ruta pasa a responder 204 tras commit exitoso y 409 en caso de violación de integridad. **I012 DONE — filtro deviceId tipado:** el query param de la lista de dispositivos valida y tipa el filtro, rechazando entradas malformadas con 400. Tests: suite `device-delete-cascade` + contratos actualizados; TDD rojo→verde. Regresión completa: backend v1.7.11 → 1.8.0.
+- **PR-D "FE Auth Register/Refresh" (ISSUE-031 / FE-003 · ISSUE-033 / FE-005)** — **I031 DONE — registro alineado a contrato v1:** el flujo de registro del frontend (payload y manejo de respuesta) se alinea al contrato REST v1 (cuerpo `{...}`, validación de errores 4xx). **I033 DONE — refresh single-flight + logout controlado:** deduplicación de peticiones de refresh concurrentes y cierre de sesión controlado (revoca token, limpia estado). Tests: `auth.test.js` (2 casos) + `axiosInstance.test.js`; TDD rojo→verde. Regresión completa: vitest 458/458 → 460/460.
+- **PR-E "CI Gates & Secrets Scanning" (ISSUE-066 / F1 · ISSUE-076 / F1 · ISSUE-080 · ISSUE-109 / INF · ISSUE-110 / INF · cierre ISSUE-084 / INF-025)** — **I066/I076/I080/I109/I110 DONE:** clúster de CI gates: tests orquestados (backend jest + frontend vitest + firmware host) en job único, security job (osv-scanner + gitleaks + pnpm audit) y firmware sketches nativos; fix de `HW_REVISION` en la generación de config (I84 cierre del checklist de secrets). Test: `REG-019_ci-gates-scanning.test.ts`. **Nota de cierre:** el run CI post-ciclo queda **rojo** (3 suites backend, osv-scanner con 22 vulns npm y firmware build preexistente) — ver `docs/project/cycle-2-closure/gate-check.md`; se registra como deuda de Ciclo 3.
+- **PR-G "ThingSpeak deprecation" (DECISION-012 · ISSUE-051 / F2 → SUPERSEDED · ISSUE-023 / F2 → SUPERSEDED · avance ISSUE-050 / F2)** — **I051/I023 SUPERSEDED (DECISION-012 ACCEPTED):** el canal ThingSpeak queda deprecado; MQTT canónico como única vía de telemetría. **I050 avance (IN_PROGRESS):** migración de la configuración de ThingSpeak fuera del backend y remoción del sync server-side. Backend: eliminación de `thingSpeakSync.js`, `migrate-thingspeak-keys.js`, claves de ThingSpeak de `env.js`/`systemSettingsDefaults.js` y actualización de rutas/modelos/seed (19 archivos, −807 líneas netas en el ciclo). Tests: `thingspeak-source-of-truth` + contratos actualizados; regresión backend completa verde (jest 226 totales; ver gate-check para estado CI).
+- **PR-H "Firmware Native Tests" (ISSUE-105 / TST-001)** — **I105 DONE — suite nativa host sin ThingSpeak + gate cobertura ≥60%:** harness de pruebas nativo para el firmware (stubs FreeRTOS/esp_timer), gate de cobertura mínimo del 60 % en CI y remoción de la dependencia de ThingSpeak del build de test. Test: suites host en `firmware/test/`.
+- Contrato: `rest-api-contract.md` sin cambio de versión (comportamiento DELETE/filtro compatibles con v1); `mqtt-contract.md` v2 intacto (MQTT canónico ya versionado en PR-L). Backend pasa de **1.7.11 → 1.8.0 (MINOR)** por el cambio de comportamiento en DELETE/auth.
+
+### Frontend — v1.15.5
+
+- **PR-D "FE Auth Register/Refresh" (I031 / I033)** — registro alineado a contrato v1 + refresh single-flight + logout controlado (detalle en Backend v1.8.0).
+
+- **PR-F "FE Secure Tests" (ISSUE-040 / FE-012 · ISSUE-108 / TST-004)** — **I040/I108 DONE — cobertura de useSSE con mock determinista de EventSource:** se añade suite de tests para `useSSE` con un stub determinista de `EventSource` (eventos controlados, reconexión y cierre), elevando la cobertura de la capa SSE del frontend. TDD rojo→verde. Frontend **1.15.4 → 1.15.5 (PATCH)**.
+
+### Firmware (ESP32-S3) — v0.23.5
+
+- **PR-G "ThingSpeak deprecation" (DECISION-012)** — **remoción del cliente ThingSpeak del firmware:** se eliminan `thingspeak_client.cpp/h`, `thingspeak_ca_root.h`, los hooks en `main.ino`/`tasks.cpp` y las defines de `config.example.h`/`generate_config.py` (8 archivos); MQTT canónico como única vía de telemetría (DECISION-012 ACCEPTED).
+- **PR-H "Firmware Native Tests" (I105)** — suite nativa host sin ThingSpeak (stubs FreeRTOS/`esp_timer.h`) + gate de cobertura ≥60 %.
+- **PR-E (I084)** — fix de `HW_REVISION` en la generación de config (parte del clúster CI gates).
+- Firmware **0.23.4 → 0.23.5 (PATCH)**.
+
+### Docs — v0.2.4
+
+- Cierre del Ciclo 2: `phase-11-cycle-2-plan.md` §13→EJECUTADO + §14 cierre formal post-ejecución; `engineering-backlog.md` §9.10; `phase-8-executive-dashboard.md` re-computo post-Ciclo 2; `docs/project/cycle-2-closure/` (informe + gate check + trazabilidad). DECISION-012 ACCEPTED (registrada). Docs **0.2.3 → 0.2.4 (PATCH)**.
+
 ## 2026-08-12
 
 ### Backend — v1.7.11
