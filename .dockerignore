@@ -21,5 +21,7 @@ scripts
 firmware/.pio
 **/config.h
 **/secrets.h
+docker/mosquitto/certs
+docker/mosquitto/*/password_file
 .DS_Store
 Thumbs.db
