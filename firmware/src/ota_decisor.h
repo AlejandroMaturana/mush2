@@ -15,9 +15,10 @@ class OTASelector {
 public:
   OTASelector();
   bool validateUrl(const String& url);
+  bool validateHash(const String& hash);
   int compareSemVer(const String& current, const String& candidate);
   bool checkRssiThreshold(int rssi);
-  OtaCandidate select(const String& url, const String& version, int rssi);
+  OtaCandidate select(const String& url, const String& version, const String& hash, int rssi);
 };
 
 #endif

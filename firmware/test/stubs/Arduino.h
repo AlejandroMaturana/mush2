@@ -68,6 +68,10 @@ inline String operator+(const String& a, const char* b) { return (a.c_str() + st
 // millis() controlable por los tests via stubs::millisValue() (stubs_config.h).
 inline unsigned long millis() { return stubs::millisValue(); }
 
+// delay() requerido por ota_executor.cpp en la suite nativa (la descarga OTA
+// no se ejecuta en host; solo necesita compilar).
+inline void delay(unsigned long ms) { (void)ms; }
+
 // plantillas requeridas por Arduino (HAL nativo inexistente aqui).
 // Variabel inline (C++17): una sola instancia en el binario nativo.
 struct SerialStub {

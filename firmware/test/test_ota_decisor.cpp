@@ -58,23 +58,64 @@ void test_OSEL_rssi_threshold(void) {
   TEST_ASSERT_FALSE(sel.checkRssiThreshold(-90));
 }
 
+// ISSUE-052 (FW-003) — hash SHA-256 obligatorio en ota/command (ADR-014 P6).
+static const char* VALID_64_HEX = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
 void test_OSEL_select_valid_when_url_and_rssi_ok(void) {
   OTASelector sel;
-  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), -60);
+  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), String(VALID_64_HEX), -60);
   TEST_ASSERT_TRUE(cand.valid);
   TEST_ASSERT_EQUAL_STRING("https://host/fw.bin", cand.url.c_str());
   TEST_ASSERT_EQUAL_STRING("0.24.0", cand.version.c_str());
+  TEST_ASSERT_EQUAL_STRING(VALID_64_HEX, cand.hash.c_str());
   TEST_ASSERT_EQUAL_INT(-60, cand.rssi);
 }
 
 void test_OSEL_select_invalid_when_url_bad(void) {
   OTASelector sel;
-  OtaCandidate cand = sel.select(String("http://host/fw.bin"), String("0.24.0"), -60);
+  OtaCandidate cand = sel.select(String("http://host/fw.bin"), String("0.24.0"), String(VALID_64_HEX), -60);
   TEST_ASSERT_FALSE(cand.valid);
 }
 
 void test_OSEL_select_invalid_when_rssi_weak(void) {
   OTASelector sel;
-  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), -90);
+  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), String(VALID_64_HEX), -90);
+  TEST_ASSERT_FALSE(cand.valid);
+}
+
+void test_OSEL_validate_hash_rejects_empty(void) {
+  OTASelector sel;
+  TEST_ASSERT_FALSE(sel.validateHash(String("")));
+}
+
+void test_OSEL_validate_hash_rejects_short(void) {
+  OTASelector sel;
+  TEST_ASSERT_FALSE(sel.validateHash(String("abc")));
+}
+
+void test_OSEL_validate_hash_rejects_non_hex(void) {
+  OTASelector sel;
+  TEST_ASSERT_FALSE(sel.validateHash(String("zz3456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")));
+}
+
+void test_OSEL_validate_hash_accepts_64_hex(void) {
+  OTASelector sel;
+  TEST_ASSERT_TRUE(sel.validateHash(String(VALID_64_HEX)));
+}
+
+void test_OSEL_validate_hash_accepts_uppercase_hex(void) {
+  OTASelector sel;
+  TEST_ASSERT_TRUE(sel.validateHash(String("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF")));
+}
+
+void test_OSEL_select_rejects_missing_hash(void) {
+  OTASelector sel;
+  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), String(""), -60);
+  TEST_ASSERT_FALSE(cand.valid);
+}
+
+void test_OSEL_select_rejects_invalid_hash_even_with_good_rssi(void) {
+  OTASelector sel;
+  OtaCandidate cand = sel.select(String("https://host/fw.bin"), String("0.24.0"), String("abc"), -75);
   TEST_ASSERT_FALSE(cand.valid);
 }

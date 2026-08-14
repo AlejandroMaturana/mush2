@@ -52,6 +52,8 @@ jobs:
           #define DEFAULT_HUM_MAX 95.0
           #define DEFAULT_CO2_MAX 1200
           #define HW_REVISION "1.0"
+          #define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+          #define OTA_CA_ROOT ""
           #endif' > src/config.h
 
       - name: Build firmware
