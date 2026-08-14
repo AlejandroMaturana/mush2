@@ -3,8 +3,8 @@
 > **Estado:** PLAN DE DESPLIEGUE — configuración versionada lista para deploy (Ciclo 2, PR-A: I074/I075)
 > **ISSUE:** ISSUE-065 (INF-006) · EPIC-BROKER · Ini 1.6 · **P0**
 > **Decisión:** DECISION-006 · ACCEPTED — contenedor Mosquitto + volumen persistente + TLS 8883, ACL por dispositivo
-> **Cierre:** requiere ISSUE-081 (provisioning/INF-022) y DECISION-011 (plan free → pago/VPS) — Ciclo 3
-> **Última actualización:** 2026-08-12
+> **Cierre:** requiere DECISION-011 (plan free → pago/VPS) — Ciclo 3. **Provisioning por dispositivo en contenedor entregado en PR-B (I081/INF-022, Ciclo 3)** — el ISSUE-065 permanece `IN_PROGRESS` hasta el despliegue real.
+> **Última actualización:** 2026-08-13
 
 ---
 
@@ -80,6 +80,8 @@ En el PaaS objetivo (Render/Railway/Fly): crear el servicio de contenedor `eclip
 - Config/ACL/certs montados read-only en `/mosquitto/config` y `/mosquitto/certs` (o embebidos en una imagen propia).
 - Puerto público 8883 habilitado; **1883 solo dentro de la red privada del PaaS** (nunca expuesto a Internet).
 
+> **Provisioning en contenedor (I081/INF-022, PR-B Ciclo 3):** la imagen backend copia `docker/mosquitto` (config/ejemplos; certs y `password_file` reales excluidos en `.dockerignore`) y trae `docker-cli`. En el stack prod-like local (`docker-compose.yml`), el backend monta `./docker/mosquitto/prod` en `/app/docker/mosquitto/prod` (rw) — el mismo directorio que el broker monta `:ro` en `/mosquitto/config` — y el socket de Docker para enviar SIGHUP al contenedor del broker. **En el PaaS el `password_file` debe vivir en un volumen compartido accesible (rw) por el backend y (ro) por el broker**, y el mecanismo de recarga (SIGHUP vía socket o reinicio orquestado) se define en el runbook de despliegue (enlazado a DECISION-011).
+
 ### 4.3 Activar TLS en el listener 8883
 
 > **Hecho en Ciclo 2 (PR-A, ISSUE-074/075):** el bloque `listener 8883` ya está **activo** en `mosquitto.prod.conf` y `docker-compose.yml` ya no publica el puerto 1883 al host (solo `8883:8883`). Verificado localmente: handshake TLS ok y conexión en claro al 8883 rechazada (evidencia ISSUE-015).
@@ -104,6 +106,8 @@ Al desplegar solo queda: montar los certs reales en `./docker/mosquitto/certs/` 
 ```bash
 ./scripts/create-mqtt-user.sh backend_bridge "<generado>" prod
 # por dispositivo, el backend lo hace vía MosquittoProvisioningService al registrarse
+# (I081/INF-022): escribe el hash `$7$` nativo en el password_file del volumen
+# compartido y recarga el broker con SIGHUP — sin mosquitto_passwd en runtime.
 ```
 
 ### 4.5 Poblar env vars del backend en Render
@@ -165,8 +169,8 @@ Reglas ADR-023-R01..R04 y ADR-028-R01..R04 aplican.
 | Contrato MQTT §2 con entorno prod | ✅ Entregado | `docs/contracts/mqtt-contract.md` |
 | `render.yaml` con envVars MQTT | ⏳ Diferido (no inventar valores) | al desplegar |
 | Certs TLS 8883 reales | ⏳ **Provisioning en operación** (issue: montar en contenedor) | deploy (depende de DECISION-011) |
-| Provisioning de credenciales por dispositivo en el contenedor | ⏳ **ISSUE-081 (INF-022)** | Ciclo 3 |
-| Broker desplegado y bridge conectado | ⏳ Ejecución del plan | tras I081/DECISION-011 |
+| Provisioning de credenciales por dispositivo en el contenedor | ✅ **Entregado (PR-B, I081/INF-022, Ciclo 3)** | `Dockerfile` (COPY `docker/mosquitto` + `docker-cli`), `.dockerignore` (sin secretos en la imagen), `docker-compose.yml` (volumen compartido rw + socket), tests `containerProvisioning` + verificación en imagen prod local |
+| Broker desplegado y bridge conectado | ⏳ Ejecución del plan | tras DECISION-011 |
 
 **Estado del ISSUE:** ISSUE-065 permanece `IN_PROGRESS` tras PR-A (avance: config TLS activa y verificada localmente; cierre exige ISSUE-081 + DECISION-011 en C3).
 

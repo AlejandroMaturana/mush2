@@ -60,6 +60,14 @@ services:
       MQTT_BROKER_URL: mqtts://mosquitto:8883
       MQTT_BROKER_USER: backend_bridge
       MQTT_BROKER_PASS: ${MQTT_BROKER_PASS:?Set MQTT_BROKER_PASS in .env.production or shell}
+    volumes:
+      # Volumen compartido con el broker (montado :ro en mosquitto): el backend
+      # escribe el password_file que el broker lee/recarga (I081/INF-022).
+      - ./docker/mosquitto/prod:/app/docker/mosquitto/prod
+      # Socket de Docker: reload() envía SIGHUP a mush2-mosquitto (recarga sin
+      # downtime). SOLO stack prod-like local (ADR-029); en el PaaS el mecanismo
+      # de recarga se define en el runbook de despliegue (DECISION-011).
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - mosquitto
       - postgres
