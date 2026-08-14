@@ -1,12 +1,12 @@
 {
   "system": {
     "name": "mush2",
-    "version": "1.8.19"
+    "version": "1.8.20"
   },
   "components": {
     "backend": "1.8.0",
     "frontend": "1.15.5",
-    "firmware": "0.23.5",
+    "firmware": "0.24.0",
     "docs": "0.2.4"
   }
 }
