@@ -53,6 +53,30 @@ void test_OSEL_select_valid_when_url_and_rssi_ok(void);
 void test_OSEL_select_invalid_when_url_bad(void);
 void test_OSEL_select_invalid_when_rssi_weak(void);
 
+// ISSUE-052 (FW-003) — OTASelector: hash SHA-256 obligatorio (ADR-014)
+void test_OSEL_validate_hash_rejects_empty(void);
+void test_OSEL_validate_hash_rejects_short(void);
+void test_OSEL_validate_hash_rejects_non_hex(void);
+void test_OSEL_validate_hash_accepts_64_hex(void);
+void test_OSEL_validate_hash_accepts_uppercase_hex(void);
+void test_OSEL_select_rejects_missing_hash(void);
+void test_OSEL_select_rejects_invalid_hash_even_with_good_rssi(void);
+
+// ISSUE-052 (FW-003) — OTAExecutor: TLS via CA + hash obligatorio (ADR-014)
+void test_OTAEXEC_ca_not_configured_by_default(void);
+void test_OTAEXEC_set_ca_cert_configures_transport(void);
+void test_OTAEXEC_set_ca_cert_empty_keeps_disabled(void);
+void test_OTAEXEC_begin_rejects_when_ca_not_configured(void);
+void test_OTAEXEC_begin_rejects_missing_hash(void);
+void test_OTAEXEC_begin_rejects_invalid_hash(void);
+void test_OTAEXEC_begin_rejects_http_url(void);
+void test_OTAEXEC_begin_rejects_empty_url(void);
+void test_OTAEXEC_verify_last_hash_false_after_reject(void);
+void test_OTAEXEC_validate_hash_accepts_64_hex(void);
+void test_OTAEXEC_validate_hash_accepts_uppercase_hex(void);
+void test_OTAEXEC_validate_hash_rejects_short(void);
+void test_OTAEXEC_validate_hash_rejects_non_hex(void);
+
 // ISSUE-105 (PR-H) — actuator_nvs
 void test_ACTNVS_init_prepares_schema_and_defaults(void);
 void test_ACTNVS_load_without_data_fails(void);
@@ -150,6 +174,30 @@ int main(int argc, char **argv) {
   RUN_TEST(test_OSEL_select_valid_when_url_and_rssi_ok);
   RUN_TEST(test_OSEL_select_invalid_when_url_bad);
   RUN_TEST(test_OSEL_select_invalid_when_rssi_weak);
+
+  // ISSUE-052 (FW-003) — OTASelector: hash SHA-256 obligatorio (ADR-014)
+  RUN_TEST(test_OSEL_validate_hash_rejects_empty);
+  RUN_TEST(test_OSEL_validate_hash_rejects_short);
+  RUN_TEST(test_OSEL_validate_hash_rejects_non_hex);
+  RUN_TEST(test_OSEL_validate_hash_accepts_64_hex);
+  RUN_TEST(test_OSEL_validate_hash_accepts_uppercase_hex);
+  RUN_TEST(test_OSEL_select_rejects_missing_hash);
+  RUN_TEST(test_OSEL_select_rejects_invalid_hash_even_with_good_rssi);
+
+  // ISSUE-052 (FW-003) — OTAExecutor: TLS via CA + hash obligatorio (ADR-014)
+  RUN_TEST(test_OTAEXEC_ca_not_configured_by_default);
+  RUN_TEST(test_OTAEXEC_set_ca_cert_configures_transport);
+  RUN_TEST(test_OTAEXEC_set_ca_cert_empty_keeps_disabled);
+  RUN_TEST(test_OTAEXEC_begin_rejects_when_ca_not_configured);
+  RUN_TEST(test_OTAEXEC_begin_rejects_missing_hash);
+  RUN_TEST(test_OTAEXEC_begin_rejects_invalid_hash);
+  RUN_TEST(test_OTAEXEC_begin_rejects_http_url);
+  RUN_TEST(test_OTAEXEC_begin_rejects_empty_url);
+  RUN_TEST(test_OTAEXEC_verify_last_hash_false_after_reject);
+  RUN_TEST(test_OTAEXEC_validate_hash_accepts_64_hex);
+  RUN_TEST(test_OTAEXEC_validate_hash_accepts_uppercase_hex);
+  RUN_TEST(test_OTAEXEC_validate_hash_rejects_short);
+  RUN_TEST(test_OTAEXEC_validate_hash_rejects_non_hex);
 
   // ISSUE-105 (PR-H) — actuator_nvs
   RUN_TEST(test_ACTNVS_init_prepares_schema_and_defaults);

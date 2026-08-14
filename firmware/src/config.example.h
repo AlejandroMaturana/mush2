@@ -262,6 +262,14 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 #define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
 #endif
 
+// ---- OTA TLS CA Root (ISSUE-052 / ADR-014 P4) ----
+// CA raiz embebida para validar el servidor HTTPS del firmware. Reutiliza la
+// Root CA de MQTT (ISRG Root X1, Let's Encrypt). Nunca usar setInsecure().
+// Si se deja vacio en un build generado, el ejecutor OTA falla cerrado (rechaza).
+#ifndef OTA_CA_ROOT
+#define OTA_CA_ROOT MQTT_CA_ROOT
+#endif
+
 // ---- WiFi Re-provisioning ----
 #ifndef WIFI_FAIL_REPROVISION_THRESHOLD
 #define WIFI_FAIL_REPROVISION_THRESHOLD 5

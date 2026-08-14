@@ -83,6 +83,11 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define DEFAULT_HUM_MAX 85.0
 #define DEFAULT_CO2_MAX 1200
 
+// OTA (ISSUE-050/052): password placeholder; CA vacia => ejecutor OTA fail-closed
+// (rechaza la descarga). Para produccion definir OTA_CA_ROOT real.
+#define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+#define OTA_CA_ROOT ""
+
 #endif
 '''
 

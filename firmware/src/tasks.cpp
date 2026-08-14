@@ -636,9 +636,21 @@ void taskOTA(void* pvParameters) {
         line.trim();
         if (line.startsWith("ota ")) {
           String url = line.substring(4);
+          url.trim();
           if (url.length() > 0 && url.startsWith("https://")) {
+            String hashTok;
+            int sp = url.indexOf(' ');
+            if (sp > 0) {
+              hashTok = url.substring(sp + 1);
+              url = url.substring(0, sp);
+            }
             strncpy(otaCommandUrl, url.c_str(), sizeof(otaCommandUrl) - 1);
             snprintf(otaCommandVersion, sizeof(otaCommandVersion), "0.0.0");
+            if (hashTok.length() > 0) {
+              strncpy(otaCommandHash, hashTok.c_str(), sizeof(otaCommandHash) - 1);
+            } else {
+              otaCommandHash[0] = '\0';
+            }
             otaCommandPending = true;
             Serial.printf("[OTA] Comando recibido via serial: %s\n", otaCommandUrl);
           }
@@ -659,6 +671,7 @@ void taskOTA(void* pvParameters) {
         OtaCandidate cand = otaselector.select(
           String(otaCommandUrl),
           String(otaCommandVersion),
+          String(otaCommandHash),
           wifi.getRSSI()
         );
 

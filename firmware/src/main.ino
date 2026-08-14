@@ -186,6 +186,9 @@ void setup() {
   otaShutdown = OTAShutdown();
   otaShutdown.init(&ssr);
   otaExecutor = OTAExecutor();
+  // ISSUE-052 (ADR-014 P4): CA embebida para el transporte TLS del ejecutor.
+  // Si OTA_CA_ROOT es vacio (builds generados), el ejecutor falla cerrado: rechaza OTA.
+  otaExecutor.setCaCert(OTA_CA_ROOT);
   otaConfirmacion = OTAConfirmation();
   otaConfirmacion.init(&sm);
 
