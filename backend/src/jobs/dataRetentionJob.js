@@ -1,16 +1,34 @@
-import { Op } from 'sequelize';
-import { Subscription, AuditLog, Telemetry, Alarm } from '../models/index.js';
+import { purgeExpiredData } from '../services/dataRetentionService.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('DATA_RETENTION');
 
 const INTERVAL = 60 * 60 * 1000;
 let handle = null;
+let running = false;
+
+export async function runPurge() {
+  if (running) return null;
+  running = true;
+  try {
+    const counts = await purgeExpiredData();
+    if (counts.deletedAudit > 0 || counts.deletedTelemetry > 0 || counts.deletedAlarms > 0) {
+      log.info(counts, 'Purge completed');
+    }
+    return counts;
+  } catch (err) {
+    log.error({ error: err.message }, 'Purge failed');
+    return null;
+  } finally {
+    running = false;
+  }
+}
 
 export function startDataRetentionJob() {
   if (handle) return;
-  runPurge().catch(() => {});
-  handle = setInterval(() => runPurge().catch(() => {}), INTERVAL);
+  runPurge();
+  handle = setInterval(() => runPurge(), INTERVAL);
+  handle.unref();
   log.info({ intervalMin: INTERVAL / 60000 }, 'Job started');
 }
 
@@ -18,49 +36,5 @@ export function stopDataRetentionJob() {
   if (handle) {
     clearInterval(handle);
     handle = null;
-  }
-}
-
-async function runPurge() {
-  const subs = await Subscription.findAll({
-    where: { status: 'ACTIVE' },
-    attributes: ['userId', 'plan', 'dataRetentionDays'],
-  });
-
-  if (subs.length === 0) {
-    log.info('No active subscriptions — skipping purge');
-    return;
-  }
-
-  let deletedAudit = 0;
-  let minRetention = Infinity;
-
-  for (const sub of subs) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - sub.dataRetentionDays);
-
-    const deleted = await AuditLog.destroy({
-      where: { userId: sub.userId, createdAt: { [Op.lt]: cutoff } },
-    });
-    deletedAudit += deleted;
-
-    if (sub.dataRetentionDays < minRetention) {
-      minRetention = sub.dataRetentionDays;
-    }
-  }
-
-  const globalCutoff = new Date();
-  globalCutoff.setDate(globalCutoff.getDate() - minRetention);
-
-  const deletedTelemetry = await Telemetry.destroy({
-    where: { timestamp: { [Op.lt]: globalCutoff } },
-  });
-
-  const deletedAlarms = await Alarm.destroy({
-    where: { createdAt: { [Op.lt]: globalCutoff } },
-  });
-
-  if (deletedAudit > 0 || deletedTelemetry > 0 || deletedAlarms > 0) {
-    log.info({ deletedAudit, deletedTelemetry, deletedAlarms, minRetention }, 'Purge completed');
   }
 }
