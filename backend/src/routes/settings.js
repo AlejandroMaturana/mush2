@@ -7,6 +7,8 @@ import { seedSystemSettings } from '../config/systemSettingsDefaults.js';
 import sequelize from '../config/database.js';
 import telegramRouter from './telegram.js';
 import apiKeysRouter from './apiKeys.js';
+import { maskSecret } from '../services/telegramConfigurationService.js';
+import { decrypt } from '../services/encryption.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('SETTINGS');
@@ -92,7 +94,16 @@ router.post('/change-password', authenticate, async (req, res) => {
 router.get('/system', authenticate, requireMinRole('SUPER_ADMIN'), async (req, res) => {
   try {
     const settings = await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
-    res.json({ data: settings });
+    const mapped = settings.map((s) => {
+      const row = typeof s.toJSON === 'function' ? s.toJSON() : s;
+      if (row.key === 'telegram_bot_token') {
+        // ISSUE-011: nunca exponer el token en claro — el valor almacenado
+        // puede ser cifrado (enc:v1:) o legacy en claro; decrypt los maneja.
+        return { ...row, value: maskSecret(decrypt(row.value || '')) };
+      }
+      return row;
+    });
+    res.json({ data: mapped });
   } catch (err) {
     log.error({ module: 'SETTINGS', event: 'READ_SYSTEM_ERROR', error: err.message }, 'Error reading system settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
