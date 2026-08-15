@@ -6,6 +6,7 @@ import { getCorrelation, getEnvironmentSummary } from '../services/bioactiveAnal
 import { getPhaseThresholds } from '../services/controlEngine.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { canAccessDevice } from '../middlewares/tenant.js';
+import { normalizeLimit } from '../utils/pagination.js';
 import { createChildLogger } from '../config/pino.js';
 
 const logger = createChildLogger('CYCLE');
@@ -50,6 +51,7 @@ router.get('/', async (req, res) => {
       where,
       include: [{ model: Recipe }],
       order: [['createdAt', 'DESC']],
+      limit: normalizeLimit(req.query.limit),
     });
     res.json({ data: cycles });
   } catch (err) {
@@ -215,7 +217,7 @@ router.get('/:id/transitions', async (req, res) => {
     const transitions = await PhaseTransition.findAll({
       where: { cycleId: req.params.id },
       order: [['createdAt', 'DESC']],
-      limit: parseInt(req.query.limit || '50', 10),
+      limit: normalizeLimit(req.query.limit, 50),
     });
     res.json({ data: transitions });
   } catch (err) {
@@ -266,7 +268,7 @@ router.get('/:id/states', async (req, res) => {
     const states = await CycleState.findAll({
       where: { cycleId: req.params.id },
       order: [['snapshotDate', 'DESC']],
-      limit: parseInt(req.query.limit || '100', 10),
+      limit: normalizeLimit(req.query.limit, 100),
     });
     res.json({ data: states });
   } catch (err) {
@@ -279,7 +281,7 @@ router.get('/:id/bioactives', async (req, res) => {
     const cycle = await CultivationCycle.findByPk(req.params.id);
     const allowed = await assertCycleAccess(req, res, cycle);
     if (allowed !== true) return;
-    const { compoundName, from, to, limit = 100 } = req.query;
+    const { compoundName, from, to, limit } = req.query;
     const where = { cycleId: req.params.id };
     if (compoundName) where.compoundName = compoundName;
     if (from || to) {
@@ -290,7 +292,7 @@ router.get('/:id/bioactives', async (req, res) => {
     const data = await BioactiveProfile.findAll({
       where,
       order: [['compoundName', 'ASC'], ['analysisDate', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: normalizeLimit(limit, 100),
     });
     res.json({ data });
   } catch (err) {

@@ -9,9 +9,10 @@ import { requireProvisioningAuth } from '../middlewares/provisioningAuth.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
-import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, recordOutgoing } from '../services/deviceHealthService.js';
+import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, getLatestHealthByDeviceIds, recordOutgoing } from '../services/deviceHealthService.js';
 import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
 import { refundProvisioningToken } from '../services/provisioningTokenService.js';
+import { normalizeLimit } from '../utils/pagination.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('API');
@@ -43,14 +44,15 @@ router.get('/devices', async (req, res) => {
         { userId: null },
       ];
     }
-    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']] });
-    const enriched = await Promise.all(devices.map(async d => {
+    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']], limit: normalizeLimit(req.query.limit) });
+    const healthByDevice = await getLatestHealthByDeviceIds(devices.map(d => d.id));
+    const enriched = devices.map(d => {
       const json = d.toJSON();
-      const latestHealth = await getLatestHealth(d.id);
+      const latestHealth = healthByDevice.get(d.id);
       json.status = getStatusFromDevice(d, latestHealth);
       json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
       return json;
-    }));
+    });
     res.json({ data: enriched });
   } catch (err) {
     log.error({ module: 'DEVICES', event: 'LIST_ERROR', error: err.message }, 'Error listing devices');
@@ -295,8 +297,8 @@ router.get('/devices/:id/telemetry/latest', checkDeviceAccess, async (req, res) 
 
 router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
   try {
-    const { sensorType, from, to, limit = 8000, resolution } = req.query;
-    const limitNum = parseInt(limit, 10);
+    const { sensorType, from, to, limit, resolution } = req.query;
+    const limitNum = normalizeLimit(limit, 100);
 
     if (resolution && parseInt(resolution) > 0) {
       const resMin = parseInt(resolution);
@@ -359,7 +361,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
 
 router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
   try {
-    const { from, to, limit = 100 } = req.query;
+    const { from, to, limit } = req.query;
     const where = { deviceId: req.device.id };
     if (from || to) {
       where.timestamp = {};
@@ -369,7 +371,7 @@ router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
     const data = await DeviceHealth.findAll({
       where,
       order: [['timestamp', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: normalizeLimit(limit, 100),
     });
     res.json({ data });
   } catch (err) {
@@ -561,7 +563,7 @@ router.get('/devices/:id/integrations', checkDeviceAccess, async (req, res) => {
 
 router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
   try {
-    const { component, from, to, limit = 100 } = req.query;
+    const { component, from, to, limit } = req.query;
     const where = { deviceId: req.device.id };
     if (component) where.component = component;
     if (from || to) {
@@ -572,7 +574,7 @@ router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
     const data = await DeviceMaintenance.findAll({
       where,
       order: [['timestamp', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: normalizeLimit(limit, 100),
     });
     res.json({ data });
   } catch (err) {
