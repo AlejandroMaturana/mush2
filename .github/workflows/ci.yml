@@ -29,6 +29,9 @@ jobs:
       - name: Create config.h
         run: |
           cd firmware
+          # PR-C/CI: overrides mínimos + template completo (config.example.h).
+          # El heredoc anterior omitía defines que el código fuente requiere
+          # (BUTTON_*/BLE_*/I2C_*/STACK_*/health_monitor…) y rompía el build.
           echo '#ifndef CONFIG_H
           #define CONFIG_H
           #define WIFI_SSID_1 ""
@@ -37,23 +40,11 @@ jobs:
           #define WIFI_PASSWORD_2 ""
           #define BACKEND_HOST "localhost"
           #define BACKEND_PORT 3797
-          #define POLL_INTERVAL 3000
           #define DEVICE_ID "ci_build"
-          #define SENSOR_INTERVAL 10000
-          #define SSR_ACTIVE_LOW 1
-          #include "channel_mapping.h"
-          #define SSR_CH1_PIN CHANNEL_1_PIN
-          #define SSR_CH2_PIN CHANNEL_2_PIN
-          #define SSR_CH3_PIN CHANNEL_3_PIN
-          #define SSR_CH4_PIN CHANNEL_4_PIN
-          #define DEFAULT_TEMP_MIN 20.0
-          #define DEFAULT_TEMP_MAX 24.0
-          #define DEFAULT_HUM_MIN 85.0
-          #define DEFAULT_HUM_MAX 95.0
-          #define DEFAULT_CO2_MAX 1200
           #define HW_REVISION "1.0"
           #define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
           #define OTA_CA_ROOT ""
+          #include "config.example.h"
           #endif' > src/config.h
 
       - name: Build firmware

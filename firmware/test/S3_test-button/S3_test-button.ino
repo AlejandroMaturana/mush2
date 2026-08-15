@@ -138,7 +138,7 @@ void setup() {
   debouncedLevel = digitalRead(PIN_BUTTON);
   rawLevel = debouncedLevel;
   lastTransitionTime = millis();
-  attachInterruptArg(digitalPinToInterrupt(PIN_BUTTON), isrHandler, this, CHANGE);
+  attachInterruptArg(digitalPinToInterrupt(PIN_BUTTON), isrHandler, NULL, CHANGE);
 
   esp_task_wdt_init(30, true);
   esp_task_wdt_add(NULL);
