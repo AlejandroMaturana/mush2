@@ -64,6 +64,19 @@ export function validate(env) {
       );
     }
 
+    // ISSUE-020: AES data encryption requires a dedicated key, different from
+    // the signing secret. Reusing JWT_SECRET to encrypt at rest would couple
+    // rotation of the signing key to corruption of stored ciphertexts.
+    if (!env.DATA_ENC_KEY || env.DATA_ENC_KEY === '') {
+      errors.push(
+        'DATA_ENC_KEY is required in production and must not be empty.'
+      );
+    } else if (env.DATA_ENC_KEY === env.JWT_SECRET) {
+      errors.push(
+        'DATA_ENC_KEY must be different from JWT_SECRET. Do not reuse the signing secret for data encryption.'
+      );
+    }
+
     // ISSUE-015 / ADR-023: TLS obligatorio para MQTT en producción.
     // El default de env.js ya es mqtts:// en prod; fallar explícitamente
     // ante una URL no-TLS evita telemetría/estado en claro.

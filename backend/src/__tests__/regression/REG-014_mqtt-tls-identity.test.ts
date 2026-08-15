@@ -16,6 +16,7 @@ function prodEnv(brokerUrl: string) {
     NODE_ENV: 'production',
     DB: { host: 'localhost', database: 'mush2', username: 'postgres', port: 5432, url: undefined },
     JWT_SECRET: 'strong-secret-1234567890abcdef',
+    DATA_ENC_KEY: 'enc-key-1234567890abcdef',
     MQTT: { brokerUrl },
   };
 }
