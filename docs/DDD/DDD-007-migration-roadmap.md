@@ -107,7 +107,7 @@ Este documento define el **plan de migración** desde la arquitectura actual (N-
 │  │  CAPA DE INFRAESTRUCTURA                             │   │
 │  │  - Repository Implementations (Sequelize)            │   │
 │  │  - MQTT Bridge                                       │   │
-│  │  - SSE Server                                       │   │
+│  │  - WebSocket Server                                 │   │
 │  │  - EventBus Implementation                          │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘

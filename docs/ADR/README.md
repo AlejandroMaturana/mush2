@@ -58,7 +58,8 @@ docs/ADR/
 ├── ADR-029-Environment-Isolation.md
 ├── ADR-030-command-actuation-protocol.md
 ├── ADR-031-simulator-architecture.md
-└── ADR-032-configuration-governance.md
+├── ADR-032-configuration-governance.md
+└── ADR-033-telegram-subsystem-split.md
 ```
 
 ## Índice de documentos
@@ -97,6 +98,7 @@ docs/ADR/
 | [ADR-030](ADR-030-command-actuation-protocol.md)          | Command & Actuation Protocol          | Protocolo formal de comando y actuación (Aceptado).                   |
 | [ADR-031](ADR-031-simulator-architecture.md)               | Simulation Platform                    | Infraestructura oficial de validación Contract First (Aceptado).      |
 | [ADR-032](ADR-032-configuration-governance.md)             | Configuration Governance               | Gobernanza de configuración: dominio, fuente de verdad y consumidores. |
+| [ADR-033](ADR-033-telegram-subsystem-split.md)             | Telegram Subsystem Split               | División del subsistema Telegram en configuración, runtime y errores.  |
 
 ## Numeración
 

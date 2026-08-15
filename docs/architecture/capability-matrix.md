@@ -160,7 +160,7 @@
 | Env Config | `backend/src/config/env.js` | 🟡 | ❌ | 🟡 |
 | System Settings | `backend/src/config/systemSettingsDefaults.js` | 🟡 | ❌ | 🟡 |
 | Event Bus | `backend/src/services/eventBus.js` | 🟡 | ❌ | 🟡 |
-| SSE Server | `backend/src/services/webSocketServer.js` | 🟡 | ❌ | 🟡 |
+| WebSocket Server | `backend/src/services/webSocketServer.js` | 🟡 | ❌ | 🟡 |
 | Sync DB | `backend/src/sync-db.js` | 🟡 | ❌ | 🟡 |
 | Seed | `backend/src/seed.js` | 🟢 | ❌ | 🟢 |
 | Data Retention | `backend/src/jobs/dataRetentionJob.js` | 🟡 | ❌ | 🟡 |
