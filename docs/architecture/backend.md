@@ -92,7 +92,7 @@ backend/
 │   │   │   ├── webhookProvider.js
 │   │   │   └── notificationService.js  # Orquestador de canales
 │   │   ├── eventBus.js            # Event bus in-memory (ADR-017)
-│   │   ├── webSocketServer.js     # Server para eventos SSE
+│   │   ├── webSocketServer.js     # Servidor WebSocket /ws (actuator state, realtime)
 │   │   ├── auditService.js        # Servicio de auditoría
 │   │   ├── encryption.js          # AES-256-GCM
 │   │   ├── logger.js              # Logger legacy (usar pino.js)

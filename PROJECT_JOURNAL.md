@@ -235,7 +235,7 @@ Se documenta la decisión de usar ThingSpeak como canal secundario de telemetrí
 - `notificationService` es el servicio público; `telegramService` es proveedor interno
 
 **Inconsistencias pendientes** (requieren decisión explícita):
-1. `webSocketServer.js` se llama así pero sirve SSE — ¿renombrar?
+1. `webSocketServer.js` se llama así pero sirve SSE — ¿renombrar? → **Resuelto (PR-E)**: es un servidor WebSocket (`/ws`) con auth JWT + QoS (RFC-0006, ISSUE-013); docs alineadas al naming real (ISSUE-103)
 2. `capability-catalog.md` marca `qos.telemetry.streaming` como 📋 pero ya está implementado
 3. `DDD-005` §5 Device state machine no tiene notice de obsolescencia
 

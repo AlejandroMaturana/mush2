@@ -21,7 +21,7 @@ graph TB
     subgraph Backend["Backend (Node.js 20+ / Express 5)"]
         direction TB
         BE_API["API REST (JWT)<br/>19 rutas"]
-        BE_SSE["SSE Server<br/>EventSource"]
+        BE_WS["WS Server<br/>EventSource"]
         BE_MQTT["mqttBridge.js<br/>Conexión broker"]
         BE_CONTROL["controlEngine.js<br/>Evaluación cada 8s"]
         BE_PHASE["phaseEvaluator.js<br/>Transiciones de fase"]
@@ -69,7 +69,7 @@ graph TB
     BE_HEALTH --> DB
 
     %% Backend → Frontend
-    BE_SSE -->|"SSE events"| FE_SSE
+    BE_WS -->|"SSE events"| FE_SSE
     BE_API -->|"REST API"| FE_CLIENT
 
     %% Backend → External
@@ -79,7 +79,7 @@ graph TB
     BE_MQTT --> BE_EVENTBUS
     BE_CONTROL --> BE_EVENTBUS
     BE_HEALTH --> BE_NOTIFY
-    BE_EVENTBUS --> BE_SSE
+    BE_EVENTBUS --> BE_WS
 
     %% Estilos
     classDef firmware fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
@@ -89,7 +89,7 @@ graph TB
     classDef external fill:#fce4ec,stroke:#c62828,stroke-width:2px
 
     class FW_MAIN,FW_WIFI,FW_HTTP,FW_MQTT,FW_SENSOR,FW_SSR,FW_HYSTERESIS,FW_STATE,FW_HEALTH,FW_SMFB,FW_OTA,FW_TELEMETRY firmware
-    class BE_API,BE_SSE,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
+    class BE_API,BE_WS,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
     class DB db
     class FE_DASH,FE_ANALYTICS,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
     class MQTT_BROKER external
