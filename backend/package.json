@@ -14,13 +14,13 @@
     "db:seed": "node src/seed.js",
     "admin:create": "node src/scripts/create-admin.js",
     "provision:token": "node src/scripts/create-provisioning-token.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --watch",
     "test:ddd": "vitest run --config vitest.config.ts",
     "test:ddd:watch": "vitest --config vitest.config.ts",
-    "test:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts",
+    "test:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand && vitest run --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
-    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts --coverage"
+    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand && vitest run --config vitest.config.ts --coverage"
   },
   "author": "AlejandroMaturana",
   "license": "MIT",

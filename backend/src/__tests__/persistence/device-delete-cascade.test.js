@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import app from '../../app.js';
 import sequelize from '../../config/database.js';
 import { markReady } from '../../config/readiness.js';
-import { User, Device, Event, Alarm, Sensor } from '../../models/index.js';
+import { User, Device, Event, Alarm, Sensor, Telemetry } from '../../models/index.js';
 
 jest.setTimeout(30000);
 
@@ -45,7 +45,7 @@ describe('PR-C ISSUE-006/I012: DELETE /devices transaccional con cascada (requie
     await Event.create({ deviceId: device.id, type: 'SYSTEM_BOOT', payload: { boot: true }, timestamp: new Date() });
     await Alarm.create({ deviceId: device.id, type: 'OUT_OF_RANGE', severity: 'HIGH', message: 'a1' });
     await Sensor.create({ deviceId: device.id, type: 'TEMPERATURE', channel: 1 });
-    await require('../../models/index.js').Telemetry.create({
+    await Telemetry.create({
       deviceId: device.id, sensorType: 'TEMPERATURE', value: 21.5, unit: '°C', timestamp: new Date(),
     });
 
@@ -59,7 +59,7 @@ describe('PR-C ISSUE-006/I012: DELETE /devices transaccional con cascada (requie
     expect(await Event.count({ where: { deviceId: device.id } })).toBe(0);
     expect(await Alarm.count({ where: { deviceId: device.id } })).toBe(0);
     expect(await Sensor.count({ where: { deviceId: device.id } })).toBe(0);
-    expect(await require('../../models/index.js').Telemetry.count({ where: { deviceId: device.id } })).toBe(0);
+    expect(await Telemetry.count({ where: { deviceId: device.id } })).toBe(0);
   });
 
   itDb('I012: filtro GET /events?deviceId=<id> devuelve los eventos del device', async () => {
