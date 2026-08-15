@@ -5,8 +5,11 @@ const log = createChildLogger('HEALTH_WATCHDOG');
 
 const CHECK_INTERVAL = 30_000;
 let handle = null;
+let running = false;
 
 async function checkDevices() {
+  if (running) return;
+  running = true;
   try {
     const transitions = await evaluateAllDevices();
     if (transitions.length > 0) {
@@ -14,6 +17,8 @@ async function checkDevices() {
     }
   } catch (err) {
     log.error({ error: err.message }, 'Error evaluating devices');
+  } finally {
+    running = false;
   }
 }
 
@@ -21,6 +26,7 @@ export function startOfflineWatchdog() {
   if (handle) return;
   checkDevices();
   handle = setInterval(checkDevices, CHECK_INTERVAL);
+  handle.unref();
   log.info({ checkIntervalSec: CHECK_INTERVAL / 1000 }, 'Watchdog started');
 }
 

@@ -4,6 +4,12 @@ import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('HEALTH');
 
+// ── Last observed status per device (ISSUE-007) ─────────────────────
+// Baseline para el watchdog: permite detectar transiciones comparando
+// contra el último estado emitido en vez de recomputar sobre los mismos
+// datos (que nunca cambiaban).
+const lastStatusByDevice = new Map();
+
 // ── Dimension values (DDD-008 / ADR-025) ───────────────────────────
 
 const CONNECTIVITY = {
@@ -158,7 +164,6 @@ function emitTransition(deviceId, prevStatus, newStatus, lastSeenAt) {
     lastSeenAt: lastSeenAt || null,
     timestamp: new Date().toISOString(),
   };
-
   const prevConn = prevStatus?.connectivity;
   const newConn = newStatus?.connectivity;
   const prevLife = prevStatus?.lifecycle;
@@ -193,6 +198,7 @@ function emitTransition(deviceId, prevStatus, newStatus, lastSeenAt) {
   }
 
   events.emit('device_status_changed', payload);
+  lastStatusByDevice.set(deviceId, newStatus);
 }
 
 // ── Fetch latest health metrics for a device ───────────────────────
@@ -228,6 +234,7 @@ async function recordIncoming(deviceId, eventType) {
   await device.update(updates);
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus, now);
   }
@@ -247,6 +254,7 @@ async function recordOutgoing(deviceId) {
   await device.update({ lastCommandAt: now });
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus, device.lastSeen);
   }
@@ -265,8 +273,15 @@ async function evaluateDevice(deviceOrId) {
   if (!device) return null;
 
   const latestHealth = await getLatestHealth(device.id);
-  const prevStatus = computeStatus(device, latestHealth);
   const newStatus = computeStatus(device, latestHealth);
+  const prevStatus = lastStatusByDevice.get(device.deviceId);
+
+  if (prevStatus === undefined) {
+    // Primera observación: se registra el estado como baseline sin emitir,
+    // para no inundar con transiciones al arrancar el servicio.
+    lastStatusByDevice.set(device.deviceId, newStatus);
+    return { device, previousStatus: newStatus, newStatus };
+  }
 
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus);
@@ -285,8 +300,13 @@ async function evaluateAllDevices() {
 
   for (const device of devices) {
     const latestHealth = await getLatestHealth(device.id);
-    const prevStatus = computeStatus(device, latestHealth);
     const newStatus = computeStatus(device, latestHealth);
+    const prevStatus = lastStatusByDevice.get(device.deviceId);
+
+    if (prevStatus === undefined) {
+      lastStatusByDevice.set(device.deviceId, newStatus);
+      continue;
+    }
 
     if (statusChanged(prevStatus, newStatus)) {
       emitTransition(device.deviceId, prevStatus, newStatus);
@@ -308,6 +328,7 @@ async function setMaintenanceMode(deviceId, enabled) {
   await device.update({ lifecycle: newLifecycle, maintenanceMode: enabled });
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus);
   }
