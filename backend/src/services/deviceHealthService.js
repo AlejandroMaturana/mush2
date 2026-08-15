@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Device, DeviceHealth } from '../models/index.js';
 import { events } from './eventBus.js';
 import { createChildLogger } from '../config/pino.js';
@@ -211,6 +212,20 @@ async function getLatestHealth(deviceId) {
   return record;
 }
 
+async function getLatestHealthByDeviceIds(deviceIds) {
+  if (!deviceIds || deviceIds.length === 0) return new Map();
+  const rows = await DeviceHealth.findAll({
+    where: { deviceId: { [Op.in]: deviceIds } },
+    order: [['timestamp', 'DESC']],
+    raw: true,
+  });
+  const byDevice = new Map();
+  for (const row of rows) {
+    if (!byDevice.has(row.deviceId)) byDevice.set(row.deviceId, row);
+  }
+  return byDevice;
+}
+
 // ── Core API — Communication Event Pipeline (ADR-026) ──────────────
 
 const INCOMING_EVENT_FIELDS = {
@@ -364,4 +379,5 @@ export {
   buildHealthPayload,
   getStatusFromDevice,
   getLatestHealth,
+  getLatestHealthByDeviceIds,
 };
