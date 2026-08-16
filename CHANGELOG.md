@@ -1,10 +1,37 @@
 # Changelog — Mush2
 
-## 2026-08-14
+## 2026-08-15
 
-### Backend — v1.9.0
+### Backend — v1.10.0 (MINOR)
 
-- ghghghg
+**Release consolidado del Ciclo 3 (PR-C a PR-G).** Bump MINOR por cambios de comportamiento en el flujo realtime (WebSocket autenticado con JWT), en la paginación (`limit` acotado), en el cifrado en reposo (`DATA_ENC_KEY` dedicada) y en el provisioning por dispositivo en contenedor. PR-B (v1.9.0, 2026-08-14) queda absorbido en este release y su entrada anterior (`v1.9.0 - ghghghg`) se corrige; los derivados (VERSION files, version-manifest.json, release.bat, platformio.ini) se sincronizan.
+
+- **PR-C "CI stability & deps" (transversal, deuda C2)** — fix de E2E `refresh-token-e2e` + `device-delete-cascade` (aislamiento de BD) y bump de dependencias: **22 vulns npm → 0** (`pnpm audit` limpio); sketch `S3_test-button` para el firmware build.
+- **PR-D "Device Health & Retention" (I007 / I010 / I028)** — watchdog cableado al scheduler con evento offline (I007), retención per-dispositivo en `dataRetentionService.js` (I010) y timers con `unref()`/guard in-flight (I028).
+- **PR-E "Realtime Auth & Contracts Canon" (I013 / I094 / I103)** — WebSocket `/ws` con handshake JWT y socket → tenant (I013); conteo ADR corregido 28→33 (I094); naming `webSocketServer` alineado a su función real (I103).
+- **PR-F "Perf & Validation" (I014 / I018 / I026)** — `limit` acotado + índices (migración `20260815000001-add-performance-indexes`); API keys con throttle/LRU; sensorHistory con ventana deslizante.
+- **PR-G "Encryption at rest & whitelists" (I020 / I011 / I025)** — `DATA_ENC_KEY` dedicada con IV en `encryption.js` (fallos logueados); token Telegram cifrado y enmascarado; whitelist de campos en recetas/especies.
+- **PR-B (absorbido) "MQTT provisioning container" (I081, avance I065)** — provisioning MQTT por dispositivo en la imagen de producción (Dockerfile + volumen compartido); `broker-deployment.md`.
+
+### Frontend — v1.15.5
+
+Sin cambios en el Ciclo 3.
+
+### Firmware (ESP32-S3) — v0.24.1
+
+**PR-H "FW Safety & Stability" (I053 / I054 / I058)** — `rebootCount` reseteado al llegar a ST_NORMAL (I053); SSR off en estados SAFE/OTA (I054); confirmación de OTA desacoplada de WiFi con rollback/wait/confirm (I058, `ota_postboot_policy.h`). Tests nativos: **99/99 PASSED** (`pio test -c platformio.test.ini -e native`).
+
+### Docs — v0.2.5
+
+- **PR-A release (2026-08-14, v1.8.20)** — OTA HTTPS + CA/host pinning + SHA-256 obligatorio (ADR-014), cierre cross-ciclo **I050 → DONE**; firmware **0.24.0**.
+- **PR-I "ADR Compliance" (I085 / I086 / I095)** — ADR-020 SUPERSEDED (DECISION-002), ADR-022 SUPERSEDED (DECISION-003) y fuente única de roadmap (DECISION-010).
+- **PR-J "ADR-021 & Runtime Coverage" (I087 / I107)** — ADR-021 alineado a `controlEngine.js` real; cobertura runtime: `controlEngine` (10), `mqttBridge` (14), `eventBus` (8) — **32/32 PASSED**.
+- **Cierre del Ciclo 3** — `docs/project/cycle-3-closure/` (informe, gate-check, trazabilidad); backlog §9.11; dashboard §10.3; plan §14.
+
+### Notas de release
+
+- Backend **1.9.0 → 1.10.0 (MINOR)** · Firmware **0.24.0 → 0.24.1 (PATCH)** · Docs **0.2.4 → 0.2.5 (PATCH)** · Frontend **1.15.5** · Root **1.8.21 → 1.8.22 (PATCH)**.
+- CI post-ciclo (run `31904228419`): firmware y frontend verdes; backend test (1 fallo authz, no reproducible localmente) y security gates (CodeQL `upload-sarif` sin permiso `security-events: write`) rojos — clasificación y deuda a C4 en `docs/project/cycle-3-closure/gate-check.md`.
 
 ## 2026-08-13
 

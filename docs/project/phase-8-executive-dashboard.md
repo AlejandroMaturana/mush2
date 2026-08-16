@@ -215,6 +215,27 @@ Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo
 
 **Lectura ejecutiva:** el Ciclo 2 ejecutó las 4 oleadas (PR-A..H, 8 PRs) y cerró **22 ISSUEs + 2 SUPERSEDED** (I051/I023 por DECISION-012), llevando el avance global a **36 %** (40/110). Seguridad sube a **Alta (82 %)** con riesgo 🟠 por DECISION-011; Testing salta de 9 % a **91 %** (banda F1 de testing y CI gates en PR-E/F/H). El objetivo transversal **CI verde (5/5) NO se cumple**: el run post-ciclo deja 3 suites backend rojas (authorization-negative preexistente; refresh-token-e2e y device-delete-cascade regresión), 22 vulnerabilidades npm en el security job y el build de firmware rojo preexistente — registrado como deuda de Ciclo 3, sin cierre falso (regla §6). Exit Gates permanecen 0/11 (P1 ⛔). Detalle: `engineering-backlog.md` §9.10 y `cycle-2-closure/`.
 
+### 10.3 Re-computo definitivo post-Ciclo 3 (2026-08-15)
+
+Aplicación de §5/§8 sobre el estado real del backlog tras el cierre del Ciclo 3 (PR #216–#225; base: §10.2, post-Ciclo 2). Es el re-computo de cierre (Fase 8 §8) e incluye PR-A..G mergeados y PR-H/I/J (pendientes de merge; trazabilidad en `cycle-3-closure/`).
+
+| Indicador | Post-Ciclo 2 (§10.2) | Post-Ciclo 3 (§10.3) | Δ |
+|---|---|---|---|
+| Avance P1 Seguridad | 23/28 ≈ 82 % | **24/28 ≈ 86 %** (I050 DONE cross-ciclo vía I052) · I065 IN_PROGRESS | +4 p.p. |
+| Avance P2 Testing | 10/11 ≈ 91 % | **11/11 = 100 %** (I107 DONE — cobertura runtime) | +9 p.p. |
+| Avance global | 40/110 ≈ 36 % | **63/110 ≈ 57.3 %** | +21 p.p. |
+| P0 en P1 | 10 DONE · 2 IP (I050/I065) · 1 SUPERSEDED (I051) · 1 BLOCKED (I070) | **11 DONE · 1 IP (I065) · 1 SUPERSEDED (I051) · 1 BLOCKED (I070)** | −1 P0 abierto (I050 cerrado) |
+| Estados ISSUEs | 40 D · 2 IP (I050/I065) · 2 SUPERSEDED · 1 BLOCKED · 65 B | **63 D · 1 IP (I065) · 2 SUPERSEDED (I051/I023) · 1 BLOCKED (I070) · 43 B** | +23 D · −1 IP |
+| Madurez Seguridad | Alta (82 %) | **Alta (86 %)** | ⬆ |
+| Madurez Testing | Alta (91 %) | **Alta (100 %)** | ⬆ |
+| Riesgo Seguridad | 🟠 Medio (DECISION-011 PENDING; I050/I065 cross-ciclo) | 🟠 Medio (DECISION-011 PENDING; I065 IN_PROGRESS) | — |
+| Bloqueador Seguridad | `DECISION-011 (I070/I071)` · I050→I052 · I065→I081 | `DECISION-011 (I070/I071)` · **I065 → DECISION-011 (host de despliegue, C4)** | — |
+| Exit Gates | 0/11 | **0/11** (P1 ⛔ PENDING — I65 IN_PROGRESS + DECISION-011) | — |
+| Cobertura transversal | 4/5 (CI verde ❌ — 3 suites + 22 vulns + firmware build) | **4/5** (CI verde ❌ — run `31904228419`: backend 1 fallo authz no reproducible local + CodeQL permisos; firmware y frontend ✅; vulns npm resueltas) | — |
+| Decisiones de arquitectura | 11 ACCEPTED · 1 PENDING | **11 ACCEPTED · 1 PENDING** (DECISION-002/003/010 aplicadas en C3; DECISION-011 sigue PENDING) | — |
+
+**Lectura ejecutiva:** el Ciclo 3 ejecutó las 3 oleadas (PR-A..J, 10 PRs) y cerró **22 ISSUEs + 1 P0 cross-ciclo** (I050 → DONE vía I052), llevando el avance global a **57.3 %** (63/110). Seguridad **86 %** (P0 11/14), Testing **100 %** (11/11). La **única varianza negativa vs §10 del plan es el objetivo CI 5/5**: la remediación PR-C resolvió 3 de 4 causas de C2 (E2E, 22 vulns npm, firmware build) y redujo la cuarta a 1 fallo residual de infraestructura de tests (authz, 500 no reproducible localmente), pero el run post-ciclo sigue rojo en 2/4 jobs (backend test + security gates por permisos de CodeQL) — registrado como deuda de C4, sin cierre falso (regla §6). Exit Gates 0/11 (P1 ⛔, I65 + DECISION-011). Detalle: `engineering-backlog.md` §9.11 y `cycle-3-closure/`.
+
 ---
 
 ## 11. Hallazgos de fase (sin corrección)
