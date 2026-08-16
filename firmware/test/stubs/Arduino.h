@@ -84,4 +84,10 @@ struct SerialStub {
 };
 inline SerialStub Serial;
 
+// ESP.restart() requerido por state_machine.cpp (handleWatchdog) en la suite nativa.
+struct EspStub {
+  void restart() {}
+};
+inline EspStub ESP;
+
 #endif // NATIVE_ARDUINO_STUB_H

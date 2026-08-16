@@ -75,6 +75,12 @@ bool StateMachine::fsmTransition(DeviceState next, const char* reason) {
   Preferences prefs;
   prefs.begin(prefsNamespace, false);
   prefs.putUChar(STATE_KEY, (uint8_t)state);
+  // ISSUE-053 (FW-004): al llegar a ST_NORMAL se resetea el conteo de reboots
+  // consecutivos (no se acumula durante operación normal).
+  if (next == ST_NORMAL && rebootCount != 0) {
+    rebootCount = 0;
+    prefs.putUChar(REBOOT_COUNT_KEY, 0);
+  }
   prefs.end();
 
   if (reason) {
@@ -140,8 +146,7 @@ void StateMachine::loadRebootCount() {
 
   if (rebootCount > 50) rebootCount = 0;
 
-  bool abnormalBoot = (savedState == ST_ERROR || savedState == ST_RECOVERY ||
-                       savedState == ST_OTA_UPDATING);
+  bool abnormalBoot = (savedState == ST_ERROR || savedState == ST_RECOVERY);
   if (abnormalBoot) {
     rebootCount++;
     prefs.begin(prefsNamespace, false);

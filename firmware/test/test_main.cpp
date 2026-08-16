@@ -118,6 +118,19 @@ void test_TBUF_load_from_spiffs_detects_pending(void);
 void test_TBUF_clear_resets_ram_counters(void);
 void test_TBUF_clear_spiffs_removes_disk_buffer(void);
 
+// ISSUE-053 (FW-004) / ISSUE-054 (FW-005) — StateMachine reboot count y gate SSR
+void test_I53_reboot_count_resets_on_normal(void);
+void test_I53_post_ota_boot_not_counted_as_abnormal(void);
+void test_I53_error_boot_still_counted_as_abnormal(void);
+void test_I54_blocks_actuation_in_safe_and_ota(void);
+void test_I54_blocks_actuation_in_safe(void);
+
+// ISSUE-058 (FW-009) — decision de confirmacion post-OTA
+void test_I58_decision_none_when_not_pending(void);
+void test_I58_decision_rollback_when_core_selftest_fails(void);
+void test_I58_decision_wait_retry_when_no_network(void);
+void test_I58_decision_confirm_when_core_ok_and_network_stable(void);
+
 void setUp(void) {
   // Estado limpio de stubs entre tests (NVS, SPIFFS, millis, esp_timer).
   stubs::resetAll();
@@ -239,6 +252,19 @@ int main(int argc, char **argv) {
   RUN_TEST(test_TBUF_load_from_spiffs_detects_pending);
   RUN_TEST(test_TBUF_clear_resets_ram_counters);
   RUN_TEST(test_TBUF_clear_spiffs_removes_disk_buffer);
+
+  // ISSUE-053 (FW-004) / ISSUE-054 (FW-005) — StateMachine reboot count y gate SSR
+  RUN_TEST(test_I53_reboot_count_resets_on_normal);
+  RUN_TEST(test_I53_post_ota_boot_not_counted_as_abnormal);
+  RUN_TEST(test_I53_error_boot_still_counted_as_abnormal);
+  RUN_TEST(test_I54_blocks_actuation_in_safe_and_ota);
+  RUN_TEST(test_I54_blocks_actuation_in_safe);
+
+  // ISSUE-058 (FW-009) — decision de confirmacion post-OTA
+  RUN_TEST(test_I58_decision_none_when_not_pending);
+  RUN_TEST(test_I58_decision_rollback_when_core_selftest_fails);
+  RUN_TEST(test_I58_decision_wait_retry_when_no_network);
+  RUN_TEST(test_I58_decision_confirm_when_core_ok_and_network_stable);
 
   return UNITY_END();
 }
