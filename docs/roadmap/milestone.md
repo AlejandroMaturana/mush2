@@ -2,6 +2,12 @@
 
 > Vinculado a `docs/roadmap/roadmap.md` — Fases 0-10 completadas, Fase 11 (Observabilidad) pendiente, al 2026-07-25
 
+> **Fuente única (DECISION-010, 2026-08-07):** Roadmap-V2 (`ultimate-roadmap2.md`) es
+> la fuente única de fases. Este documento (fases 0–10, al 2026-07-25) queda como
+> **registro histórico** junto con `docs/roadmap/roadmap.md` (fases 0–9, 2026-07-23);
+> su contenido puede no reflejar el proceso de madurez actual (Programas 1–11,
+> DECISION-NNN, engineering-backlog).
+
 Cada milestone agrupa una fase del roadmap en entregables verificables, con criterios de aceptación, issues de referencia y retrospectiva de riesgos encontrados.
 
 ---

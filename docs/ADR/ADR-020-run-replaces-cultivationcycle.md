@@ -1,7 +1,15 @@
 # ADR-020: Run Replaces CultivationCycle
 
 **Fecha**: 2026-07-20
-**Estado**: Aceptado
+**Estado**: ~~Aceptado~~ → **SUPERSEDED** (DECISION-002, 2026-08-07)
+
+> **Actualización 2026-08-15 (PR-I / DECISION-002):** este ADR queda **SUPERSEDED**.
+> La refundación prevista (tabla `runs` en sustitución de `cultivation_cycles`) no se
+> completó: **CultivationCycle es el modelo vigente**. Persiste
+> `backend/src/models/CultivationCycle.js`, las rutas activas son `/cycles*`
+> (`backend/src/routes/cycles.js`; `actuators.js:40`, `analytics.js:74` consultan
+> `CultivationCycle`) y `api-contract.md` documenta `/cycles*` (no `/runs`).
+> No hay cambio de contrato de comunicación: `/cycles*` se mantiene.
 
 ## Context
 
