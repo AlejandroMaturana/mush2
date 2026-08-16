@@ -2,6 +2,12 @@
 
 > Actualizado: 2026-07-23 — Mush2 v1.8.0 — Fases 0-9 completadas
 
+> **Fuente única (DECISION-010, 2026-08-07):** Roadmap-V2 (`ultimate-roadmap2.md`) es
+> la fuente única de fases. Este documento (fases 0–9, 2026-07-23) queda como **registro
+> histórico** junto con `docs/roadmap/milestone.md` (fases 0–10, 2026-07-25); su
+> contenido puede no reflejar el proceso de madurez actual (Programas 1–11, DECISION-NNN,
+> engineering-backlog).
+
 El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se construyen slices verticales completos, después se endurece y finalmente se industrializa. Tras la refundación (ADR-019 a ADR-022), el foco está en reescribir el backend siguiendo arquitectura domain-first antes de añadir nuevas capacidades.
 
 ---
