@@ -1794,7 +1794,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Archivos afectados:** `docs/ADR/ADR-021-control-engine-as-orchestrator.md`, `services/controlEngine.js`.
 - **Contratos afectados:** —.
 - **ADR/DDD:** ADR-021.
-- **Dependencias:** ISSUE-089 (TST-003).
+- **Dependencias:** ~~ISSUE-089 (TST-003)~~ → **ISSUE-107 (TST-003)** — corrección formal del mislabel (F12-2, 2026-08-15): ISSUE-089 es DOC-005 (Capability Matrix); TST-003 es ISSUE-107. Par mutuo **I87↔I107** (PR-J #225).
 - **DoD:** ADR alineado.
 - **Tasks:** alinear o implementar.
 
@@ -2408,4 +2408,36 @@ Ejecución de las Oleadas 2–4 (`phase-11-cycle-2-plan.md` §3): **PR-C** Data 
 
 ---
 
-*Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED (ver `architecture-decisions-pending.md`).
+### 9.11 Ciclo 3 — resultados de PR-A a PR-J y cierre formal (2026-08-15)
+
+Ejecución de las 3 oleadas (`phase-12-cycle-3-plan.md` §3.1): **PR-A** FW-OTA Security (cierre I050), **PR-B** Provisioning Container (avance I065), **PR-C** CI Debt Remediation (transversal, deuda C2), **PR-D** Device Health & Retention, **PR-E** Realtime Auth & Contracts Canon, **PR-F** Perf & Validation, **PR-G** Secrets & Input Validation, **PR-H** FW Safety & Stability, **PR-I** ADR Compliance, **PR-J** ADR-021 Alignment & Runtime Coverage. Mergeados PR-A..G: #216 (A), #217 (B), #218 (C), #219 (D), #220 (E), #221 (F), #222 (G). PR-H/I/J: #223, #224, #225 (ramas creadas; merge prerequisito del cierre).
+
+| ISSUE | Fecha | Transición | Evidencia |
+|---|---|---|---|
+| ISSUE-052 (FW-003) | 2026-08-14 | BACKLOG → DONE | PR-A: OTA HTTPS + CA/host pinning + SHA-256 obligatorio (ADR-014); suites `test_ota_executor`/`test_ota_decisor` |
+| ISSUE-050 (FW-001, P0) | 2026-08-14 | IN_PROGRESS → **DONE** (cross-ciclo) | Cierre por acumulación (F12-5): groundwork NVS (I059, C1) + `TS_API_KEY` eliminada (PR-G/C2) + **OTA TLS y hash obligatorio (I052/PR-A)** |
+| ISSUE-081 (INF-022) | 2026-08-14 | BACKLOG → DONE | PR-B: provisioning MQTT por dispositivo en imagen prod (Dockerfile + volumen); `containerProvisioning.test.js`; `broker-deployment.md` |
+| ISSUE-065 (INF-006, P0) | 2026-08-14 | IN_PROGRESS (avance) | PR-B: provisioning funcional en contenedor (I081); **cierre exige DECISION-011 (host de despliegue)** — permanece IN_PROGRESS |
+| ISSUE-007/010/028 | 2026-08-15 | BACKLOG → DONE | PR-D: watchdog cableado (I007), retención per-dispositivo (I010), timers con `unref`/guard (I028); suites `offlineWatchdog`/`deviceHealthWatchdog`/`dataRetention*` |
+| ISSUE-013/094/103 | 2026-08-15 | BACKLOG → DONE | PR-E: WS /ws con JWT + socket→tenant (I013), conteo ADR 28→33 (I094), naming `webSocketServer` (I103); `webSocketServer.test.js` + `REG-020` |
+| ISSUE-014/018/026 | 2026-08-15 | BACKLOG → DONE | PR-F: limit acotado + índices (I014), API keys throttle (I018), sensorHistory ventana deslizante (I026); `pagination`/`apiKeysThrottle`/`phaseEvaluator` tests |
+| ISSUE-020/011/025 | 2026-08-15 | BACKLOG → DONE | PR-G: `DATA_ENC_KEY` dedicada con IV (I020), token Telegram cifrado/enmascarado (I011), whitelist de campos (I025); `encryption`/`telegramConfigurationService`/`recipesSpeciesWhitelist` tests |
+| ISSUE-053/054/058 | 2026-08-15 | BACKLOG → DONE | PR-H (#223): rebootCount reset en ST_NORMAL (I053), SSR off en SAFE/OTA (I054), confirmación OTA desacoplada de WiFi (I058); `pio test -c platformio.test.ini -e native` **99/99 PASSED** |
+| ISSUE-085/086/095 | 2026-08-15 | BACKLOG → DONE | PR-I (#224): ADR-020 SUPERSEDED (DECISION-002), ADR-022 SUPERSEDED (DECISION-003), fuente única roadmap (DECISION-010) |
+| ISSUE-087 (DOC-003) | 2026-08-15 | BACKLOG → DONE | PR-J (#225): ADR-021 alineado a `controlEngine.js` real (par mutuo I87↔I107) |
+| ISSUE-107 (TST-003) | 2026-08-15 | BACKLOG → DONE | PR-J (#225): cobertura runtime — `controlEngine.test.js` (10), `mqttBridge.test.js` (14), `eventBus.test.js` (8) **32/32 PASSED** |
+
+**Corrección formal del mislabel I087 (F12-2):** el campo `Dependencias` de ISSUE-087 citaba `ISSUE-089 (TST-003)`; **TST-003 es ISSUE-107** (I089 es DOC-005). Corregido en §4.5 y operado como par mutuo I87↔I107 en PR-J (#225).
+
+**Estado global post-Ciclo 3 (medido):** 22 ISSUEs del ciclo DONE + I050 cross-ciclo → **63 DONE · 2 SUPERSEDED (I051/I023) · 1 IN_PROGRESS (I065) · 1 BLOCKED (I070, DECISION-011) · 43 BACKLOG** (detalle en `phase-8-executive-dashboard.md` §10.3; avance global **57.3 %** = 63/110).
+
+**Cierre diferido (sin cierre falso, regla §6):** I65 → DECISION-011 (C4); I70/I71 → DECISION-011 (BLOCKED, inamovibles); release train D11 (I62/I67/I82/I69/I78/I77/I96/I98/I93) → C4 (F12-6).
+
+**Runbook de gates:**
+- **Exit Gates:** 0/11 — P1 ⛔ PENDING (I65 `IN_PROGRESS` + DECISION-011 PENDING, I70).
+- **Cobertura transversal:** OTA TLS (PR-A), provisioning (PR-B), device health (PR-D), WS auth + ADR count (PR-E), pagination/throttle (PR-F), secrets/whitelist (PR-G), firmware safety (PR-H), ADR compliance (PR-I), runtime (PR-J). **CI post-ciclo en `develop` ❌ rojo (2/4 jobs)** — run `31904228419`: backend test 1 fallo (`authorization-negative`, 500 vs 401, no reproducible localmente) · security gates fallo de permisos CodeQL `upload-sarif` (`security-events: write`, sin vulnerabilidades: `pnpm audit` limpio) · firmware build ✅ y frontend ✅ (deuda C2 resuelta: E2E, vulns npm y defines BLE/BUTTON). Clasificación y deuda: `docs/project/cycle-3-closure/gate-check.md`.
+- **Versiones:** backend **1.9.0 → 1.10.0 (MINOR)** (consolidado; corrige CHANGELOG defectuoso `v1.9.0 - ghghghg`), frontend 1.15.5 (sin cambios), firmware **0.24.0 → 0.24.1 (PATCH)**, docs **0.2.4 → 0.2.5 (PATCH)**, root **1.8.21 → 1.8.22 (PATCH)**. Derivados sincronizados.
+
+---
+
+*Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED y aplicadas en C3 (ver `architecture-decisions-pending.md`).
