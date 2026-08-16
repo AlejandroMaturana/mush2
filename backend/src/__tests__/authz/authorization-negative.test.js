@@ -123,7 +123,12 @@ describe('ISSUE-003/I106: /monitoring/* requiere auth + rol ADMIN (PR-F)', () =>
 const HAS_TEST_DB = /mush2_test/.test(process.env.DATABASE_URL || '');
 const itDb = HAS_TEST_DB ? it : it.skip;
 
-describe('ISSUE-001: POST /devices/register exige sesión o token de aprovisionamiento', () => {  it('anónimo sin token → 401 (AUTH_REQUIRED), sin acuñar credenciales', async () => {
+describe('ISSUE-001: POST /devices/register exige sesión o token de aprovisionamiento', () => {
+  beforeAll(async () => {
+    if (HAS_TEST_DB) await sequelize.sync();
+  });
+
+  it('anónimo sin token → 401 (AUTH_REQUIRED), sin acuñar credenciales', async () => {
     const res = await request(app)
       .post('/api/v1/devices/register')
       .send({ deviceId: 'anon-no-token', macAddress: 'AA:00:00:00:00:01' });
