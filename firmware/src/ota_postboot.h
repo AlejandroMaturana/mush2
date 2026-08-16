@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <esp_ota_ops.h>
+#include "ota_postboot_policy.h"
 
 class StateMachine;
 

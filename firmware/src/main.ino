@@ -334,7 +334,11 @@ void setup() {
     }
 
     if (otaConfirmacion.isPendingVerification()) {
-      if (otaConfirmacion.selfTest()) {
+      // ISSUE-058 (FW-009): decisión post-OTA desacoplada de la red.
+      // Si la red aún no está estable, se difiere y taskTelemetry reintenta
+      // la confirmación cuando WiFi conecte.
+      OtaPostBootDecision d = decidePostBoot(true, otaConfirmacion.selfTest(), wifi.isConnected());
+      if (d == OtaPostBootDecision::CONFIRM) {
         otaConfirmacion.confirm();
         String ver = nvsGetFwVer();
         Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
@@ -342,8 +346,10 @@ void setup() {
         snprintf(successPayload, sizeof(successPayload),
           "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
         mqtt.publish("ota/status", successPayload, true);
+      } else if (d == OtaPostBootDecision::ROLLBACK) {
+        otaConfirmacion.rollback();
       } else {
-        Serial.println("[OTA] Self-test falló — rollback pendiente");
+        Serial.println("[OTA] Núcleo OK — confirmación diferida hasta red estable");
       }
     } else {
       esp_ota_mark_app_valid_cancel_rollback();

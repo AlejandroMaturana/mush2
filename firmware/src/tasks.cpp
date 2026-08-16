@@ -362,7 +362,13 @@ void taskSSR(void* pvParameters) {
     hyst.setOverheat(temp);
     sharedOverheatActive = (hyst.getOverheatState() == OH_ACTIVE);
 
-    if (sharedSensorsValid) {
+    // ISSUE-054 (FW-005): en SAFE y OTA_UPDATING los actuadores quedan OFF
+    // (gate por estado, no se evalúa control alguno).
+    bool actuationBlocked = sm.blocksActuation();
+
+    if (actuationBlocked) {
+      ssr.setAll(0);
+    } else if (sharedSensorsValid) {
       uint8_t hystOutputs[4] = {0, 0, 0, 0};
       hyst.evaluate(temp, hum, eco2, hystOutputs);
 
@@ -708,6 +714,9 @@ void taskOTA(void* pvParameters) {
           ESP.restart();
         } else {
           Serial.println("[OTA] Fallo en ejecutor — restaurando");
+          // ISSUE-058 (FW-009): rollback explícito — se cancela cualquier
+          // rollback pendiente y se marca el firmware actual como válido.
+          otaShutdown.abortRollback();
           snprintf(statusPayload, sizeof(statusPayload),
             "{\"estado\":\"OTA_FAILED\",\"error\":\"download_failed\"}");
           mqtt.publish("ota/status", statusPayload, true);
@@ -749,6 +758,28 @@ void taskTelemetry(void* pvParameters) {
       if (replayed > 0) {
         Serial.printf("[TELEMETRY] Replay: %d entradas enviadas\n", replayed);
       }
+    }
+
+    // ISSUE-058 (FW-009): confirmación post-OTA con reintento. Si en setup no
+    // había red estable, se reintenta aquí cuando WiFi conecte; si el self-test
+    // de núcleo falla, se fuerza rollback explícito.
+    if (otaConfirmacion.isPendingVerification()) {
+      bool coreOk = otaConfirmacion.selfTest();
+      OtaPostBootDecision d = decidePostBoot(true, coreOk, wifiOk);
+      if (d == OtaPostBootDecision::CONFIRM) {
+        otaConfirmacion.confirm();
+        String ver = nvsGetFwVer();
+        Serial.printf("[OTA] Firmware v%s confirmado post-OTA (red estable)\n", ver.c_str());
+        if (mqttOk) {
+          char successPayload[128];
+          snprintf(successPayload, sizeof(successPayload),
+            "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
+          mqtt.publish("ota/status", successPayload, true);
+        }
+      } else if (d == OtaPostBootDecision::ROLLBACK) {
+        otaConfirmacion.rollback();
+      }
+      // WAIT_RETRY: se reintenta en el siguiente ciclo del loop.
     }
 
     if (now - lastMqttTel >= 10000) {

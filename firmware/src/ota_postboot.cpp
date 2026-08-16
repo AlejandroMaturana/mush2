@@ -2,7 +2,6 @@
 #include "state_machine.h"
 #include "config.h"
 #include "ota_nvs.h"
-#include <WiFi.h>
 #include <Wire.h>
 
 OTAConfirmation::OTAConfirmation() : _otaPending(false), _sm(nullptr) {}
@@ -25,11 +24,11 @@ bool OTAConfirmation::selfTest() {
   if (!isPendingVerification()) return false;
 
   _otaPending = true;
-  Serial.println("[OTA] Post-boot: particion en PENDING_VERIFY, ejecutando self-test...");
+  Serial.println("[OTA] Post-boot: particion en PENDING_VERIFY, ejecutando self-test de nucleo...");
 
-  bool wifiOk = WiFi.status() == WL_CONNECTED;
-  bool stateOk = _sm && _sm->getState() == ST_NORMAL;
-
+  // ISSUE-058 (FW-009): el self-test de nucleo NO depende de WiFi ni del
+  // estado de la FSM. La disponibilidad de red se evalua aparte en la
+  // decision (decidePostBoot) y se reintenta en runtime.
   bool i2cOk = false;
   Wire.beginTransmission(0x38);
   i2cOk = (Wire.endTransmission() == 0);
@@ -37,14 +36,12 @@ bool OTAConfirmation::selfTest() {
   uint32_t freeHeap = ESP.getFreeHeap();
   bool heapOk = (freeHeap > 30000);
 
-  Serial.printf("[OTA] Self-test: WiFi=%s, State=%s, I2C=%s, Heap=%lu (%s)\n",
-    wifiOk ? "OK" : "FAIL",
-    _sm ? _sm->getStateName() : "?",
+  Serial.printf("[OTA] Self-test: I2C=%s, Heap=%lu (%s)\n",
     i2cOk ? "OK" : "FAIL",
     (unsigned long)freeHeap,
     heapOk ? "OK" : "LOW");
 
-  return wifiOk && stateOk && i2cOk && heapOk;
+  return i2cOk && heapOk;
 }
 
 void OTAConfirmation::confirm() {
