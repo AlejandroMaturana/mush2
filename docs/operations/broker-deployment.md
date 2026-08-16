@@ -1,10 +1,11 @@
 # Plan de Despliegue — Broker MQTT (Mosquitto 2.x)
 
-> **Estado:** PLAN DE DESPLIEGUE — configuración versionada lista para deploy (Ciclo 2, PR-A: I074/I075)
+> **Estado:** PLAN DE DESPLIEGUE — configuración versionada lista para deploy (Ciclo 2, PR-A: I074/I075) · **provisioning verificado en runtime en contenedor (Ciclo 4, avance ISSUE-065)**
 > **ISSUE:** ISSUE-065 (INF-006) · EPIC-BROKER · Ini 1.6 · **P0**
 > **Decisión:** DECISION-006 · ACCEPTED — contenedor Mosquitto + volumen persistente + TLS 8883, ACL por dispositivo
 > **Cierre:** requiere DECISION-011 (plan free → pago/VPS) — Ciclo 3. **Provisioning por dispositivo en contenedor entregado en PR-B (I081/INF-022, Ciclo 3)** — el ISSUE-065 permanece `IN_PROGRESS` hasta el despliegue real.
-> **Última actualización:** 2026-08-13
+> **Verificado en runtime (PR-B, avance I065, Ciclo 4):** `scripts/verify-broker-provisioning.sh` — broker `eclipse-mosquitto:2` con config/ACL/certs prod, 9/9 checks PASS (verde→rojo→verde): hash `$7$` nativo Node aceptado, SIGHUP como mecanismo de recarga (control negativo sin SIGHUP), TLS obligatorio en 8883, ACL por client_id end-to-end, sin secretos horneados. Contrato codificado en `REG-021_broker-provisioning-runtime-verify.test.ts`.
+> **Última actualización:** 2026-08-16
 
 ---
 
@@ -170,13 +171,35 @@ Reglas ADR-023-R01..R04 y ADR-028-R01..R04 aplican.
 | `render.yaml` con envVars MQTT | ⏳ Diferido (no inventar valores) | al desplegar |
 | Certs TLS 8883 reales | ⏳ **Provisioning en operación** (issue: montar en contenedor) | deploy (depende de DECISION-011) |
 | Provisioning de credenciales por dispositivo en el contenedor | ✅ **Entregado (PR-B, I081/INF-022, Ciclo 3)** | `Dockerfile` (COPY `docker/mosquitto` + `docker-cli`), `.dockerignore` (sin secretos en la imagen), `docker-compose.yml` (volumen compartido rw + socket), tests `containerProvisioning` + verificación en imagen prod local |
+| Verificación **runtime** del provisioning en contenedor (verde→rojo→verde) | ✅ **Entregado (PR-B, avance I065, Ciclo 4)** | `scripts/verify-broker-provisioning.sh` (9/9 PASS) + `REG-021_broker-provisioning-runtime-verify.test.ts` — ver §8.1 |
 | Broker desplegado y bridge conectado | ⏳ Ejecución del plan | tras DECISION-011 |
 
-**Estado del ISSUE:** ISSUE-065 permanece `IN_PROGRESS` tras PR-A (avance: config TLS activa y verificada localmente; cierre exige ISSUE-081 + DECISION-011 en C3).
+**Estado del ISSUE:** ISSUE-065 permanece `IN_PROGRESS`. Avances entregados: PR-A (Ciclo 2, config TLS activa y verificada localmente), PR-B (Ciclo 3, provisioning en contenedor I081), PR-B (Ciclo 4, **verificación runtime** del provisioning en contenedor — §8.1). Cierre formal exige el despliegue real tras DECISION-011.
 
 ---
 
 ## 8. Verificación final (runbook post-deploy)
+
+### 8.1 Verificación hermética automatizada (recomendada)
+
+`scripts/verify-broker-provisioning.sh` levanta un broker `eclipse-mosquitto:2` hermético con la config/ACL/certs de producción y verifica el contrato de provisioning **en runtime** (lo que los contract tests estáticos `containerProvisioning.test.js` no cubren):
+
+```bash
+./scripts/verify-broker-provisioning.sh    # 9/9 PASS esperado; exit 0 = contrato OK
+```
+
+Checks cubiertos (estado real, avance ISSUE-065, Ciclo 4):
+1. **Baseline:** `backend_bridge` autentica por MQTTS 8883 (broker listo).
+2. **Control negativo SIGHUP:** una credencial recién provisionada es RECHAZADA sin SIGHUP (prueba que `MosquittoProvisioningService.reload()` es el paso que la activa).
+3. **Provisioning real:** hash `$7$` nativo Node (`mosquittoPasswordHash`) + SIGHUP → el dispositivo autentica y publica.
+4. **Seguridad:** contraseña incorrecta → `not authorised`.
+5. **TLS obligatorio (ISSUE-015):** conexión en claro al 8883 → rechazada.
+6. **ACL por client_id (ADR-028, end-to-end):** el bridge autorizado recibe telemetría; un "snooper" con otro client_id NO recibe nada.
+7. **Imagen sin secretos:** `.dockerignore` excluye `docker/mosquitto/certs` y los `password_file` reales.
+
+El contrato queda codificado en `backend/src/__tests__/regression/REG-021_broker-provisioning-runtime-verify.test.ts`.
+
+### 8.2 Verificación manual (post-deploy real)
 
 ```bash
 # 1. Broker arriba y listener TLS escuchando
@@ -191,7 +214,7 @@ mosquitto_sub -h <host> -p 8883 -t '#'    # debe rechazar (handshake TLS)
 # 4. Telemetría cifrada: publicar telemetría de un dispositivo y verificar persistencia en /devices
 ```
 
-Criterio de salida (§8.2 de este plan): `MQTT_BROKER_URL` poblado + bridge conectado + telemetría fluyendo cifrada.
+Criterio de salida (§8.3 de este plan): `MQTT_BROKER_URL` poblado + bridge conectado + telemetría fluyendo cifrada.
 
 ---
 

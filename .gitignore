@@ -23,6 +23,8 @@ backend/mush2_backup_20260630_113545.dump
 docker/mosquitto/*/password_file
 docker/mosquitto/certs/*.key
 docker/mosquitto/certs/*.crt
+docker/mosquitto/certs/*.csr
+docker/mosquitto/certs/*.srl
 *.log
 .DS_Store
 Thumbs.db
