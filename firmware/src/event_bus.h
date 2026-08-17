@@ -66,6 +66,7 @@ struct HealthUpdatePayload {
   uint16_t taskStackMQTT;
   uint16_t taskStackOTA;
   uint16_t taskStackTelemetry;
+  uint16_t taskStackPoller;
   uint16_t taskStackButton;
   bool i2cHealthy;
   uint8_t rebootCount;

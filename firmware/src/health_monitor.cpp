@@ -17,7 +17,8 @@ HealthMonitor healthMonitor;
 HealthMonitor::HealthMonitor()
   : _bus(nullptr), _taskSensors(nullptr), _taskSSR(nullptr),
     _taskWiFi(nullptr), _taskMQTT(nullptr), _taskOTA(nullptr),
-    _taskTelemetry(nullptr), _taskButton(nullptr), _healthy(true) {
+    _taskTelemetry(nullptr), _taskPoller(nullptr), _taskButton(nullptr),
+    _healthy(true), _i2cMutex(nullptr) {
   memset(&_metrics, 0, sizeof(_metrics));
   for (int i = 0; i < HB_TASK_COUNT; i++) {
     _lastHeartbeat[i] = 0;
@@ -26,7 +27,7 @@ HealthMonitor::HealthMonitor()
 
 void HealthMonitor::init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
                          TaskHandle_t wifi, TaskHandle_t mqtt, TaskHandle_t ota,
-                         TaskHandle_t telemetry, TaskHandle_t button) {
+                         TaskHandle_t telemetry, TaskHandle_t poller, TaskHandle_t button) {
   _bus = bus;
   _taskSensors = sensors;
   _taskSSR = ssr;
@@ -34,8 +35,12 @@ void HealthMonitor::init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
   _taskMQTT = mqtt;
   _taskOTA = ota;
   _taskTelemetry = telemetry;
+  _taskPoller = poller;
   _taskButton = button;
-  LOG_I("HEALTH", "HealthMonitor inicializado (8 tasks tracked)");
+  if (!_i2cMutex) {
+    _i2cMutex = xSemaphoreCreateMutex();
+  }
+  LOG_I("HEALTH", "HealthMonitor inicializado (9 tasks tracked)");
 }
 
 uint16_t HealthMonitor::_getStackHighWater(TaskHandle_t task) {
@@ -61,10 +66,13 @@ void HealthMonitor::_checkTaskStacks() {
   _metrics.stackMQTT = _getStackHighWater(_taskMQTT);
   _metrics.stackOTA = _getStackHighWater(_taskOTA);
   _metrics.stackTelemetry = _getStackHighWater(_taskTelemetry);
+  _metrics.stackPoller = _getStackHighWater(_taskPoller);
   _metrics.stackButton = _getStackHighWater(_taskButton);
 }
 
 void HealthMonitor::_checkI2C() {
+  if (_i2cMutex) xSemaphoreTake(_i2cMutex, portMAX_DELAY);
+
   Wire.beginTransmission(0x38);
   uint8_t errAht = Wire.endTransmission();
   _metrics.sensorAht21 = (errAht == 0);
@@ -115,6 +123,8 @@ void HealthMonitor::_checkI2C() {
   _metrics.i2cRecoveryAttempts = i2cRecoveryAttempts;
   _metrics.i2cRecoverySuccesses = i2cRecoverySuccesses;
   _metrics.i2cPredictiveAlert = i2cPredictiveAlert;
+
+  if (_i2cMutex) xSemaphoreGive(_i2cMutex);
 }
 
 void HealthMonitor::_recoverI2C() {
@@ -182,6 +192,7 @@ void HealthMonitor::_publishMetrics() {
     event.payload.healthUpdate.taskStackMQTT = _metrics.stackMQTT;
     event.payload.healthUpdate.taskStackOTA = _metrics.stackOTA;
     event.payload.healthUpdate.taskStackTelemetry = _metrics.stackTelemetry;
+    event.payload.healthUpdate.taskStackPoller = _metrics.stackPoller;
     event.payload.healthUpdate.i2cHealthy = _metrics.i2cBusHealthy;
     event.payload.healthUpdate.resetReason = _metrics.resetReason;
     _bus->publish(event);
@@ -193,7 +204,7 @@ void HealthMonitor::_publishMetrics() {
       _metrics.freeHeap, _metrics.minFreeHeap, _metrics.maxAllocHeap,
       _metrics.stackSensors, _metrics.stackSSR, _metrics.stackWiFi,
       _metrics.stackMQTT, _metrics.stackOTA, _metrics.stackTelemetry,
-      _metrics.stackButton, _metrics.i2cBusHealthy,
+      _metrics.stackPoller, _metrics.stackButton, _metrics.i2cBusHealthy,
       _metrics.sensorAht21, _metrics.sensorEns160,
       _metrics.staleTaskMask, _metrics.heartbeatsHealthy,
       _metrics.uptime, _metrics.rebootCount, _metrics.resetReason,
@@ -221,10 +232,11 @@ void HealthMonitor::checkComprehensive() {
   _metrics.uptime = millis() / 1000;
   _publishMetrics();
 
-  LOG_I("HEALTH", "Heap:%lu/%lu Stack(S:%u R:%u W:%u M:%u O:%u T:%u) I2C:%s HB:%s",
+  LOG_I("HEALTH", "Heap:%lu/%lu Stack(S:%u R:%u W:%u M:%u O:%u T:%u P:%u) I2C:%s HB:%s",
     _metrics.freeHeap, _metrics.minFreeHeap,
     _metrics.stackSensors, _metrics.stackSSR, _metrics.stackWiFi,
     _metrics.stackMQTT, _metrics.stackOTA, _metrics.stackTelemetry,
+    _metrics.stackPoller,
     _metrics.i2cBusHealthy ? "OK" : "FAIL",
     _metrics.heartbeatsHealthy ? "OK" : "STALE");
 }

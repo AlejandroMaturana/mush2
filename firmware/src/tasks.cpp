@@ -215,6 +215,11 @@ void mqttCommandCallback(const MqttCommandMessage* msg) {
 // ============================================================
 
 void taskSensors(void* pvParameters) {
+  esp_err_t wdtErr = esp_task_wdt_add(NULL);
+  if (wdtErr != ESP_OK) {
+    Serial.printf("[SENSORS] WDT add: %s (0x%x)\n",
+      wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
+  }
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastSensorValid = 0;
   unsigned long fallbackStart = 0;
@@ -337,6 +342,7 @@ void taskSensors(void* pvParameters) {
 
     processPhotoperiod();
 
+    esp_task_wdt_reset();
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(currentSensorInterval));
   }
 }
