@@ -54,9 +54,10 @@ public:
   bool publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t maxAllocHeap,
                      uint16_t stackSensors, uint16_t stackSSR, uint16_t stackWiFi,
                      uint16_t stackMQTT, uint16_t stackOTA, uint16_t stackTelemetry,
-                     uint16_t stackButton, bool i2cHealthy, bool sensorAht21, bool sensorEns160,
-                     uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount,
-                     uint8_t resetReason,
+                     uint16_t stackPoller, uint16_t stackButton, bool i2cHealthy,
+                     bool sensorAht21, bool sensorEns160,
+                     uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime,
+                     uint8_t rebootCount, uint8_t resetReason,
                      bool bootTestPassed, const char* bootTestFailReason);
   bool publishMaintenance(const char* component, uint8_t health, uint32_t estimatedFailure, const char* reason);
 

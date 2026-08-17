@@ -378,7 +378,7 @@ void setup() {
     // para cubrir fallos tempranos del arranque (crash antes de setup completo).
     healthMonitor.init(&eventBus, taskSensorsHandle, taskSSRHandle,
                        taskWiFiHandle, taskMQTTHandle, taskOTAHandle,
-                       taskTelemetryHandle, taskButtonHandle);
+                       taskTelemetryHandle, taskPollerHandle, taskButtonHandle);
     xTaskCreatePinnedToCore(taskMonitor, "Monitor", 4096, NULL, 1, NULL, CORE_NETWORK);
 
     Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());
