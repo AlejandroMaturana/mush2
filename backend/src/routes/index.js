@@ -11,6 +11,7 @@ import settingsRouter from './settings.js';
 import diagnosticsRouter from './diagnostics.js';
 import eventsRouter from './events.js';
 import analyticsRouter from './analytics.js';
+import chambersRouter from './chambers.js';
 import telegramRouter from './telegram.js';
 import subscriptionsRouter from './subscriptions.js';
 import speciesRouter from './species.js';
@@ -39,6 +40,7 @@ router.use('/alarms', authenticate, checkApiRateLimit, tenantScope, alarmsRouter
 router.use('/diag', authenticate, checkApiRateLimit, diagnosticsRouter);
 router.use('/events', eventsRouter);
 router.use('/chambers', analyticsRouter);
+router.use('/chambers', authenticate, checkApiRateLimit, tenantScope, chambersRouter);
 router.use('/telegram', authenticate, checkApiRateLimit, telegramRouter);
 router.use('/species', authenticate, checkApiRateLimit, tenantScope, speciesRouter);
 router.use('/cycles', authenticate, checkApiRateLimit, tenantScope, cyclesRouter);
