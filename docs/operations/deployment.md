@@ -5,6 +5,7 @@
 | Entorno | Propósito | URL | DB |
 |---|---|---|---|
 | `development` | Desarrollo local | `localhost:3797` | PostgreSQL local |
+| `production` | Render (web service `mush2`, plan free) | `https://mush2.onrender.com` | Render PostgreSQL (`mush2-db`) |
 
 ## Desarrollo Local
 
@@ -13,7 +14,12 @@
 cd backend
 pnpm install
 # Editar .env con credenciales locales (nunca commiteado)
-pnpm run dev  # nodemon, puerto 3797, auto-sync DB
+pnpm run dev  # Node.js 22 --watch (--watch-path=src), puerto 3797
+# Utilidades:
+pnpm run db:migrate    # migraciones Sequelize
+pnpm run db:seed       # seed base (node src/seed.js)
+pnpm run db:seed:dev   # seed de desarrollo
+pnpm run admin:create  # crear usuario admin/operador
 ```
 
 ### Frontend
@@ -33,16 +39,20 @@ pio device monitor                 # logs serial 115200 baud
 
 ## CI/CD (GitHub Actions)
 
-Workflow en `.github/workflows/ci.yml`:
-- **Firmware**: `pio run` compila el ESP32-S3
-- **Backend**: Jest + Supertest con PostgreSQL 16 (Node.js 22, alineado con runtime de prod)
-- **Frontend**: `pnpm build` con Vite
+Workflow en `.github/workflows/ci.yml` (gate de PR) y `.github/workflows/release.yml` (release train D11):
+
+- **Firmware**: `pio run` compila el ESP32-S3; tests nativos + sketch build (workflow completo: `firmware` job)
+- **Backend**: Jest + Vitest con PostgreSQL 16 y Node.js 22 (alineado con runtime de prod); incluye validación de versiones (`scripts/check-version-manifest.cjs`, I078)
+- **Frontend**: `pnpm build` + tests con Vite
+- **Security**: audit de dependencias (npm/pnpm + OSV) y gitleaks para secretos
+- **Deploy (I067)**: en push a `main` dispara el hook de Render y verifica `GET /health` → 200 (activo solo si existe el secreto `RENDER_DEPLOY_HOOK`; sin URL falsa hardcodeada)
+- **Release (I082/I062)**: en push a `develop` abre la PR "Release: version packages" (`pnpm version-packages`); al mergearla a `main` crea el tag `vX.Y.Z` + GitHub Release (`scripts/release.js`). Reemplaza el flujo manual de `scripts/release.bat`.
 
 ## Seed Data
 
 ```bash
 cd backend
-node src/scripts/seed.js  # Crea usuario admin / admin123 (SUPER_ADMIN)
+pnpm run db:seed  # node src/seed.js — crea datos base; usuarios admin/operador vía `pnpm run admin:create`
 ```
 
 ## Seguridad
@@ -55,9 +65,11 @@ node src/scripts/seed.js  # Crea usuario admin / admin123 (SUPER_ADMIN)
 
 ### Transporte
 - Backend: TLS con Let's Encrypt (futuro)
-- MQTT: deshabilitar bridge público o asegurar con TLS (ADR-013 Fase 1)
-- **Broker MQTT (Mosquitto 2.x):** plan de despliegue en [`broker-deployment.md`](broker-deployment.md) (PR-G, ISSUE-065) — contenedor + TLS 8883 + ACL por dispositivo (DECISION-006); ejecución diferida a ISSUE-075/081.
+- MQTT: TLS 8883 activo en el broker Mosquitto (ISSUE-074/075) con ACL por dispositivo (DECISION-006)
+- **Broker MQTT (Mosquitto 2.x):** plan de despliegue en [`broker-deployment.md`](broker-deployment.md) — contenedor + TLS 8883 + ACL por dispositivo; **ejecutado** (provisioning ISSUE-081 y verificación automática ISSUE-065). Verificación: `bash scripts/verify-broker-provisioning.sh` (9/9 checks).
 
-## Broker MQTT de producción
+## Healthcheck (I069)
 
-El despliegue del broker Mosquitto de producción está **planificado pero no ejecutado** (PR-G, Ciclo 0). Ver [`broker-deployment.md`](broker-deployment.md) para: arquitectura, pasos, gestión de secretos, rollback, migración y verificación. No poblar `MQTT_BROKER_URL`/`MQTT_BROKER_PASS` en Render hasta cerrar ISSUE-075 (TLS) e ISSUE-081 (provisioning).
+- `Dockerfile`: `HEALTHCHECK` sobre `GET http://127.0.0.1:3797/health` (público, 200/503)
+- `docker-compose.yml`: healthchecks para `postgres` (`pg_isready`) y `mosquitto` (`nc -z 8883`); el backend arranca con `depends_on: condition: service_healthy`
+- Render usa `healthCheckPath: /health` (`render.yaml`)
