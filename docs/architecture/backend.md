@@ -24,14 +24,15 @@ backend/
 ├── src/
 │   ├── server.js              # Punto de entrada, arranque
 │   ├── app.js                 # Configuración Express
-│   ├── composition-root.js    # Inyección de dependencias
 │   ├── config/
 │   │   ├── database.js        # Conexión Sequelize
 │   │   ├── env.js             # Variables de entorno validadas
 │   │   ├── pino.js            # Logger estructurado (Pino)
 │   │   ├── resetReasons.js    # Mapa de razones de reinicio (ADR-027)
-│   │   └── readiness.js       # Estado de readiness del sistema
-│   ├── models/                # Modelos Sequelize (25)
+│   │   ├── readiness.js       # Estado de readiness del sistema
+│   │   ├── systemSettingsDefaults.js  # Valores por defecto de SystemSetting
+│   │   └── ConfigurationService.js   # Servicio de configuración (ADR-032)
+│   ├── models/                # Modelos Sequelize
 │   │   ├── index.js           # Asociaciones
 │   │   ├── Chamber.js
 │   │   ├── Device.js
@@ -53,33 +54,48 @@ backend/
 │   │   ├── IntegrationCredentials.js
 │   │   ├── UserChamberAccess.js
 │   │   ├── UserPreference.js
-│   │   └── ... (+5 modelos adicionales)
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   └── Run.ts         # Entidad de dominio (ADR-020, persiste como CultivationCycle)
-│   │   └── valueObjects/
+│   │   ├── SpeciesProfile.js
+│   │   ├── BioactiveProfile.js
+│   │   ├── BioactiveCompound.js
+│   │   ├── MedicinalProperty.js
+│   │   ├── ProvisioningToken.js
+│   │   ├── RefreshToken.js
+│   │   ├── SystemSetting.js
+│   │   ├── TelegramDeviceConfig.js
+│   │   └── Token.js
 │   ├── jobs/                  # Tareas programadas
 │   │   ├── dataRetentionJob.js        # Purga según plan de suscripción
-│   │   ├── subscriptionExpiration.js  # Cancelación al final del período
 │   │   └── offlineWatchdog.js         # Detección de dispositivos offline
 │   ├── middlewares/            # Middleware personalizado
 │   │   ├── auth.js            # Verificación JWT + API Key dual
 │   │   ├── rbac.js            # Control de roles (RBAC)
 │   │   ├── subscriptionRateLimit.js   # Rate limiting por suscripción
-│   │   └── tenant.js          # Scope de tenant
+│   │   ├── tenant.js          # Scope de tenant
+│   │   ├── errorHandler.js    # Manejo global de errores
+│   │   └── provisioningAuth.js # Auth para endpoints de provisioning
 │   ├── routes/                # Definición de rutas
 │   │   ├── index.js           # Montaje de rutas
 │   │   ├── auth.js
 │   │   ├── api.js             # API REST versión 1
-│   │   ├── runs-pilot.js      # Endpoints de Run (ADR-020)
-│   │   ├── monitoring.js      # Health + maintenance endpoints
 │   │   ├── admin.js           # Rutas de administración
-│   │   └── diagnostics.js     # Diagnósticos MQTT
-│   ├── services/              # Lógica de negocio (17)
+│   │   ├── monitoring.js      # Health + maintenance endpoints
+│   │   ├── diagnostics.js     # Diagnósticos MQTT
+│   │   ├── subscriptions.js   # Suscripciones y billing
+│   │   ├── chambers.js        # Cámaras de cultivo
+│   │   ├── recipes.js         # Recetas
+│   │   ├── cycles.js          # Ciclos de cultivo
+│   │   ├── species.js         # Especies
+│   │   ├── alarms.js          # Alarmas
+│   │   ├── actuators.js       # Actuadores
+│   │   ├── analytics.js       # Analytics por chamber
+│   │   ├── apiKeys.js         # API Keys
+│   │   ├── settings.js        # Configuración
+│   │   ├── events.js          # SSE (Server-Sent Events)
+│   │   └── telegram.js        # Integración Telegram
+│   ├── services/              # Lógica de negocio
 │   │   ├── controlEngine.js       # Motor de reglas (ADR-021)
 │   │   ├── phaseEvaluator.js      # Evaluador de fases (ADR-021)
 │   │   ├── mqttBridge.js          # Cliente MQTT (renombrado desde mqttService)
-│   │   ├── mqtt-adapter.ts        # Adaptador MQTT (domain layer)
 │   │   ├── mqttProvisioningService.js  # Provisión de credenciales MQTT
 │   │   ├── mosquittoProvisioningService.js  # Provisioning Mosquitto
 │   │   ├── deviceHealthService.js  # Health + maintenance (ADR-025)
@@ -95,9 +111,14 @@ backend/
 │   │   ├── webSocketServer.js     # Servidor WebSocket /ws (actuator state, realtime)
 │   │   ├── auditService.js        # Servicio de auditoría
 │   │   ├── encryption.js          # AES-256-GCM
+│   │   ├── dataRetentionService.js # Lógica de purga de datos
+│   │   ├── bioactiveAnalyzer.js   # Analizador de compuestos bioactivos
+│   │   ├── provisioningTokenService.js  # Tokens de provisioning
+│   │   ├── tokenService.js        # Gestión de tokens
 │   │   ├── logger.js              # Logger legacy (usar pino.js)
 │   │   └── logReaderService.js    # Lector de logs del firmware
-│   └── utils/                 # Utilidades
+│   └── utils/
+│       └── pagination.js      # Utilidad de paginación
 ├── tests/
 │   ├── unit/
 │   └── integration/
@@ -153,11 +174,11 @@ User 1──N AuditLog
 - `POST /api/v1/cycles` — Iniciar ciclo
 
 ### Suscripción
-- `GET /api/v1/subscriptions` — Plan activo del usuario autenticado
-- `GET /api/v1/subscriptions/usage` — Consumo actual vs límites del plan
-- `POST /api/v1/subscriptions/check` — Verifica si una acción está permitida
-- `PATCH /api/v1/subscriptions` — Cambiar de plan
-- `DELETE /api/v1/subscriptions` — Cancelar suscripción (fin del período)
+- `GET /api/v1/subscriptions/mine` — Plan activo del usuario autenticado
+- `GET /api/v1/subscriptions/mine/usage` — Consumo actual vs límites del plan
+- `PATCH /api/v1/subscriptions/mine/upgrade` — Cambiar de plan
+- `PATCH /api/v1/subscriptions/mine/cancel` — Cancelar suscripción (fin del período)
+- `GET /api/v1/subscriptions` — (Admin) Listar todas las suscripciones
 
 ## Servicios Clave
 

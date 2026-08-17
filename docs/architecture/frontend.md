@@ -110,13 +110,6 @@ frontend/src/
 │       └───pages/                  # SettingsHub, UserSettings, DeviceSettings,
 │                                   # CultivationSettings, ApiKeysSettings,
 │                                   # SystemSettings, SubscriptionSettings
-│
-└───pages/                          # Páginas legacy (algunas aún activas)
-        DeviceDetail.jsx
-        Cycles.jsx
-        BioactiveDashboard.jsx
-        Login.jsx
-        Landing.jsx
 ```
 
 ## Flujo de Autenticación
