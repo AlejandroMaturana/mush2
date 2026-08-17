@@ -120,6 +120,9 @@ jobs:
       - name: Install dependencies
         run: cd frontend && pnpm install --frozen-lockfile
 
+      - name: Version manifest consistency (I078/INF-019)
+        run: node scripts/check-version-manifest.cjs
+
       - name: Test (I080/I109)
         run: cd frontend && pnpm run test
 
@@ -165,3 +168,30 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
+
+  deploy:
+    name: Deploy (Render) & health check
+    # I067/INF-008: deploy automático en push a main, verificado por /health.
+    # Inactivo hasta que exista el secreto RENDER_DEPLOY_HOOK (hook único de
+    # Render) — sin URL falsa hardcodeada (DECISION-011 PENDING).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.RENDER_DEPLOY_HOOK != ''
+    runs-on: ubuntu-latest
+    needs: [firmware, backend, frontend, security]
+    steps:
+      - name: Trigger Render deploy hook
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" >/dev/null
+
+      - name: Verify /health after deploy
+        env:
+          HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL || 'https://mush2.onrender.com/health' }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "OK: $HEALTH_URL -> 200 (tras $(( (i-1) * 10 ))s)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ERROR: $HEALTH_URL no responde 200 tras 300s (último estado: $code)"
+          exit 1

@@ -46,4 +46,9 @@ ENV PORT=3797
 
 EXPOSE 3797
 
+# HEALTHCHECK operativo (I069/INF-010): /health es público en app.js; con
+# start-period se evitan falsos negativos durante migraciones de arranque.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3797/health >/dev/null 2>&1 || exit 1
+
 CMD ["sh", "-c", "cd backend && pnpm db:migrate && node src/server.js"]
