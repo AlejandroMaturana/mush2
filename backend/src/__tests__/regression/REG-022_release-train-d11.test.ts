@@ -46,20 +46,17 @@ describe('REG-022: Release Train D11 (PR-C: I062/I067/I069/I077/I078/I082/I093/I
   });
 
   describe('I067 — deploy automático en CI (push a main + health check)', () => {
-    const deployJob = ci.split(/^  deploy:/m)[1] || '';
-
-    it('job deploy existe y depende del clúster de gates', () => {
-      expect(deployJob).toMatch(/needs:\s*\[firmware, backend, frontend, security\]/);
+    it('job deploy fue removido en C5 PR-A (secrets en job-level if causaba workflow parse error)', () => {
+      const deployJob = ci.split(/^  deploy:/m)[1] || '';
+      expect(deployJob).toBe('');
     });
 
-    it('se dispara solo en push a main con el secret RENDER_DEPLOY_HOOK presente', () => {
-      expect(deployJob).toMatch(/refs\/heads\/main/);
-      expect(deployJob).toMatch(/RENDER_DEPLOY_HOOK/);
-    });
-
-    it('verifica GET /health tras el deploy', () => {
-      expect(deployJob).toMatch(/HEALTH_URL/);
-      expect(deployJob).toMatch(/health/);
+    it('CI tiene los 4 jobs core: firmware, backend, frontend, security', () => {
+      expect(ci).toMatch(/jobs:/);
+      expect(ci).toMatch(/name: Firmware build/);
+      expect(ci).toMatch(/name: Backend test/);
+      expect(ci).toMatch(/name: Frontend build & test/);
+      expect(ci).toMatch(/name: Security gates/);
     });
   });
 
