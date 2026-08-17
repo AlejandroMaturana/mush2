@@ -118,6 +118,8 @@ Trabajo de saneamiento identificado por la auditoría, pendiente de planificaci�
 * Public Settings Consumer
 * Integration Credentials Providers
 
+> **Fuente de trazabilidad:** El registro detallado de estos ítems se mantiene en [`docs/governance/tech-debt.md`](../governance/tech-debt.md). Este ADR define las reglas; tech-debt.md registra el estado de cada ítem.
+
 ---
 
 # Consecuencias positivas

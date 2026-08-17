@@ -47,7 +47,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 - **Monitoreo Ambiental Preciso**: Lectura de temperatura, humedad relativa y calidad del aire (CO₂, VOC) mediante sensores AHT21 y ENS160 vía I²C.
 - **Control de Actuadores SSR**: Gestión de 4 canales de relés de estado sólido (active-LOW) para ventilación, calefacción, humidificación e iluminación.
-- **Arquitectura FreeRTOS**: 8 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
+- **Arquitectura FreeRTOS**: 9 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
 - **Comunicación HTTP Polling**: Sincronización entre firmware y backend mediante REST API con cola de comandos y backoff exponencial.
 - **Dashboard en Tiempo Real**: Interfaz web React con SSE, visualización de datos históricos y control remoto de actuadores.
 - **Telemetría de Respaldo**: Envío de datos a ThingSpeak como sistema de respaldo y monitoreo externo.
