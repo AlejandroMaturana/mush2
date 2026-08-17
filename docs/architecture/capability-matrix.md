@@ -61,7 +61,7 @@
 | Actuator Routes | `backend/src/routes/actuators.js` | 🟡 | ❌ | 🟡 |
 | Control Engine | `backend/src/services/controlEngine.js` | 🔴 | ❌ | 🔴 |
 | Phase Evaluator | `backend/src/services/phaseEvaluator.js` | 🔴 | ❌ | 🔴 |
-| ActuatorControl (FE) | `frontend/src/components/device/ActuatorControl.jsx` | 🟢 | ❌ | 🟢 |
+| ActuatorControl (FE) | `frontend/src/features/devices/components/ActuatorControl.jsx` | 🟢 | ❌ | 🟢 |
 
 **Contrato afectado**: `docs/contracts/mqtt-contract.md` (topics de comandos SSR)
 
@@ -80,8 +80,8 @@
 | Recipe Routes | `backend/src/routes/recipes.js` | 🟡 | ❌ | 🟡 |
 | Cycle Routes | `backend/src/routes/cycles.js` | 🟡 | ❌ | 🟡 |
 | Species Routes | `backend/src/routes/species.js` | 🟢 | ❌ | 🟢 |
-| Recipes Page (FE) | `frontend/src/pages/Recipes.jsx` | 🟢 | ❌ | 🟢 |
-| Cycles Page (FE) | `frontend/src/pages/Cycles.jsx` | 🟢 | ❌ | 🟢 |
+| Recipes Page (FE) | `frontend/src/features/cultivation/pages/RecipesPage.jsx` | 🟢 | ❌ | 🟢 |
+| Cycles Page (FE) | `frontend/src/features/cultivation/pages/CyclesPage.jsx` | 🟢 | ❌ | 🟢 |
 
 ---
 
@@ -96,8 +96,8 @@
 | BLE Provisioning | `firmware/src/ble_provisioning.cpp` | 🟡 | ❌ | 🟡 |
 | HTTP Poller (FW) | `firmware/src/http_poller.cpp` | 🔴 | ❌ | 🔴 |
 | MQTT Client (FW) | `firmware/src/mqtt_client.cpp` | 🔴 | ❌ | 🔴 |
-| Provisioning (FE) | `frontend/src/pages/Provisioning.jsx` | 🟢 | ❌ | 🟢 |
-| DeviceDetail (FE) | `frontend/src/pages/DeviceDetail.jsx` | 🟢 | ❌ | 🟢 |
+| Provisioning (FE) | `frontend/src/features/devices/pages/ProvisioningPage.jsx` | 🟢 | ❌ | 🟢 |
+| DeviceDetail (FE) | `frontend/src/features/devices/pages/DeviceDetailPage.jsx` | 🟢 | ❌ | 🟢 |
 
 ---
 
@@ -139,16 +139,16 @@
 
 | Capacidad | Archivos | Riesgo | Tests | Toque |
 |---|---|---|---|---|
-| Dashboard | `frontend/src/pages/Dashboard.jsx` | 🟢 | ❌ | 🟢 |
-| AppShell/Layout | `frontend/src/components/layout/AppShell.jsx` | 🟡 | ❌ | 🟡 |
+| Dashboard | `frontend/src/features/dashboard/pages/DashboardPage.jsx` | 🟢 | ❌ | 🟢 |
+| AppShell/Layout | `frontend/src/layouts/AppShell/AppShell.jsx` | 🟡 | ❌ | 🟡 |
 | Auth Context | `frontend/src/api/AuthContext.jsx` | 🟡 | ❌ | 🟡 |
 | SSE Hook | `frontend/src/api/useSSE.js` | 🟡 | ❌ | 🟡 |
 | API Client | `frontend/src/api/client.js` | 🟡 | ❌ | 🟡 |
-| Theme Context | `frontend/src/contexts/ThemeContext.jsx` | 🟢 | ❌ | 🟢 |
-| Alarm Context | `frontend/src/contexts/AlarmContext.jsx` | 🟢 | ❌ | 🟢 |
-| TemporalEngine | `frontend/src/services/TemporalEngine.js` | 🟢 | ❌ | 🟢 |
-| Gauges (Arc/Dome) | `frontend/src/components/ui/ArcGauge.jsx`, `DomeGauge.jsx` | 🟢 | ❌ | 🟢 |
-| Charts | `frontend/src/components/ui/ChartPanel.jsx`, `DeviceHistoryChart.jsx` | 🟢 | ❌ | 🟢 |
+| Theme Context | `frontend/src/app/providers/ThemeProvider.jsx` | 🟢 | ❌ | 🟢 |
+| Alarm Context | `frontend/src/app/providers/AlarmProvider.jsx` | 🟢 | ❌ | 🟢 |
+| TemporalEngine | `frontend/src/shared/utils/TemporalEngine.js` | 🟢 | ❌ | 🟢 |
+| Gauges (Arc/Dome) | `frontend/src/shared/components/ArcGauge.jsx`, `DomeGauge.jsx` | 🟢 | ❌ | 🟢 |
+| Charts | `frontend/src/shared/components/ChartPanel.jsx`, `DeviceHistoryChart.jsx` | 🟢 | ❌ | 🟢 |
 
 ---
 
@@ -173,11 +173,11 @@
 
 ## Resumen de Cobertura de Tests
 
-| Componente | Archivos fuente | Con tests | Cobertura |
+| Componente | Archivos fuente | Archivos de test | Notas |
 |---|---|---|---|
-| Backend | 72 | 4 | ~6% |
-| Frontend | 63 | 0 | 0% |
+| Backend | 146 | 84 | 33 JS suites en CI (jest), 51 TS suites (configuración pendiente) |
+| Frontend | 98 | 11 | Vitest, archivos en `features/*/`, `shared/`, `api/` |
 | Firmware | 68 | 9 (hardware) | Solo integración física |
-| **Total** | **203** | **13** | **~6%** |
+| **Total** | **312** | **104** | — |
 
 **Prioridad de testing**: Los archivos marcados con 🔴 y ❌ en tests son los más urgentes de cubrir.
