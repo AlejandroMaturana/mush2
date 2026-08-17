@@ -180,7 +180,9 @@ jobs:
     # I067/INF-008: deploy automático en push a main, verificado por /health.
     # Inactivo hasta que exista el secreto RENDER_DEPLOY_HOOK (hook único de
     # Render) — sin URL falsa hardcodeada (DECISION-011 PENDING).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.RENDER_DEPLOY_HOOK != ''
+    # Temporarily disabled — secrets context in job-level if may cause workflow parse error.
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.RENDER_DEPLOY_HOOK != ''
+    if: false
     runs-on: ubuntu-latest
     needs: [firmware, backend, frontend, security]
     steps:
