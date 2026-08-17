@@ -99,4 +99,21 @@ describe('eventBus — contrato de eventos del runtime', () => {
     events.emit('test-remove', 1);
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('maxListeners está configurado a 50', () => {
+    expect(events.getMaxListeners()).toBe(50);
+  });
+
+  it('safeEmit no propag excepciones de listeners', () => {
+    const faulty = () => { throw new Error('boom'); };
+    events.on('test-faulty', faulty);
+    const result = events.emit('test-faulty', {});
+    expect(result).toBe(false);
+    events.removeListener('test-faulty', faulty);
+  });
+
+  it('safeEmit retorna false cuando no hay listeners (estándar EventEmitter)', () => {
+    const result = events.emit('test-nolistener', { data: 1 });
+    expect(result).toBe(false);
+  });
 });
