@@ -172,4 +172,4 @@ MIT
 
 ---
 
-> **Estado del Sistema**: v1.7.22 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.
+> **Estado del Sistema**: v1.8.22 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.
