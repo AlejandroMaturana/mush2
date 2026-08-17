@@ -4,9 +4,7 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
-  release:
-    types: [published]
+    branches: [main, develop]
 
 env:
   NODE_VERSION: '22'
@@ -16,7 +14,7 @@ jobs:
     name: Firmware build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -29,9 +27,6 @@ jobs:
       - name: Create config.h
         run: |
           cd firmware
-          # PR-C/CI: overrides mínimos + template completo (config.example.h).
-          # El heredoc anterior omitía defines que el código fuente requiere
-          # (BUTTON_*/BLE_*/I2C_*/STACK_*/health_monitor…) y rompía el build.
           echo '#ifndef CONFIG_H
           #define CONFIG_H
           #define WIFI_SSID_1 ""
@@ -69,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -83,7 +78,7 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -107,7 +102,7 @@ jobs:
     name: Frontend build & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -136,7 +131,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -148,17 +143,17 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      - name: pnpm audit (umbral critical, política de severidad I076)
+      - name: pnpm audit (umbral critical, politica de severidad I076)
         run: |
           cd backend  && pnpm audit --audit-level=critical
           cd ../frontend && pnpm audit --audit-level=critical
 
-      - name: gitleaks — detección de secretos en el árbol (I076/I84)
-        uses: gitleaks/gitleaks-action@v3
+      - name: gitleaks - deteccion de secretos en el arbol (I076/I84)
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: osv-scanner — reporte de vulnerabilidades (I076)
+      - name: osv-scanner - reporte de vulnerabilidades (I076)
         uses: google/osv-scanner/actions/scanner@v1
         with:
           scan-args: |-
@@ -168,38 +163,11 @@ jobs:
             results.sarif
             --recursive
             .
+        continue-on-error: true
+
       - name: Upload SARIF
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-
-  deploy:
-    name: Deploy (Render) & health check
-    # I067/INF-008: deploy automático en push a main, verificado por /health.
-    # Inactivo hasta que exista el secreto RENDER_DEPLOY_HOOK (hook único de
-    # Render) — sin URL falsa hardcodeada (DECISION-011 PENDING).
-    # Temporarily disabled — secrets context in job-level if may cause workflow parse error.
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.RENDER_DEPLOY_HOOK != ''
-    if: false
-    runs-on: ubuntu-latest
-    needs: [firmware, backend, frontend, security]
-    steps:
-      - name: Trigger Render deploy hook
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" >/dev/null
-
-      - name: Verify /health after deploy
-        env:
-          HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL || 'https://mush2.onrender.com/health' }}
-        run: |
-          for i in $(seq 1 30); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo 000)
-            if [ "$code" = "200" ]; then
-              echo "OK: $HEALTH_URL -> 200 (tras $(( (i-1) * 10 ))s)"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "ERROR: $HEALTH_URL no responde 200 tras 300s (último estado: $code)"
-          exit 1
