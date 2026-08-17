@@ -112,8 +112,8 @@ describe('eventBus — contrato de eventos del runtime', () => {
     events.removeListener('test-faulty', faulty);
   });
 
-  it('safeEmit retorna true cuando no hay listeners', () => {
+  it('safeEmit retorna false cuando no hay listeners (estándar EventEmitter)', () => {
     const result = events.emit('test-nolistener', { data: 1 });
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 });
