@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import { Navigate } from 'react-router-dom'
 import RequireRole, { ForbiddenPage } from '../shared/components/RequireRole'
+import NotFound from '../shared/components/NotFound'
 
 const Landing = lazy(() => import('../features/auth/pages/LandingPage.jsx'))
 const Home = lazy(() => import('../features/auth/pages/HomeRedirect.jsx'))
@@ -72,4 +73,5 @@ export const protectedRoutes = [
   { path: '/settings/*', element: () => <Navigate to="/system/settings" replace /> },
   { path: '/provisioning', element: () => <Navigate to="/fleet/provision" replace /> },
   { path: '/devices/:id', element: () => <Navigate to="/fleet/devices/:id" replace /> },
+  { path: '*', element: <NotFound /> },
 ]
