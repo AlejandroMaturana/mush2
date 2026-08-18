@@ -120,6 +120,9 @@ jobs:
       - name: Version manifest consistency (I078/INF-019)
         run: node scripts/check-version-manifest.cjs
 
+      - name: Lint (I039)
+        run: cd frontend && pnpm run lint
+
       - name: Test (I080/I109)
         run: cd frontend && pnpm run test
 

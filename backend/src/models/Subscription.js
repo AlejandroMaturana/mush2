@@ -49,6 +49,8 @@ Subscription.init({
   currentPeriodStart: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   currentPeriodEnd: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal("NOW() + INTERVAL '1 month'") },
   canceledAt: { type: DataTypes.DATE, allowNull: true },
+  pendingPlan: { type: DataTypes.ENUM('FREE', 'BASIC', 'PREMIUM'), allowNull: true },
+  requestedAt: { type: DataTypes.DATE, allowNull: true },
 }, {
   sequelize,
   modelName: 'Subscription',

@@ -1,16 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getDeviceConnectivity, setMaintenanceMode } from '../../../api/client'
 import { getPrimaryStatus, CONNECTIVITY_CONFIG, HEALTH_CONFIG, LIFECYCLE_CONFIG } from '../../../shared/constants/deviceStatus.js'
-
-function formatTimeAgo(seconds) {
-  if (seconds == null) return 'Nunca'
-  if (seconds < 5) return 'Hace un momento'
-  if (seconds < 60) return `Hace ${seconds}s`
-  if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m ${seconds % 60}s`
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `Hace ${h}h ${m}m`
-}
+import { formatTimeAgo } from '../../../shared/utils/format.js'
+import { useSSE } from '../../../api/useSSE'
 
 function DeviceConnectivityPanel({ deviceId }) {
   const [health, setHealth] = useState(null)
@@ -19,20 +11,24 @@ function DeviceConnectivityPanel({ deviceId }) {
 
   useEffect(() => {
     let active = true
-    let intervalId = null
     async function fetch() {
       try {
         const data = await getDeviceConnectivity(deviceId)
         if (active) setHealth(data)
-      } catch {
-        if (active && intervalId) { clearInterval(intervalId); intervalId = null }
+      } catch (err) {
+        console.error('Failed to fetch device connectivity:', err)
       }
       if (active) setLoading(false)
     }
     fetch()
-    intervalId = setInterval(fetch, 10000)
-    return () => { active = false; if (intervalId) clearInterval(intervalId) }
+    return () => { active = false }
   }, [deviceId])
+
+  useSSE(useCallback((type, data) => {
+    if (type === 'device_status_changed' && data.deviceId === deviceId) {
+      setHealth(prev => prev ? { ...prev, status: data.status, secondsSinceLastSeen: data.secondsSinceLastSeen } : prev)
+    }
+  }, [deviceId]))
 
   async function handleToggleMaintenance() {
     if (!health || toggling) return
@@ -40,7 +36,7 @@ function DeviceConnectivityPanel({ deviceId }) {
     try {
       const result = await setMaintenanceMode(deviceId, !health.maintenanceMode)
       setHealth(prev => ({ ...prev, ...result }))
-    } catch {}
+    } catch (err) { console.error('Failed to toggle maintenance mode:', err) }
     setToggling(false)
   }
 

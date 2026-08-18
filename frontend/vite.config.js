@@ -6,8 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:3797',
-      '/events': 'http://localhost:3797',
+      '/api': process.env.VITE_API_PROXY || 'http://localhost:3797',
+      '/events': process.env.VITE_API_PROXY || 'http://localhost:3797',
     }
   }
 })

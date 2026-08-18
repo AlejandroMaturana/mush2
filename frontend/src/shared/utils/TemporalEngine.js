@@ -90,10 +90,10 @@ class TemporalEngine {
     }
     return {
       labels: aggregatedData.map(d => TemporalEngine.formatDate(d.t, timeFormat)),
-      temp: aggregatedData.map(d => d.temp ?? 0),
-      hum: aggregatedData.map(d => d.hum ?? 0),
-      eco2: aggregatedData.map(d => d.eco2 ?? 0),
-      tvoc: aggregatedData.map(d => d.tvoc ?? 0),
+      temp: aggregatedData.map(d => d.temp),
+      hum: aggregatedData.map(d => d.hum),
+      eco2: aggregatedData.map(d => d.eco2),
+      tvoc: aggregatedData.map(d => d.tvoc),
     }
   }
 }

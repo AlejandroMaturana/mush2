@@ -252,6 +252,7 @@ describe('Horizontal: settings.js', () => {
 
 describe('Horizontal: subscriptions.js', () => {
   const source = readSource('routes/subscriptions.js');
+  const serviceSource = readSource('services/modelSubscription.js');
 
   it('planes válidos definidos', () => {
     expect(source).toContain('FREE');
@@ -260,11 +261,11 @@ describe('Horizontal: subscriptions.js', () => {
   });
 
   it('upgrade valida plan destino', () => {
-    expect(source).toContain("error: 'Plan inválido. Usa FREE, BASIC o PREMIUM'");
+    expect(serviceSource).toContain("error: 'Plan inválido. Usa FREE, BASIC o PREMIUM'");
   });
 
   it('downgrade no permitido', () => {
-    expect(source).toContain("error: 'No puedes downgrade");
+    expect(serviceSource).toContain("error: 'El plan solicitado debe ser superior al actual'");
   });
 
   it('admin puede listar todas con ADMIN role', () => {

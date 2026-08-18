@@ -19,8 +19,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await apiLogout()
-    } catch {
-      // backend logout is best-effort; local session must still be cleared
+    } catch (err) {
+      console.error('Backend logout failed (best-effort):', err)
     }
     setUser(null)
     localStorage.removeItem('mush2_user')

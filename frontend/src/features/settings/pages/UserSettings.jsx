@@ -47,7 +47,7 @@ function UserSettings() {
       const st = await getTelegramStatus()
       setTelegramStatus(st)
       setTelegramCode(null)
-    } catch { }
+    } catch (err) { console.error('Failed to load Telegram status:', err) }
   }
 
   useEffect(() => { if (!loading) loadTelegramStatus() }, [loading])
