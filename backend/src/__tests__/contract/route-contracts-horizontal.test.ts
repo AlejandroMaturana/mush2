@@ -255,9 +255,9 @@ describe('Horizontal: subscriptions.js', () => {
   const serviceSource = readSource('services/modelSubscription.js');
 
   it('planes válidos definidos', () => {
-    expect(source).toContain('FREE');
-    expect(source).toContain('BASIC');
-    expect(source).toContain('PREMIUM');
+    expect(serviceSource).toContain('FREE');
+    expect(serviceSource).toContain('BASIC');
+    expect(serviceSource).toContain('PREMIUM');
   });
 
   it('upgrade valida plan destino', () => {
