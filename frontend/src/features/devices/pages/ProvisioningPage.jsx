@@ -83,13 +83,13 @@ function Provisioning() {
   }, [])
 
   const handleDisconnect = useCallback(async () => {
-    if (serverRef.current) { try { serverRef.current.disconnect() } catch {} serverRef.current = null; serviceRef.current = null; statusCharRef.current = null }
+    if (serverRef.current) { try { serverRef.current.disconnect() } catch (err) { console.error('BLE disconnect failed:', err) } serverRef.current = null; serviceRef.current = null; statusCharRef.current = null }
     setStep(STEPS.SCAN); setSelectedDevice(null); setDeviceInfo(null); setStatusMsg(''); setError(null)
   }, [])
 
   useEffect(() => {
     if (step === STEPS.DONE && deviceInfo?.deviceId) {
-      createDevice({ deviceId: deviceInfo.deviceId, macAddress: deviceInfo.deviceId, chamberName: `Mush2-${deviceInfo.deviceId.slice(-4)}` }).catch(() => {})
+      createDevice({ deviceId: deviceInfo.deviceId, macAddress: deviceInfo.deviceId, chamberName: `Mush2-${deviceInfo.deviceId.slice(-4)}` }).catch(err => console.error('Failed to create device:', err))
     }
   }, [step, deviceInfo])
 

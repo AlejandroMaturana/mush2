@@ -1,5 +1,4 @@
 ﻿import { useEffect, useRef, useCallback } from 'react'
-import { getAccessToken } from '../shared/api/tokenStore'
 
 const INITIAL_DELAY = 1000
 const MAX_DELAY = 30000
@@ -35,7 +34,7 @@ function startHeartbeat() {
 function dispatch(type, data) {
   startHeartbeat()
   for (const cb of subscribers) {
-    try { cb(type, data) } catch {}
+    try { cb(type, data) } catch { /* subscriber error must not crash dispatch */ }
   }
 }
 
@@ -55,7 +54,7 @@ function createEventSource() {
       lastEventId = e.lastEventId || lastEventId
       try {
         dispatch(type, JSON.parse(e.data))
-      } catch {}
+      } catch { /* JSON parse error must not crash */ }
     })
   })
 

@@ -5,17 +5,8 @@ import { useSSE } from '../../../api/useSSE.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
-import { getPrimaryStatus, CONNECTIVITY, LIFECYCLE } from '../../../shared/constants/deviceStatus.js'
-
-function formatTimeAgo(seconds) {
-  if (seconds == null) return 'Nunca'
-  if (seconds < 5) return 'Hace un momento'
-  if (seconds < 60) return `Hace ${seconds}s`
-  if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m`
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `Hace ${h}h ${m}m`
-}
+import { getPrimaryStatus } from '../../../shared/constants/deviceStatus.js'
+import { formatTimeAgo } from '../../../shared/utils/format.js'
 
 function DeviceList() {
   const navigate = useNavigate()
@@ -209,10 +200,10 @@ function DeviceList() {
 
       {showDeleteModal && (
         <div className="modal-overlay" onClick={() => !deleting && setShowDeleteModal(null)}>
-          <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="glass-card modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--error-red)' }}>warning</span>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', textAlign: 'center' }}>Eliminar dispositivo</h2>
+              <h2 id="delete-dialog-title" style={{ fontSize: '18px', fontWeight: 600, color: 'var(--on-surface)', textAlign: 'center' }}>Eliminar dispositivo</h2>
               <p style={{ fontSize: '13px', color: 'var(--outline)', textAlign: 'center', lineHeight: 1.5 }}>
                 ¿Está seguro de que desea eliminar <strong style={{ color: 'var(--on-surface)' }}>{showDeleteModal.chamberName || showDeleteModal.deviceId}</strong>?
                 Esta acción eliminará todos los datos asociados, incluyendo ciclos, telemetría e historial de actuadores.

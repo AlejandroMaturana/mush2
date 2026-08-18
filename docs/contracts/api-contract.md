@@ -413,12 +413,29 @@ Requiere auth. Elimina una API key.
 Requiere auth. Devuelve suscripción del usuario.
 
 ### `GET /subscriptions/mine/usage`
-Requiere auth. Uso actual de la suscripción.
+Requiere auth. Uso actual de la suscripción. Incluye `pendingPlan` y `requestedAt` si hay upgrade pendiente.
 
 ### `PATCH /subscriptions/mine/upgrade`
-Requiere auth.
+Requiere auth. **Retorna 202 Accepted** con estado REQUESTED (no aplica directamente).
 ```json
-{ "plan": "FREE"|"PRO"|"ENTERPRISE" }
+{ "plan": "FREE"|"BASIC"|"PREMIUM" }
+```
+Response 202:
+```json
+{
+  "data": { "id": 1, "plan": "FREE", "pendingPlan": "BASIC", "requestedAt": "..." },
+  "message": "Upgrade a BASIC solicitado. Confirme para aplicar."
+}
+```
+
+### `POST /subscriptions/:id/confirm`
+Requiere auth. Confirma upgrade pendiente y aplica el cambio de plan.
+Response 200:
+```json
+{
+  "data": { "id": 1, "plan": "BASIC", "pendingPlan": null },
+  "message": "Plan actualizado a BASIC"
+}
 ```
 
 ### `PATCH /subscriptions/mine/cancel`

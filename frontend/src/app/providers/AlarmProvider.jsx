@@ -10,7 +10,7 @@ export function AlarmProvider({ children }) {
   useEffect(() => {
     getAlarmStats()
       .then(data => setStats(data))
-      .catch(() => {})
+      .catch(err => console.error('Failed to load alarm stats:', err))
   }, [])
 
   useSSE(useCallback((type, data) => {

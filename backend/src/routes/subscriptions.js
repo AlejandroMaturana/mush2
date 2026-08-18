@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Subscription, User } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { requestUpgrade, confirmUpgrade } from '../services/modelSubscription.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('SUBSCRIPTION');
@@ -36,6 +37,8 @@ router.get('/mine/usage', authenticate, async (req, res) => {
         dataRetentionDays: sub.dataRetentionDays,
         currentPeriodStart: sub.currentPeriodStart,
         currentPeriodEnd: sub.currentPeriodEnd,
+        pendingPlan: sub.pendingPlan,
+        requestedAt: sub.requestedAt,
       },
     });
   } catch (err) {
@@ -47,36 +50,34 @@ router.get('/mine/usage', authenticate, async (req, res) => {
 router.patch('/mine/upgrade', authenticate, async (req, res) => {
   try {
     const { plan } = req.body;
-    if (!['FREE', 'BASIC', 'PREMIUM'].includes(plan)) {
-      return res.status(400).json({ error: 'Plan inválido. Usa FREE, BASIC o PREMIUM' });
-    }
-
-    let sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    if (!sub) {
-      sub = await Subscription.createForUser(req.user.id, plan);
-      return res.json({ data: sub, message: `Plan actualizado a ${plan}` });
-    }
-
-    if (sub.status === 'CANCELED') {
-      return res.status(400).json({ error: 'No puedes cambiar un plan cancelado. Contacta al administrador.' });
-    }
-
-    const limits = Subscription.getPlanLimits(plan);
-    const upgradeOrder = { FREE: 0, BASIC: 1, PREMIUM: 2 };
-    if (upgradeOrder[plan] < upgradeOrder[sub.plan]) {
-      return res.status(400).json({ error: 'No puedes downgrade. Contacta al administrador.' });
-    }
-
-    await sub.update({
-      plan,
-      apiCallsPerMonth: limits.apiCallsPerMonth,
-      dataRetentionDays: limits.dataRetentionDays,
+    const sub = await requestUpgrade(req.user.id, plan);
+    res.status(202).json({
+      data: {
+        id: sub.id,
+        plan: sub.plan,
+        pendingPlan: sub.pendingPlan,
+        requestedAt: sub.requestedAt,
+      },
+      message: `Upgrade a ${plan} solicitado. Confirme para aplicar.`,
     });
-
-    res.json({ data: sub, message: `Plan actualizado a ${plan}` });
   } catch (err) {
-    log.error({ module: 'SUBSCRIPTION', event: 'UPGRADE_ERROR', error: err.message }, 'Error upgrading subscription');
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+    const status = err.status || 500;
+    log.error({ module: 'SUBSCRIPTION', event: 'UPGRADE_REQUEST_ERROR', error: err.message }, 'Error requesting upgrade');
+    res.status(status).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+router.post('/:id/confirm', authenticate, async (req, res) => {
+  try {
+    const sub = await confirmUpgrade(parseInt(req.params.id), req.user.id);
+    res.json({
+      data: sub,
+      message: `Plan actualizado a ${sub.plan}`,
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    log.error({ module: 'SUBSCRIPTION', event: 'CONFIRM_ERROR', error: err.message }, 'Error confirming upgrade');
+    res.status(status).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
 
