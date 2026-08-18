@@ -715,6 +715,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-008 — Upgrade de plan sin billing (BE-008) — P1
 `Programa 4 · EPIC-ENTITLEMENT · Ini 4.3`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** cambios de plan como "solicitados" hasta confirmación; reconciliación de entitlement.
 - **Problema actual:** `routes/subscriptions.js` permite subir/bajar plan directamente; `modelSubscription.js` sin verificación.
 - **Impacto:** bypass de ingresos.
@@ -722,6 +723,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** `api-contract.md`.
 - **ADR/DDD:** ADR-016 · DDD-001.
 - **Dependencias:** ISSUE-009.
+- **Contrato/versión:** `api-contract v1` — `POST /subscriptions/:id/upgrade` y `POST /subscriptions/:id/downgrade`. Cambio compatible (flujo de confirmación intermedio sin cambio de payload).
+- **Riesgos:** bypass de ingresos si el usuario confirma sin billing → mitigación: estado "solicitado" intermedio; downgrade inmediato sin prorrateo → mitigación: reconciliación de entitlement en cierre; regresión en tests de PLANS → mitigación: test de monotonía existente (PR-D I009).
+- **Verificación (verde→rojo→verde):** verde: test de upgrade/downgrade pasa sin confirmación (hoy `routes/subscriptions.js` permite cambio directo); rojo: test que intenta upgrade sin confirmar → debe devolver 202 con estado "solicitado" → hoy hace 200 con cambio directo; verde: tras flujo de confirmación, upgrade retorna "solicitado" y confirmación aplica el cambio.
 - **DoD:** flujo de confirmación; entitlement reconciliado.
 - **Tasks:** flujo checkout/billing; estado "solicitado"; tests.
 
@@ -1040,6 +1044,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-032 — SSE sin auth/reconexión (FE-004) — P1
 `Programa 5 · EPIC-SSE · Ini 5.1`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** singleton de EventSource con backoff/heartbeat/`Last-Event-ID`; token o cookie.
 - **Problema actual:** `useSSE.js:3-37` (`onerror` vacío, `catch {}`); 7+ consumidores.
 - **Impacto:** pérdida de telemetría; hasta 8 conexiones por pestaña.
@@ -1047,6 +1052,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** `api-contract.md` (SSE `/events`).
 - **ADR/DDD:** —.
 - **Dependencias:** backend `/events` autenticado (ISSUE-013 BE-013).
+- **Contrato/versión:** `api-contract v1` — `GET /events` (SSE). Sin cambio de versión (el endpoint no cambia; se añade `Last-Event-ID` header).
+- **Riesgos:** regresión en los 7+ consumidores de useSSE → mitigación: API de useSSE se mantiene; se añade singleton internamente; token expirado durante reconexión → mitigación: refresh before reconnect; memoria por heartbeat → mitigación: cleanup on unmount.
+- **Verificación (verde→rojo→verde):** verde: 7 consumidores crean 7 EventSource connections (hoy `useSSE.js:3-37`); rojo: test que instancia useSSE 3 veces y espera exactamente 1 conexión SSE → hoy crea 3; verde: tras singleton + backoff + heartbeat, solo 1 conexión y reconexión con `Last-Event-ID`.
 - **DoD:** singleton; reconexión; auth; `Last-Event-ID`.
 - **Tasks:** singleton; backoff; heartbeat; tests con mock EventSource.
 
@@ -1067,6 +1075,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-034 — Sin 404 en rutas protegidas (FE-006) — P1
 `Programa 5 · EPIC-AUTH-FLOW · Ini 5.3`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** `{ path:'*', element:<NotFound/> }`.
 - **Problema actual:** `routes.jsx:29-73` sin catch-all.
 - **Impacto:** shell en blanco.
@@ -1074,11 +1083,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — routing frontend (React Router). Sin impacto en API contract.
+- **Riesgos:** regresión en rutas existentes si se cambia el catch-all → mitigación: ruta `*` como última ruta; 404 page sin dependencias de auth → mitigación: componente NotFound simple.
+- **Verificación (verde→rojo→verde):** verde: navegar a `/nonexistent` no muestra 404 (hoy `router.jsx` sin catch-all); rojo: test que navega a `/nonexistent` y espera componente NotFound → hoy no lo muestra; verde: tras añadir `{ path:'*', element:<NotFound/> }`, test pasa.
 - **DoD:** 404 real.
 - **Tasks:** catch-all + NotFound.
 
 #### ISSUE-035 — Modales sin a11y (FE-007) — P2
 `Programa 5 · EPIC-A11Y · Ini 5.5`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** diálogo accesible con focus trap y `aria-*`.
 - **Problema actual:** `Modal.jsx:19-33` sin `role="dialog"`/focus trap.
 - **Impacto:** inaccesible; cierre accidental.
@@ -1086,11 +1099,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — componente UI. Sin impacto en API contract.
+- **Riesgos:** regresión visual en modales existentes → mitigación: additive changes (role, aria, focus trap); performance por focus trap → mitigación: cleanup on unmount.
+- **Verificación (verde→rojo→verde):** verde: `Modal.jsx:19-33` sin `role="dialog"` ni focus trap (hoy pasa); rojo: test que abre modal y verifica `role="dialog"` + focus trap → hoy falla (sin role); verde: tras añadir Dialog pattern, test pasa.
 - **DoD:** diálogo accesible.
 - **Tasks:** Dialog; focus trap; `onMouseDown`.
 
 #### ISSUE-036 — Capa API inconsistente (FE-008) — P2
 `Programa 5 · EPIC-QUALITY · Ini 5.6`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** centralizar en feature API modules.
 - **Problema actual:** `BioactiveDashboardPage.jsx:29-31,44`, `DeviceHealthPanel.jsx:11,13` usan `client.get/post` raw.
 - **Impacto:** drift de contratos.
@@ -1098,11 +1115,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** `api-contract.md`.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — refactor interno. Sin impacto en API contract.
+- **Riesgos:** drift si se usa `client.get/post` directamente → mitigación: feature API modules centralizados; regresión en páginas que usan `client` directo → mitigación: migración gradual.
+- **Verificación (verde→rojo→verde):** verde: `BioactiveDashboardPage.jsx:29-31,44` usa `client.get/post` raw (hoy pasa); rojo: test que busca imports de `client` fuera de feature API modules → hoy los encuentra; verde: tras migrar a feature API modules, test no encuentra imports directos.
 - **DoD:** sin llamadas raw; contratos centralizados.
 - **Tasks:** feature API modules; migrar call sites.
 
 #### ISSUE-037 — Código muerto (FE-009) — P2
 `Programa 5 · EPIC-A11Y · Ini 5.5` (también P9.4)
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** eliminar/consolidar ~16 componentes sin uso y CSS huérfano.
 - **Problema actual:** sin imports (ArcGauge, Gauge, SegmentedBar, etc.).
 - **Impacto:** confusión y duplicación.
@@ -1110,11 +1131,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — limpieza de código. Sin impacto en API contract.
+- **Riesgos:** eliminar código que aún se usa → mitigación: scan de imports antes de eliminar; reducir bundle size como efecto secundario positivo.
+- **Verificación (verde→rojo→verde):** verde: `src/` contiene código no importado (hoy pasa); rojo: test que busca archivos sin imports recursivos → hoy los encuentra; verde: tras eliminación, test no encuentra código muerto.
 - **DoD:** sin componentes muertos; linter CSS.
 - **Tasks:** eliminar/consolidar; lint selectores.
 
 #### ISSUE-038 — README frontend obsoleto (FE-010) — P2
 `Programa 5 · EPIC-README · Ini 5.8`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** reescribir README al estado real.
 - **Problema actual:** `frontend/README.md:43-79,128-144,164-166` con comandos inexistentes.
 - **Impacto:** onboarding erróneo.
@@ -1122,11 +1147,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — documentación. Sin impacto en API contract.
+- **Riesgos:** README obsoleto causa confusión en nuevos desarrolladores → mitigación: actualizar con estado actual del frontend.
+- **Verificación (verde→rojo→verde):** N/A — documentación, sin tests automatizados. Verificación manual: README refleja estructura actual de `frontend/src/`.
 - **DoD:** comandos y estructura reales.
 - **Tasks:** reescribir README.
 
 #### ISSUE-039 — Sin lint/typecheck (FE-011) — P2
 `Programa 5 · EPIC-QUALITY · Ini 5.4`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** ESLint flat config + script `lint` + gate CI.
 - **Problema actual:** sin `lint`, sin eslint config, sin `tsc`.
 - **Impacto:** bugs como FE-003 indetectables.
@@ -1134,6 +1163,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — tooling. Sin impacto en API contract.
+- **Riesgos:** lint rules estrictas causan muchos errores → mitigación: habilitar gradualmente; typecheck sin `tsconfig.json` estricto → mitigación: empezar con `noEmit`.
+- **Verificación (verde→rojo→verde):** verde: `pnpm run lint` no existe o no se ejecuta en CI (hoy no hay gate); rojo: añadir script de lint y ejecutar → hoy falla con errores existentes; verde: tras corregir errores críticos, lint pasa en CI.
 - **DoD:** lint/typecheck en CI.
 - **Tasks:** eslint; script; gate CI.
 
@@ -1154,6 +1186,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-041 — Polling duplicado (FE-013) — P2
 `Programa 5 · EPIC-SSE · Ini 5.1`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** derivar salud/conectividad de SSE.
 - **Problema actual:** `DeviceConnectivityPanel.jsx:33` (10s), `DeviceHealthPanel.jsx:17` (30s) sondear; SSE ya emite.
 - **Impacto:** carga innecesaria.
@@ -1161,11 +1194,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ISSUE-032.
+- **Contrato/versión:** N/A — refactor interno. Sin impacto en API contract.
+- **Riesgos:** regresión en paneles que dependen de polling → mitigación: debounce/throttle conservador; dependencia de I032 (SSE singleton) → mitigación: PR-B incluye ambos.
+- **Verificación (verde→rojo→verde):** verde: `DeviceConnectivityPanel.jsx` y `DeviceHealthPanel.jsx` hacen polling independiente (hoy pasa); rojo: test que simula 2 paneles y espera 1 llamada de polling → hoy hace 2; verde: tras dedup, solo 1 llamada de polling compartida.
 - **DoD:** sin polling duplicado.
 - **Tasks:** consumir SSE; resync puntual.
 
 #### ISSUE-042 — Utilidades de formato duplicadas (FE-014) — P3
 `Programa 5 · EPIC-QUALITY · Ini 5.6`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** consolidar en `shared/utils/format.js`.
 - **Problema actual:** `formatTimeAgo`, `formatUptime`, `formatBytes` duplicadas.
 - **Impacto:** divergencias.
@@ -1173,11 +1210,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — refactor interno. Sin impacto en API contract.
+- **Riesgos:** regresión en formateo de fechas/números → mitigación: test de formatos; dependencia de utilidades existentes → mitigación: re-exportar desde `utils/format.js`.
+- **Verificación (verde→rojo→verde):** verde: múltiples archivos definen `formatDate`/`formatNumber` (hoy pasa); rojo: test que busca definiciones duplicadas de `formatDate` → hoy las encuentra; verde: tras consolidar en `utils/format.js`, test no encuentra duplicados.
 - **DoD:** utilidades únicas.
 - **Tasks:** consolidar; reemplazar call sites.
 
 #### ISSUE-043 — Errores tragados (FE-015) — P3
 `Programa 5 · EPIC-QUALITY · Ini 5.6`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** toaster central o al menos `console.error`.
 - **Problema actual:** decenas de `catch {}`.
 - **Impacto:** fallos silenciosos.
@@ -1185,11 +1226,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — componente UI. Sin impacto en API contract.
+- **Riesgos:** error boundary atrapa errores legítimos → mitigación: boundary específico por feature; feedback de usuario reducido → mitigación: UI de error clara.
+- **Verificación (verde→rojo→verde):** verde: componente que lanza error no muestra UI de error (hoy `catch {}` vacío); rojo: test que renderiza componente que lanza y espera fallback UI → hoy no lo muestra; verde: tras ErrorBoundary, test muestra fallback UI.
 - **DoD:** feedback visible.
 - **Tasks:** toaster; revisar catches.
 
 #### ISSUE-044 — alert() nativo (FE-016) — P3
 `Programa 5 · EPIC-QUALITY · Ini 5.6`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** sistema de toasts.
 - **Problema actual:** `BioactiveDashboardPage.jsx:52`.
 - **Impacto:** UX bloqueante.
@@ -1197,11 +1242,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ISSUE-043.
+- **Contrato/versión:** N/A — componente UI. Sin impacto en API contract.
+- **Riesgos:** regresión en UX de alertas → mitigación: toast con mismo estilo; dependencia de I043 → mitigación: PR-C incluye ambos.
+- **Verificación (verde→rojo→verde):** verde: `alert()` nativo se usa para notificaciones (hoy pasa); rojo: test que busca llamadas a `alert()` → hoy las encuentra; verde: tras reemplazar por Toast, test no encuentra `alert()`.
 - **DoD:** sin alert().
 - **Tasks:** toasts.
 
 #### ISSUE-045 — Datos faltantes como 0 en gráficos (FE-017) — P3
 `Programa 5 · Ini 5.7`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** `null` en datasets.
 - **Problema actual:** `TemporalEngine.js:93-96` `d.temp ?? 0`.
 - **Impacto:** series distorsionadas.
@@ -1209,11 +1258,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** revisar ChartPanel.
+- **Contrato/versión:** N/A — componente UI. Sin impacto en API contract.
+- **Riesgos:** datos faltantes mostrados como 0 confunden al usuario → mitigación: mostrar "N/D" o placeholder; regresión visual en gráficos → mitigación: test de renderizado.
+- **Verificación (verde→rojo→verde):** verde: gráfico muestra 0 para datos faltantes (hoy `ChartPanel`); rojo: test que pasa datos con null y espera placeholder → hoy muestra 0; verde: tras fix, test muestra "N/D".
 - **DoD:** null correcto.
 - **Tasks:** datasets null; test.
 
 #### ISSUE-046 — ToggleSwitch como div (FE-018) — P3
 `Programa 5 · EPIC-A11Y · Ini 5.7`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** `<button role="switch" aria-checked>`.
 - **Problema actual:** `ToggleSwitch.jsx:1-16`.
 - **Impacto:** sin semántica.
@@ -1221,11 +1274,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — componente UI. Sin impacto en API contract.
+- **Riesgos:** regresión en toggles existentes → mitigación: mismo comportamiento; accesibilidad mejorada con `<button>` → mitigación: additive.
+- **Verificación (verde→rojo→verde):** verde: `ToggleSwitch` usa `<div>` sin `role` (hoy pasa); rojo: test que verifica `role="switch"` → hoy falla; verde: tras cambiar a `<button role="switch">`, test pasa.
 - **DoD:** control semántico.
 - **Tasks:** button; aria; test.
 
 #### ISSUE-047 — Tema hardcodeado y FOUC (FE-019) — P3
 `Programa 5 · Ini 5.7`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** pre-paint + `prefers-color-scheme`.
 - **Problema actual:** `index.html:2` `class="dark"`; `ThemeProvider.jsx:6-21`.
 - **Impacto:** parpadeo.
@@ -1233,11 +1290,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — tema CSS. Sin impacto en API contract.
+- **Riesgos:** FOUC (Flash of Unstyled Content) al cargar → mitigación: tema inline en `<head>`; hardcoding de colores → mitigación: usar tokens de diseño.
+- **Verificación (verde→rojo→verde):** verde: tema hardcodeado sin CSS variables (hoy pasa); rojo: test que verifica `data-theme` attribute → hoy no existe; verde: tras añadir tema inline, test pasa.
 - **DoD:** sin FOUC.
 - **Tasks:** pre-hidratación; prefers-color-scheme.
 
 #### ISSUE-048 — Proxy Vite hardcodeado (FE-020) — P3
 `Programa 5 · Ini 5.7`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** `process.env.VITE_API_PROXY` con fallback.
 - **Problema actual:** `vite.config.js:6-12` `http://localhost:3797`.
 - **Impacto:** fricción en entornos compartidos.
@@ -1245,11 +1306,15 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — configuración Vite. Sin impacto en API contract.
+- **Riesgos:** proxy hardcodeado a `localhost:3797` falla en CI/staging → mitigación: usar variable de entorno; regresión en develop → mitigación: fallback a default.
+- **Verificación (verde→rojo→verde):** verde: `vite.config.js` hardcodea proxy a `localhost:3797` (hoy pasa); rojo: test que verifica proxy usa variable de entorno → hoy falla; verde: tras usar `process.env.VITE_API_URL`, test pasa.
 - **DoD:** proxy configurable.
 - **Tasks:** env var; fallback.
 
 #### ISSUE-049 — Doble fuente de versión (FE-021) — P3
 `Programa 5 · Ini 5.7`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** manifest generado en pipeline.
 - **Problema actual:** `package.json` 1.15.3 vs `public/version-manifest.json` stale.
 - **Impacto:** footer inconsistente.
@@ -1257,6 +1322,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** CI.
+- **Contrato/versión:** N/A — configuración. Sin impacto en API contract.
+- **Riesgos:** doble fuente de versión causa inconsistencia → mitigación: `package.json` como fuente única; VERSION file redundante → mitigación: eliminar o sincronizar.
+- **Verificación (verde→rojo→verde):** verde: `VERSION` y `package.json` pueden divergir (hoy pasa); rojo: test que compara VERSION con package.json version → hoy puede fallar; verde: tras eliminar `VERSION` o sincronizar, test pasa.
 - **DoD:** manifest automático.
 - **Tasks:** generar manifest en pipeline.
 
@@ -1933,6 +2001,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-099 — Artefactos VitePress commiteados (DOC-015) — P3
 `Programa 8 · EPIC-DOCS-OPS · Ini 8.6`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** limpiar `docs/--ignoreDeadLinks/`.
 - **Problema actual:** artefactos VitePress en repo.
 - **Impacto:** ruido en repo.
@@ -1940,6 +2009,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** —.
 - **ADR/DDD:** —.
 - **Dependencias:** ninguna.
+- **Contrato/versión:** N/A — documentación. Sin impacto en API contract.
+- **Riesgos:** artefactos VitePress commiteados causan diffs innecesarios → mitigación: añadir a `.gitignore`; pérdida de historia → mitigación: git conserva el historial.
+- **Verificación (verde→rojo→verde):** N/A — documentación, sin tests automatizados. Verificación manual: `docs/--ignoreDeadLinks/` existe y contiene artefactos de build; tras fix, directorio en `.gitignore`.
 - **DoD:** árbol limpio.
 - **Tasks:** eliminar/ignorar.
 
@@ -1957,6 +2029,7 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 
 #### ISSUE-101 — SSE URL doble (DOC-017) — P2
 `Programa 3 · EPIC-CONTRACTS-CANON · Ini 3.4`
+- **Estado:** READY (Ciclo 5, 2026-08-17 — DoR 9/9; promovido para C5)
 - **Objetivo:** canonizar SSE URL.
 - **Problema actual:** `/events` (frontend.md) vs `/api/v1/events` (backend.md).
 - **Impacto:** integraciones rotas.
@@ -1964,6 +2037,9 @@ Flujo de estados: `BACKLOG → (DoR) → READY → (GitHub Issue) → IN_PROGRES
 - **Contratos afectados:** `api-contract.md`.
 - **ADR/DDD:** —.
 - **Dependencias:** ISSUE-032 (SSE).
+- **Contrato/versión:** `api-contract v1` — `GET /events` (SSE URL). Sin cambio de versión.
+- **Riesgos:** URL duplicada causa conexiones SSE múltiples → mitigación: dedup en useSSE (I032); dependencia de I032 → mitigación: PR-B incluye ambos.
+- **Verificación (verde→rojo→verde):** verde: `useSSE.js` y otro módulo definen URL de SSE independientemente (hoy pasa); rojo: test que busca definiciones de SSE URL duplicadas → hoy las encuentra; verde: tras dedup, test no encuentra duplicados.
 - **DoD:** URL única.
 - **Tasks:** unificar.
 
@@ -2441,3 +2517,129 @@ Ejecución de las 3 oleadas (`phase-12-cycle-3-plan.md` §3.1): **PR-A** FW-OTA 
 ---
 
 *Reconciliación final:* 110/110 hallazgos trazados al backlog (uno por Issue). Decisión pendiente: DECISION-011 (infraestructura) es el único prerequisito abierto de decisión; las DECISION-002…010 quedaron ACCEPTED y aplicadas en C3 (ver `architecture-decisions-pending.md`).
+
+### 9.12 Ciclo 4 — resultados de PR-C a PR-G y cierre formal (2026-08-17)
+
+Ejecución de las 4 oleadas (`phase-13-cycle-4-plan.md` §3.1): **PR-C** Release Train D11 (9 ISSUEs de infra/docs), **PR-D** Entitlement & EventBus Hardening (I009 + I021), **PR-E** Contracts Canon & Capability Matrix (I022 + I089 + I090 + I100), **PR-F** Firmware Watchdog & Concurrency (I055 + I056 + I057), **PR-G** Documentation & ADR (I088 + I091 + I092 + I102). Mergeados en orden: PR-G `9386336` (ff), PR-D `0085078` (ort), PR-E `83a8241` (ort), PR-F `e0b9b98` (ort). Post-merge fix: `1940e70` (lazy-import migrateChambers para evitar fallo Jest ESM transitive).
+
+**PR-A (remediación CI, deuda C3): no ejecutado en C4.** El plan §8.1 definía CI verde 5/5 como criterio de salida; PR-A no se creó ni mergeó. El CI/CD de GitHub Actions permanece en fallo de configuración (run 31983364321, 0s, `workflow file issue`). Este fue el único criterio de salida no alcanzado.
+
+#### 9.12.1 Trazabilidad PR → ISSUE → evidencia
+
+| PR | Commits | ISSUEs cerrados | Evidencia |
+|---|---|---|---|
+| PR-C | `20b56b2` + `9386336` (merge) | I062, I067, I069, I077, I078, I082, I093, I096, I098 | Release D11: tags, deploy gated, healthcheck, manifest, docs ops; commit `20b56b2` feat(infra) |
+| PR-D | `fd514f0` + `8573cd4` (fix) + `0085078` (merge) | I009, I021 | `Subscription.PLANS` corregido (FREE 1000/7d, BASIC 5000/30d, PREMIUM 25000/365d); `eventBus.js` safeEmit + maxListeners=50; tests: `subscription-plans-monotonicity` (5), `eventBus` (+3) |
+| PR-E | `94deab5` + `83a8241` (merge) | I022, I089, I090, I100 | `routes/index.js` chambersRouter importado + mount `/chambers`; `capability-matrix.md` cobertura real + paths frontend corregidos; `backend.md` endpoint `/subscriptions/mine/usage` unificado |
+| PR-F | `02ef2c3` + `e0b9b98` (merge) | I055, I056, I057 | `tasks.cpp` TWDT en taskSensors (3/9 tasks cubiertas); `HealthMonitor` I2C mutex; poller handle + stackPoller metric; MQTT publishHealth JSON actualizado; `event_bus.h` HealthUpdatePayload extendido |
+| PR-G | `9386336` (ff) | I088, I091, I092, I102 | `backend.md` regenerado (phantom files eliminados, routes/services añadidos); `frontend.md` legacy pages removido; README FreeRTOS 8→9; ADR-032 linked con `tech-debt.md` |
+| Fix | `1940e70` | — | `chambers.js` lazy-import `migrateChambers` → resuelve fallo Jest ESM transitive de 4 suites |
+
+**I097 (DOC-013):** DONE por fusión con I063 (evidencia §9.8 PR-B del C2). Sin código nuevo.
+
+**I008 (BE-008, upgrade sin billing):** permanece BACKLOG. Dependía de I009 pero el PR-D no lo implementó (flujo de billing diferido). No contabilizar como DONE.
+
+#### 9.12.2 Estado global post-Ciclo 4 (medido)
+
+| Indicador | Post-Ciclo 3 (§9.11) | Post-Ciclo 4 (§9.12) | Δ |
+|---|---|---|---|
+| DONE | 63 | **86** | +23 |
+| BACKLOG | 43 | **20** | −23 |
+| IN_PROGRESS | 1 (I065) | **1 (I065)** | — |
+| BLOCKED | 1 (I070) | **1 (I070)** | — |
+| SUPERSEDED | 2 (I051/I023) | **2 (I051/I023)** | — |
+| Avance global | 57.3 % (63/110) | **78.2 % (86/110)** | +20.9 p.p. |
+| P1 Seguridad | 86 % (24/28) | **86 % (24/28)** | — |
+| P2 Testing | 100 % (11/11) | **100 % (11/11)** | — |
+| CI transversal | 4/5 (❌) | **4/5 (❌)** (PR-A no ejecutado) | — |
+| Exit Gates | 0/11 (P1 ⛔) | **0/11 (P1 ⛔)** | — |
+| Decisiones arquitectura | 11 ACCEPTED · 1 PENDING | **11 ACCEPTED · 1 PENDING** (DECISION-011) | — |
+| Cobertura transversal | 4/5 (CI ❌) | **4/5 (CI ❌)** | — |
+
+**Varianza vs proyección del plan (§10.3):** el plan proyectaba **88 DONE (80.0 %)** y CI 5/5. El resultado real es **86 DONE (78.2 %)** y CI 4/5. Diferencia de 2 ISSUEs: (a) I008 (upgrade sin billing) no implementado en PR-D — dependiente de I009, diferido por el usuario; (b) I089 contabilizado como documental (capability-matrix) sin transición formal de ISSUE. CI 5/5 no alcanzado: PR-A (remediación CI) no ejecutado — el workflow `ci.yml` falla por issue de configuración (0s, pre-existente desde C3).
+
+#### 9.12.3 Gate-check del Ciclo 4
+
+| # | Criterio de salida (§8) | Estado | Evidencia |
+|---|---|---|---|
+| 1 | CI verde transversal 5/5 | **❌ NO CUMPLIDO** | PR-A no ejecutado. `ci.yml` falla (workflow file issue, run 31983364321). 4/5 jobs. |
+| 2 | Avance P0 sin cierre falso | **✅ CUMPLIDO** | I065 permanece IN_PROGRESS (avance, cierre condicionado a DECISION-011). I070 BLOCKED. Sin cierre falso. |
+| 3 | Release train D11 ejecutado | **✅ CUMPLIDO** | PR-C merged `2b2da33`. 9 ISSUEs (I62/I67/I69/I77/I78/I82/I93/I96/I98). Tags, deploy gated, healthcheck, manifest. |
+| 4 | Hardening banda F2 (P4/P6) | **✅ CUMPLIDO** | PR-D (I009/I021): PLANS + EventBus. PR-E (I022/I089/I090/I100): contracts + matrix. PR-F (I055/I056/I057): watchdog + mutex + poller. |
+| 5 | Deuda documental absorbida | **✅ CUMPLIDO** | PR-G: I088/I091/I092/I102. backend.md/frontend.md/README/ADR-032. I097 DONE por fusión. |
+| 6 | Cierre formal I097 | **✅ CUMPLIDO** | I097 BACKLOG → DONE (fusión con I063, evidencia §9.8). |
+| 7 | Banda F3 intacta | **✅ CUMPLIDO** | Ningún ISSUE P5/P9/P11 promovido. Banda diferida a C5. |
+| 8 | Snapshot C4 vs post-C3 | **✅ CUMPLIDO** | §9.12.2 de este documento. Δ = +20.9 p.p. (57.3% → 78.2%). |
+
+**Resultado: 7/8 criterios cumplidos. 1 no cumplido (CI 5/5 — PR-A no ejecutado).**
+
+#### 9.12.4 Versión y manifest
+
+| Componente | Versión | Nota |
+|---|---|---|
+| Root | 1.8.22 | CONSISTENT (`check-version-manifest.cjs` OK) |
+| Backend | 1.10.0 | MINOR (C3 consolidation) |
+| Frontend | 1.15.5 | Sin cambios en C4 |
+| Firmware | 0.24.1 | PATCH (C3 safety) |
+| Docs | 0.2.5 | PATCH (C3) |
+
+#### 9.12.5 Deuda residual heredada a C5
+
+| Deuda | Origen | Impacto | Condición |
+|---|---|---|---|
+| CI/CD `ci.yml` workflow file issue | C2→C3→C4 | Transversal 4/5; impediría gates de C5 | Requiere PR-A remediación (acciones Node 22, CodeQL v4, aislamiento tests) |
+| DECISION-011 PENDING | C1→C2→C3→C4 | Exit Gate P1 ⛔; I070/I071 BLOCKED; banda F3 diferida | Requiere decisión del usuario (Render pago vs VPS/IaC) |
+| I065 IN_PROGRESS | C3→C4 | P0 sin cierre; cierre condicionado a DECISION-011 | Avanzar con PR-B o esperar DECISION-011 |
+| I008 BACKLOG (upgrade sin billing) | C4 | P1 sin implementar; dependiente de I009 (ya DONE) | Promover a READY en C5; requiere PR-D o similar |
+| 3 suites Jest TypeScript skipped | Pre-C4 | 41 tests saltados; no bloqueante | Requiere configuración `ts-jest` |
+| Firmware build sin validación local | C4 | PR-F sin evidencia `pio run` | CI será la evidencia definitiva; validar en C5 |
+| CHANGELOG sin entradas C4 | C4 | Inconsistencia de trazabilidad | Agregar sección C4 al CHANGELOG en C5 |
+
+#### 9.12.6 Condiciones heredadas para C5
+
+1. **DECISION-011 permanece PENDING.** No es prerequisito de ejecución de C5 pero mantiene Exit Gate P1 ⛔.
+2. **CI/CD requiere PR-A.** El workflow `ci.yml` tiene un issue de configuración que impide ejecución completa. C5 debe priorizar PR-A.
+3. **I008 (upgrade sin billing) promovible.** I009 está DONE; I008 puede promoverse a READY y planificarse en C5.
+4. **Banda F3 habilitable.** Con C4 cerrado, la banda F3 (P5/P9/P11) puede planificarse en C5 si DECISION-011 no es requisito inmediato.
+5. **CHANGELOG requiere actualización.** Las 23 transiciones de C4 no están documentadas en CHANGELOG.
+
+#### 9.12.7 Veredicto
+
+**Ciclo 4: CERRADO CON OBSERVACIÓN.**
+
+- **23 ISSUEs cerrados** (78.2% avance global, +20.9 p.p. sobre C3).
+- **7/8 criterios de salida cumplidos.**
+- **1 criterio incumplido:** CI 5/5 (PR-A no ejecutado — workflow issue pre-existente, no regresión de C4).
+- **No hay cierre falso:** I065 IN_PROGRESS, I070 BLOCKED, DECISION-011 PENDING — todos documentados y correctamente diferidos.
+- **Banda F3 intacta** y diferida a C5.
+- **Exit Gates 0/11** (P1 ⛔ por DECISION-011 — prerequisito de usuario, no de implementación).
+- **Varianza menor vs plan:** −2 ISSUEs (I008 no implementado, I089 documental) y CI 4/5 en lugar de 5/5. Ambas varianzas son por decisiones explícitas del usuario (diferir I008) y por deuda pre-existente (CI workflow), no por fallos de ejecución del ciclo.
+
+### 9.13 Ciclo 5 — Gate CI 5/5 cumplido e inicio de Oleada 2 (2026-08-17)
+
+#### 9.13.1 Gate CI 5/5 — evidencia
+
+| Run ID | Trigger | Jobs | Conclusión |
+|---|---|---|---|
+| `31993393854` | PR-A push | Firmware ✅ Backend ✅ Frontend ✅ Security ✅ osv-scanner ✅ | **5/5 GREEN** |
+| `31993689816` | Post-merge push a `develop` | Firmware ✅ Backend ✅ Frontend ✅ Security ✅ osv-scanner ✅ | **5/5 GREEN** |
+
+PR-A merge: `4664b82` (squash merge a `develop`, 2026-08-17T04:13:14Z).
+
+**Root cause original:** `actions/checkout@v5`, `gitleaks-action@v3`, `codeql-action@v4` no existen → GitHub Actions rechaza el workflow en parse time (0s, 0 jobs). Corregido a `@v4`/`@v2`/`@v3` respectivamente.
+
+#### 9.13.2 Oleada 2 — en ejecución
+
+| PR | ISSUEs | Dominio | Estado |
+|---|---|---|---|
+| PR-B | I032, I033, I034, I101 (4) | Frontend Core | 🔄 EN EJECUCIÓN |
+| PR-C | I035-I039, I041-I049 (14) | Frontend Quality | 🔄 EN EJECUCIÓN |
+| PR-D | I008 (1) | Backend Billing | 🔄 EN EJECUCIÓN |
+
+#### 9.13.3 Restricciones heredadas (sin cambio)
+
+- I065 = IN_PROGRESS (cierre condicionado a DECISION-011)
+- I070 = BLOCKED (DECISION-011 PENDING)
+- I071 = BACKLOG (dep I070 BLOCKED)
+- DECISION-011 = PENDING
+- Firmware validation = deuda trasladable a C6
