@@ -347,10 +347,11 @@ Pre-existente. Requiere `ts-jest` config. No bloqueante. Se documenta como deuda
 
 ---
 
-## 11. Cierre formal — en ejecución
+## 11. Cierre formal — COMPLETADO
 
 **Fecha de plan:** 2026-08-17.
 **Inicio ejecución:** 2026-08-17 (autorización del usuario).
+**Cierre ejecución:** 2026-08-18.
 **Gate CI 5/5:** ✅ CUMPLIDO (run `31993393854` + post-merge `31993689816`, 5/5 jobs verdes, PR-A merged `4664b82`).
 
 ### 11.1 Estado de Oleadas
@@ -358,13 +359,26 @@ Pre-existente. Requiere `ts-jest` config. No bloqueante. Se documenta como deuda
 | Oleada | PRs | Estado |
 |---|---|---|
 | 1 | PR-A (CI remediation) | ✅ MERGED (`4664b82`) — CI 5/5 GREEN |
-| 2 | PR-B (Frontend Core), PR-C (Frontend Quality), PR-D (Backend Billing) | 🔄 EN EJECUCIÓN |
-| 3 | PR-E (Docs VitePress) | ⏳ PENDIENTE |
+| 2 | PR-B (Frontend Core) `#232`, consolidated PR-C+D (Frontend Quality + Backend Billing) `#235` | ✅ MERGED |
+| 3 | PR-E (Docs VitePress) — I099 | ✅ DONE (`eb1a0b8`, direct push) |
 
-### 11.2 Próximos pasos
+### 11.2 Criterios de salida — 8/8 CUMPLIDOS
 
-1. Implementar PR-B (I032, I033, I034, I101) — 4 ISSUEs frontend core
-2. Implementar PR-C (I035-I039, I041-I049) — 14 ISSUEs frontend quality
-3. Implementar PR-D (I008) — 1 ISSUE backend billing
-4. CI verde tras Oleada 2 → PR-E (I099) en Oleada 3
-5. Cierre formal: CHANGELOG C5, firmware validation transfer, versioning
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | CI verde 5/5 | ✅ | PR-A `4664b82` |
+| 2 | Banda F3 ejecutada | ✅ | 17 P5 + I101 = 18 ISSUEs frontend |
+| 3 | I008 cerrado | ✅ | PR #235 billing flow |
+| 4 | CHANGELOG C4 | ✅ | CHANGELOG.md 2026-08-17 |
+| 5 | Firmware validation | ✅ (deuda a C6) | CI verde, sin `pio run` local |
+| 6 | Banda F3 intacta | ✅ | Sin promociones P7/P9/P11 |
+| 7 | Snapshot C5 vs C4 | ✅ | backlog §9.14.2: 96.4% |
+| 8 | Avance P0 sin cierre falso | ✅ | I065 IP, I070 BLOCKED |
+
+### 11.3 Próximos pasos (C6)
+
+1. DECISION-011 — resolver (Exit Gate P1 ⛔)
+2. I065/I070/I071 — cerrar o avanzar según DECISION-011
+3. Jest TS skips — configurar `ts-jest`
+4. Firmware validation local — `pio run` o documentar como deuda permanente
+5. Release workflow fix — `release.js` tag collision (exit 128)

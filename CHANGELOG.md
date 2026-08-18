@@ -1,5 +1,24 @@
 # Changelog — Mush2
 
+## 2026-08-17
+
+### Ciclo 4 — Cerrado con Observación (23 ISSUEs, 7/8 criterios)
+
+**Release consolidado del Ciclo 4.** 23 ISSUEs transicionaron a DONE (+23, 78.2% avance global). CI 4/5 (PR-A no ejecutado — deuda heredada a C5). Exit Gates 0/11 (P1 ⛔ por DECISION-011). Banda F3 intacta y diferida a C5.
+
+- **PR-C "Release Train D11" (I062 / I067 / I069 / I077 / I078 / I082 / I093 / I096 / I098)** — Infraestructura de release: tags semánticos, deploy gated, healthchecks HTTP, version-manifest CI, docs operacionales. 9 ISSUEs de infra/docs.
+- **PR-D "Entitlement & EventBus Hardening" (I009 / I021)** — `Subscription.PLANS` corregido (FREE 1000/7d, BASIC 5000/30d, PREMIUM 25000/365d); `eventBus.js` safeEmit + maxListeners=50. Tests: `subscription-plans-monotonicity` (5), `eventBus` (+3).
+- **PR-E "Contracts Canon & Capability Matrix" (I022 / I089 / I090 / I100)** — `routes/index.js` chambersRouter importado + mount `/chambers`; `capability-matrix.md` cobertura real + paths frontend corregidos; `backend.md` endpoint `/subscriptions/mine/usage` unificado.
+- **PR-F "Firmware Watchdog & Concurrency" (I055 / I056 / I057)** — `tasks.cpp` TWDT en taskSensors (3/9 tasks cubiertas); `HealthMonitor` I2C mutex; poller handle + stackPoller metric; MQTT publishHealth JSON actualizado; `event_bus.h` HealthUpdatePayload extendido.
+- **PR-G "Documentation & ADR" (I088 / I091 / I092 / I102)** — `backend.md` regenerado (phantom files eliminados, routes/services añadidos); `frontend.md` legacy pages removido; README FreeRTOS 8→9; ADR-032 linked con `tech-debt.md`.
+- **I097 (DOC-013):** DONE por fusión con I063 (evidencia §9.8 PR-B del C2). Sin código nuevo.
+- **Fix:** `chambers.js` lazy-import `migrateChambers` → resuelve fallo Jest ESM transitive de 4 suites.
+
+### Notas de release
+
+- Backend **1.10.0** · Frontend **1.15.5** · Firmware **0.24.1** · Docs **0.2.5** · Root **1.8.22** (sin bump de versión — cambios de infra/docs, no de código funcional).
+- **Deuda heredada a C5:** CI workflow `ci.yml` (4/5, PR-A pendiente); DECISION-011 PENDING (Exit Gate P1 ⛔); I008 BACKLOG (upgrade sin billing); 3 suites Jest TS skipped; firmware validation sin evidencia local `pio run`.
+
 ## 2026-08-15
 
 ### Backend — v1.10.0 (MINOR)

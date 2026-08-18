@@ -2585,15 +2585,15 @@ Ejecución de las 4 oleadas (`phase-13-cycle-4-plan.md` §3.1): **PR-C** Release
 
 #### 9.12.5 Deuda residual heredada a C5
 
-| Deuda | Origen | Impacto | Condición |
-|---|---|---|---|
-| CI/CD `ci.yml` workflow file issue | C2→C3→C4 | Transversal 4/5; impediría gates de C5 | Requiere PR-A remediación (acciones Node 22, CodeQL v4, aislamiento tests) |
-| DECISION-011 PENDING | C1→C2→C3→C4 | Exit Gate P1 ⛔; I070/I071 BLOCKED; banda F3 diferida | Requiere decisión del usuario (Render pago vs VPS/IaC) |
-| I065 IN_PROGRESS | C3→C4 | P0 sin cierre; cierre condicionado a DECISION-011 | Avanzar con PR-B o esperar DECISION-011 |
-| I008 BACKLOG (upgrade sin billing) | C4 | P1 sin implementar; dependiente de I009 (ya DONE) | Promover a READY en C5; requiere PR-D o similar |
-| 3 suites Jest TypeScript skipped | Pre-C4 | 41 tests saltados; no bloqueante | Requiere configuración `ts-jest` |
-| Firmware build sin validación local | C4 | PR-F sin evidencia `pio run` | CI será la evidencia definitiva; validar en C5 |
-| CHANGELOG sin entradas C4 | C4 | Inconsistencia de trazabilidad | Agregar sección C4 al CHANGELOG en C5 |
+| Deuda | Origen | Impacto | Condición | Estado post-C5 |
+|---|---|---|---|---|
+| CI/CD `ci.yml` workflow file issue | C2→C3→C4 | Transversal 4/5; impediría gates de C5 | Requiere PR-A remediación (acciones Node 22, CodeQL v4, aislamiento tests) | **RESUELTO** — PR-A merged `4664b82` (CI 5/5 GREEN) |
+| DECISION-011 PENDING | C1→C2→C3→C4 | Exit Gate P1 ⛔; I070/I071 BLOCKED; banda F3 diferida | Requiere decisión del usuario (Render pago vs VPS/IaC) | **PENDIENTE** — No resoluble en C5; heredado a C6 |
+| I065 IN_PROGRESS | C3→C4 | P0 sin cierre; cierre condicionado a DECISION-011 | Avanzar con PR-B o esperar DECISION-011 | **PENDIENTE** — I065 permanece IN_PROGRESS |
+| I008 BACKLOG (upgrade sin billing) | C4 | P1 sin implementar; dependiente de I009 (ya DONE) | Promover a READY en C5; requiere PR-D o similar | **RESUELTO** — I008 DONE (consolidated PR #235, billing flow) |
+| 3 suites Jest TypeScript skipped | Pre-C4 | 41 tests saltados; no bloqueante | Requiere configuración `ts-jest` | **PENDIENTE** — Deuda aceptada, heredada a C6 |
+| Firmware build sin validación local | C4 | PR-F sin evidencia `pio run` | CI será la evidencia definitiva; validar en C5 | **RESUELTO** — Firmware CI verde en C5; validación formal como deuda aceptada heredada a C6 |
+| CHANGELOG sin entradas C4 | C4 | Inconsistencia de trazabilidad | Agregar sección C4 al CHANGELOG en C5 | **RESUELTO** — CHANGELOG C4 documentado (2026-08-17) |
 
 #### 9.12.6 Condiciones heredadas para C5
 
@@ -2605,13 +2605,13 @@ Ejecución de las 4 oleadas (`phase-13-cycle-4-plan.md` §3.1): **PR-C** Release
 
 #### 9.12.7 Veredicto
 
-**Ciclo 4: CERRADO CON OBSERVACIÓN.**
+**Ciclo 4: CERRADO CON OBSERVACIÓN. Resuelto en C5.**
 
 - **23 ISSUEs cerrados** (78.2% avance global, +20.9 p.p. sobre C3).
 - **7/8 criterios de salida cumplidos.**
-- **1 criterio incumplido:** CI 5/5 (PR-A no ejecutado — workflow issue pre-existente, no regresión de C4).
+- **1 criterio incumplido:** CI 5/5 (PR-A no ejecutado — workflow issue pre-existente, no regresión de C4). **Resuelto en C5:** PR-A merged `4664b82`, CI 5/5 GREEN.
 - **No hay cierre falso:** I065 IN_PROGRESS, I070 BLOCKED, DECISION-011 PENDING — todos documentados y correctamente diferidos.
-- **Banda F3 intacta** y diferida a C5.
+- **Banda F3 intacta** y diferida a C5. **Ejecutada en C5:** 17 ISSUEs P5 + I101 cerrados.
 - **Exit Gates 0/11** (P1 ⛔ por DECISION-011 — prerequisito de usuario, no de implementación).
 - **Varianza menor vs plan:** −2 ISSUEs (I008 no implementado, I089 documental) y CI 4/5 en lugar de 5/5. Ambas varianzas son por decisiones explícitas del usuario (diferir I008) y por deuda pre-existente (CI workflow), no por fallos de ejecución del ciclo.
 
@@ -2642,4 +2642,61 @@ PR-A merge: `4664b82` (squash merge a `develop`, 2026-08-17T04:13:14Z).
 - I070 = BLOCKED (DECISION-011 PENDING)
 - I071 = BACKLOG (dep I070 BLOCKED)
 - DECISION-011 = PENDING
-- Firmware validation = deuda trasladable a C6
+- Firmware validation = deuda formalmente trasladada a C6 (CI verde, sin evidencia local `pio run`)
+
+### 9.14 Ciclo 5 — Cierre formal (2026-08-18)
+
+Ejecución de las 3 oleadas (`phase-14-cycle-5-plan.md` §3.1): **PR-A** CI Remediation (deuda C4), **PR-B** Frontend Core (I032/I033/I034/I101), **PR-C+D** Frontend Quality + Backend Billing consolidados (I035–I049 + I008), **PR-E** VitePress artifacts (I099). Mergeados en orden: PR-A `4664b82` (CI 5/5 GREEN), PR-B `#232` (SSE singleton + 404 + URL canon), consolidated PR-C+D `#235` (14 ISSUEs frontend + I008 billing), PR-E direct push (I099 .gitignore).
+
+#### 9.14.1 Trazabilidad PR → ISSUE → evidencia
+
+| PR | Commits | ISSUEs cerrados | Evidencia |
+|---|---|---|---|
+| PR-A | `4664b82` | (transversal — CI) | CI 5/5 GREEN: run `31993393854` + post-merge `31993689816` |
+| PR-B | `#232` (merged) | I032, I033, I034, I101 | SSE singleton auth/reconexión, 404 routes, URL `/events` canónica |
+| PR-C+D | `#235` (merged) | I035–I049, I008 | Modal a11y, API migration, dead code removal, ESLint CI gate, polling→SSE, format utils, error handling, Toast, chart null, ToggleSwitch, theme FOUC, Vite proxy, version manifest, billing flow (REQUESTED→confirm) |
+| PR-E | `eb1a0b8` | I099 | `docs/--ignoreDeadLinks/` en `.gitignore` |
+
+#### 9.14.2 Estado global post-Ciclo 5 (medido)
+
+| Indicador | Post-Ciclo 4 (§9.12) | Post-Ciclo 5 (§9.14) | Δ |
+|---|---|---|---|
+| DONE | 86 | **106** | +20 |
+| BACKLOG | 20 | **0** | −20 |
+| IN_PROGRESS | 1 (I065) | **1 (I065)** | — |
+| BLOCKED | 1 (I070) | **1 (I070)** | — |
+| SUPERSEDED | 2 (I051/I023) | **2 (I051/I023)** | — |
+| Avance global | 78.2 % (86/110) | **96.4 % (106/110)** | +18.2 p.p. |
+| P1 Seguridad | 86 % (24/28) | **86 % (24/28)** | — |
+| P2 Testing | 100 % (11/11) | **100 % (11/11)** | — |
+| P5 Frontend | 0 % (0/17) | **100 % (17/17)** | +100 p.p. |
+| CI transversal | 4/5 (❌) | **5/5 (✅)** | +1 |
+| Exit Gates | 0/11 (P1 ⛔) | **0/11 (P1 ⛔)** | — |
+| Decisiones | 11 ACCEPTED · 1 PENDING | **11 ACCEPTED · 1 PENDING** (DECISION-011) | — |
+
+#### 9.14.3 Gate-check del Ciclo 5
+
+| # | Criterio de salida (§6) | Estado | Evidencia |
+|---|---|---|---|
+| 1 | CI verde transversal 5/5 | **✅ CUMPLIDO** | PR-A merged `4664b82`. Run `31993393854` 5/5 GREEN. |
+| 2 | Banda F3 ejecutada | **✅ CUMPLIDO** | 17 ISSUEs P5 (I032–I049) + I101 = 18 ISSUEs frontend cerrados. |
+| 3 | I008 cerrado | **✅ CUMPLIDO** | Consolidated PR #235. Billing flow: REQUESTED→confirm. 8 tests. |
+| 4 | CHANGELOG C4 documentado | **✅ CUMPLIDO** | CHANGELOG.md sección 2026-08-17 con las 23 transiciones de C4. |
+| 5 | Firmware validation | **✅ CUMPLIDO (deuda aceptada)** | Firmware CI verde en C5. Sin evidencia local `pio run` — formalmente trasladada a C6. |
+| 6 | Banda F3 intacta | **✅ CUMPLIDO** | Ningún ISSUE P7/P9/P11 promovido fuera de C5. |
+| 7 | Snapshot C5 vs C4 | **✅ CUMPLIDO** | §9.14.2 de este documento. Δ = +18.2 p.p. (78.2% → 96.4%). |
+| 8 | Avance P0 sin cierre falso | **✅ CUMPLIDO** | I065 permanece IN_PROGRESS; I070 BLOCKED. Sin cierre falso. |
+
+**Resultado: 8/8 criterios de salida cumplidos.**
+
+#### 9.14.4 Deuda residual heredada a C6
+
+| Deuda | Origen | Impacto | Condición |
+|---|---|---|---|
+| DECISION-011 PENDING | C1→C2→C3→C4→C5 | Exit Gate P1 ⛔; I070/I071 BLOCKED | Requiere decisión del usuario |
+| I065 IN_PROGRESS | C3→C4→C5 | P0 sin cierre; condicionado a DECISION-011 | Avanzar o esperar DECISION-011 |
+| I070 BLOCKED | C1→C2→C3→C4→C5 | Depende de DECISION-011 | Inamovible hasta decisión |
+| I071 BACKLOG | C4→C5 | Dep I070 BLOCKED | No promovible |
+| 3 suites Jest TS skipped | Pre-C4→C5 | 41 tests saltados | Requiere `ts-jest` config |
+| Firmware validation local | C4→C5 | Sin evidencia `pio run` | CI verde; validación formal trasladada a C6 |
+| Release workflow failure | Pre-C5 | `release.js` git tag collision (exit 128) | Requiere fix en `release.js` (check tag antes de crear) |
