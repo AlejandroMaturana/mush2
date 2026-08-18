@@ -58,7 +58,7 @@ function DeviceDetail() {
 
       getTelegramDeviceConfig(id).then(cfg => {
         if (!cancelledRef.current) setTgConfig(cfg)
-      }).catch(() => {})
+      }).catch(err => console.error('Failed to load Telegram config:', err))
 
       const latest = await getLatestTelemetry(id)
       if (!cancelledRef.current && latest?.temperature != null) {
@@ -78,7 +78,7 @@ function DeviceDetail() {
       if (dev) setDevice(dev)
       setActuators(acts)
       setError(null)
-    } catch {}
+    } catch (err) { console.error('Failed to sync device state:', err) }
   }, [id])
 
   function applyTelemetry(sensors, initial = false) {
@@ -394,7 +394,7 @@ function DeviceDetail() {
                 const val = e.target.checked
                 setTgConfig(prev => ({ ...prev, enabled: val }))
                 setTgSaving(true)
-                try { await updateTelegramDeviceConfig(id, { enabled: val }) } catch {}
+                try { await updateTelegramDeviceConfig(id, { enabled: val }) } catch (err) { console.error('Failed to update Telegram enabled:', err) }
                 setTgSaving(false)
               }} />
             </label>
@@ -406,7 +406,7 @@ function DeviceDetail() {
                 const val = e.target.value
                 setTgConfig(prev => ({ ...prev, minSeverity: val }))
                 setTgSaving(true)
-                try { await updateTelegramDeviceConfig(id, { minSeverity: val }) } catch {}
+                try { await updateTelegramDeviceConfig(id, { minSeverity: val }) } catch (err) { console.error('Failed to update Telegram severity:', err) }
                 setTgSaving(false)
               }}>
                 <option value="LOW">Baja</option>
@@ -436,7 +436,7 @@ function DeviceDetail() {
                 <input type="checkbox" className="toggle-checkbox" checked={tgConfig[key]} onChange={async e => {
                   const val = e.target.checked
                   setTgConfig(prev => ({ ...prev, [key]: val }))
-                  try { await updateTelegramDeviceConfig(id, { [key]: val }) } catch {}
+                  try { await updateTelegramDeviceConfig(id, { [key]: val }) } catch (err) { console.error('Failed to update Telegram setting:', err) }
                 }} />
               </div>
             ))}

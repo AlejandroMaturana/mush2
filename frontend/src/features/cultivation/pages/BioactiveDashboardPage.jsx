@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import client from '../../../api/client.js'
+import { getBioactivesCorrelation, getBioactives, createBioactive } from '../api/cycles'
 import CompoundBar from '../components/CompoundBar.jsx'
+import { useToast } from '../../../shared/components/Toast'
 
 export default function BioactiveDashboard() {
   const { id } = useParams()
+  const toast = useToast()
   const [correlation, setCorrelation] = useState(null)
   const [bioactives, setBioactives] = useState([])
   const [loading, setLoading] = useState(true)
@@ -26,11 +28,11 @@ export default function BioactiveDashboard() {
     try {
       setLoading(true)
       const [corrRes, bioRes] = await Promise.all([
-        client.get(`/cycles/${id}/bioactives/correlation`),
-        client.get(`/cycles/${id}/bioactives`),
+        getBioactivesCorrelation(id),
+        getBioactives(id),
       ])
-      setCorrelation(corrRes.data)
-      setBioactives(bioRes.data.data)
+      setCorrelation(corrRes)
+      setBioactives(bioRes.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Error loading bioactive data')
     } finally {
@@ -41,7 +43,7 @@ export default function BioactiveDashboard() {
   async function handleAdd(e) {
     e.preventDefault()
     try {
-      await client.post(`/cycles/${id}/bioactives`, {
+      await createBioactive(id, {
         ...formData,
         concentration: parseFloat(formData.concentration),
       })
@@ -49,7 +51,7 @@ export default function BioactiveDashboard() {
       setFormData({ compoundName: '', concentration: '', unit: 'mg/g', labSource: '', notes: '' })
       fetchData()
     } catch (err) {
-      alert(err.response?.data?.error || 'Error adding bioactive')
+      toast(err.response?.data?.error || 'Error adding bioactive', 'error')
     }
   }
 

@@ -49,7 +49,7 @@ function SystemSettings() {
 
   useEffect(() => { fetchSettings() }, [])
 
-  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st.data || st) } catch {} }
+  async function loadTgStatus() { try { const st = await getTelegramBotStatus(); setTgStatus(st.data || st) } catch (err) { console.error('Failed to load Telegram bot status:', err) } }
 
   useEffect(() => {
     if (!loading) {

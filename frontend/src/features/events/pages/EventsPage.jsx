@@ -133,7 +133,7 @@ function Events() {
     let cancelled = false
     getDevices()
       .then(devs => { if (!cancelled) setDevices(devs) })
-      .catch(() => {})
+      .catch(err => console.error('Failed to load devices for events:', err))
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])

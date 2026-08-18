@@ -14,7 +14,7 @@ export function useSSE(onEvent) {
     const handlers = ['connected', 'ack', 'state', 'telemetry', 'alarm', 'control_eval', 'health', 'maintenance', 'phase_transition', 'device_health', 'device_status_changed']
     handlers.forEach(type => {
       es.addEventListener(type, (e) => {
-        try { cbRef.current(type, JSON.parse(e.data)) } catch {}
+        try { cbRef.current(type, JSON.parse(e.data)) } catch { /* parse error must not crash */ }
       })
     })
 

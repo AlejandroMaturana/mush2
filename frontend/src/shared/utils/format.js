@@ -54,3 +54,13 @@ export function formatUptime(seconds) {
   if (h > 0) return `${h}h ${m}m`
   return `${m}m`
 }
+
+export function formatTimeAgo(seconds) {
+  if (seconds == null) return 'Nunca'
+  if (seconds < 5) return 'Hace un momento'
+  if (seconds < 60) return `Hace ${seconds}s`
+  if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m ${seconds % 60}s`
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return `Hace ${h}h ${m}m`
+}
