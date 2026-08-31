@@ -81,7 +81,7 @@ function makeCycle(deviceId, overrides = {}) {
     deviceId,
     chamberId: null,
     status: 'ACTIVE',
-    startDate: new Date('2026-08-10T00:00:00Z'),
+    startDate: new Date(),
     update: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
@@ -236,8 +236,27 @@ describe('evaluateAllCycles — ruta runtime real', () => {
 
     expect(mockCycleFindAll).toHaveBeenCalled();
     expect(cycle.update).toHaveBeenCalledWith(expect.objectContaining({ currentPhase: 'FRUITING' }));
+
+    // Comportamiento real del engine (controlEngine.js): tras la transición de
+    // fase por duración emite el control_eval del eval + un segundo control_eval
+    // que transporte `event: 'PHASE_TRANSITION'` (fromPhase → toPhase).
+    const evalEvents = mockEmit.mock.calls.filter(([ev]) => ev === 'control_eval');
+    expect(evalEvents).toHaveLength(2);
+
+    const evalEval = evalEvents.find(([, p]) => !p.event);
+    expect(evalEval[1].deviceId).toBe('dev-phase-1');
+    expect(evalEval[1].phase).toBe('INCUBATION');
+
+    const transitionEval = evalEvents.find(([, p]) => p.event === 'PHASE_TRANSITION');
+    expect(transitionEval[1]).toMatchObject({
+      deviceId: 'dev-phase-1',
+      event: 'PHASE_TRANSITION',
+      fromPhase: 'INCUBATION',
+      toPhase: 'FRUITING',
+    });
+
     const transitions = mockEmit.mock.calls.filter(([ev, p]) => ev === 'phase_transition' && p.toPhase === 'FRUITING');
-    expect(transitions.length).toBeGreaterThan(0);
+    expect(transitions.length).toBe(2);
   });
 
   it('sin lecturas recientes: no crea CycleState ni emite control_eval', async () => {
