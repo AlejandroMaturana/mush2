@@ -10,6 +10,7 @@ import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, getLatestHealthByDeviceIds, recordOutgoing } from '../services/deviceHealthService.js';
+import { derivePrimaryStatus } from '../services/cameraStatusSemantics.js';
 import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
 import { refundProvisioningToken } from '../services/provisioningTokenService.js';
 import { normalizeLimit } from '../utils/pagination.js';
@@ -18,6 +19,19 @@ import { createChildLogger } from '../config/pino.js';
 const log = createChildLogger('API');
 const router = express.Router();
 const mqttProvisioner = new MosquittoProvisioningService();
+
+// ── D2: enriquecimiento semántico no destructivo (M0.2 §9) ──────────
+// Añade los campos derivados (primaryStatus/primaryLabel/primaryReason/
+// secondaryStates) al payload de un device SIN eliminar ningún campo
+// existente (status, secondsSinceLastSeen, diagnostics, etc.).
+function enrichDeviceJson(json, latestHealth) {
+  const derived = derivePrimaryStatus(json.status, { health: latestHealth });
+  json.primaryStatus = derived.primaryStatus;
+  json.primaryLabel = derived.primaryLabel;
+  json.primaryReason = derived.primaryReason;
+  json.secondaryStates = derived.secondaryStates;
+  return json;
+}
 
 // Rate limit por IP para el registro de dispositivos anónimos (ISSUE-001).
 // Los usuarios autenticados quedan gobernados por su plan (checkApiRateLimit).
@@ -51,11 +65,72 @@ router.get('/devices', async (req, res) => {
       const latestHealth = healthByDevice.get(d.id);
       json.status = getStatusFromDevice(d, latestHealth);
       json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
-      return json;
+      return enrichDeviceJson(json, latestHealth);
     });
     res.json({ data: enriched });
   } catch (err) {
     log.error({ module: 'DEVICES', event: 'LIST_ERROR', error: err.message }, 'Error listing devices');
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+// ── D1/T9: endpoint agregado del dashboard (resuelve H-5 N+1) ────────
+// Una sola petición devuelve, por cámara del usuario, el estado derivado D2
+// (primaryStatus/primaryLabel/primaryReason/secondaryStates) + la última
+// telemetría, evitando N+1 cliente al volcar a /devices/:id/telemetry/latest.
+// Endpoint NUEVO y aditivo: NO modifica el contrato de `/devices`.
+function aggregateLatestTelemetry(rows) {
+  const byDevice = new Map();
+  for (const row of rows) {
+    if (!byDevice.has(row.deviceId)) byDevice.set(row.deviceId, {});
+    const map = byDevice.get(row.deviceId);
+    const key = row.sensorType.toLowerCase();
+    map[key] = parseFloat(row.value);
+    map[`${key}_unit`] = row.unit;
+    map.ts = row.timestamp;
+  }
+  return byDevice;
+}
+export { aggregateLatestTelemetry };
+
+router.get('/dashboard/summary', async (req, res) => {
+  try {
+    const where = {};
+    if (req.tenant && req.tenant.userId) {
+      where[Op.or] = [
+        { userId: req.tenant.userId },
+        { userId: null },
+      ];
+    }
+    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']], limit: normalizeLimit(req.query.limit) });
+    const deviceIds = devices.map(d => d.id);
+
+    const [healthByDevice, telRows] = await Promise.all([
+      getLatestHealthByDeviceIds(deviceIds),
+      deviceIds.length
+        ? Telemetry.sequelize.query(`
+            SELECT DISTINCT ON (t."deviceId", t."sensorType") t."deviceId", t."sensorType", t.value, t.unit, t."timestamp"
+            FROM telemetry t
+            WHERE t."deviceId" = ANY($1)
+            ORDER BY t."deviceId", t."sensorType", t."timestamp" DESC
+          `, { bind: [deviceIds] })
+        : Promise.resolve([[], {}]),
+    ]);
+
+    const telByDevice = aggregateLatestTelemetry(telRows?.[0] || []);
+
+    const enriched = devices.map(d => {
+      const json = d.toJSON();
+      const latestHealth = healthByDevice.get(d.id);
+      json.status = getStatusFromDevice(d, latestHealth);
+      json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
+      enrichDeviceJson(json, latestHealth);
+      json.latestTelemetry = telByDevice.get(d.id) || {};
+      return json;
+    });
+    res.json({ data: enriched });
+  } catch (err) {
+    log.error({ module: 'DASHBOARD', event: 'SUMMARY_ERROR', error: err.message }, 'Error building dashboard summary');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -226,6 +301,7 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
     const latestHealth = await getLatestHealth(req.device.id);
     json.status = getStatusFromDevice(req.device, latestHealth);
     json.secondsSinceLastSeen = getSecondsSinceLastSeen(req.device);
+    enrichDeviceJson(json, latestHealth);
     res.json(json);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });

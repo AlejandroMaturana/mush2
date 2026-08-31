@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
 import { canAccessDevice } from '../middlewares/tenant.js';
 import { createChildLogger } from '../config/pino.js';
+import { explainAlarm } from '../services/alertTranslationService.js';
 
 const log = createChildLogger('ALARMS');
 const router = express.Router();
@@ -55,8 +56,15 @@ router.get('/', authenticate, async (req, res) => {
       offset,
     });
 
+    // D3/T11 — Serialización aditiva: se derivan los 5 niveles en backend
+    // (Single Source of Truth) y se adjuntan sin eliminar/renombrar campos.
+    const data = rows.map((row) => {
+      const plain = row.get({ plain: true });
+      return { ...plain, ...explainAlarm(plain) };
+    });
+
     res.json({
-      data: rows,
+      data,
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {

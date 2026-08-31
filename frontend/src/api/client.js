@@ -3,7 +3,7 @@
 export { default } from '../shared/api/axiosInstance'
 
 export { login, register, logout } from '../features/auth/api/auth'
-export { getDevices, getDevice, createDevice, updateDevice, deleteDevice, getActuators, setActuatorDirect, getDeviceConnectivity, setMaintenanceMode, updateHealthConfig } from '../features/devices/api/devices'
+export { getDevices, getDashboardSummary, getDevice, createDevice, updateDevice, deleteDevice, getActuators, setActuatorDirect, getDeviceConnectivity, setMaintenanceMode, updateHealthConfig } from '../features/devices/api/devices'
 export { getLatestTelemetry, getLatestHealth, getTelemetryHistory } from '../features/devices/api/telemetry'
 export { getTelegramDeviceConfig, updateTelegramDeviceConfig } from '../features/devices/api/telegram'
 export { getCycles, getCycle, createCycle, updateCycle, transitionCycle, abortCycle, getCycleTransitions, getCycleStates, getBioactives, createBioactive, getBioactivesCorrelation } from '../features/cultivation/api/cycles'

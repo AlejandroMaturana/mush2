@@ -60,10 +60,16 @@ Requiere auth. Actualiza perfil del usuario.
 
 ### `GET /devices`
 - Response 200: `{ data: [{ id, deviceId, macAddress, chamberName, status, lastSeen, firmwareVersion, userId }] }`
+- **Enriquecimiento no destructivo (D2):** cada dispositivo incluye además los campos derivados (`primaryStatus`, `primaryLabel`, `primaryReason`, `secondaryStates`), calculados en backend junto a `computeStatus` (M0.2 §9.2). Son aditivos: no eliminan ni renombran campos previos.
 
 ### `GET /devices/:id`
 - Incluye actuadores asociados
-- Response 200: Detalle del dispositivo con actuadores
+- Response 200: Detalle del dispositivo con actuadores; incluye el mismo enriquecimiento derivado D2 (`primaryStatus`, `primaryLabel`, `primaryReason`, `secondaryStates`).
+
+### `GET /dashboard/summary`
+- **Nuevo (D1/T9).** Endpoint agregado del dashboard: devuelve, por cámara del usuario, el estado derivado D2 (`primaryStatus`/`primaryLabel`/`primaryReason`/`secondaryStates`) + la **última telemetría** por sensor (`latestTelemetry`), en **una sola petición** (resuelve el N+1 de telemetría, H-5).
+- Response 200: `{ data: [{ id, deviceId, chamberName, status, primaryStatus, primaryLabel, primaryReason, secondaryStates, secondsSinceLastSeen, latestTelemetry, ... }] }`
+- Aditivo: no modifica el contrato de `GET /devices`.
 
 ### `POST /devices`
 Requiere auth.
@@ -121,6 +127,7 @@ Devuelve el ciclo activo asociado al dispositivo.
 
 ### `GET /devices/:id/health/latest`
 - Response: Último registro de salud del dispositivo
+- Incluye el enriquecimiento derivado D2 (`primaryStatus`, `primaryLabel`, `primaryReason`, `secondaryStates`) y `lastTransmission` (objeto aditivo con `secondsSinceLastSeen`, `heartbeatInterval`, `degradedThreshold`, `offlineThreshold`, `lastTelemetryAt`). Aditivo: no elimina campos previos.
 
 ---
 
@@ -333,6 +340,7 @@ Requiere auth.
 ### `GET /alarms`
 - Query: `?severity=CRITICAL|HIGH|MEDIUM|LOW&deviceId=N`
 - Response: `{ data: [{ id, deviceId, severity, message, acknowledged, resolved, ... }] }`
+- **Enriquecimiento no destructivo (D3/T11):** cada alarma incluye además los 5 niveles derivados en backend (`what`, `meaning`, `impact`, `action`, `verify`) — Single Source of Truth (`alertTranslationService`). Aditivo: no elimina ni renombra campos previos.
 
 ### `GET /alarms/stats`
 - Response: `{ total, unacknowledged, bySeverity: { CRITICAL, HIGH, MEDIUM, LOW } }`
@@ -353,6 +361,7 @@ Requiere auth. Marca alarma como resuelta.
 ### `GET /chambers/:chamberId/analytics`
 - Query: `?from=ISO&to=ISO&period=day|week|month`
 - Response: Analytics agregados de un chamber
+- El objeto `chamber` incluye la derivación semántica D2 (aditiva): `primaryStatus`, `primaryLabel`, `primaryReason`, `secondaryStates`, junto al `status` compuesto con salud real. Aditivo: no elimina campos previos.
 
 ---
 

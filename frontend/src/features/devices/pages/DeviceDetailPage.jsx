@@ -168,9 +168,7 @@ function DeviceDetail() {
       }))
     }
     if (type === 'device_status_changed' && device && data.deviceId === device.deviceId) {
-      if (data.status?.connectivity === 'ONLINE' && data.previousStatus?.connectivity !== 'ONLINE') {
-        syncState()
-      }
+      syncState()
     }
   }, [device, actuators, addLog, syncState]))
 
@@ -247,9 +245,17 @@ function DeviceDetail() {
     />
   )
 
-  const isOnline = device.status?.connectivity === 'ONLINE'
-  const isStale = device.status?.connectivity === 'DEGRADED'
-  const isMaintenance = device.status?.lifecycle === 'MAINTENANCE'
+  // D2: el estado principal llega derivado por el backend (primaryStatus);
+  // aquí solo se mapea presentación, no se recomputa la precedencia.
+  const primaryVariant = {
+    'OPERATIVA': 'online',
+    'SIN CONEXIÓN': 'critical',
+    'EN MANTENIMIENTO': 'info',
+    'AVISO': 'warning',
+    'PROVISIONANDO': 'info',
+    'RETIRADA': 'offline',
+    'DATOS_NO_DISPONIBLES': 'offline',
+  }[device.primaryStatus] || 'critical'
   const has = {
     temp: telemetry.temperature != null,
     hum: telemetry.humidity != null,
@@ -271,8 +277,8 @@ function DeviceDetail() {
       <EntityHeader
         title={device.chamberName || device.deviceId}
         subtitle={`${device.hwRevision ? `HW ${device.hwRevision} · ` : ''}Firmware ${device.firmwareVersion} · ${device.macAddress || 'MAC —'}${device.secondsSinceLastSeen != null ? ` · Última transmisión ${device.secondsSinceLastSeen < 5 ? 'hace un momento' : device.secondsSinceLastSeen < 60 ? `hace ${device.secondsSinceLastSeen}s` : `hace ${Math.floor(device.secondsSinceLastSeen / 60)}m`}` : ''}`}
-        badge={device.status?.lifecycle || 'ACTIVE'}
-        badgeVariant={isOnline ? 'online' : isMaintenance ? 'info' : isStale ? 'warning' : 'critical'}
+        badge={device.primaryStatus || device.status?.lifecycle || 'ACTIVE'}
+        badgeVariant={primaryVariant}
         actions={
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button onClick={() => navigate(`/fleet/devices/${id}/analytics`)} className="btn btn-secondary" style={{ fontSize: '11px' }}>

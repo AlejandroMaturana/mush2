@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { Device, DeviceHealth } from '../models/index.js';
 import { events } from './eventBus.js';
 import { createChildLogger } from '../config/pino.js';
+import { derivePrimaryStatus } from './cameraStatusSemantics.js';
 
 const log = createChildLogger('HEALTH');
 
@@ -119,6 +120,7 @@ function getStatusFromDevice(device, latestHealth = null) {
 function buildHealthPayload(device, composedStatus, latestHealth) {
   const secondsSinceLastSeen = getSecondsSinceLastSeen(device);
   const hb = device.heartbeatInterval || 10;
+  const derived = derivePrimaryStatus(composedStatus, { health: latestHealth });
 
   return {
     status: composedStatus,
@@ -131,6 +133,18 @@ function buildHealthPayload(device, composedStatus, latestHealth) {
     degradedThreshold: hb * (device.staleMultiplier || 3),
     offlineThreshold: hb * (device.offlineMultiplier || 6),
     maintenanceMode: device.maintenanceMode,
+    // ── D2: enriquecimiento semántico no destructivo (M0.2 §9) ──
+    primaryStatus: derived.primaryStatus,
+    primaryLabel: derived.primaryLabel,
+    primaryReason: derived.primaryReason,
+    secondaryStates: derived.secondaryStates,
+    lastTransmission: {
+      secondsSinceLastSeen,
+      heartbeatInterval: hb,
+      degradedThreshold: hb * (device.staleMultiplier || 3),
+      offlineThreshold: hb * (device.offlineMultiplier || 6),
+      lastTelemetryAt: device.lastTelemetryAt,
+    },
     diagnostics: latestHealth ? {
       i2c: latestHealth.i2cHealthy ? 'OK' : 'FAIL',
       sensorAht21: latestHealth.sensorAht21 ? 'OK' : 'FAIL',
