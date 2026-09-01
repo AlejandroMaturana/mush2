@@ -47,7 +47,7 @@ Registro de **decisiones de arquitectura** tomadas y su justificación. Una vez 
 
 | Rango | Contenido |
 |---|---|
-| ADR-001 a ADR-006 | Plataforma, sensores, SSR, ThingSpeak, PostgreSQL, logging |
+| ADR-001, ADR-003, ADR-005, ADR-006 | Plataforma, sensores, SSR, PostgreSQL, logging |
 | ADR-007 a ADR-010 | JWT/RBAC, protocolo HTTP, control histéresis, fail-safe |
 | ADR-011 a ADR-014 | Recetas/ciclos, FreeRTOS, seguridad, OTA v3 |
 | ADR-015 | Reestructuración de documentación |

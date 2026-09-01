@@ -396,24 +396,6 @@
 
 ---
 
-### `integrations.thingspeak`
-
-| Campo | Valor |
-|-------|-------|
-| **Tipo** | Capacidad |
-| **Descripción** | Sincronización bidireccional con ThingSpeak |
-| **Costo operacional** | Bajo |
-| **Enforcement** | `Device.thingSpeakEnabled` + `IntegrationCredentials` |
-| **Estado** | ✅ |
-
-| Plan | Disponible |
-|------|------------|
-| FREE | ✅ |
-| BASIC | ✅ |
-| PREMIUM | ✅ |
-
----
-
 ## 9. Organización
 
 ### `organization.users`
@@ -458,5 +440,4 @@
 | **analytics.predictions** 📋 | ❌ | ❌ | ✅ |
 | **integrations.mqtt.bridge** 📋 | ❌ | Solo lectura | Full |
 | **integrations.webhooks** 📋 | ❌ | 2 webhooks | 10 webhooks |
-| **integrations.thingspeak** ✅ | ✅ | ✅ | ✅ |
 | **organization.users** 📋 | 1 | 3 | 10 |

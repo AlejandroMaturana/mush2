@@ -13,6 +13,14 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { ApiKey, User } from '../models/index.js';
 
+const LAST_USED_FLUSH_MS = 60_000;
+const lastUsedFlush = new Map();
+function flushLastUsed(keyId, lastUsedAt) { lastUsedFlush.set(keyId, lastUsedAt); }
+function shouldFlushLastUsed(keyId, now) {
+  const prev = lastUsedFlush.get(keyId);
+  return prev === undefined || now - prev >= LAST_USED_FLUSH_MS;
+}
+
 async function authenticateWithApiKey(req) {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return null;
@@ -32,7 +40,11 @@ async function authenticateWithApiKey(req) {
     if (!key.ipWhitelist.includes(clientIp)) return { error: 'IP no autorizada para esta API key' };
   }
 
-  await key.update({ lastUsedAt: new Date(), lastIpAddress: clientIp, authFailures: 0 });
+  const now = Date.now();
+  if (shouldFlushLastUsed(key.id, now)) {
+    await key.update({ lastUsedAt: new Date(), lastIpAddress: clientIp, authFailures: 0 });
+    flushLastUsed(key.id, now);
+  }
 
   return {
     user: {

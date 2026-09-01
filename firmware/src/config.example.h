@@ -21,15 +21,6 @@
 #define WIFI_PASSWORD_2 "your_password_2"
 #endif
 
-// ---- ThingSpeak ----
-#ifndef TS_HOST
-#define TS_HOST "api.thingspeak.com"
-#endif
-#define TS_PORT 80
-#ifndef TS_API_KEY
-#define TS_API_KEY "your_ts_api_key"
-#endif
-
 // ---- Environment ----
 #define ENV_DEVELOPMENT 0
 #define ENV_STAGING     1
@@ -197,7 +188,6 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 
 // ---- Intervals (ms) ----
 #define SENSOR_INTERVAL 10000
-#define TS_INTERVAL 20000
 #define POLL_INTERVAL 5000
 
 // ---- WDT ----
@@ -263,6 +253,21 @@ BadNVNSsV4JTkZ7OQGGC0R4dU0YzV0IF3oCkE4pD2fYMHeLHt8tQhIz0Jh2dN4W
 #endif
 #ifndef BLE_DEVICE_NAME_PREFIX
 #define BLE_DEVICE_NAME_PREFIX "Mush2"
+#endif
+
+// ---- OTA (ISSUE-050) ----
+// Placeholder — la contraseña OTA real por dispositivo se entrega por
+// provisioning/registro y se persiste en NVS (ota_nvs). Nunca un secreto real aquí.
+#ifndef OTA_PASSWORD
+#define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+#endif
+
+// ---- OTA TLS CA Root (ISSUE-052 / ADR-014 P4) ----
+// CA raiz embebida para validar el servidor HTTPS del firmware. Reutiliza la
+// Root CA de MQTT (ISRG Root X1, Let's Encrypt). Nunca usar setInsecure().
+// Si se deja vacio en un build generado, el ejecutor OTA falla cerrado (rechaza).
+#ifndef OTA_CA_ROOT
+#define OTA_CA_ROOT MQTT_CA_ROOT
 #endif
 
 // ---- WiFi Re-provisioning ----

@@ -36,6 +36,12 @@ public:
   uint8_t getRebootCount();
   bool isSafeMode();
 
+  // ISSUE-054 (FW-005): en SAFE y OTA_UPDATING la actuacion de SSR queda
+  // bloqueada (gate por estado). El taskSSR fuerza los canales a OFF.
+  bool blocksActuation() const {
+    return state == ST_SAFE || state == ST_OTA_UPDATING;
+  }
+
 private:
   DeviceState state;
   char errorReason[32];

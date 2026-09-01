@@ -27,17 +27,17 @@ public:
   void init(const char* deviceId, const char* host, uint16_t port);
   void loop();
   bool isConnected();
-  bool registerDevice(const char* fwVersion, const char* macAddress, const char* hwRevision = "");
+  // ADR-028: entrega las credenciales MQTT de la respuesta de registro en los
+  // buffers del llamador (transitorios, fuera de la clase). Si la respuesta no
+  // las incluye, outUser/outPass quedan vacíos y outGotMqttCreds=false.
+  bool registerDevice(const char* fwVersion, const char* macAddress, const char* hwRevision,
+                      char* outUser, size_t userSize, char* outPass, size_t passSize,
+                      bool* outGotMqttCreds = nullptr);
   void getDesired(int ch, uint8_t* state, uint8_t* mode);
   unsigned int getFailCount() { return failCount; }
 
   bool getSsrActiveLow();
   bool ssrActiveLowChanged();
-
-  // ADR-028: MQTT credentials from registration response
-  const char* getMqttUser() { return _mqttUser; }
-  const char* getMqttPass() { return _mqttPass; }
-  bool hasMqttCredentials() { return _mqttUser[0] != '\0'; }
 
   bool hasActiveCycle() { return _hasActiveCycle; }
   const char* getPhase() { return _phase; }
@@ -65,6 +65,7 @@ private:
 
   bool _ssrActiveLow;
   bool _ssrActiveLowPrev;
+  bool _ssrFirstSync;
 
   bool _hasActiveCycle;
   char _phase[16];
@@ -72,10 +73,6 @@ private:
   float _tempMin, _tempMax, _humMin, _humMax;
   uint16_t _co2Max;
   bool _setpointsChanged;
-
-  // ADR-028: MQTT credentials received from backend
-  char _mqttUser[64];
-  char _mqttPass[64];
 
   void beginRequest();
   void runConnect();

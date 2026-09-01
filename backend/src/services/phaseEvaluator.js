@@ -111,15 +111,18 @@ const OPERATORS = {
 
 const sensorHistory = {};
 const HISTORY_WINDOW = 3600000;
+const MAX_HISTORY_PER_FIELD = 2000;
 
 function recordSensorReading(cycleId, field, value) {
   if (!sensorHistory[cycleId]) sensorHistory[cycleId] = {};
   if (!sensorHistory[cycleId][field]) sensorHistory[cycleId][field] = [];
 
-  const history = sensorHistory[cycleId][field];
+  let history = sensorHistory[cycleId][field];
   const now = Date.now();
   history.push({ value, timestamp: now });
-  sensorHistory[cycleId][field] = history.filter(r => now - r.timestamp < HISTORY_WINDOW);
+  history = history.filter(r => now - r.timestamp < HISTORY_WINDOW);
+  if (history.length > MAX_HISTORY_PER_FIELD) history.splice(0, history.length - MAX_HISTORY_PER_FIELD);
+  sensorHistory[cycleId][field] = history;
 }
 
 function checkSustainCondition(cycleId, field, operator, value, sustainMinutes) {
@@ -280,6 +283,10 @@ export async function executePhaseTransition(cycle, transitionResult) {
       phaseStartedAt: new Date(),
     });
 
+    if (transition.toPhase === 'COMPLETED') {
+      delete sensorHistory[cycle.id];
+    }
+
     log.info({ cycleId: cycle.id, fromPhase: transition.fromPhase, toPhase: transition.toPhase, triggerType: transition.triggerType }, 'Phase transition executed');
 
     events.emit('phase_transition', {
@@ -304,3 +311,5 @@ export function getTransitionRulesForSpecies(scientificName) {
 export function getAllTransitionRules() {
   return TRANSITION_RULES;
 }
+
+export { recordSensorReading, sensorHistory };

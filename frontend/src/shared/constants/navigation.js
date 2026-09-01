@@ -34,21 +34,20 @@ export const NAV_SECTIONS = [
     icon: 'monitoring',
     collapsible: true,
     items: [
-      { to: '/operations/analytics', icon: 'analytics', label: 'Analítica' },
       { to: '/operations/alarms', icon: 'warning', label: 'Alertas', hasBadge: true },
       { to: '/operations/events', icon: 'bolt', label: 'Eventos' },
       { to: '/operations/logs', icon: 'history', label: 'Registro de auditoría' },
-      { to: '/operations/diagnostics', icon: 'diagnosis', label: 'Diagnóstico' },
-      { to: '/operations/monitoring', icon: 'monitoring', label: 'Monitoreo' },
     ],
   },
   {
-    id: 'system',
-    label: 'SISTEMA',
+    id: 'settings',
+    label: 'CONFIGURACIÓN',
     icon: 'settings',
     collapsible: true,
     items: [
-      { to: '/system/settings', icon: 'tune', label: 'Configuración' },
+      { to: '/system/settings/user', icon: 'fingerprint', label: 'Usuario' },
+      { to: '/system/settings/device', icon: 'developer_board', label: 'Dispositivo' },
+      { to: '/system/settings/system', icon: 'settings', label: 'Sistema' },
     ],
   },
 ]

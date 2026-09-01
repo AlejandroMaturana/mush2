@@ -5,6 +5,7 @@ import { Device, Actuator, CultivationCycle, Recipe } from '../models/index.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
 import { getPhaseThresholds } from '../services/controlEngine.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { createChildLogger } from '../config/pino.js';
 import { recordOutgoing, recordIncoming } from '../services/deviceHealthService.js';
 
@@ -89,17 +90,20 @@ router.patch('/:channel', async (req, res) => {
       return res.status(400).json({ error: 'channel debe ser 1-4' });
     }
 
-    const device = await Device.findOrCreate({
-      where: { deviceId },
-      defaults: { deviceId },
-    }).then(([d]) => d);
+    const device = await Device.findOne({ where: { deviceId } });
+    if (!device) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Dispositivo no encontrado' });
+    }
+    if (!(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
 
     const cmdId = crypto.randomUUID();
 
-    const [actuator] = await Actuator.findOrCreate({
-      where: { deviceId: device.id, channel },
-      defaults: { deviceId: device.id, channel, state: command, mode: 'REMOTE' },
-    });
+    let actuator = await Actuator.findOne({ where: { deviceId: device.id, channel } });
+    if (!actuator) {
+      actuator = await Actuator.create({ deviceId: device.id, channel, state: command, mode: 'REMOTE' });
+    }
 
     await actuator.update({
       state: command,

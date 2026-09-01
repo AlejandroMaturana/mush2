@@ -233,6 +233,15 @@ sequenceDiagram
 
 ---
 
+## SUPERSESIÓN (2026-08-10) — Autoridad de despliegue del broker
+
+La presente ADR sigue vigente en su totalidad. Este anexo (análogo al anexo DECISION-005 de ADR-007) registra la **autoridad de despliegue** del broker, en línea con DECISION-006 (ACCEPTED) e ISSUE-065 (INF-006):
+
+1. **Broker de producción:** contenedor Mosquitto 2.x + volumen persistente + TLS 8883, ACL por dispositivo (opción (b) de DECISION-006). El hosting concreto se decide en operación y se enlaza a DECISION-011 (plan free de Render).
+2. **Plan de despliegue:** `docs/operations/broker-deployment.md` (entregado en PR-G, Ciclo 0). Este documento define pasos, secretos, rollback, migración y verificación. El PR-G **no despliega** el broker; el cierre depende de ISSUE-075 (TLS/INF-015) e ISSUE-081 (provisioning/INF-022).
+3. **Config preparada:** `docker/mosquitto/prod/mosquitto.conf` mantiene el bloque `listener 8883` comentado (listo para activar con certs reales); `docker/mosquitto/prod/acl.conf` alineado con el contrato (§2.3) incluyendo `alarm`, `ota/#` y `actuators`.
+4. **No regresión:** los puntos §2–§6 de esta ADR (TLS firmware, auth por dispositivo, ACLs, fallo TLS, backend→broker) quedan inalterados; este anexo solo fija **quién/cómo/cuándo** se ejecuta el despliegue.
+
 ## Referencias
 
 - `RFC-0001` — Estrategia de Seguridad TLS (general)
@@ -240,6 +249,7 @@ sequenceDiagram
 - `ADR-013` — Estrategia de Seguridad general
 - `docs/protocol/protocol-v1.md` — Protocolo MQTT actual
 - `mosquitto.conf` — Configuración del broker
+- `docs/operations/broker-deployment.md` — plan de despliegue del broker (PR-G, ISSUE-065)
 
 ---
 
@@ -248,6 +258,7 @@ sequenceDiagram
 | Versión | Fecha      | Autor            | Cambios                          |
 | ------- | ---------- | ---------------- | -------------------------------- |
 | 1.0     | 2026-07-23 | AlejandroMaturana | Creación del documento (ACEPTADO) |
+| 1.1     | 2026-08-10 | Opencode         | Anexo SUPERSESIÓN: autoridad de despliegue del broker (DECISION-006 · ISSUE-065 · PR-G) |
 
 ---
 

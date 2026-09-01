@@ -14,7 +14,6 @@
 #define PROV_CHAR_WIFI_PASS     "a7c3d6e3-f1b2-4a5b-8c9d-0e1f2a3b4c5d"
 #define PROV_CHAR_CMD           "a7c3d6e4-f1b2-4a5b-8c9d-0e1f2a3b4c5d"
 #define PROV_CHAR_STATUS        "a7c3d6e5-f1b2-4a5b-8c9d-0e1f2a3b4c5d"
-#define PROV_CHAR_SSR_MODE      "a7c3d6e6-f1b2-4a5b-8c9d-0e1f2a3b4c5d"
 
 #ifndef BLE_DEVICE_NAME_PREFIX
 #define BLE_DEVICE_NAME_PREFIX "Mush2"
@@ -55,7 +54,6 @@ private:
   BLECharacteristic* _charWifiPass;
   BLECharacteristic* _charCmd;
   BLECharacteristic* _charStatus;
-  BLECharacteristic* _charSsrMode;
 
   String _deviceId;
   String _bleName;

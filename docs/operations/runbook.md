@@ -13,13 +13,16 @@ Procedimientos y runbooks para operar Mush2 en producción: monitoring, troubles
 curl http://localhost:3797/health
 # { "status": "ok", "uptime": 3600 }
 
-# HTTP Polling Health
-curl http://localhost:3797/monitoring/health/polling
+# HTTP Polling Health (requiere auth + rol ADMIN — ISSUE-003)
+curl http://localhost:3797/monitoring/health/polling -H "Authorization: Bearer $ADMIN_TOKEN"
 # { "status": "ok", "activeDevices": 3, "commandsPending": 0 }
 
 # DB Health (endpoint admin)
 curl http://localhost:3797/monitoring/health/db -H "Authorization: Bearer $ADMIN_TOKEN"
 # { "status": "ok", "pool": "8/20" }
+
+# Nota (ISSUE-003): desde backend v1.7.5, /monitoring/* exige Bearer JWT + rol ADMIN.
+# Solo /health es público. El access log HTTP ya no excluye /monitoring/logs.
 ```
 
 ### Prometheus Metrics (recomendado)
@@ -104,8 +107,8 @@ tail -f /var/log/mush2/backend.log | grep -i "timeout\|poll"
 # 3. Verificar conectividad
 curl -I http://localhost:3797/health
 
-# 4. Monitorear dispositivos activos
-curl http://localhost:3797/monitoring/health/polling | jq
+# 4. Monitorear dispositivos activos (requiere auth + rol ADMIN — ISSUE-003)
+curl http://localhost:3797/monitoring/health/polling -H "Authorization: Bearer $ADMIN_TOKEN" | jq
 ```
 
 **Fix:**

@@ -26,7 +26,7 @@ export function ThemeProvider({ children }) {
 
   const setThemeMode = useCallback((mode) => {
     setTheme(mode === 'light' || mode === 'dark' ? mode : 'dark')
-    updateProfileSettings({ preferences: { theme: mode === 'light' || mode === 'dark' ? mode : 'dark' } }).catch(() => {})
+    updateProfileSettings({ preferences: { theme: mode === 'light' || mode === 'dark' ? mode : 'dark' } }).catch(err => console.error('Failed to persist theme:', err))
   }, [])
 
   return (

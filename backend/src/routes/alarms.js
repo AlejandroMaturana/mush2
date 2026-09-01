@@ -3,7 +3,9 @@ import { Op } from 'sequelize';
 import { Alarm, Device } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { createChildLogger } from '../config/pino.js';
+import { explainAlarm } from '../services/alertTranslationService.js';
 
 const log = createChildLogger('ALARMS');
 const router = express.Router();
@@ -16,7 +18,19 @@ router.get('/', authenticate, async (req, res) => {
     if (severity) where.severity = severity.toUpperCase();
     if (status === 'active') where.resolvedAt = null;
     if (status === 'resolved') where.resolvedAt = { [Op.ne]: null };
-    if (deviceId) where.deviceId = deviceId;
+
+    // I012/PR-C — alinear tipos en el boundary: deviceId llega como string
+    // (id INTEGER o deviceId del Device); se resuelve el Device y se filtra
+    // por su id INTEGER, evitando comparar strings contra la columna INTEGER.
+    if (deviceId) {
+      const device = await Device.findOne({
+        where: { [Op.or]: [{ id: deviceId }, { deviceId }] },
+      });
+      if (!device) {
+        return res.json({ data: [], pagination: { page: 1, limit: 0, total: 0, pages: 0 } });
+      }
+      where.deviceId = device.id;
+    }
 
     if (req.tenant && req.tenant.userId) {
       const accessibleDevices = await Device.findAll({
@@ -42,8 +56,15 @@ router.get('/', authenticate, async (req, res) => {
       offset,
     });
 
+    // D3/T11 — Serialización aditiva: se derivan los 5 niveles en backend
+    // (Single Source of Truth) y se adjuntan sin eliminar/renombrar campos.
+    const data = rows.map((row) => {
+      const plain = row.get({ plain: true });
+      return { ...plain, ...explainAlarm(plain) };
+    });
+
     res.json({
-      data: rows,
+      data,
       pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
     });
   } catch (err) {
@@ -89,6 +110,10 @@ router.patch('/:id/acknowledge', authenticate, async (req, res) => {
     if (!alarm) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Alarma no encontrada' });
     }
+    const device = await Device.findByPk(alarm.deviceId);
+    if (!device || !(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
     if (alarm.resolvedAt) {
       return res.status(400).json({ error: 'Alarma ya resuelta' });
     }
@@ -111,6 +136,10 @@ router.patch('/:id/resolve', authenticate, async (req, res) => {
     const alarm = await Alarm.findByPk(req.params.id);
     if (!alarm) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Alarma no encontrada' });
+    }
+    const device = await Device.findByPk(alarm.deviceId);
+    if (!device || !(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
     }
     if (alarm.resolvedAt) {
       return res.status(400).json({ error: 'Alarma ya resuelta' });

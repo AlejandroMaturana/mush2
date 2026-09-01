@@ -2,6 +2,7 @@
 
 **Fecha**: 2026-06-13 (actualizado 2026-07-25)
 **Estado**: Completado
+> **Actualización 2026-08 (refactor de Operations):** la página frontend de monitoreo fue retirada de la UI. Los endpoints `/monitoring/*` y los servicios de observabilidad permanecen a nivel backend.
 
 ## Contexto
 El sistema es distribuido: un ESP32-S3 en el borde generando telemetría y ejecutando comandos de actuadores, un backend Node.js procesando HTTP y ThingSpeak, y una base de datos PostgreSQL almacenando históricos. Se necesita trazabilidad para diagnosticar fallos en la cadena: sensor → firmware → HTTP → backend → DB → control → actuador.
@@ -25,8 +26,8 @@ Implementar logs estructurados vía Pino en backend, con JSON output en producci
 - **Centralización**: un solo punto de dispatch, no wiring directo en EventEmitter
 
 ### Monitoreo
-- **MonitoringPage** en frontend con métricas del sistema, salud de dispositivos, y logs filtrables
-- **Reset reason mapper**: backend normaliza código → string, frontend presenta
+- **Monitoreo (backend)**: endpoints `/monitoring/*` con métricas del sistema, salud de dispositivos y logs filtrables. La página frontend `MonitoringPage` fue retirada en el refactor de Operations (2026-08); los endpoints quedan disponibles para tooling/CLI y healthchecks
+- **Reset reason mapper**: backend normaliza código → string (el componente UI de presentación fue retirado con `MonitoringPage`)
 
 ## Consecuencias
 - **Logs persistentes**: Pino escribe a `backend/logs/backend.log` vía write stream
@@ -45,5 +46,5 @@ Implementar logs estructurados vía Pino en backend, con JSON output en producci
 - LogReaderService: `backend/src/services/logReaderService.js`
 - NotificationService: `backend/src/services/notifications/notificationService.js`
 - EmailProvider: `backend/src/services/notifications/emailProvider.js`
-- MonitoringPage: `frontend/src/features/monitoring/pages/MonitoringPage.jsx`
+- Monitoring endpoints: `backend/src/routes/monitoring.js` (sin página frontend desde 2026-08)
 - Documentation: `docs/operations/monitoring.md`

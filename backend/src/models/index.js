@@ -24,8 +24,10 @@ import BioactiveCompound from './BioactiveCompound.js';
 import PhaseTransition from './PhaseTransition.js';
 import DeviceMaintenance from './DeviceMaintenance.js';
 import BioactiveProfile from './BioactiveProfile.js';
+import RefreshToken from './RefreshToken.js';
+import ProvisioningToken from './ProvisioningToken.js';
 
-Device.hasMany(Sensor, { foreignKey: 'deviceId' });
+Device.hasMany(Sensor, { foreignKey: 'deviceId', onDelete: 'CASCADE' });
 Sensor.belongsTo(Device, { foreignKey: 'deviceId' });
 
 Device.hasMany(Telemetry, { foreignKey: 'deviceId' });
@@ -34,7 +36,10 @@ Telemetry.belongsTo(Device, { foreignKey: 'deviceId' });
 Sensor.hasMany(Telemetry, { foreignKey: 'sensorId' });
 Telemetry.belongsTo(Sensor, { foreignKey: 'sensorId' });
 
-Device.hasMany(Event, { foreignKey: 'deviceId' });
+// Cascada explícita en las asociaciones Device → hijo (ISSUE-006/PR-C):
+// al destruir un Device, Event/Alarm/Sensor siembran delete en su FK.
+// El handler DELETE los borra además explícitamente en transacción.
+Device.hasMany(Event, { foreignKey: 'deviceId', onDelete: 'CASCADE' });
 Event.belongsTo(Device, { foreignKey: 'deviceId' });
 
 Device.hasMany(Actuator, { foreignKey: 'deviceId' });
@@ -54,7 +59,7 @@ Device.hasMany(CultivationCycle, { foreignKey: 'deviceId' });
 CultivationCycle.belongsTo(Device, { foreignKey: 'deviceId' });
 
 Alarm.belongsTo(Device, { foreignKey: 'deviceId' });
-Device.hasMany(Alarm, { foreignKey: 'deviceId' });
+Device.hasMany(Alarm, { foreignKey: 'deviceId', onDelete: 'CASCADE' });
 Alarm.belongsTo(User, { foreignKey: 'acknowledgedBy', as: 'acknowledger' });
 User.hasMany(Alarm, { foreignKey: 'acknowledgedBy', as: 'acknowledgedAlarms' });
 
@@ -107,4 +112,7 @@ DeviceMaintenance.belongsTo(Device, { foreignKey: 'deviceId' });
 CultivationCycle.hasMany(BioactiveProfile, { foreignKey: 'cycleId' });
 BioactiveProfile.belongsTo(CultivationCycle, { foreignKey: 'cycleId' });
 
-export { Chamber, Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting, TelegramDeviceConfig, IntegrationCredentials, Subscription, DeviceHealth, SpeciesProfile, MedicinalProperty, BioactiveCompound, PhaseTransition, DeviceMaintenance, BioactiveProfile };
+User.hasMany(RefreshToken, { foreignKey: 'userId' });
+RefreshToken.belongsTo(User, { foreignKey: 'userId' });
+
+export { Chamber, Device, Sensor, Telemetry, Event, Actuator, Recipe, CultivationCycle, CycleState, User, AuditLog, UserChamberAccess, Alarm, ApiKey, UserPreference, SystemSetting, TelegramDeviceConfig, IntegrationCredentials, Subscription, DeviceHealth, SpeciesProfile, MedicinalProperty, BioactiveCompound, PhaseTransition, DeviceMaintenance, BioactiveProfile, RefreshToken, ProvisioningToken };

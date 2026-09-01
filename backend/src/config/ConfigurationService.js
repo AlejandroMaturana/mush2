@@ -63,6 +63,31 @@ export function validate(env) {
         'JWT_SECRET is required in production and must not be the default dev value.'
       );
     }
+
+    // ISSUE-020: AES data encryption requires a dedicated key, different from
+    // the signing secret. Reusing JWT_SECRET to encrypt at rest would couple
+    // rotation of the signing key to corruption of stored ciphertexts.
+    if (!env.DATA_ENC_KEY || env.DATA_ENC_KEY === '') {
+      errors.push(
+        'DATA_ENC_KEY is required in production and must not be empty.'
+      );
+    } else if (env.DATA_ENC_KEY === env.JWT_SECRET) {
+      errors.push(
+        'DATA_ENC_KEY must be different from JWT_SECRET. Do not reuse the signing secret for data encryption.'
+      );
+    }
+
+    // ISSUE-015 / ADR-023: TLS obligatorio para MQTT en producción.
+    // El default de env.js ya es mqtts:// en prod; fallar explícitamente
+    // ante una URL no-TLS evita telemetría/estado en claro.
+    const mqttUrl = env.MQTT?.brokerUrl || '';
+    const mqttScheme = (mqttUrl.match(/^([a-z]+):\/\//i) || [])[1] || '';
+    if (!['mqtts', 'tls', 'ssl'].includes(mqttScheme)) {
+      errors.push(
+        `MQTT_BROKER_URL must use TLS (mqtts://) in production. ` +
+        `Got: "${mqttUrl || '(not set)'}". Configure a TLS broker URL or fix NODE_ENV.`
+      );
+    }
   }
 
   // ── 4. Cross-environment detection (CRITICAL) ──────────────────

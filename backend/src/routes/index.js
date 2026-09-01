@@ -11,6 +11,7 @@ import settingsRouter from './settings.js';
 import diagnosticsRouter from './diagnostics.js';
 import eventsRouter from './events.js';
 import analyticsRouter from './analytics.js';
+import chambersRouter from './chambers.js';
 import telegramRouter from './telegram.js';
 import subscriptionsRouter from './subscriptions.js';
 import speciesRouter from './species.js';
@@ -26,20 +27,22 @@ router.use('/auth', authRouter);
 
 router.use('/admin', authenticate, checkApiRateLimit, requireMinRole('ADMIN'), adminRouter);
 
-router.use('/monitoring', monitoringRouter);
+router.use('/monitoring', authenticate, requireMinRole('ADMIN'), monitoringRouter);
+
+router.use('/settings', settingsRouter);
+router.use('/api-keys', apiKeysRouter);
+router.use('/subscriptions', subscriptionsRouter);
 
 router.use('/', optionalAuth, checkApiRateLimit, tenantScope, apiRouter);
-router.use('/', optionalAuth, checkApiRateLimit, tenantScope, recipesRouter);
 router.use('/actuators', optionalAuth, checkApiRateLimit, tenantScope, actuatorsRouter);
+router.use('/', authenticate, checkApiRateLimit, tenantScope, recipesRouter);
 router.use('/alarms', authenticate, checkApiRateLimit, tenantScope, alarmsRouter);
-router.use('/api-keys', apiKeysRouter);
-router.use('/settings', settingsRouter);
 router.use('/diag', authenticate, checkApiRateLimit, diagnosticsRouter);
 router.use('/events', eventsRouter);
 router.use('/chambers', analyticsRouter);
-router.use('/subscriptions', subscriptionsRouter);
+router.use('/chambers', authenticate, checkApiRateLimit, tenantScope, chambersRouter);
 router.use('/telegram', authenticate, checkApiRateLimit, telegramRouter);
-router.use('/species', optionalAuth, checkApiRateLimit, tenantScope, speciesRouter);
-router.use('/cycles', optionalAuth, checkApiRateLimit, tenantScope, cyclesRouter);
+router.use('/species', authenticate, checkApiRateLimit, tenantScope, speciesRouter);
+router.use('/cycles', authenticate, checkApiRateLimit, tenantScope, cyclesRouter);
 
 export default router;

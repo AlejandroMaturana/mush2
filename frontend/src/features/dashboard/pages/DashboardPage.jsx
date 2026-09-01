@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getDevices, getLatestTelemetry } from '../../../api/client.js'
+import { getDashboardSummary } from '../../../api/client.js'
 import { useSSE } from '../../../api/useSSE.js'
 import LoadingState from '../../../shared/components/LoadingState.jsx'
 import ErrorState from '../../../shared/components/ErrorState.jsx'
@@ -8,7 +8,7 @@ import StatusBadge from '../../../shared/components/StatusBadge.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 import DashboardGrid from '../../../shared/components/DashboardGrid.jsx'
-import { getPrimaryStatus, getStatusCssClass } from '../../../shared/constants/deviceStatus.js'
+import { PRIMARY_STATUS_CONFIG } from '../../../shared/components/CameraStatus.jsx'
 
 function SummaryCard({ label, value, icon, iconClass }) {
   return (
@@ -26,8 +26,11 @@ function SummaryCard({ label, value, icon, iconClass }) {
 
 function DeviceRow({ device, telemetry }) {
   const navigate = useNavigate()
-  const primary = getPrimaryStatus(device.status)
-  const dotClass = primary.config.cssClass
+  // D1/T8: consume el primario derivado por el backend (D2). El frontend NO
+  // reimplementa la precedencia; solo mapea presentación por primaryStatus.
+  const cfg = PRIMARY_STATUS_CONFIG[device.primaryStatus] || PRIMARY_STATUS_CONFIG['DATOS_NO_DISPONIBLES']
+  const label = device.primaryLabel || device.primaryStatus || 'Datos no disponibles'
+  const tone = cfg.tone
   return (
     <tr
       className="card-clickable"
@@ -35,7 +38,7 @@ function DeviceRow({ device, telemetry }) {
     >
       <td style={{ padding: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span className={`status-dot ${dotClass}`} />
+          <span className={`status-dot ${tone}`} />
           <div>
             <div style={{ fontWeight: 600, color: 'var(--on-surface)' }}>{device.chamberName || device.deviceId}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--outline)', marginTop: '2px' }}>
@@ -45,7 +48,12 @@ function DeviceRow({ device, telemetry }) {
         </div>
       </td>
       <td style={{ padding: '12px' }}>
-        <StatusBadge status={dotClass} label={primary.config.label} />
+        <StatusBadge status={tone} label={label} />
+        {device.primaryReason && (
+          <div style={{ fontSize: '10px', color: 'var(--on-surface-variant)', marginTop: '2px' }}>
+            {device.primaryReason}
+          </div>
+        )}
       </td>
       <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--on-surface-variant)' }}>
         {telemetry?.temperature != null ? (
@@ -88,15 +96,14 @@ function Dashboard() {
 
   async function fetchData() {
     try {
-      const devs = await getDevices()
-      if (cancelledRef.current) return
-      setDevices(devs)
-
-      const allTel = await Promise.all(devs.map(d => getLatestTelemetry(d.deviceId).catch(() => null)))
+      // D1/T9: una única petición agregada devuelve estado D2 + última
+      // telemetría por cámara (elimina el N+1 de getLatestTelemetry).
+      const devs = await getDashboardSummary()
       if (cancelledRef.current) return
 
       const map = {}
-      devs.forEach((d, i) => { map[d.id] = allTel[i] })
+      devs.forEach(d => { map[d.id] = d.latestTelemetry || {} })
+      setDevices(devs)
       setTelemetryMap(map)
       setError(null)
     } catch (err) {
@@ -125,11 +132,16 @@ function Dashboard() {
         setTelemetryMap(prev => ({ ...prev, [dev.id]: { ...prev[dev.id], ...update } }))
       }
     } else if (type === 'device_status_changed') {
-      setDevices(prev => prev.map(d =>
-        d.deviceId === data.deviceId
-          ? { ...d, status: data.status, lastSeen: data.lastSeenAt }
-          : d
-      ))
+      // D1/T8: el derivado (primaryStatus) vive en backend; el evento SSE solo
+      // trae `status`. Se re-fetcha el resumen agregado (D1/T9) para no
+      // recomputar la precedencia en frontend ni repetir N+1.
+      getDashboardSummary().then(devs => {
+        if (cancelledRef.current) return
+        const map = {}
+        devs.forEach(d => { map[d.id] = d.latestTelemetry || {} })
+        setDevices(devs)
+        setTelemetryMap(map)
+      }).catch(() => {})
     }
   }, [devices]))
 
@@ -138,8 +150,13 @@ function Dashboard() {
     return <ErrorState message={error} onRetry={fetchData} />
   }
 
-  const onlineCount = devices.filter(d => d.status?.connectivity === 'ONLINE').length
-  const offlineCount = devices.filter(d => d.status?.connectivity === 'OFFLINE').length
+  // D1/T8 — los resúmenes se agregan por primaryStatus (estado derivado D2),
+  // NO por ejes crudos: así RETIRADA/EN MANTENIMIENTO/PROVISIONANDO no se
+  // malclasifican y cada cámara se cuenta según su estado principal (M0.2 §12).
+  const onlineSet = new Set(['OPERATIVA', 'AVISO'])
+  const offlineSet = new Set(['SIN CONEXIÓN', 'RETIRADA'])
+  const onlineCount = devices.filter(d => onlineSet.has(d.primaryStatus)).length
+  const offlineCount = devices.filter(d => offlineSet.has(d.primaryStatus)).length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

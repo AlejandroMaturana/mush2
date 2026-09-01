@@ -15,20 +15,18 @@ graph TB
         FW_HEALTH["health_monitor<br/>Heap/stacks/I2C/sensors"]
         FW_SMFB["taskButton<br/>SMFB: short/long/double"]
         FW_OTA["ota_decisor + executor<br/>4-capas + SHA-256"]
-        FW_TS["thingspeak_client<br/>HTTP GET cada 20s"]
         FW_TELEMETRY["telemetry_buffer<br/>RAM ring + SPIFFS spill"]
     end
 
     subgraph Backend["Backend (Node.js 20+ / Express 5)"]
         direction TB
         BE_API["API REST (JWT)<br/>19 rutas"]
-        BE_SSE["SSE Server<br/>EventSource"]
+        BE_WS["WS Server<br/>EventSource"]
         BE_MQTT["mqttBridge.js<br/>Conexión broker"]
         BE_CONTROL["controlEngine.js<br/>Evaluación cada 8s"]
         BE_PHASE["phaseEvaluator.js<br/>Transiciones de fase"]
         BE_HEALTH["deviceHealthService.js<br/>Health + Maintenance"]
         BE_NOTIFY["notificationService.js<br/>Email + Telegram + Webhook"]
-        BE_THINGSPEAK["thingSpeakSync.js<br/>Backfill datos"]
         BE_EVENTBUS["eventBus.js<br/>In-memory pub/sub"]
         BE_AUDIT["auditService.js<br/>Audit trail"]
         BE_ENCRYPT["encryption.js<br/>AES-256-GCM"]
@@ -43,7 +41,7 @@ graph TB
     subgraph Frontend["Frontend (React 18 / Vite)"]
         direction TB
         FE_DASH["DashboardPage"]
-        FE_MONITOR["MonitoringPage<br/>Health + Maintenance"]
+        FE_ANALYTICS["DeviceAnalyticsPage<br/>Riesgos + condiciones ambientales"]
         FE_DEVICE["DeviceDetailPage"]
         FE_CYCLES["CyclesPage"]
         FE_RECIPES["RecipesPage"]
@@ -53,7 +51,6 @@ graph TB
     end
 
     subgraph External["Servicios Externos"]
-        TS["ThingSpeak<br/>Respaldo telemetría"]
         MQTT_BROKER["Mosquitto<br/>MQTT Broker"]
     end
 
@@ -72,18 +69,17 @@ graph TB
     BE_HEALTH --> DB
 
     %% Backend → Frontend
-    BE_SSE -->|"SSE events"| FE_SSE
+    BE_WS -->|"SSE events"| FE_SSE
     BE_API -->|"REST API"| FE_CLIENT
 
     %% Backend → External
-    FW_TS -->|"HTTP GET cada 20s"| TS
-    BE_THINGSPEAK -->|"Backfill"| TS
+    BE_MQTT -->|"mqtts://broker"| MQTT_BROKER
 
     %% Internal Backend
     BE_MQTT --> BE_EVENTBUS
     BE_CONTROL --> BE_EVENTBUS
     BE_HEALTH --> BE_NOTIFY
-    BE_EVENTBUS --> BE_SSE
+    BE_EVENTBUS --> BE_WS
 
     %% Estilos
     classDef firmware fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
@@ -92,8 +88,8 @@ graph TB
     classDef frontend fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
     classDef external fill:#fce4ec,stroke:#c62828,stroke-width:2px
 
-    class FW_MAIN,FW_WIFI,FW_HTTP,FW_MQTT,FW_SENSOR,FW_SSR,FW_HYSTERESIS,FW_STATE,FW_HEALTH,FW_SMFB,FW_OTA,FW_TS,FW_TELEMETRY firmware
-    class BE_API,BE_SSE,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_THINGSPEAK,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
+    class FW_MAIN,FW_WIFI,FW_HTTP,FW_MQTT,FW_SENSOR,FW_SSR,FW_HYSTERESIS,FW_STATE,FW_HEALTH,FW_SMFB,FW_OTA,FW_TELEMETRY firmware
+    class BE_API,BE_WS,BE_MQTT,BE_CONTROL,BE_PHASE,BE_HEALTH,BE_NOTIFY,BE_EVENTBUS,BE_AUDIT,BE_ENCRYPT,BE_PINO,BE_ROUTES backend
     class DB db
-    class FE_DASH,FE_MONITOR,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
-    class TS,MQTT_BROKER external
+    class FE_DASH,FE_ANALYTICS,FE_DEVICE,FE_CYCLES,FE_RECIPES,FE_ALARMS,FE_SSE,FE_CLIENT frontend
+    class MQTT_BROKER external

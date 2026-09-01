@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react'
+import { setAccessToken, clearAccessToken, getAccessToken } from '../../shared/api/tokenStore'
+import { logout as apiLogout } from '../../features/auth/api/auth'
 
 const AuthContext = createContext(null)
 
@@ -8,30 +10,27 @@ export function AuthProvider({ children }) {
     return stored ? JSON.parse(stored) : null
   })
 
-  const login = useCallback((userData, accessToken, refreshToken) => {
+  const login = useCallback((userData, accessToken) => {
     setUser(userData)
     localStorage.setItem('mush2_user', JSON.stringify(userData))
-    localStorage.setItem('mush2_access_token', accessToken)
-    localStorage.setItem('mush2_refresh_token', refreshToken)
+    setAccessToken(accessToken)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await apiLogout()
+    } catch (err) {
+      console.error('Backend logout failed (best-effort):', err)
+    }
     setUser(null)
     localStorage.removeItem('mush2_user')
-    localStorage.removeItem('mush2_access_token')
-    localStorage.removeItem('mush2_refresh_token')
+    clearAccessToken()
   }, [])
 
-  const getToken = useCallback(() => {
-    return localStorage.getItem('mush2_access_token')
-  }, [])
-
-  const getRefreshToken = useCallback(() => {
-    return localStorage.getItem('mush2_refresh_token')
-  }, [])
+  const getToken = useCallback(() => getAccessToken(), [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, getToken, getRefreshToken }}>
+    <AuthContext.Provider value={{ user, login, logout, getToken }}>
       {children}
     </AuthContext.Provider>
   )

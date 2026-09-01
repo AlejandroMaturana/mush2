@@ -1,19 +1,53 @@
 import { Op } from 'sequelize';
 import crypto from 'crypto';
 import express from 'express';
-import { Device, Telemetry, Actuator, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
+import rateLimit from 'express-rate-limit';
+import sequelize from '../config/database.js';
+import { Device, Event, Alarm, Sensor, Telemetry, Actuator, TelegramDeviceConfig, UserChamberAccess, CultivationCycle, CycleState, Recipe, IntegrationCredentials, DeviceHealth, DeviceMaintenance } from '../models/index.js';
 import { checkDeviceAccess } from '../middlewares/tenant.js';
+import { requireProvisioningAuth } from '../middlewares/provisioningAuth.js';
 import { logAudit } from '../services/auditService.js';
 import { sendActuatorUpdate } from '../services/webSocketServer.js';
 import { publishActuatorCommand } from '../services/mqttBridge.js';
-import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, recordOutgoing } from '../services/deviceHealthService.js';
+import { getHealthInfo, setMaintenanceMode, getStatusFromDevice, buildHealthPayload, getSecondsSinceLastSeen, getLatestHealth, getLatestHealthByDeviceIds, recordOutgoing } from '../services/deviceHealthService.js';
+import { derivePrimaryStatus } from '../services/cameraStatusSemantics.js';
 import MosquittoProvisioningService from '../services/mosquittoProvisioningService.js';
+import { refundProvisioningToken } from '../services/provisioningTokenService.js';
+import { normalizeLimit } from '../utils/pagination.js';
 import { createChildLogger } from '../config/pino.js';
-import { env } from '../config/env.js';
 
 const log = createChildLogger('API');
 const router = express.Router();
 const mqttProvisioner = new MosquittoProvisioningService();
+
+// ── D2: enriquecimiento semántico no destructivo (M0.2 §9) ──────────
+// Añade los campos derivados (primaryStatus/primaryLabel/primaryReason/
+// secondaryStates) al payload de un device SIN eliminar ningún campo
+// existente (status, secondsSinceLastSeen, diagnostics, etc.).
+function enrichDeviceJson(json, latestHealth) {
+  const derived = derivePrimaryStatus(json.status, { health: latestHealth });
+  json.primaryStatus = derived.primaryStatus;
+  json.primaryLabel = derived.primaryLabel;
+  json.primaryReason = derived.primaryReason;
+  json.secondaryStates = derived.secondaryStates;
+  return json;
+}
+
+// Rate limit por IP para el registro de dispositivos anónimos (ISSUE-001).
+// Los usuarios autenticados quedan gobernados por su plan (checkApiRateLimit).
+// La cuota del token de aprovisionamiento es la protección primaria contra la
+// acuñación; este límite por IP solo mitiga el martilleo de peticiones.
+const registerRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  limit: parseInt(process.env.REGISTER_RATE_LIMIT_PER_MINUTE || '100', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => Boolean(req.user),
+  handler: (req, res) => res.status(429).json({
+    error: 'Demasiados intentos de registro',
+    code: 'RATE_LIMIT_EXCEEDED',
+  }),
+});
 
 router.get('/devices', async (req, res) => {
   try {
@@ -24,17 +58,79 @@ router.get('/devices', async (req, res) => {
         { userId: null },
       ];
     }
-    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']] });
-    const enriched = await Promise.all(devices.map(async d => {
+    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']], limit: normalizeLimit(req.query.limit) });
+    const healthByDevice = await getLatestHealthByDeviceIds(devices.map(d => d.id));
+    const enriched = devices.map(d => {
       const json = d.toJSON();
-      const latestHealth = await getLatestHealth(d.id);
+      const latestHealth = healthByDevice.get(d.id);
       json.status = getStatusFromDevice(d, latestHealth);
       json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
-      return json;
-    }));
+      return enrichDeviceJson(json, latestHealth);
+    });
     res.json({ data: enriched });
   } catch (err) {
     log.error({ module: 'DEVICES', event: 'LIST_ERROR', error: err.message }, 'Error listing devices');
+    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+// ── D1/T9: endpoint agregado del dashboard (resuelve H-5 N+1) ────────
+// Una sola petición devuelve, por cámara del usuario, el estado derivado D2
+// (primaryStatus/primaryLabel/primaryReason/secondaryStates) + la última
+// telemetría, evitando N+1 cliente al volcar a /devices/:id/telemetry/latest.
+// Endpoint NUEVO y aditivo: NO modifica el contrato de `/devices`.
+function aggregateLatestTelemetry(rows) {
+  const byDevice = new Map();
+  for (const row of rows) {
+    if (!byDevice.has(row.deviceId)) byDevice.set(row.deviceId, {});
+    const map = byDevice.get(row.deviceId);
+    const key = row.sensorType.toLowerCase();
+    map[key] = parseFloat(row.value);
+    map[`${key}_unit`] = row.unit;
+    map.ts = row.timestamp;
+  }
+  return byDevice;
+}
+export { aggregateLatestTelemetry };
+
+router.get('/dashboard/summary', async (req, res) => {
+  try {
+    const where = {};
+    if (req.tenant && req.tenant.userId) {
+      where[Op.or] = [
+        { userId: req.tenant.userId },
+        { userId: null },
+      ];
+    }
+    const devices = await Device.findAll({ where, order: [['updatedAt', 'DESC']], limit: normalizeLimit(req.query.limit) });
+    const deviceIds = devices.map(d => d.id);
+
+    const [healthByDevice, telRows] = await Promise.all([
+      getLatestHealthByDeviceIds(deviceIds),
+      deviceIds.length
+        ? Telemetry.sequelize.query(`
+            SELECT DISTINCT ON (t."deviceId", t."sensorType") t."deviceId", t."sensorType", t.value, t.unit, t."timestamp"
+            FROM telemetry t
+            WHERE t."deviceId" = ANY($1)
+            ORDER BY t."deviceId", t."sensorType", t."timestamp" DESC
+          `, { bind: [deviceIds] })
+        : Promise.resolve([[], {}]),
+    ]);
+
+    const telByDevice = aggregateLatestTelemetry(telRows?.[0] || []);
+
+    const enriched = devices.map(d => {
+      const json = d.toJSON();
+      const latestHealth = healthByDevice.get(d.id);
+      json.status = getStatusFromDevice(d, latestHealth);
+      json.secondsSinceLastSeen = getSecondsSinceLastSeen(d);
+      enrichDeviceJson(json, latestHealth);
+      json.latestTelemetry = telByDevice.get(d.id) || {};
+      return json;
+    });
+    res.json({ data: enriched });
+  } catch (err) {
+    log.error({ module: 'DASHBOARD', event: 'SUMMARY_ERROR', error: err.message }, 'Error building dashboard summary');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
 });
@@ -88,10 +184,12 @@ router.post('/devices', async (req, res) => {
   }
 });
 
-router.post('/devices/register', async (req, res) => {
+router.post('/devices/register', registerRateLimit, requireProvisioningAuth, async (req, res) => {
+  const provisionToken = req.provisionToken;
   try {
     const { deviceId, macAddress, firmwareVersion, hwRevision } = req.body;
     if (!deviceId) {
+      if (provisionToken) await refundProvisioningToken(provisionToken.id);
       return res.status(400).json({ error: 'deviceId requerido' });
     }
 
@@ -120,12 +218,9 @@ router.post('/devices/register', async (req, res) => {
         mqttCredentials = { user: mqttUser, pass: mqttPass };
         log.info({ event: 'MQTT_PROVISIONED', deviceId, mqttUser }, `MQTT credentials generated for ${deviceId}`);
 
-        // Mosquitto no hot-reloada password_file: sin reload el broker sigue
-        // rechazando al usuario recién provisionado (ADR-029).
-        const reloadResult = await mqttProvisioner.reload();
-        if (!reloadResult.ok) {
-          log.error({ event: 'MQTT_RELOAD_FAILED', deviceId, error: reloadResult.error }, 'Credentials provisioned but broker reload failed');
-        }
+        // Mosquitto 2.x recarga password_file y acl_file con SIGHUP sin
+        // reiniciar (recarga idempotente en job con debounce, ISSUE-001).
+        mqttProvisioner.scheduleReload();
       } else {
         log.error({ event: 'MQTT_PROVISION_FAILED', deviceId, error: provResult.error }, 'Failed to provision MQTT credentials');
       }
@@ -147,6 +242,7 @@ router.post('/devices/register', async (req, res) => {
 
     res.status(created ? 201 : 200).json(response);
   } catch (err) {
+    if (provisionToken) await refundProvisioningToken(provisionToken.id);
     log.error({ module: 'REGISTER', event: 'REGISTER_ERROR', error: err.message }, 'Error registering device');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
   }
@@ -205,6 +301,7 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
     const latestHealth = await getLatestHealth(req.device.id);
     json.status = getStatusFromDevice(req.device, latestHealth);
     json.secondsSinceLastSeen = getSecondsSinceLastSeen(req.device);
+    enrichDeviceJson(json, latestHealth);
     res.json(json);
   } catch (err) {
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -214,7 +311,7 @@ router.get('/devices/:id', checkDeviceAccess, async (req, res) => {
 router.patch('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = req.device;
-    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'thingSpeakEnabled', 'thingSpeakChannelId', 'thingSpeakReadKey', 'thingSpeakWriteKey', 'thingSpeakSyncInterval', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
+    const allowed = ['chamberName', 'chamberLocation', 'chamberId', 'ssrActiveLow', 'firmwareVersion', 'hwRevision', 'heartbeatInterval', 'staleMultiplier', 'offlineMultiplier'];
     const updates = {};
     for (const field of allowed) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -276,8 +373,8 @@ router.get('/devices/:id/telemetry/latest', checkDeviceAccess, async (req, res) 
 
 router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
   try {
-    const { sensorType, from, to, limit = 8000, resolution } = req.query;
-    const limitNum = parseInt(limit, 10);
+    const { sensorType, from, to, limit, resolution } = req.query;
+    const limitNum = normalizeLimit(limit, 100);
 
     if (resolution && parseInt(resolution) > 0) {
       const resMin = parseInt(resolution);
@@ -340,7 +437,7 @@ router.get('/devices/:id/telemetry', checkDeviceAccess, async (req, res) => {
 
 router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
   try {
-    const { from, to, limit = 100 } = req.query;
+    const { from, to, limit } = req.query;
     const where = { deviceId: req.device.id };
     if (from || to) {
       where.timestamp = {};
@@ -350,7 +447,7 @@ router.get('/devices/:id/health', checkDeviceAccess, async (req, res) => {
     const data = await DeviceHealth.findAll({
       where,
       order: [['timestamp', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: normalizeLimit(limit, 100),
     });
     res.json({ data });
   } catch (err) {
@@ -389,10 +486,10 @@ router.patch('/devices/:id/actuators/:channel', checkDeviceAccess, async (req, r
       return res.status(400).json({ error: 'VALIDATION', message: 'command debe ser ON u OFF' });
     }
 
-    const [actuator] = await Actuator.findOrCreate({
-      where: { deviceId: device.id, channel },
-      defaults: { deviceId: device.id, channel, state: command, mode: 'REMOTE' },
-    });
+    let actuator = await Actuator.findOne({ where: { deviceId: device.id, channel } });
+    if (!actuator) {
+      actuator = await Actuator.create({ deviceId: device.id, channel, state: command, mode: 'REMOTE' });
+    }
     await actuator.update({
       state: command === 'ON' ? 'ON' : 'OFF',
       mode: 'REMOTE',
@@ -489,18 +586,28 @@ router.delete('/devices/:id', checkDeviceAccess, async (req, res) => {
   try {
     const device = req.device;
 
-    const cycles = await CultivationCycle.findAll({ where: { deviceId: device.id }, attributes: ['id'] });
-    for (const cycle of cycles) {
-      await CycleState.destroy({ where: { cycleId: cycle.id } });
-    }
-    await CultivationCycle.destroy({ where: { deviceId: device.id } });
-    await Actuator.destroy({ where: { deviceId: device.id } });
-    await Telemetry.destroy({ where: { deviceId: device.id } });
-    await DeviceHealth.destroy({ where: { deviceId: device.id } });
-    await DeviceMaintenance.destroy({ where: { deviceId: device.id } });
-    await IntegrationCredentials.destroy({ where: { deviceId: device.id } });
-    await UserChamberAccess.destroy({ where: { deviceId: device.id } });
-    await device.destroy();
+    // Borrado transaccional (ISSUE-006/PR-C): atomicidad — si cualquier paso
+    // falla, el rollback deja el Device y su historial intactos. Cascada
+    // explícita en orden: los hijos de Device se eliminan antes que el padre,
+    // cubriendo TODAS las tablas con FK deviceId (contrato api-contract §4).
+    await sequelize.transaction(async (t) => {
+      const cycles = await CultivationCycle.findAll({ where: { deviceId: device.id }, attributes: ['id'], transaction: t });
+      for (const cycle of cycles) {
+        await CycleState.destroy({ where: { cycleId: cycle.id }, transaction: t });
+      }
+      await CultivationCycle.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Event.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Alarm.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Sensor.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Actuator.destroy({ where: { deviceId: device.id }, transaction: t });
+      await Telemetry.destroy({ where: { deviceId: device.id }, transaction: t });
+      await DeviceHealth.destroy({ where: { deviceId: device.id }, transaction: t });
+      await DeviceMaintenance.destroy({ where: { deviceId: device.id }, transaction: t });
+      await IntegrationCredentials.destroy({ where: { deviceId: device.id }, transaction: t });
+      await TelegramDeviceConfig.destroy({ where: { deviceId: device.id }, transaction: t });
+      await UserChamberAccess.destroy({ where: { deviceId: device.id }, transaction: t });
+      await device.destroy({ transaction: t });
+    });
 
     if (req.user) {
       await logAudit({
@@ -518,42 +625,6 @@ router.delete('/devices/:id', checkDeviceAccess, async (req, res) => {
   }
 });
 
-router.post('/devices/:id/thingSpeak/validate', checkDeviceAccess, async (req, res) => {
-  try {
-    const { apiKey } = req.body;
-    if (!apiKey) {
-      return res.status(400).json({ error: 'apiKey requerida' });
-    }
-
-    const host = env.TS.host;
-    const response = await fetch(`https://${host}/channels.json?api_key=${apiKey}`, {
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!response.ok) {
-      return res.status(401).json({ error: 'API key inválida o expirada', valid: false });
-    }
-
-    const channels = await response.json();
-    const channelList = channels.map(ch => ({
-      id: ch.id,
-      name: ch.name,
-      description: ch.description,
-      readKey: ch.api_keys?.find(k => k.read_flag && !k.write_flag)?.api_key || null,
-      writeKey: ch.api_keys?.find(k => k.write_flag && !k.read_flag)?.api_key || null,
-      lastEntryId: ch.last_entry_id,
-      createdAt: ch.created_at,
-    }));
-
-    res.json({ valid: true, channels: channelList });
-  } catch (err) {
-    if (err.name === 'TimeoutError') {
-      return res.status(504).json({ error: 'Timeout al conectar con ThingSpeak' });
-    }
-    res.status(500).json({ error: 'Error validando ThingSpeak', details: err.message });
-  }
-});
-
 router.get('/devices/:id/integrations', checkDeviceAccess, async (req, res) => {
   try {
     const list = await IntegrationCredentials.findAll({
@@ -566,47 +637,9 @@ router.get('/devices/:id/integrations', checkDeviceAccess, async (req, res) => {
   }
 });
 
-router.post('/devices/:id/integrations/thingspeak', checkDeviceAccess, async (req, res) => {
-  try {
-    const { channelId, readKey, writeKey, syncInterval } = req.body;
-    if (!channelId) {
-      return res.status(400).json({ error: 'channelId requerido' });
-    }
-
-    const instance = await IntegrationCredentials.setCredentials(req.device.id, 'THINGSPEAK', {
-      channelId,
-      readKey: readKey || '',
-      writeKey: writeKey || '',
-      syncInterval: syncInterval || 300000,
-    });
-
-    await Device.update({
-      thingSpeakEnabled: true,
-      thingSpeakChannelId: channelId,
-      thingSpeakReadKey: readKey || null,
-      thingSpeakWriteKey: writeKey || null,
-      thingSpeakSyncInterval: syncInterval || 300000,
-    }, { where: { id: req.device.id } });
-
-    if (req.user) {
-      await logAudit({
-        userId: req.user.id,
-        action: 'INTEGRATION_UPDATE',
-        resource: 'integration',
-        resourceId: instance.id,
-        details: { deviceId: req.device.deviceId, provider: 'THINGSPEAK' },
-      });
-    }
-
-    res.json({ data: { id: instance.id, provider: 'THINGSPEAK', status: instance.status } });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
 router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
   try {
-    const { component, from, to, limit = 100 } = req.query;
+    const { component, from, to, limit } = req.query;
     const where = { deviceId: req.device.id };
     if (component) where.component = component;
     if (from || to) {
@@ -617,7 +650,7 @@ router.get('/devices/:id/maintenance', checkDeviceAccess, async (req, res) => {
     const data = await DeviceMaintenance.findAll({
       where,
       order: [['timestamp', 'DESC']],
-      limit: parseInt(limit, 10),
+      limit: normalizeLimit(limit, 100),
     });
     res.json({ data });
   } catch (err) {

@@ -2,6 +2,12 @@
 
 > Actualizado: 2026-07-23 — Mush2 v1.8.0 — Fases 0-9 completadas
 
+> **Fuente única (DECISION-010, 2026-08-07):** Roadmap-V2 (`ultimate-roadmap2.md`) es
+> la fuente única de fases. Este documento (fases 0–9, 2026-07-23) queda como **registro
+> histórico** junto con `docs/roadmap/milestone.md` (fases 0–10, 2026-07-25); su
+> contenido puede no reflejar el proceso de madurez actual (Programas 1–11, DECISION-NNN,
+> engineering-backlog).
+
 El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se construyen slices verticales completos, después se endurece y finalmente se industrializa. Tras la refundación (ADR-019 a ADR-022), el foco está en reescribir el backend siguiendo arquitectura domain-first antes de añadir nuevas capacidades.
 
 ---
@@ -297,7 +303,7 @@ El orden de las fases minimiza retrabajo: primero se fijan contratos, luego se c
 - [x] Backend: endpoint `GET /monitoring/logs` con filtros por nivel/componente
 - [x] Backend: notificaciones por email (alarmas CRITICAL + WARNING) vía nodemailer
 - [x] Backend: health check por nodo (última telemetría, estado MQTT, watchdog)
-- [x] Frontend: página `/monitoring` con estado de salud del sistema
+- [x] Frontend: página `/monitoring` con estado de salud del sistema (retirada de la UI en refactor de Operations 2026-08; endpoints `/monitoring/*` permanecen para tooling)
 - [x] Docs: `docs/operations/monitoring.md` — Guía de monitoreo y alertas
 
 ### Capacidades futuras del Fail-Safe

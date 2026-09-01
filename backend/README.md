@@ -74,7 +74,6 @@ src/
 │   ├── controlEngine.js     # Motor de control ambiental
 │   ├── auditService.js      # Logging de acciones
 │   ├── encryptionService.js # AES-256 para secretos
-│   └── thingSpeakSync.js    # Telemetría backupea ThingSpeak
 ├── middlewares/              # Middleware Express
 │   ├── auth.js              # Autenticación JWT
 │   ├── rbac.js              # Control de acceso por rol
@@ -232,7 +231,7 @@ router.get('/admin/users', authenticate, requireMinRole('ADMIN'), controller);
 ### Secretos
 
 - **NUNCA** comitear `.env` con valores reales
-- Variables sensibles: `JWT_SECRET`, `DB_PASSWORD`, `TS_API_KEY`
+- Variables sensibles: `JWT_SECRET`, `DB_PASSWORD`
 - En producción: usar AWS Secrets Manager, Azure Key Vault, o HashiCorp Vault
 - Cifrado AES-256 para datos sensibles persistidos
 

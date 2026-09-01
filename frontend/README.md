@@ -1,167 +1,96 @@
 # Frontend — Mush2
 
-Dashboard React en tiempo real para monitoreo y control de cultivos de hongos adaptógenos. Visualiza telemetría en tiempo real, gestiona recetas, controla actuadores remotamente.
+Dashboard React en tiempo real para monitoreo y control de cultivos de hongos adaptógenos.
 
-## 📋 Stack Tecnológico
+## Stack
 
 | Componente | Versión | Propósito |
 |---|---|---|
-| **Framework** | React 18 | UI library |
-| **Bundler** | Vite | Build tool (fast HMR) |
-| **Lenguaje** | JavaScript (ES2022) | Frontend logic |
-| **Styling** | CSS Modules + CSS Grid | UI styling |
-| **Charts** | Chart.js 4 | Visualización de telemetría |
-| **HTTP** | Fetch API / axios | Comunicación con backend |
-| **Testing** | Vitest + React Testing Library | Tests unitarios |
-| **Dev Server** | Vite dev server | Local development |
+| React | 18.x | UI library |
+| Vite | 6.x | Build tool |
+| Tailwind | 4.x | Utility CSS |
+| Chart.js | 4.x | Telemetry charts |
+| axios | 1.x | HTTP client |
+| Vitest | 3.x | Testing |
 
-## 🚀 Inicio Rápido
-
-### Requisitos
-
-- Node.js 18.x o superior
-- pnpm (gestor de paquetes)
-- Backend corriendo en http://localhost:3797
-
-### Instalación
+## Inicio Rápido
 
 ```bash
-# 1. Instalar dependencias
 cd frontend
 pnpm install
-
-# 2. Configurar variables de entorno
-# No requiere variables de entorno (usa defaults y proxy Vite a localhost:3797)
-
-# 3. Iniciar servidor de desarrollo
-pnpm run dev
-# Accede en http://localhost:5173
+pnpm run dev    # http://localhost:5173
 ```
 
-## 📚 Estructura del Proyecto
+Requiere backend corriendo en `http://localhost:3797`.
+
+## Comandos
+
+```bash
+pnpm run dev        # Dev server (puerto 5173)
+pnpm run build      # Build → dist/
+pnpm run preview    # Preview build
+pnpm test           # Tests (vitest)
+pnpm run lint       # ESLint
+```
+
+## Estructura
 
 ```
 src/
-├── main.jsx                  # Entry point
-├── App.jsx                   # Root component + routing
-├── index.css                 # Global styles
-├── pages/                    # Page components (layouts)
-│   ├── Dashboard.jsx         # Dashboard principal
-│   ├── RecipeList.jsx        # Listado de recetas
-│   ├── CycleManager.jsx      # Gestión de ciclos
-│   ├── DeviceList.jsx        # Dispositivos
-│   └── Login.jsx             # Autenticación
-├── components/               # Componentes reutilizables
-│   ├── DeviceCard.jsx        # Card de dispositivo
-│   ├── SensorChart.jsx       # Gráfico de telemetría
-│   ├── AlarmBanner.jsx       # Banner de alarmas
-│   ├── Header.jsx            # Navbar
-│   └── Sidebar.jsx           # Navegación lateral
-├── api/                      # Servicios HTTP
-│   ├── client.js             # Configuración fetch
-│   ├── auth.js               # Endpoints de autenticación
-│   ├── devices.js            # Endpoints de dispositivos
-│   └── recipes.js            # Endpoints de recetas
-├── hooks/                    # Custom React hooks
-│   ├── useFetchDevices.js    # Hook para obtener dispositivos
-│   ├── useAuth.js            # Hook de autenticación
-│   └── useLocalStorage.js    # Persistencia local
-├── context/                  # Context API
-│   ├── AuthContext.jsx       # Autenticación global
-│   └── ThemeContext.jsx      # Tema (light/dark)
-├── utils/                    # Funciones auxiliares
-│   ├── formatDate.js         # Formatos de fecha
-│   ├── validators.js         # Validación de formularios
-│   └── constants.js          # Constantes globales
-└── __tests__/                # Suite de tests
-    ├── components/
-    └── hooks/
+├── main.jsx                          # Entry point + providers
+├── App.jsx                           # Router + layout
+├── api/
+│   ├── client.js                     # Re-exports (axiosInstance + feature APIs)
+│   ├── useSSE.js                     # SSE singleton (auth + backoff)
+│   └── AuthContext.jsx               # Re-export to AuthProvider
+├── app/
+│   ├── providers/
+│   │   ├── AuthProvider.jsx          # Auth context (JWT in-memory)
+│   │   ├── ThemeProvider.jsx         # Theme (dark/light)
+│   │   └── AlarmProvider.jsx         # Alarm stats (SSE-driven)
+│   └── routes.jsx                    # Route definitions
+├── features/
+│   ├── auth/api/auth.js              # Login/logout/refresh
+│   ├── devices/
+│   │   ├── api/devices.js            # Device CRUD + actuators
+│   │   ├── components/               # DeviceConnectivityPanel, ToggleSwitch, ActuatorControl
+│   │   └── pages/                    # DeviceListPage, DeviceDetailPage, ProvisioningPage
+│   ├── cultivation/
+│   │   ├── api/cycles.js             # Cycles + bioactives
+│   │   ├── components/               # CompoundBar, SpeciesCard
+│   │   └── pages/                    # CyclesPage, CycleDetailPage, BioactiveDashboardPage
+│   ├── events/pages/                 # EventsPage
+│   ├── analytics/pages/              # DeviceAnalyticsPage
+│   ├── alarms/                       # AlarmsPage + API
+│   ├── settings/                     # SettingsPage + UserSettings + SystemSettings
+│   └── monitoring/pages/             # MonitoringPage
+├── shared/
+│   ├── api/axiosInstance.js           # Axios with auth interceptor + refresh single-flight
+│   ├── components/                   # ToggleSwitch, StatusBadge, Panel, LoadingState, etc.
+│   ├── constants/deviceStatus.js     # Status configs + derived helpers
+│   └── utils/
+│       ├── format.js                 # formatDate, formatBytes, formatUptime, formatTimeAgo
+│       └── TemporalEngine.js         # Telemetry aggregation + chart formatting
+└── styles/                           # CSS (Tailwind + custom)
 ```
 
-## 🎨 Componentes Principales
-
-### Dashboard
-
-Página de inicio: visualiza dispositivos, ciclos activos y alarmas.
-
-```jsx
-<Dashboard>
-  ├── <DeviceGrid>
-  │   └── <DeviceCard>
-  │       ├── <SensorChart> (temp, humedad, CO2)
-  │       └── <ActuatorControls>
-  └── <AlarmBanner>
-```
-
-### Real-time Updates
-
-Server-Sent Events para actualizaciones en vivo:
-
-```javascript
-const eventSource = new EventSource('/api/v1/events');
-eventSource.addEventListener('telemetry', (e) => {
-  const data = JSON.parse(e.data);
-  updateChart(data);
-});
-```
-
-## 🔌 Integración con Backend
-
-### API Client
-
-```javascript
-import { getDevices, sendActuatorCommand } from './api/devices.js';
-
-// Obtener dispositivos
-const devices = await getDevices();
-
-// Enviar comando
-await sendActuatorCommand('mush2_s3_001', {
-  channel: 1,
-  state: true,
-  duration: 3600
-});
-```
-
-## 🧪 Testing
+## Testing
 
 ```bash
-pnpm test              # Tests una vez
-pnpm run test:watch    # Modo watch
-pnpm run test:ui       # UI interactiva
+pnpm test           # Run all
+pnpm run test:watch # Watch mode
 ```
 
-## 📦 Comandos Principales
+Tests use Vitest + React Testing Library. Run from `frontend/`.
+
+## Deployment
 
 ```bash
-pnpm run dev              # Dev server (puerto 5173)
-pnpm run build            # Build minificado → dist/
-pnpm run preview          # Previsualizar build
-pnpm run build:analyze    # Analizar tamaño bundle
-pnpm test                 # Tests
-pnpm run lint             # ESLint
-pnpm run format:fix       # Auto-formatear
+pnpm run build  # → dist/
 ```
 
-## 🎯 Performance
-
-- Code splitting por rutas (React.lazy)
-- Memoization con useMemo, useCallback
-- Lazy loading de imágenes
-- Virtual scrolling para listas grandes
-
-## 🚢 Deployment
-
-```bash
-pnpm run build  # Genera dist/
-# Servir dist/ con Nginx, Vercel, Netlify, etc.
-```
-
-Ver `docs/deployment.md` para más detalles.
+Serve `dist/` con Nginx, Vercel, etc. Backend must be accessible at the same origin or via CORS.
 
 ---
 
-**Última actualización:** 2026-06-13  
-**Versión:** 0.1.0  
-**Stack:** React 18 + Vite
-
+**Versión:** 1.15.5

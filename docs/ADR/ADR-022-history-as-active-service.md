@@ -1,7 +1,15 @@
 # ADR-022: History as Active Service
 
 **Fecha**: 2026-07-20
-**Estado**: Aceptado
+**Estado**: ~~Aceptado~~ → **SUPERSEDED** (DECISION-003, 2026-08-07)
+
+> **Actualización 2026-08-15 (PR-I / DECISION-003):** este ADR queda **SUPERSEDED** y
+> el `HistoryService` se declara **"reservado"** (sin implementación ni consumidores;
+> `getRunTimeline`/`getRunSummary` no se implementaron). El acceso a historial se sirve
+> hoy vía `backend/src/routes/analytics.js` (con `CultivationCycle` + `CycleState`).
+> El ADR asumía la entidad `Run`, que no existe (ver ADR-020). La funcionalidad queda
+> reservada para una evolución futura (p. ej. si se adopta `Run`). No hay contrato de
+> comunicación afectado: el servicio nunca se expuso.
 
 ## Context
 

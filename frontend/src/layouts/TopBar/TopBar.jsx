@@ -11,10 +11,9 @@ const PAGE_TITLES = {
   '/cultivation/recipes/compare': 'Comparador de recetas',
   '/cultivation/species': 'Biblioteca de especies',
   '/cultivation/cycles': 'Ciclos de cultivo',
-  '/operations/analytics': 'Analítica',
   '/operations/alarms': 'Alertas',
+  '/operations/events': 'Eventos',
   '/operations/logs': 'Registro de auditoría',
-  '/operations/diagnostics': 'Diagnóstico',
   '/system/settings': 'Configuración',
 }
 
@@ -25,9 +24,12 @@ function TopBar() {
   const activeCount = stats?.total || 0
   const { isDark, toggleTheme } = useTheme()
 
-  const title = Object.entries(PAGE_TITLES).find(
-    ([path]) => location.pathname === path || location.pathname.startsWith(path + '/')
-  )?.[1] || 'Mush2'
+  const isDeviceAnalytics = /^\/fleet\/devices\/[^/]+\/analytics$/.test(location.pathname)
+  const title = isDeviceAnalytics
+    ? 'Análisis del dispositivo'
+    : Object.entries(PAGE_TITLES).find(
+        ([path]) => location.pathname === path || location.pathname.startsWith(path + '/')
+      )?.[1] || 'Mush2'
 
   return (
     <header className="topbar">

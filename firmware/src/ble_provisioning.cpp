@@ -22,33 +22,6 @@ class ProvServerCallbacks : public BLEServerCallbacks {
   }
 };
 
-class SsrModeCallback : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic* chr) {
-    std::string val = chr->getValue();
-    String value = String(val.c_str());
-    value.trim();
-    Serial.printf("[BLE] SSR mode escrito: '%s'\n", value.c_str());
-
-    if (value == "0" || value == "1") {
-      Preferences prefs;
-      prefs.begin("mush2", false);
-      prefs.putBool("ssr_mode", value == "1");
-      prefs.end();
-      Serial.printf("[BLE] SSR mode guardado en NVS: active-%s\n", value == "1" ? "LOW" : "HIGH");
-    } else {
-      Serial.printf("[BLE] Valor SSR mode inválido: '%s' — se ignora\n", value.c_str());
-    }
-  }
-  void onRead(BLECharacteristic* chr) {
-    Preferences prefs;
-    prefs.begin("mush2", true);
-    bool mode = prefs.getBool("ssr_mode", true);
-    prefs.end();
-    chr->setValue(mode ? "1" : "0");
-    Serial.printf("[BLE] SSR mode leído de NVS: active-%s\n", mode ? "LOW" : "HIGH");
-  }
-};
-
 class ProvCmdCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* chr) {
     std::string val = chr->getValue();
@@ -97,7 +70,7 @@ BLEProvisioning::BLEProvisioning()
   : _active(false), _provisioned(false), _restartPending(false), _restartAt(0),
     _advStartTime(0), _server(nullptr), _service(nullptr),
     _charDeviceInfo(nullptr), _charWifiSsid(nullptr), _charWifiPass(nullptr),
-    _charCmd(nullptr), _charStatus(nullptr), _charSsrMode(nullptr) {
+    _charCmd(nullptr), _charStatus(nullptr) {
   _instance = this;
 }
 
@@ -154,19 +127,6 @@ void BLEProvisioning::start() {
   );
   _charStatus->addDescriptor(new BLE2902());
   _charStatus->setValue("{\"status\":\"ready\"}");
-
-  _charSsrMode = _service->createCharacteristic(
-    PROV_CHAR_SSR_MODE,
-    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE
-  );
-  {
-    Preferences prefs;
-    prefs.begin("mush2", true);
-    bool mode = prefs.getBool("ssr_mode", true);
-    prefs.end();
-    _charSsrMode->setValue(mode ? "1" : "0");
-  }
-  _charSsrMode->setCallbacks(new SsrModeCallback());
 
   _service->start();
 

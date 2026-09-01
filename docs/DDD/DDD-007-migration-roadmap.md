@@ -107,7 +107,7 @@ Este documento define el **plan de migración** desde la arquitectura actual (N-
 │  │  CAPA DE INFRAESTRUCTURA                             │   │
 │  │  - Repository Implementations (Sequelize)            │   │
 │  │  - MQTT Bridge                                       │   │
-│  │  - SSE Server                                       │   │
+│  │  - WebSocket Server                                 │   │
 │  │  - EventBus Implementation                          │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -197,7 +197,6 @@ backend/src/
 │   │   └── event-bus.ts
 │   └── external/
 │       ├── telegram-service.ts
-│       └── thingspeak-sync.ts
 │
 └── interfaces/                # Capa de presentación
     ├── http/

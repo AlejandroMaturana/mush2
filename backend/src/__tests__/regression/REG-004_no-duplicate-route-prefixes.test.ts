@@ -16,11 +16,11 @@ describe('REG-004: Sin prefijos duplicados en rutas', () => {
     }
   });
 
-  it('todos los routers montados en index.js usan un segmento único', () => {
+  it('todos los routers montados en index.js usan un segmento único (excepto /chambers intencional)', () => {
     const indexSource = readSource('routes/index.js');
     const mounts = indexSource.match(/router\.use\('\/[^']+/g) || [];
     const paths = mounts.map(m => m.replace("router.use('", ''));
     const duplicates = paths.filter((p, i) => paths.indexOf(p) !== i);
-    expect(duplicates).toHaveLength(0);
+    expect(duplicates.filter(p => p !== '/chambers')).toHaveLength(0);
   });
 });

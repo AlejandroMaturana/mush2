@@ -1,0 +1,63 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# release.yml — Release train D11 (PR-C, ISSUE-082/INF-023)
+#
+# Trigger: push a `develop`.
+# Comportamiento:
+#   - Si hay changesets: abre/actualiza la PR "Release: version packages"
+#     (develop → main) ejecutando `pnpm version-packages`
+#     (changeset version + scripts/aggregate-changelog.cjs, que sincroniza
+#     VERSION files, version-manifest.json, platformio.ini y release.bat).
+#   - Al mergear esa PR a main: ejecuta scripts/release.js (tag vX.Y.Z + GitHub
+#     Release) — el paso "publish" del changesets/action.
+#
+# Es el reemplazo del release manual (scripts/release.bat) — I062/I082.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Changesets — Version PR / Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies (workspace root)
+        run: pnpm install --frozen-lockfile
+
+      - name: Create Release PR or Publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          publish: node scripts/release.js
+          commit: 'chore(release): version packages'
+          title: 'Release: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

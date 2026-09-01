@@ -38,7 +38,7 @@ function RecipeComparator() {
       try {
         const data = await getRecipes()
         setRecipes(data)
-      } catch {
+      } catch (err) { console.error('Failed to load recipes:', err)
       } finally {
         setLoading(false)
       }

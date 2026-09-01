@@ -524,7 +524,7 @@ Gestionar **identidad, autorización, suscripciones y configuración** de usuari
 │  (Servicios de Aplicación, Orquestación, DTOs)             │
 ├─────────────────────────────────────────────────────────────┤
 │                    CAPA DE INFRAESTRUCTURA                  │
-│  (Repositorios, MQTT, SSE, Telegram, ThingSpeak)     │
+│  (Repositorios, MQTT, SSE, Telegram)                        │
 ├─────────────────────────────────────────────────────────────┤
 │                    CAPA DE PERSISTENCIA                     │
 │  (Sequelize ORM, Migraciones, Seeds)                       │
@@ -550,7 +550,6 @@ Los contextos que se comunican con sistemas externos deben tener Anti-Corruption
 
 - **Monitoreo**: MQTT Bridge (traduce protocolo MQTT a eventos internos)
 - **Usuarios**: Telegram Service (traduce API de Telegram a eventos internos)
-- **Monitoreo**: ThingSpeak Sync (traduce datos internos a formato ThingSpeak)
 
 ### 9.3 Eventual Consistency
 

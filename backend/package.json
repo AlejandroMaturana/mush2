@@ -1,21 +1,26 @@
 {
   "name": "mush2-backend",
-  "version": "1.5.1",
+  "version": "1.10.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --watch --watch-path=src src/server.js",
     "start": "node src/server.js",
     "db:sync": "node src/sync-db.js",
-    "db:seed": "node src/seed.js",
+    "db:migrate": "sequelize-cli db:migrate --config config/config.cjs --migrations-path src/db/migrations",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo --config config/config.cjs --migrations-path src/db/migrations",
+    "db:seed:catalog": "node src/db/seed-catalog.js",
     "db:seed:dev": "node src/seed-dev.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",
+    "db:seed": "node src/seed.js",
+    "admin:create": "node src/scripts/create-admin.js",
+    "provision:token": "node src/scripts/create-provisioning-token.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --watch",
     "test:ddd": "vitest run --config vitest.config.ts",
     "test:ddd:watch": "vitest --config vitest.config.ts",
-    "test:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts",
+    "test:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand && vitest run --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
-    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js && vitest run --config vitest.config.ts --coverage"
+    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js --runInBand && vitest run --config vitest.config.ts --coverage"
   },
   "author": "AlejandroMaturana",
   "license": "MIT",
@@ -35,6 +40,7 @@
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "sequelize": "^6.37.5",
+    "sequelize-cli": "^6.6.5",
     "ws": "^8.21.0"
   },
   "devDependencies": {

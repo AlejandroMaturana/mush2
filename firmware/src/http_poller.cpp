@@ -14,13 +14,12 @@ HTTPPoller::HTTPPoller() : client() {
   memset(hdrBuf, 0, 4);
   _ssrActiveLow = true;
   _ssrActiveLowPrev = true;
+  _ssrFirstSync = true;
   _hasActiveCycle = false;
   _hasSetpoints = false;
   _setpointsChanged = false;
   _tempMin = 0; _tempMax = 0; _humMin = 0; _humMax = 0; _co2Max = 0;
   _phase[0] = '\0';
-  _mqttUser[0] = '\0';
-  _mqttPass[0] = '\0';
   for (int i = 0; i < ACTUATOR_CHANNELS; i++) {
     desired[i].state = 0;
     desired[i].mode = 0;
@@ -34,7 +33,14 @@ void HTTPPoller::init(const char* id, const char* h, uint16_t p) {
   client.setTimeout(3000);
 }
 
-bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress, const char* hwRevision) {
+// ADR-028 / ISSUE-059: las credenciales MQTT de la respuesta se entregan en
+// buffers transitorios del llamador (nunca en RAM persistente de la clase).
+bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress, const char* hwRevision,
+                                char* outUser, size_t userSize, char* outPass, size_t passSize,
+                                bool* outGotMqttCreds) {
+  if (outUser) outUser[0] = '\0';
+  if (outPass) outPass[0] = '\0';
+  if (outGotMqttCreds) *outGotMqttCreds = false;
   if (WiFi.status() != WL_CONNECTED) return false;
 
   WiFiClient regClient;
@@ -83,7 +89,7 @@ bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress, c
   bool ok = response.indexOf("200 OK") >= 0 || response.indexOf("201 Created") >= 0;
   Serial.printf("[REG] Dispositivo %s: %s\n", ok ? "registrado" : "falló", deviceId.c_str());
 
-  // ADR-028: Parse MQTT credentials from response body
+  // ADR-028: Parse MQTT credentials from response body → buffers del llamador
   if (ok) {
     int bodyStart = response.indexOf("\r\n\r\n");
     if (bodyStart >= 0) {
@@ -93,10 +99,11 @@ bool HTTPPoller::registerDevice(const char* fwVersion, const char* macAddress, c
       if (!err && doc.containsKey("mqtt")) {
         const char* user = doc["mqtt"]["user"];
         const char* pass = doc["mqtt"]["pass"];
-        if (user && pass) {
-          snprintf(_mqttUser, sizeof(_mqttUser), "%s", user);
-          snprintf(_mqttPass, sizeof(_mqttPass), "%s", pass);
-          Serial.printf("[REG] MQTT credentials recibidas: user=%s\n", _mqttUser);
+        if (user && pass && outUser && outPass) {
+          snprintf(outUser, userSize, "%s", user);
+          snprintf(outPass, passSize, "%s", pass);
+          if (outGotMqttCreds) *outGotMqttCreds = true;
+          Serial.printf("[REG] MQTT credentials recibidas: user=%s\n", outUser);
         }
       }
     }
@@ -451,6 +458,10 @@ bool HTTPPoller::getSsrActiveLow() {
 }
 
 bool HTTPPoller::ssrActiveLowChanged() {
+  if (_ssrFirstSync) {
+    _ssrFirstSync = false;
+    return true;
+  }
   return _ssrActiveLow != _ssrActiveLowPrev;
 }
 

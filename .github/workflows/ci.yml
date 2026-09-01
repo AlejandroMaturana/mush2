@@ -4,12 +4,10 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
-  release:
-    types: [published]
+    branches: [main, develop]
 
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: '22'
 
 jobs:
   firmware:
@@ -21,10 +19,10 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
 
       - name: Install PlatformIO
-        run: pip install platformio
+        run: pip install platformio==6.1.19
 
       - name: Create config.h
         run: |
@@ -35,26 +33,13 @@ jobs:
           #define WIFI_PASSWORD_1 ""
           #define WIFI_SSID_2 ""
           #define WIFI_PASSWORD_2 ""
-          #define TS_HOST "api.thingspeak.com"
-          #define TS_PORT 80
-          #define TS_API_KEY ""
           #define BACKEND_HOST "localhost"
           #define BACKEND_PORT 3797
-          #define POLL_INTERVAL 3000
           #define DEVICE_ID "ci_build"
-          #define SENSOR_INTERVAL 10000
-          #define TS_INTERVAL 15000
-          #define SSR_ACTIVE_LOW 1
-          #include "channel_mapping.h"
-          #define SSR_CH1_PIN CHANNEL_1_PIN
-          #define SSR_CH2_PIN CHANNEL_2_PIN
-          #define SSR_CH3_PIN CHANNEL_3_PIN
-          #define SSR_CH4_PIN CHANNEL_4_PIN
-          #define DEFAULT_TEMP_MIN 20.0
-          #define DEFAULT_TEMP_MAX 24.0
-          #define DEFAULT_HUM_MIN 85.0
-          #define DEFAULT_HUM_MAX 95.0
-          #define DEFAULT_CO2_MAX 1200
+          #define HW_REVISION "1.0"
+          #define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+          #define OTA_CA_ROOT ""
+          #include "config.example.h"
           #endif' > src/config.h
 
       - name: Build firmware
@@ -63,12 +48,23 @@ jobs:
       - name: Firmware unit tests (native)
         run: cd firmware && pio test -c platformio.test.ini -e native
 
+      - name: Firmware coverage gate (I105, >=60%)
+        run: cd firmware && python test/scripts/coverage_gate.py
+
+      - name: Compile hardware sketches (I110)
+        run: |
+          cd firmware
+          for sk in test/S3_test-actuator-chain test/S3_test-button test/S3_test-http-poller test/S3_test-watchdog; do
+            echo "=== $sk ==="
+            pio run -d "$sk"
+          done
+
   backend:
     name: Backend test
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18
+        image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -85,15 +81,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Install pnpm
         run: npm install -g pnpm
 
       - name: Install dependencies
-        run: cd backend && pnpm install
+        run: cd backend && pnpm install --frozen-lockfile
 
       - name: Run tests
         run: cd backend && pnpm run test:ci
@@ -103,21 +100,80 @@ jobs:
           LOG_LEVEL: silent
 
   frontend:
-    name: Frontend build
+    name: Frontend build & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Install pnpm
         run: npm install -g pnpm
 
       - name: Install dependencies
-        run: cd frontend && pnpm install
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Version manifest consistency (I078/INF-019)
+        run: node scripts/check-version-manifest.cjs
+
+      - name: Lint (I039)
+        run: cd frontend && pnpm run lint
+
+      - name: Test (I080/I109)
+        run: cd frontend && pnpm run test
 
       - name: Build
         run: cd frontend && pnpm run build
+
+  security:
+    name: Security gates (audit + gitleaks + osv-scanner)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: pnpm audit (umbral critical, politica de severidad I076)
+        run: |
+          cd backend  && pnpm audit --audit-level=critical
+          cd ../frontend && pnpm audit --audit-level=critical
+
+      - name: gitleaks - deteccion de secretos en el arbol (I076/I84)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: osv-scanner - reporte de vulnerabilidades (I076)
+        uses: google/osv-scanner/actions/scanner@v1
+        with:
+          scan-args: |-
+            --format
+            sarif
+            --output
+            results.sarif
+            --recursive
+            .
+        continue-on-error: true
+
+      - name: Upload SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif

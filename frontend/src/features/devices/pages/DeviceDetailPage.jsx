@@ -58,7 +58,7 @@ function DeviceDetail() {
 
       getTelegramDeviceConfig(id).then(cfg => {
         if (!cancelledRef.current) setTgConfig(cfg)
-      }).catch(() => {})
+      }).catch(err => console.error('Failed to load Telegram config:', err))
 
       const latest = await getLatestTelemetry(id)
       if (!cancelledRef.current && latest?.temperature != null) {
@@ -78,7 +78,7 @@ function DeviceDetail() {
       if (dev) setDevice(dev)
       setActuators(acts)
       setError(null)
-    } catch {}
+    } catch (err) { console.error('Failed to sync device state:', err) }
   }, [id])
 
   function applyTelemetry(sensors, initial = false) {
@@ -168,9 +168,7 @@ function DeviceDetail() {
       }))
     }
     if (type === 'device_status_changed' && device && data.deviceId === device.deviceId) {
-      if (data.status?.connectivity === 'ONLINE' && data.previousStatus?.connectivity !== 'ONLINE') {
-        syncState()
-      }
+      syncState()
     }
   }, [device, actuators, addLog, syncState]))
 
@@ -247,9 +245,17 @@ function DeviceDetail() {
     />
   )
 
-  const isOnline = device.status?.connectivity === 'ONLINE'
-  const isStale = device.status?.connectivity === 'DEGRADED'
-  const isMaintenance = device.status?.lifecycle === 'MAINTENANCE'
+  // D2: el estado principal llega derivado por el backend (primaryStatus);
+  // aquí solo se mapea presentación, no se recomputa la precedencia.
+  const primaryVariant = {
+    'OPERATIVA': 'online',
+    'SIN CONEXIÓN': 'critical',
+    'EN MANTENIMIENTO': 'info',
+    'AVISO': 'warning',
+    'PROVISIONANDO': 'info',
+    'RETIRADA': 'offline',
+    'DATOS_NO_DISPONIBLES': 'offline',
+  }[device.primaryStatus] || 'critical'
   const has = {
     temp: telemetry.temperature != null,
     hum: telemetry.humidity != null,
@@ -271,13 +277,19 @@ function DeviceDetail() {
       <EntityHeader
         title={device.chamberName || device.deviceId}
         subtitle={`${device.hwRevision ? `HW ${device.hwRevision} · ` : ''}Firmware ${device.firmwareVersion} · ${device.macAddress || 'MAC —'}${device.secondsSinceLastSeen != null ? ` · Última transmisión ${device.secondsSinceLastSeen < 5 ? 'hace un momento' : device.secondsSinceLastSeen < 60 ? `hace ${device.secondsSinceLastSeen}s` : `hace ${Math.floor(device.secondsSinceLastSeen / 60)}m`}` : ''}`}
-        badge={device.status?.lifecycle || 'ACTIVE'}
-        badgeVariant={isOnline ? 'online' : isMaintenance ? 'info' : isStale ? 'warning' : 'critical'}
+        badge={device.primaryStatus || device.status?.lifecycle || 'ACTIVE'}
+        badgeVariant={primaryVariant}
         actions={
-          <button onClick={() => setShowDeleteModal(true)} className="btn btn-danger" style={{ fontSize: '11px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-            ELIMINAR
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button onClick={() => navigate(`/fleet/devices/${id}/analytics`)} className="btn btn-secondary" style={{ fontSize: '11px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>analytics</span>
+              ANÁLISIS
+            </button>
+            <button onClick={() => setShowDeleteModal(true)} className="btn btn-danger" style={{ fontSize: '11px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+              ELIMINAR
+            </button>
+          </div>
         }
       />
 
@@ -388,7 +400,7 @@ function DeviceDetail() {
                 const val = e.target.checked
                 setTgConfig(prev => ({ ...prev, enabled: val }))
                 setTgSaving(true)
-                try { await updateTelegramDeviceConfig(id, { enabled: val }) } catch {}
+                try { await updateTelegramDeviceConfig(id, { enabled: val }) } catch (err) { console.error('Failed to update Telegram enabled:', err) }
                 setTgSaving(false)
               }} />
             </label>
@@ -400,7 +412,7 @@ function DeviceDetail() {
                 const val = e.target.value
                 setTgConfig(prev => ({ ...prev, minSeverity: val }))
                 setTgSaving(true)
-                try { await updateTelegramDeviceConfig(id, { minSeverity: val }) } catch {}
+                try { await updateTelegramDeviceConfig(id, { minSeverity: val }) } catch (err) { console.error('Failed to update Telegram severity:', err) }
                 setTgSaving(false)
               }}>
                 <option value="LOW">Baja</option>
@@ -430,7 +442,7 @@ function DeviceDetail() {
                 <input type="checkbox" className="toggle-checkbox" checked={tgConfig[key]} onChange={async e => {
                   const val = e.target.checked
                   setTgConfig(prev => ({ ...prev, [key]: val }))
-                  try { await updateTelegramDeviceConfig(id, { [key]: val }) } catch {}
+                  try { await updateTelegramDeviceConfig(id, { [key]: val }) } catch (err) { console.error('Failed to update Telegram setting:', err) }
                 }} />
               </div>
             ))}

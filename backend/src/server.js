@@ -8,8 +8,6 @@ import logger, { createChildLogger } from './config/pino.js';
 
 const log = createChildLogger('SERVER');
 
-let tsSyncHandle = null;
-
 async function start() {
   try {
     log.info({ event: 'STARTING', pid: process.pid }, 'Iniciando backend');
@@ -55,8 +53,6 @@ async function start() {
 
 // ── Secondary services (non-blocking) ─────────────────────────────
 async function initSecondaryServices(httpServer) {
-  const TS_CHECK_INTERVAL = 60000;
-
   // Schema sync removed from startup — use `npm run db:sync` when schema changes are needed.
   // Running sync({ alter: true }) on every startup adds 5-10 minutes to boot and saturates the DB pool.
   markServiceStarted('dbSync');
@@ -96,16 +92,11 @@ async function initSecondaryServices(httpServer) {
 
   // Telegram Bot
   try {
-    const { initBot } = await import('./services/telegramService.js');
-    const SystemSetting = (await import('./models/SystemSetting.js')).default;
-    const [tgToken, tgUsername] = await Promise.all([
-      SystemSetting.findOne({ where: { key: 'telegram_bot_token' } }),
-      SystemSetting.findOne({ where: { key: 'telegram_bot_username' } }),
-    ]);
-    const botToken = tgToken?.value || env.TELEGRAM_BOT_TOKEN;
-    const botUsername = tgUsername?.value || env.TELEGRAM_BOT_USERNAME;
-    if (botToken) {
-      await initBot(botToken, botUsername);
+    const { initBot } = await import('./services/telegramBotService.js');
+    const { getBotConfig } = await import('./services/telegramConfigurationService.js');
+    const config = await getBotConfig();
+    if (config.token) {
+      await initBot(config.token, config.username);
       markServiceStarted('telegram');
       log.info({ module: 'TELEGRAM', event: 'STARTED' }, 'Telegram Bot started');
     } else {
@@ -175,17 +166,7 @@ async function initSecondaryServices(httpServer) {
     log.error({ module: 'EVENTBUS', event: 'FAILED', error: err.message }, 'Event bus wiring failed');
   }
 
-  // ThingSpeak Sync
-  try {
-    const { syncAllFromThingSpeak } = await import('./services/thingSpeakSync.js');
-    syncAllFromThingSpeak().catch(() => {});
-    tsSyncHandle = setInterval(() => syncAllFromThingSpeak().catch(() => {}), TS_CHECK_INTERVAL);
-    markServiceStarted('thingSpeak');
-    log.info({ module: 'TS', event: 'STARTED', interval: TS_CHECK_INTERVAL / 1000 }, 'ThingSpeak Sync check');
-  } catch (err) {
-    markServiceFailed('thingSpeak', err);
-    log.error({ module: 'TS', event: 'FAILED', error: err.message }, 'ThingSpeak Sync failed');
-  }
+  // ThingSpeak Sync removed (DECISION-012: ThingSpeak deprecated, MQTT canonical)
 
   // Background Jobs
   try {
@@ -213,17 +194,16 @@ function shutdown(signal) {
   return async () => {
     log.info({ event: 'SHUTDOWN', signal }, 'Cerrando conexiones');
     try {
-      if (tsSyncHandle) clearInterval(tsSyncHandle);
       const { stopControlEngine } = await import('./services/controlEngine.js');
       const { stopDataRetentionJob } = await import('./jobs/dataRetentionJob.js');
       const { stopOfflineWatchdog } = await import('./jobs/offlineWatchdog.js');
-      const { stopBot } = await import('./services/telegramService.js');
+      const { stopBot } = await import('./services/telegramBotService.js');
       const { stopMqttBridge } = await import('./services/mqttBridge.js');
       const { stopWebSocketServer } = await import('./services/webSocketServer.js');
       stopControlEngine();
       stopDataRetentionJob();
       stopOfflineWatchdog();
-      stopBot();
+      await stopBot();
       stopMqttBridge();
       stopWebSocketServer();
       await sequelize.close();

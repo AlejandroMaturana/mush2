@@ -5,6 +5,16 @@ import { logAudit } from '../services/auditService.js';
 
 const router = express.Router();
 
+const RECIPE_FIELDS = ['name', 'speciesId', 'species', 'incubationTempMin', 'incubationTempMax', 'incubationHumMin', 'incubationHumMax', 'incubationCo2Max', 'incubationDurationDays', 'fruitingTempMin', 'fruitingTempMax', 'fruitingHumMin', 'fruitingHumMax', 'fruitingCo2Max', 'fruitingDurationDays', 'maintenanceTempMin', 'maintenanceTempMax', 'maintenanceHumMin', 'maintenanceHumMax', 'maintenanceCo2Max', 'faeIntervalMinutes', 'ventilationStrategy', 'lightCycleHours', 'faeLevel', 'dewPointMaxRH'];
+
+function pickRecipeFields(body) {
+  const updates = {};
+  for (const field of RECIPE_FIELDS) {
+    if (body[field] !== undefined) updates[field] = body[field];
+  }
+  return updates;
+}
+
 router.get('/recipes', async (req, res) => {
   try {
     const where = {};
@@ -42,7 +52,7 @@ router.post('/recipes', async (req, res) => {
       return res.status(401).json({ error: 'Autenticación requerida' });
     }
 
-    const recipe = await Recipe.create({ ...req.body, userId: req.user.id });
+    const recipe = await Recipe.create({ ...pickRecipeFields(req.body), userId: req.user.id });
 
     await logAudit({
       userId: req.user.id,
@@ -66,7 +76,12 @@ router.put('/recipes/:id', async (req, res) => {
       return res.status(403).json({ error: 'Sin acceso a esta receta' });
     }
 
-    await recipe.update(req.body);
+    const updates = pickRecipeFields(req.body);
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'BAD_REQUEST', message: 'No se proporcionaron campos válidos' });
+    }
+
+    await recipe.update(updates);
 
     await logAudit({
       userId: req.user?.id,

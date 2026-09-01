@@ -29,6 +29,7 @@ struct HealthMetrics {
   uint16_t stackMQTT;
   uint16_t stackOTA;
   uint16_t stackTelemetry;
+  uint16_t stackPoller;
   uint16_t stackButton;
   bool i2cBusHealthy;
   bool sensorAht21;
@@ -52,7 +53,7 @@ public:
   HealthMonitor();
   void init(EventBus* bus, TaskHandle_t sensors, TaskHandle_t ssr,
             TaskHandle_t wifi, TaskHandle_t mqtt, TaskHandle_t ota,
-            TaskHandle_t telemetry, TaskHandle_t button);
+            TaskHandle_t telemetry, TaskHandle_t poller, TaskHandle_t button);
   void feed(HeartbeatTaskId task);
   void checkQuick();
   void checkComprehensive();
@@ -69,9 +70,11 @@ private:
   TaskHandle_t _taskMQTT;
   TaskHandle_t _taskOTA;
   TaskHandle_t _taskTelemetry;
+  TaskHandle_t _taskPoller;
   TaskHandle_t _taskButton;
   bool _healthy;
   unsigned long _lastHeartbeat[HB_TASK_COUNT];
+  SemaphoreHandle_t _i2cMutex;
 
   void _checkHeap();
   void _checkTaskStacks();

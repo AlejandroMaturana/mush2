@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { ApiKey } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
+import { normalizeLimit } from '../utils/pagination.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('APIKEYS');
@@ -10,22 +11,23 @@ const router = express.Router();
 
 router.get('/', authenticate, requireMinRole('ADMIN'), async (req, res) => {
   try {
-    const { page = 1, limit = 50 } = req.query;
+    const { page = 1, limit } = req.query;
+    const limitNum = normalizeLimit(limit, 50);
     const where = {};
     if (req.user.role !== 'SUPER_ADMIN') {
       where.userId = req.user.id;
     }
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const offset = (parseInt(page) - 1) * limitNum;
     const { rows, count } = await ApiKey.findAndCountAll({
       where,
       attributes: { exclude: ['keyHash'] },
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit),
+      limit: limitNum,
       offset,
     });
     res.json({
       data: rows,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: count, pages: Math.ceil(count / parseInt(limit)) },
+      pagination: { page: parseInt(page), limit: limitNum, total: count, pages: Math.ceil(count / limitNum) },
     });
   } catch (err) {
     log.error({ module: 'APIKEYS', event: 'LIST_ERROR', error: err.message }, 'Error listing API keys');

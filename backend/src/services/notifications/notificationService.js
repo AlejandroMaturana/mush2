@@ -1,12 +1,11 @@
-import { sendAlarm, notifyDeviceAlarm } from '../telegramService.js';
+import { sendAlarm } from '../telegramBotService.js';
 import { sendEmail, isEmailConfigured } from './emailProvider.js';
 import { sendWebhook } from './webhookProvider.js';
-import { UserPreference, Device, User } from '../../models/index.js';
+import { buildDistributionPlan } from './distributionPolicy.js';
+import { UserPreference, Device, User, TelegramDeviceConfig } from '../../models/index.js';
 import { createChildLogger } from '../../config/pino.js';
 
 const log = createChildLogger('NOTIFICATION');
-
-const SEVERITY_ORDER = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 };
 
 function formatAlarmHtml(alarm, device) {
   const deviceName = device?.chamberName || device?.deviceId || '—';
@@ -33,6 +32,19 @@ function formatAlarmHtml(alarm, device) {
   `;
 }
 
+/**
+ * Despacha una alarma a todos los canales del Delivery Plan calculado por la
+ * política de distribución (ISSUE-046-S2, ADR-032).
+ *
+ * Responsabilidades del orquestador: resolver el contexto (dispositivo,
+ * preferencias del propietario, configuración Telegram por dispositivo, email
+ * del usuario y configuración del proveedor email), construir el plan con
+ * `buildDistributionPlan` y ejecutar cada entrega contra el proveedor
+ * correspondiente. No contiene reglas de ruteo propias.
+ *
+ * @param {{ id: number, deviceId: number, severity: string, type: string, message?: string, sensorType?: string, currentValue?: number, thresholdMin?: number, thresholdMax?: number }} alarm Alarma emitida por el control engine.
+ * @returns {Promise<void>}
+ */
 export async function notifyAlarm(alarm) {
   if (!alarm || !alarm.deviceId) return;
 
@@ -43,45 +55,48 @@ export async function notifyAlarm(alarm) {
     const ownerPrefs = await UserPreference.findOne({ where: { userId: device.userId } });
     if (!ownerPrefs) return;
 
-    const minSeverity = ownerPrefs.minNotificationSeverity || 'MEDIUM';
-    const alarmSev = SEVERITY_ORDER[alarm.severity] ?? 0;
-    const minSev = SEVERITY_ORDER[minSeverity] ?? 1;
-    if (alarmSev < minSev) return;
-
-    // Telegram
+    let telegramDeviceConfig = null;
     if (ownerPrefs.telegramEnabled && ownerPrefs.telegramChatId) {
-      try {
-        await notifyDeviceAlarm(alarm.deviceId, alarm);
-        log.info({ module: 'NOTIFICATION', event: 'SENT', channel: 'telegram', alarmId: alarm.id, deviceId: alarm.deviceId });
-      } catch (err) {
-        log.error({ module: 'NOTIFICATION', event: 'FAILED', channel: 'telegram', alarmId: alarm.id, error: err.message });
-      }
+      telegramDeviceConfig = await TelegramDeviceConfig.findOne({ where: { deviceId: alarm.deviceId } });
     }
 
-    // Email
-    if (ownerPrefs.emailAlerts && isEmailConfigured()) {
+    let userEmail = null;
+    if (ownerPrefs.emailAlerts) {
       try {
         const user = await User.findByPk(device.userId, { attributes: ['email'] });
-        if (user?.email) {
-          await sendEmail({
-            to: user.email,
-            subject: `[Mush2] ${alarm.severity} — ${alarm.type}`,
-            html: formatAlarmHtml(alarm, device),
-          });
-          log.info({ module: 'NOTIFICATION', event: 'SENT', channel: 'email', alarmId: alarm.id, deviceId: alarm.deviceId });
-        }
+        userEmail = user?.email || null;
       } catch (err) {
         log.error({ module: 'NOTIFICATION', event: 'FAILED', channel: 'email', alarmId: alarm.id, error: err.message });
       }
     }
 
-    // Webhook
-    if (ownerPrefs.webhookUrl) {
+    const plan = buildDistributionPlan({
+      event: alarm,
+      ownerPrefs,
+      telegramDeviceConfig,
+      userEmail,
+      emailConfigured: isEmailConfigured(),
+    });
+
+    for (const item of plan) {
       try {
-        await sendWebhook({ url: ownerPrefs.webhookUrl, payload: { alarm, device: { deviceId: device.deviceId, chamberName: device.chamberName } } });
-        log.info({ module: 'NOTIFICATION', event: 'SENT', channel: 'webhook', alarmId: alarm.id, deviceId: alarm.deviceId });
+        if (item.channel === 'telegram') {
+          await sendAlarm(item.chatId, alarm, device);
+        } else if (item.channel === 'email') {
+          await sendEmail({
+            to: item.to,
+            subject: `[Mush2] ${alarm.severity} — ${alarm.type}`,
+            html: formatAlarmHtml(alarm, device),
+          });
+        } else if (item.channel === 'webhook') {
+          await sendWebhook({
+            url: item.url,
+            payload: { alarm, device: { deviceId: device.deviceId, chamberName: device.chamberName } },
+          });
+        }
+        log.info({ module: 'NOTIFICATION', event: 'SENT', channel: item.channel, alarmId: alarm.id, deviceId: alarm.deviceId });
       } catch (err) {
-        log.error({ module: 'NOTIFICATION', event: 'FAILED', channel: 'webhook', alarmId: alarm.id, error: err.message });
+        log.error({ module: 'NOTIFICATION', event: 'FAILED', channel: item.channel, alarmId: alarm.id, error: err.message });
       }
     }
   } catch (err) {

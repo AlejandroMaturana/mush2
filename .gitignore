@@ -5,6 +5,7 @@ node_modules/
 cache/
 dist/
 build/
+docs/--ignoreDeadLinks/
 backend/coverage/
 backend/mush2_backup_20260630_113545.dump
 .aaron
@@ -23,6 +24,8 @@ backend/mush2_backup_20260630_113545.dump
 docker/mosquitto/*/password_file
 docker/mosquitto/certs/*.key
 docker/mosquitto/certs/*.crt
+docker/mosquitto/certs/*.csr
+docker/mosquitto/certs/*.srl
 *.log
 .DS_Store
 Thumbs.db
@@ -36,6 +39,7 @@ skills-lock.json
 
 # Build systems (ESP32-S3)
 firmware/.pio/
+*.gcov
 
 # Python
 __pycache__/

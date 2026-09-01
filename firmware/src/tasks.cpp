@@ -55,8 +55,13 @@ void reProvision() {
   prefs.clear();
   prefs.end();
 
-  // Clear main NVS (SSR mode, reboot count, FSM state)
+  // Clear main NVS (reboot count, FSM state)
   prefs.begin("mush2", false);
+  prefs.clear();
+  prefs.end();
+
+  // Clear SSR polarity cache (mush2_ssr) — reinicia al default hasta el primer sync
+  prefs.begin("mush2_ssr", false);
   prefs.clear();
   prefs.end();
 
@@ -210,6 +215,11 @@ void mqttCommandCallback(const MqttCommandMessage* msg) {
 // ============================================================
 
 void taskSensors(void* pvParameters) {
+  esp_err_t wdtErr = esp_task_wdt_add(NULL);
+  if (wdtErr != ESP_OK) {
+    Serial.printf("[SENSORS] WDT add: %s (0x%x)\n",
+      wdtErr == ESP_ERR_INVALID_STATE ? "YA_REGISTRADO" : "ERROR", wdtErr);
+  }
   TickType_t lastWake = xTaskGetTickCount();
   unsigned long lastSensorValid = 0;
   unsigned long fallbackStart = 0;
@@ -332,6 +342,7 @@ void taskSensors(void* pvParameters) {
 
     processPhotoperiod();
 
+    esp_task_wdt_reset();
     vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(currentSensorInterval));
   }
 }
@@ -357,7 +368,13 @@ void taskSSR(void* pvParameters) {
     hyst.setOverheat(temp);
     sharedOverheatActive = (hyst.getOverheatState() == OH_ACTIVE);
 
-    if (sharedSensorsValid) {
+    // ISSUE-054 (FW-005): en SAFE y OTA_UPDATING los actuadores quedan OFF
+    // (gate por estado, no se evalúa control alguno).
+    bool actuationBlocked = sm.blocksActuation();
+
+    if (actuationBlocked) {
+      ssr.setAll(0);
+    } else if (sharedSensorsValid) {
       uint8_t hystOutputs[4] = {0, 0, 0, 0};
       hyst.evaluate(temp, hum, eco2, hystOutputs);
 
@@ -631,9 +648,21 @@ void taskOTA(void* pvParameters) {
         line.trim();
         if (line.startsWith("ota ")) {
           String url = line.substring(4);
+          url.trim();
           if (url.length() > 0 && url.startsWith("https://")) {
+            String hashTok;
+            int sp = url.indexOf(' ');
+            if (sp > 0) {
+              hashTok = url.substring(sp + 1);
+              url = url.substring(0, sp);
+            }
             strncpy(otaCommandUrl, url.c_str(), sizeof(otaCommandUrl) - 1);
             snprintf(otaCommandVersion, sizeof(otaCommandVersion), "0.0.0");
+            if (hashTok.length() > 0) {
+              strncpy(otaCommandHash, hashTok.c_str(), sizeof(otaCommandHash) - 1);
+            } else {
+              otaCommandHash[0] = '\0';
+            }
             otaCommandPending = true;
             Serial.printf("[OTA] Comando recibido via serial: %s\n", otaCommandUrl);
           }
@@ -654,6 +683,7 @@ void taskOTA(void* pvParameters) {
         OtaCandidate cand = otaselector.select(
           String(otaCommandUrl),
           String(otaCommandVersion),
+          String(otaCommandHash),
           wifi.getRSSI()
         );
 
@@ -690,6 +720,9 @@ void taskOTA(void* pvParameters) {
           ESP.restart();
         } else {
           Serial.println("[OTA] Fallo en ejecutor — restaurando");
+          // ISSUE-058 (FW-009): rollback explícito — se cancela cualquier
+          // rollback pendiente y se marca el firmware actual como válido.
+          otaShutdown.abortRollback();
           snprintf(statusPayload, sizeof(statusPayload),
             "{\"estado\":\"OTA_FAILED\",\"error\":\"download_failed\"}");
           mqtt.publish("ota/status", statusPayload, true);
@@ -705,7 +738,6 @@ ota_skip:
 
 void taskTelemetry(void* pvParameters) {
   TickType_t lastWake = xTaskGetTickCount();
-  unsigned long lastTsSend = 0;
   unsigned long lastMqttTel = 0;
   unsigned long lastMqttStatus = 0;
   unsigned long lastReplay = 0;
@@ -734,13 +766,26 @@ void taskTelemetry(void* pvParameters) {
       }
     }
 
-    if (now - lastTsSend >= TS_INTERVAL) {
-      lastTsSend = now;
-      if (wifiOk && sharedSensorsValid) {
-        ts.send(sharedTemp, sharedHum,
-          sharedEnsValid ? sharedEco2 : 0,
-          sharedEnsValid ? sharedTvoc : 0);
+    // ISSUE-058 (FW-009): confirmación post-OTA con reintento. Si en setup no
+    // había red estable, se reintenta aquí cuando WiFi conecte; si el self-test
+    // de núcleo falla, se fuerza rollback explícito.
+    if (otaConfirmacion.isPendingVerification()) {
+      bool coreOk = otaConfirmacion.selfTest();
+      OtaPostBootDecision d = decidePostBoot(true, coreOk, wifiOk);
+      if (d == OtaPostBootDecision::CONFIRM) {
+        otaConfirmacion.confirm();
+        String ver = nvsGetFwVer();
+        Serial.printf("[OTA] Firmware v%s confirmado post-OTA (red estable)\n", ver.c_str());
+        if (mqttOk) {
+          char successPayload[128];
+          snprintf(successPayload, sizeof(successPayload),
+            "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
+          mqtt.publish("ota/status", successPayload, true);
+        }
+      } else if (d == OtaPostBootDecision::ROLLBACK) {
+        otaConfirmacion.rollback();
       }
+      // WAIT_RETRY: se reintenta en el siguiente ciclo del loop.
     }
 
     if (now - lastMqttTel >= 10000) {

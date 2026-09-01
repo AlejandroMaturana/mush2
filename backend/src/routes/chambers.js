@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { Chamber, Device, CultivationCycle } from '../models/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { requireMinRole } from '../middlewares/rbac.js';
-import { migrateChambers } from '../../../scripts/archive/migrations/migrate-chambers.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('CHAMBERS');
@@ -99,6 +98,7 @@ router.delete('/:id', authenticate, requireMinRole('ADMIN'), async (req, res) =>
 
 router.post('/migrate', authenticate, requireMinRole('ADMIN'), async (req, res) => {
   try {
+    const { migrateChambers } = await import('../../../scripts/archive/migrations/migrate-chambers.js');
     const chambers = await migrateChambers();
     res.json({ data: chambers, message: 'Migración completada' });
   } catch (err) {

@@ -20,9 +20,9 @@
 #include "ens160_sensor.h"
 #include "ssr_controller.h"
 #include "hysteresis_controller.h"
-#include "thingspeak_client.h"
 #include "device_manager.h"
 #include "mqtt_client.h"
+#include "mqtt_credential_policy.h"
 #include "ble_provisioning.h"
 #include "actuator_nvs.h"
 #include "event_bus.h"
@@ -52,7 +52,6 @@ AHTSensor aht;
 EnsSensor ens;
 SSRController ssr;
 HysteresisController hyst;
-ThingSpeakClient ts;
 MQTTClient mqtt;
 BLEProvisioning bleProv;
 Adafruit_NeoPixel led(LED_RGB_COUNT, LED_RGB_PIN, NEO_GRB + NEO_KHZ800);
@@ -187,6 +186,9 @@ void setup() {
   otaShutdown = OTAShutdown();
   otaShutdown.init(&ssr);
   otaExecutor = OTAExecutor();
+  // ISSUE-052 (ADR-014 P4): CA embebida para el transporte TLS del ejecutor.
+  // Si OTA_CA_ROOT es vacio (builds generados), el ejecutor falla cerrado: rechaza OTA.
+  otaExecutor.setCaCert(OTA_CA_ROOT);
   otaConfirmacion = OTAConfirmation();
   otaConfirmacion.init(&sm);
 
@@ -276,17 +278,44 @@ void setup() {
     strncpy(sharedFwVer, ota.getVersion(), sizeof(sharedFwVer) - 1);
     strncpy(sharedHwRev, HW_REVISION, sizeof(sharedHwRev) - 1);
 
-    // ADR-028: Register first to obtain MQTT credentials from backend
-    for (int i = 0; i < 5; i++) {
-      if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev)) break;
-      vTaskDelay(pdMS_TO_TICKS(2000));
+    // ADR-028 / ISSUE-059: credenciales MQTT en NVS (fuera de RAM). Registro
+    // HTTP SOLO cuando no existen (primer aprovisionamiento) — no se re-registra
+    // en cada boot. Fallback a defaults de config.h SOLO en el primer arranque.
+    String nvsUser, nvsPass;
+    bool hasNvs = deviceManager.loadMqttCredentials(nvsUser, nvsPass);
+
+    if (!hasNvs) {
+      char regUser[64], regPass[64];
+      bool gotMqttCreds = false;
+      for (int i = 0; i < 5; i++) {
+        if (httpPoller.registerDevice(sharedFwVer, sharedMac, sharedHwRev,
+                                      regUser, sizeof(regUser), regPass, sizeof(regPass),
+                                      &gotMqttCreds)) break;
+        vTaskDelay(pdMS_TO_TICKS(2000));
+      }
+      if (gotMqttCreds) {
+        deviceManager.saveMqttCredentials(String(regUser), String(regPass));
+        nvsUser = regUser;
+        nvsPass = regPass;
+        hasNvs = true;
+      }
+      // Limpiar buffers transitorios: las credenciales quedan solo en NVS.
+      memset(regUser, 0, sizeof(regUser));
+      memset(regPass, 0, sizeof(regPass));
     }
 
-    // ADR-028: Init MQTT with provisioned credentials (or fallback to defaults)
-    if (httpPoller.hasMqttCredentials()) {
-      mqtt.init(deviceManager.getDeviceId().c_str(), httpPoller.getMqttUser(), httpPoller.getMqttPass());
-    } else {
-      mqtt.init(deviceManager.getDeviceId().c_str());
+    MqttCredentialMode mqttCredMode = resolveMqttCredentialMode(hasNvs, deviceManager.isFirstBoot());
+    switch (mqttCredMode) {
+      case MqttCredentialMode::PROVISIONED:
+        mqtt.init(deviceManager.getDeviceId().c_str(), nvsUser.c_str(), nvsPass.c_str());
+        break;
+      case MqttCredentialMode::DEFAULT_FALLBACK:
+        mqtt.init(deviceManager.getDeviceId().c_str());
+        break;
+      case MqttCredentialMode::NO_CREDENTIALS:
+      default:
+        mqtt.init(deviceManager.getDeviceId().c_str(), "", "", false);
+        break;
     }
     mqtt.setOtaCallback(otaMqttCallback);
     mqtt.setActuatorCallback(mqttActuatorCallback);
@@ -305,7 +334,11 @@ void setup() {
     }
 
     if (otaConfirmacion.isPendingVerification()) {
-      if (otaConfirmacion.selfTest()) {
+      // ISSUE-058 (FW-009): decisión post-OTA desacoplada de la red.
+      // Si la red aún no está estable, se difiere y taskTelemetry reintenta
+      // la confirmación cuando WiFi conecte.
+      OtaPostBootDecision d = decidePostBoot(true, otaConfirmacion.selfTest(), wifi.isConnected());
+      if (d == OtaPostBootDecision::CONFIRM) {
         otaConfirmacion.confirm();
         String ver = nvsGetFwVer();
         Serial.printf("[OTA] Firmware v%s confirmado post-OTA\n", ver.c_str());
@@ -313,8 +346,10 @@ void setup() {
         snprintf(successPayload, sizeof(successPayload),
           "{\"estado\":\"OTA_SUCCESS\",\"version\":\"%s\"}", ver.c_str());
         mqtt.publish("ota/status", successPayload, true);
+      } else if (d == OtaPostBootDecision::ROLLBACK) {
+        otaConfirmacion.rollback();
       } else {
-        Serial.println("[OTA] Self-test falló — rollback pendiente");
+        Serial.println("[OTA] Núcleo OK — confirmación diferida hasta red estable");
       }
     } else {
       esp_ota_mark_app_valid_cancel_rollback();
@@ -343,7 +378,7 @@ void setup() {
     // para cubrir fallos tempranos del arranque (crash antes de setup completo).
     healthMonitor.init(&eventBus, taskSensorsHandle, taskSSRHandle,
                        taskWiFiHandle, taskMQTTHandle, taskOTAHandle,
-                       taskTelemetryHandle, taskButtonHandle);
+                       taskTelemetryHandle, taskPollerHandle, taskButtonHandle);
     xTaskCreatePinnedToCore(taskMonitor, "Monitor", 4096, NULL, 1, NULL, CORE_NETWORK);
 
     Serial.printf("[OTA] Firmware v%s\n", ota.getVersion());

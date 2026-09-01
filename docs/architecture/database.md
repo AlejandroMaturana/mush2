@@ -42,8 +42,6 @@ Chamber ──1:N── Device
 | lifecycle | ENUM(INSTALLING,RUNNING,MAINTENANCE,DECOMMISSIONED) | Ciclo de vida (ADR-025) |
 | lastSeen | TIMESTAMP | Última conexión |
 | lastTelemetryAt | TIMESTAMP | Última telemetría recibida |
-| thingSpeakChannelId | VARCHAR(64) | Channel ID ThingSpeak |
-| thingSpeakReadKey | TEXT | Read key cifrada (AES-256-GCM) |
 | mqttUser | VARCHAR(100) | Usuario MQTT provisionado (ADR-028) |
 | mqttPass | TEXT | Password MQTT cifrada (ADR-028) |
 
@@ -229,10 +227,20 @@ Reglas de negocio:
 | deviceId | UUID FK(device) | Dispositivo compartido |
 | role | VARCHAR(20) | Rol de acceso |
 
-## Sincronización
+## Sincronización de esquema
 
-En desarrollo: `sequelize.sync({ alter: true })` al iniciar.
-En producción: migraciones versionadas (ADR-013 Fase 3).
+El esquema se gestiona con **migraciones versionadas (Sequelize CLI)** (DECISION-004 · ISSUE-061):
+
+- **Producción:** `pnpm db:migrate` (`sequelize-cli db:migrate --config config/config.cjs --migrations-path src/db/migrations`). El CMD del contenedor ejecuta migraciones antes de arrancar `server.js`.
+- **Baseline:** `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs` — snapshot inicial 1:1 con los modelos (26 tablas). Las nuevas tablas/campos se agregan con migraciones incrementales, no editando el snapshot.
+- **Rollback:** `pnpm db:migrate:undo`.
+- **Desarrollo (solo local):** `pnpm db:sync` (`sequelize.sync({ alter: true })`) como herramienta rápida, **prohibido** en producción.
+
+## Datos de arranque (seed)
+
+- **Catálogo referencial** (especies, templates de cámara): `pnpm db:seed:catalog` (`node src/db/seed-catalog.js`) — idempotente, no crea credenciales ni fixtures de test.
+- **Fixtures de desarrollo** (admin de prueba, datos fake): `pnpm db:seed` / `pnpm db:seed:dev` — solo con `NODE_ENV !== 'production'` (guard en `seed.js`, DECISION-008 · ISSUE-060/068).
+- **Admin real en producción:** `pnpm admin:create` (`node src/scripts/create-admin.js`) — CLI explícita, nunca desde el CMD del contenedor.
 
 ## Notas sobre el Modelo de Suscripción
 

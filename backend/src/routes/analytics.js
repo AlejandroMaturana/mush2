@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { authenticate, optionalAuth } from '../middlewares/auth.js';
+import { authenticate } from '../middlewares/auth.js';
+import { canAccessDevice } from '../middlewares/tenant.js';
 import { Device, Telemetry, CultivationCycle, CycleState, Actuator } from '../models/index.js';
 import { getStatusFromDevice, getLatestHealth } from '../services/deviceHealthService.js';
+import { derivePrimaryStatus } from '../services/cameraStatusSemantics.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('ANALYTICS');
@@ -44,13 +46,16 @@ function calcRisks(temp, rh, vpd) {
 
 const router = Router();
 
-router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
+router.get('/:chamberId/analytics', authenticate, async (req, res) => {
   try {
     const device = await Device.findOne({
       where: { [Op.or]: [{ id: req.params.chamberId }, { deviceId: req.params.chamberId }] },
       include: [{ model: Actuator, attributes: ['channel', 'state', 'mode'] }],
     });
     if (!device) return res.status(404).json({ error: 'NOT_FOUND' });
+    if (!(await canAccessDevice(req.user, device))) {
+      return res.status(403).json({ error: 'Sin acceso a este dispositivo' });
+    }
 
     const latestTelemetry = await Telemetry.findAll({
       where: { deviceId: device.id },
@@ -89,13 +94,22 @@ router.get('/:chamberId/analytics', optionalAuth, async (req, res) => {
     const totalDevices = await Device.count();
     const faeCount = (device.Actuators || []).filter(a => a.mode === 'FAE').length;
 
+    // D2: estado compuesto con health real + enriquecimiento semántico (M0.2 §9).
+    const latestHealth = await getLatestHealth(device.id);
+    const composedStatus = getStatusFromDevice(device, latestHealth);
+    const derived = derivePrimaryStatus(composedStatus, { health: latestHealth });
+
     res.json({
       data: {
         chamber: {
           id: device.id,
           deviceId: device.deviceId,
           name: device.chamberName || device.deviceId,
-          status: getStatusFromDevice(device),
+          status: composedStatus,
+          primaryStatus: derived.primaryStatus,
+          primaryLabel: derived.primaryLabel,
+          primaryReason: derived.primaryReason,
+          secondaryStates: derived.secondaryStates,
           lastSeen: device.lastSeen,
         },
         telemetry: {

@@ -57,10 +57,7 @@ export const env = {
 
   JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-change-in-production',
 
-  TS: {
-    host: process.env.TS_HOST || 'api.thingspeak.com',
-    port: parseInt(process.env.TS_PORT || '80', 10),
-  },
+  DATA_ENC_KEY: process.env.DATA_ENC_KEY || '',
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
@@ -77,15 +74,20 @@ export const env = {
   },
 
   MQTT: {
-    brokerUrl: process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883',
+    // TLS obligatorio en producción (ISSUE-015 / ADR-023): el default en prod
+    // es mqtts:// y ConfigurationService.validate() falla ante no-TLS.
+    brokerUrl: process.env.MQTT_BROKER_URL
+      || (nodeEnv === 'production' ? 'mqtts://localhost:8883' : 'mqtt://localhost:1883'),
     username: process.env.MQTT_BROKER_USER || 'backend_bridge',
     password: process.env.MQTT_BROKER_PASS || '',
+    // Validación de certificado TLS del broker. Default true (seguro).
+    // MQTT_REJECT_UNAUTHORIZED=false solo para certs self-signed en staging.
+    rejectUnauthorized: process.env.MQTT_REJECT_UNAUTHORIZED === 'false' ? false : true,
   },
 
   MQTT_PROVISIONING: {
     passwordFile: resolveRepoPath(process.env.MOSQUITTO_PASSWORD_FILE || mqttPasswordFile),
     container: process.env.MOSQUITTO_CONTAINER || 'mush2-mosquitto',
-    mosquittoPasswd: process.env.MOSQUITTO_PASSWD_PATH || 'mosquitto_passwd',
   },
 
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',

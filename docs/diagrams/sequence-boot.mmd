@@ -8,7 +8,6 @@ sequenceDiagram
     participant WIFI as WiFi Manager
     participant HTTP as Backend HTTP
     participant MQTT as MQTT Broker
-    participant TS as ThingSpeak
 
     Note over FW: Power On / Reset
 
@@ -49,7 +48,6 @@ sequenceDiagram
         FW->>MQTT: subscribe mush2/{id}/actuators
         FW->>MQTT: subscribe mush2/{id}/ota/command
         FW->>MQTT: publish mush2/{id}/health
-        FW->>TS: HTTP GET telemetry (cada 20s)
     end
 
     Note over FW: Operación normal: sensores cada 8s, HTTP poll cada 500ms

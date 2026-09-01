@@ -4,7 +4,7 @@ const MOBILE_ITEMS = [
   { to: '/overview', icon: 'dashboard', label: 'Panel' },
   { to: '/cultivation/recipes', icon: 'potted_plant', label: 'Cultivo' },
   { to: '/operations/alarms', icon: 'warning', label: 'Alertas' },
-  { to: '/system/settings', icon: 'settings', label: 'Sistema' },
+  { to: '/system/settings', icon: 'settings', label: 'Configuración' },
 ]
 
 function BottomNav() {

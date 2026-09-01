@@ -28,8 +28,24 @@ describe('Contract: estructura de rutas REST', () => {
     const routes = extractRoutes(source);
 
     it('todas las rutas de devices comienzan con /devices', () => {
-      const nonDevice = routes.filter(r => !r.path.startsWith('/devices'));
+      // D1/T9: /dashboard/summary es un endpoint agregado NUEVO (autorizado en
+      // D1) cuyo contrato no pertenece al árbol /devices. El resto de rutas de
+      // api.js sí deben ser de /devices.
+      const allowedNonDevice = ['/dashboard/summary'];
+      const nonDevice = routes.filter(r => !r.path.startsWith('/devices') && !allowedNonDevice.includes(r.path));
       expect(nonDevice).toHaveLength(0);
+    });
+
+    it('T9: el endpoint agregado /dashboard/summary existe y es GET', () => {
+      const summary = routes.find(r => r.path === '/dashboard/summary');
+      expect(summary).toBeDefined();
+      expect(summary!.method).toBe('GET');
+    });
+
+    it('T9: el endpoint agregado no duplica el contrato de /devices (no muta)', () => {
+      const summarySrc = source.split('\n').filter(l => l.includes("router.get('/dashboard/summary'"));
+      expect(summarySrc.length).toBe(1);
+      expect(summarySrc[0]).toContain("router.get('/dashboard/summary'");
     });
 
     it('las rutas con :id son consistentes (ninguna usa :deviceId ni otro nombre)', () => {
@@ -65,7 +81,7 @@ describe('Contract: estructura de rutas REST', () => {
           l.includes(`router.${route.method.toLowerCase()}(`) && l.includes(route.path)
         );
         for (const line of routeDeclaration) {
-          if (!route.path.includes('/claim') && !route.path.includes('/thingSpeak')) {
+          if (!route.path.includes('/claim')) {
             expect(
               line.includes('checkDeviceAccess') || route.path === '/devices'
             ).toBe(true);
@@ -179,6 +195,12 @@ describe('Contract: middlewares globales en rutas', () => {
     expect(source).toContain("router.use('/alarms', authenticate");
   });
 
+  it('D3/T11 — alarmas serializa los 5 niveles desde alertTranslationService', () => {
+    const alarmsSource = readSource('routes/alarms.js');
+    expect(alarmsSource).toContain("import { explainAlarm } from '../services/alertTranslationService.js'");
+    expect(alarmsSource).toContain('...explainAlarm(plain)');
+  });
+
   it('cada router use tiene checkApiRateLimit', () => {
     const useLines = source.split('\n').filter(l => l.includes("router.use("));
     const withRateLimit = useLines.filter(l => l.includes('checkApiRateLimit'));
@@ -243,3 +265,35 @@ describe('Contract: convenciones HTTP', () => {
     }
   });
 });
+
+describe('Contract: D2 enriquecimiento semántico (no destructivo)', () => {
+  const apiSource = readSource('routes/api.js');
+  const analyticsSource = readSource('routes/analytics.js');
+
+  it('GET /devices conserva status y secondsSinceLastSeen (backward compat)', () => {
+    expect(apiSource).toContain('json.status = getStatusFromDevice');
+    expect(apiSource).toContain('json.secondsSinceLastSeen = getSecondsSinceLastSeen');
+  });
+
+  it('GET /devices añade primaryStatus, primaryLabel, primaryReason, secondaryStates', () => {
+    for (const field of ['primaryStatus', 'primaryLabel', 'primaryReason', 'secondaryStates']) {
+      expect(apiSource).toContain(`json.${field} =`);
+    }
+  });
+
+  it('GET /devices/:id conserva status y añade los campos semánticos derivados', () => {
+    expect(apiSource).toContain('json.status = getStatusFromDevice(req.device, latestHealth)');
+    expect(apiSource).toContain('json.secondsSinceLastSeen = getSecondsSinceLastSeen');
+  });
+
+  it('GET /devices/:id añade primaryStatus, primaryLabel, primaryReason, secondaryStates', () => {
+    for (const field of ['primaryStatus', 'primaryLabel', 'primaryReason', 'secondaryStates']) {
+      expect(apiSource).toContain(`json.${field} =`);
+    }
+  });
+
+  it('analytics.js pasa latestHealth a getStatusFromDevice (gap corregido)', () => {
+    expect(analyticsSource).toContain('getStatusFromDevice(device, latestHealth)');
+  });
+});
+

@@ -2,7 +2,7 @@
 
 ## Visión General
 
-Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 capas (firmware, backend, frontend) comunicadas mediante MQTT, API REST y ThingSpeak.
+Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 capas (firmware, backend, frontend) comunicadas mediante MQTT y API REST.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -18,14 +18,13 @@ Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 cap
 │   └──────┬────┘                    └────────┬─────────┘  │
 │          │                                   │            │
 │          │  HTTP (GET)                       │  HTTP      │
-│          └────────────────▶ ThingSpeak ◀─────┘            │
-│                                                   │      │
-│                                          ┌────────┴──┐   │
-│                                          │  Frontend  │   │
-│                                          │  React     │   │
-│                                          │  Vite      │   │
-│                                          │  Chart.js  │   │
-│                                          └───────────┘   │
+│          │                                   ▼            │
+│          │                          ┌────────┴──┐   │
+│          │                          │  Frontend  │   │
+│          │                          │  React     │   │
+│          │                          │  Vite      │   │
+│          │                          │  Chart.js  │   │
+│          │                          └───────────┘   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -34,8 +33,7 @@ Sistema IoT de control ambiental para hongos adaptógenos. Arquitectura de 3 cap
 ### 1. Telemetría (Sensor → Nube)
 ```
 Sensor AHT21/ENS160 → Firmware (lectura cada 10s)
-    ├── MQTT publish → Broker → Backend → PostgreSQL
-    └── HTTP GET → ThingSpeak (campo de respaldo)
+    └── MQTT publish → Broker → Backend → PostgreSQL
 ```
 
 ### 2. Control (Usuario → Actuador)
@@ -67,7 +65,6 @@ Firmware (Reglas locales)
 
 | Origen | Destino | Protocolo | Puerto | Frecuencia | Payload |
 |---|---|---|---|---|---|
-| Firmware | ThingSpeak | HTTP GET | 80 | Cada 20s | `field1=temp&field2=hum&field3=CO2` |
 | Firmware | Broker MQTT | MQTT 3.1.1 | 1883 | Cada 20s | JSON telemetría |
 | Firmware | Broker MQTT | MQTT 3.1.1 | 1883 | Bajo demanda | JSON estado SSR |
 | Broker | Backend | MQTT 3.1.1 | 1883 | Tiempo real | JSON telemetría/eventos |
@@ -109,7 +106,7 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 - **Configuración**: `config.h` generado desde `.env`
 
 ### Backend (Node.js)
-- **Runtime**: Node.js 20+
+- **Runtime**: Node.js 20+ (runtime validado: 22 LTS)
 - **Framework**: Express 5
 - **ORM**: Sequelize 6 + PostgreSQL 16
 - **Autenticación**: JWT (HS256) + API Key dual, bcryptjs
@@ -136,7 +133,7 @@ Ver `docs/architecture/capability-catalog.md` para el catálogo completo de capa
 
 1. **JWT**: Token firmado con HS256, expiración configurable, renovación por refresh token
 2. **API Key**: Autenticación alternativa para integraciones M2M (prefijo visible `mush2_*`)
-3. **Cifrado**: AES-256-GCM para claves de ThingSpeak almacenadas en DB
+3. **Cifrado**: AES-256-GCM para secretos de integraciones almacenados en DB
 4. **Rate Limiting**: Capa global (100/15min) + capa por suscripción (definida en `capability-catalog.md`)
 5. **CSP**: Content-Security-Policy estricta (Helmet)
 6. **CORS**: Solo orígenes autorizados

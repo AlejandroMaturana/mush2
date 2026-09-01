@@ -1,13 +1,20 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Subscription from '../models/Subscription.js';
-import { env } from '../config/env.js';
 import { authenticate } from '../middlewares/auth.js';
 import { logAudit } from '../services/auditService.js';
 import { createChildLogger } from '../config/pino.js';
+import {
+  signAccessToken,
+  issueRefreshToken,
+  verifyAndRotate,
+  revokeAllForUser,
+  parseRefreshToken,
+  setRefreshCookie,
+  clearRefreshCookie,
+} from '../services/tokenService.js';
 
 const log = createChildLogger('AUTH');
 const router = Router();
@@ -39,9 +46,9 @@ router.post('/register', async (req, res) => {
       details: { username }, ip: req.ip, userAgent: req.headers['user-agent'],
     });
 
-    const tokenPayload = { id: user.id, username: user.username, role: user.role };
-    const accessToken = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '1h' });
-    const refreshToken = jwt.sign(tokenPayload, env.JWT_SECRET + '_refresh', { expiresIn: '7d' });
+    const accessToken = signAccessToken(user);
+    const { token: refreshToken } = await issueRefreshToken(user);
+    setRefreshCookie(res, refreshToken);
 
     res.status(201).json({
       token: { accessToken, refreshToken, expiresIn: 3600 },
@@ -70,13 +77,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const tokenPayload = { id: user.id, username: user.username, role: user.role };
+    await user.update({ lastLoginAt: new Date() });
 
-    const accessToken = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '1h' });
-    const refreshToken = jwt.sign(tokenPayload, env.JWT_SECRET + '_refresh', { expiresIn: '7d' });
-
-    const refreshExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await user.update({ refreshToken, refreshTokenExpires: refreshExpires, lastLoginAt: new Date() });
+    const accessToken = signAccessToken(user);
+    const { token: refreshToken } = await issueRefreshToken(user);
+    setRefreshCookie(res, refreshToken);
 
     await logAudit({
       userId: user.id, action: 'LOGIN', resource: 'auth',
@@ -95,32 +100,21 @@ router.post('/login', async (req, res) => {
 
 router.post('/refresh', async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = parseRefreshToken(req);
     if (!refreshToken) {
       return res.status(400).json({ error: 'Refresh token requerido' });
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(refreshToken, env.JWT_SECRET + '_refresh');
-    } catch {
-      return res.status(401).json({ error: 'Refresh token inválido o expirado', code: 'REFRESH_EXPIRED' });
+    const result = await verifyAndRotate(refreshToken);
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error, code: 'REFRESH_EXPIRED' });
     }
 
-    const user = await User.findByPk(decoded.id);
-    if (!user || !user.isActive || user.refreshToken !== refreshToken) {
-      return res.status(401).json({ error: 'Refresh token revocado' });
-    }
-
-    const tokenPayload = { id: user.id, username: user.username, role: user.role };
-    const newAccessToken = jwt.sign(tokenPayload, env.JWT_SECRET, { expiresIn: '1h' });
-    const newRefreshToken = jwt.sign(tokenPayload, env.JWT_SECRET + '_refresh', { expiresIn: '7d' });
-
-    const refreshExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await user.update({ refreshToken: newRefreshToken, refreshTokenExpires: refreshExpires });
+    const newAccessToken = signAccessToken(result.user);
+    setRefreshCookie(res, result.token);
 
     res.json({
-      token: { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 3600 },
+      token: { accessToken: newAccessToken, refreshToken: result.token, expiresIn: 3600 },
     });
   } catch (err) {
     log.error({ module: 'AUTH', event: 'REFRESH_ERROR', error: err.message }, 'Refresh error');
@@ -130,16 +124,14 @@ router.post('/refresh', async (req, res) => {
 
 router.post('/logout', authenticate, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
-    if (user) {
-      await user.update({ refreshToken: null, refreshTokenExpires: null });
-    }
+    await revokeAllForUser(req.user.id);
 
     await logAudit({
       userId: req.user.id, action: 'LOGOUT', resource: 'auth',
       details: {}, ip: req.ip, userAgent: req.headers['user-agent'],
     });
 
+    clearRefreshCookie(res);
     res.json({ message: 'Sesión cerrada' });
   } catch (err) {
     log.error({ module: 'AUTH', event: 'LOGOUT_ERROR', error: err.message }, 'Logout error');

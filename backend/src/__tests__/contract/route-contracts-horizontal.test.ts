@@ -55,7 +55,8 @@ describe('Horizontal: auth.js', () => {
   });
 
   it('refresh token maneja token inválido', () => {
-    expect(source).toContain("error: 'Refresh token inválido o expirado'");
+    expect(source).toContain("code: 'REFRESH_EXPIRED'");
+    expect(source).toContain('parseRefreshToken(req)');
   });
 });
 
@@ -203,9 +204,15 @@ describe('Horizontal: actuators.js (device-facing)', () => {
     expect(source).toContain('5 * 60 * 1000');
   });
 
-  it('findOrCreate usado para device y actuator', () => {
-    expect(source).toContain('Device.findOrCreate');
-    expect(source).toContain('Actuator.findOrCreate');
+  it('no hay findOrCreate en la ruta de comandos (ISSUE-004: sin auto-registro)', () => {
+    expect(source).not.toContain('Device.findOrCreate');
+    expect(source).not.toContain('Actuator.findOrCreate');
+    expect(source).toContain('canAccessDevice');
+  });
+
+  it('ssrActiveLow siempre presente en respuesta del poller (ambas ramas)', () => {
+    const occurrences = source.match(/ssrActiveLow: device\.ssrActiveLow/g) || [];
+    expect(occurrences).toHaveLength(2);
   });
 });
 
@@ -230,10 +237,11 @@ describe('Horizontal: settings.js', () => {
     expect(source).toContain("router.get('/system/public'");
   });
 
-  it('subscripción proxy rutas', () => {
-    expect(source).toContain("router.get('/subscription'");
-    expect(source).toContain("router.post('/subscription/upgrade'");
-    expect(source).toContain("router.delete('/subscription'");
+  it('no expone proxies de suscripción (retirados en ISSUE-042)', () => {
+    expect(source).not.toContain("router.get('/subscription'");
+    expect(source).not.toContain("router.get('/subscription/usage'");
+    expect(source).not.toContain("router.post('/subscription/upgrade'");
+    expect(source).not.toContain("router.delete('/subscription'");
   });
 
   it('mounts telegram y api-keys como submódulos', () => {
@@ -244,19 +252,20 @@ describe('Horizontal: settings.js', () => {
 
 describe('Horizontal: subscriptions.js', () => {
   const source = readSource('routes/subscriptions.js');
+  const serviceSource = readSource('services/modelSubscription.js');
 
   it('planes válidos definidos', () => {
-    expect(source).toContain('FREE');
-    expect(source).toContain('BASIC');
-    expect(source).toContain('PREMIUM');
+    expect(serviceSource).toContain('FREE');
+    expect(serviceSource).toContain('BASIC');
+    expect(serviceSource).toContain('PREMIUM');
   });
 
   it('upgrade valida plan destino', () => {
-    expect(source).toContain("error: 'Plan inválido. Usa FREE, BASIC o PREMIUM'");
+    expect(serviceSource).toContain("error: 'Plan inválido. Usa FREE, BASIC o PREMIUM'");
   });
 
   it('downgrade no permitido', () => {
-    expect(source).toContain("error: 'No puedes downgrade");
+    expect(serviceSource).toContain("error: 'El plan solicitado debe ser superior al actual'");
   });
 
   it('admin puede listar todas con ADMIN role', () => {
@@ -287,13 +296,13 @@ describe('Horizontal: events.js', () => {
   const source = readSource('routes/events.js');
   const routes = extractRoutes(source);
 
-  it('rutas son GET con optionalAuth', () => {
+  it('rutas son GET con authenticate (denegación por defecto — ISSUE-002)', () => {
     const list = routes.find(r => r.path === '/');
     expect(list?.method).toBe('GET');
-    expect(source).toContain("router.get('/', optionalAuth");
+    expect(source).toContain("router.get('/', authenticate");
     const device = routes.find(r => r.path === '/device/:deviceId');
     expect(device?.method).toBe('GET');
-    expect(source).toContain("router.get('/device/:deviceId', optionalAuth");
+    expect(source).toContain("router.get('/device/:deviceId', authenticate");
   });
 });
 
@@ -321,7 +330,7 @@ describe('Horizontal: monitoring.js', () => {
   const source = readSource('routes/monitoring.js');
   const routes = extractRoutes(source);
 
-  it('rutas de monitoreo son GET públicas', () => {
+  it('rutas de monitoreo son GET y se montan tras authenticate + ADMIN (ISSUE-003)', () => {
     const metrics = routes.find(r => r.path === '/metrics');
     expect(metrics?.method).toBe('GET');
     const dbHealth = routes.find(r => r.path === '/health/db');
@@ -330,6 +339,9 @@ describe('Horizontal: monitoring.js', () => {
     expect(logs?.method).toBe('GET');
     const stream = routes.find(r => r.path === '/stream');
     expect(stream?.method).toBe('GET');
+
+    const index = readSource('routes/index.js');
+    expect(index).toContain("router.use('/monitoring', authenticate, requireMinRole('ADMIN'), monitoringRouter)");
   });
 
   it('DB health usa sequelize.authenticate', () => {
@@ -341,8 +353,9 @@ describe('Horizontal: analytics.js (chamber)', () => {
   const source = readSource('routes/analytics.js');
   const routes = extractRoutes(source);
 
-  it('analytics es GET con optionalAuth', () => {
+  it('analytics es GET con authenticate (denegación por defecto — ISSUE-002)', () => {
     const analytics = routes.find(r => r.path === '/:chamberId/analytics');
     expect(analytics?.method).toBe('GET');
+    expect(source).toContain("router.get('/:chamberId/analytics', authenticate");
   });
 });

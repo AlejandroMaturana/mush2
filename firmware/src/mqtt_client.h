@@ -40,7 +40,10 @@ struct MqttCommandMessage {
 class MQTTClient {
 public:
   MQTTClient();
-  void init(const char* deviceId, const char* mqttUser = nullptr, const char* mqttPass = nullptr);
+  // ISSUE-059: allowDefaultFallback=false → sin credenciales provisionadas, NO
+  // usar la identidad por defecto de config.h (solo primer arranque la permite).
+  void init(const char* deviceId, const char* mqttUser = nullptr, const char* mqttPass = nullptr,
+            bool allowDefaultFallback = true);
   void loop();
   bool isConnected();
 
@@ -51,9 +54,10 @@ public:
   bool publishHealth(uint32_t freeHeap, uint32_t minFreeHeap, uint32_t maxAllocHeap,
                      uint16_t stackSensors, uint16_t stackSSR, uint16_t stackWiFi,
                      uint16_t stackMQTT, uint16_t stackOTA, uint16_t stackTelemetry,
-                     uint16_t stackButton, bool i2cHealthy, bool sensorAht21, bool sensorEns160,
-                     uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime, uint8_t rebootCount,
-                     uint8_t resetReason,
+                     uint16_t stackPoller, uint16_t stackButton, bool i2cHealthy,
+                     bool sensorAht21, bool sensorEns160,
+                     uint8_t staleTaskMask, bool heartbeatsHealthy, uint32_t uptime,
+                     uint8_t rebootCount, uint8_t resetReason,
                      bool bootTestPassed, const char* bootTestFailReason);
   bool publishMaintenance(const char* component, uint8_t health, uint32_t estimatedFailure, const char* reason);
 

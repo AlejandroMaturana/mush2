@@ -48,7 +48,6 @@ describe('Invariant: ownership de dispositivos', () => {
       { method: 'PATCH', path: "'/devices/:id/maintenance'" },
       { method: 'PATCH', path: "'/devices/:id/health-config'" },
       { method: 'DELETE', path: "'/devices/:id'" },
-      { method: 'POST', path: "'/devices/:id/integrations/thingspeak'" },
     ];
 
     for (const route of mutatingRoutes) {

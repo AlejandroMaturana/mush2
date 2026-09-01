@@ -7,6 +7,8 @@ import { seedSystemSettings } from '../config/systemSettingsDefaults.js';
 import sequelize from '../config/database.js';
 import telegramRouter from './telegram.js';
 import apiKeysRouter from './apiKeys.js';
+import { maskSecret } from '../services/telegramConfigurationService.js';
+import { decrypt } from '../services/encryption.js';
 import { createChildLogger } from '../config/pino.js';
 
 const log = createChildLogger('SETTINGS');
@@ -92,7 +94,16 @@ router.post('/change-password', authenticate, async (req, res) => {
 router.get('/system', authenticate, requireMinRole('SUPER_ADMIN'), async (req, res) => {
   try {
     const settings = await SystemSetting.findAll({ order: [['category', 'ASC'], ['key', 'ASC']] });
-    res.json({ data: settings });
+    const mapped = settings.map((s) => {
+      const row = typeof s.toJSON === 'function' ? s.toJSON() : s;
+      if (row.key === 'telegram_bot_token') {
+        // ISSUE-011: nunca exponer el token en claro — el valor almacenado
+        // puede ser cifrado (enc:v1:) o legacy en claro; decrypt los maneja.
+        return { ...row, value: maskSecret(decrypt(row.value || '')) };
+      }
+      return row;
+    });
+    res.json({ data: mapped });
   } catch (err) {
     log.error({ module: 'SETTINGS', event: 'READ_SYSTEM_ERROR', error: err.message }, 'Error reading system settings');
     res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
@@ -143,50 +154,5 @@ router.get('/system/public', async (req, res) => {
 // Proxy routes — frontend settings.js calls these paths
 router.use('/telegram', authenticate, telegramRouter);
 router.use('/api-keys', authenticate, apiKeysRouter);
-
-// Subscription proxies (frontend /subscription → backend /subscriptions/mine)
-router.get('/subscription', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    res.json({ data: sub });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.get('/subscription/usage', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    if (!sub) return res.json({ data: { plan: 'FREE', used: 0, limit: 50000 } });
-    res.json({ data: { plan: sub.plan, used: sub.apiCallsUsed || 0, limit: sub.apiCallsLimit || 50000 } });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.post('/subscription/upgrade', authenticate, async (req, res) => {
-  try {
-    const { plan } = req.body;
-    const { Subscription } = await import('../models/index.js');
-    const [sub] = await Subscription.findOrCreate({ where: { userId: req.user.id }, defaults: { plan: 'FREE' } });
-    await sub.update({ plan });
-    res.json({ data: sub });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
-
-router.delete('/subscription', authenticate, async (req, res) => {
-  try {
-    const { Subscription } = await import('../models/index.js');
-    const sub = await Subscription.findOne({ where: { userId: req.user.id } });
-    if (sub) await sub.update({ plan: 'FREE' });
-    res.json({ message: 'Suscripción cancelada' });
-  } catch (err) {
-    res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
-  }
-});
 
 export default router;

@@ -47,7 +47,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 - **Monitoreo Ambiental Preciso**: Lectura de temperatura, humedad relativa y calidad del aire (CO₂, VOC) mediante sensores AHT21 y ENS160 vía I²C.
 - **Control de Actuadores SSR**: Gestión de 4 canales de relés de estado sólido (active-LOW) para ventilación, calefacción, humidificación e iluminación.
-- **Arquitectura FreeRTOS**: 8 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
+- **Arquitectura FreeRTOS**: 9 tareas en 2 núcleos Xtensa LX7 con prioridades, colas de sincronización y watchdog jerárquico (TWDT + SWDT + Health Check).
 - **Comunicación HTTP Polling**: Sincronización entre firmware y backend mediante REST API con cola de comandos y backoff exponencial.
 - **Dashboard en Tiempo Real**: Interfaz web React con SSE, visualización de datos históricos y control remoto de actuadores.
 - **Telemetría de Respaldo**: Envío de datos a ThingSpeak como sistema de respaldo y monitoreo externo.
@@ -60,7 +60,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 | Capa | Tecnología |
 |---|---|
 | **Firmware** | C++ (PlatformIO / ESP32-S3) + FreeRTOS |
-| **Backend** | Node.js 20+ / Express 5 / Sequelize 6 |
+| **Backend** | Node.js 20+ (runtime validado: 22 LTS) / Express 5 / Sequelize 6 |
 | **Contenedores** | Docker / Docker Compose (Broker MQTT + Backend) |
 | **Frontend** | React 18 + Vite + Chart.js |
 | **Base de datos** | PostgreSQL 16 |
@@ -105,7 +105,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 - `PROJECT_CONTEXT.md` — Definición del proyecto
 - `PROJECT_JOURNAL.md` — Bitácora de decisiones
-- `docs/ADR/` — 28 Architecture Decision Records (ADR-001 a ADR-028)
+- `docs/ADR/` — 33 Architecture Decision Records (ADR-001 a ADR-033)
 - `docs/architecture/` — Arquitectura por componente
 - `docs/contracts/` — Contratos (API REST, MQTT)
 - `docs/roadmap/roadmap.md` — Roadmap de desarrollo (18 fases)
@@ -125,7 +125,7 @@ Mush2 es una solución completa de **IoT industrial** para el cultivo controlado
 
 ### Prerequisitos
 
-- Node.js 20+
+- Node.js 20+ (runtime validado: 22 LTS)
 - Docker Desktop
 - PostgreSQL 16 (opcional, se usa el contenedor Docker)
 
@@ -172,4 +172,4 @@ MIT
 
 ---
 
-> **Estado del Sistema**: v1.7.22 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.
+> **Estado del Sistema**: v1.8.22 — En desarrollo. Mush2 es software libre para el cultivo de hongos adaptógenos e IoT industrial.

@@ -57,7 +57,6 @@ firmware/
 │   ├── ota_executor.h/.cpp    # OTA download, SHA-256 verify, flash inactive partition
 │   ├── ota_shutdown.h/.cpp    # Safe shutdown: SSR off + sensor pause before OTA
 │   ├── ota_postboot.h/.cpp    # Post-OTA self-test + mark_valid() or rollback
-│   ├── thingspeak_client.h/.cpp # HTTP GET T/HR/CO₂/VOC cada 20s
 │   ├── device_manager.h/.cpp  # Device ID derivado de MAC address
 │   ├── event_bus.h/.cpp       # In-memory pub/sub (FreeRTOS Queue), 10 event types
 │   ├── logger.h/.cpp          # Multi-sink logger (Serial, SPIFFS, MQTT) + ring buffer
@@ -91,7 +90,6 @@ firmware/
 | OTA Executor | `ota_executor.h/.cpp` | OTA download, SHA-256 verify, flash |
 | OTA Shutdown | `ota_shutdown.h/.cpp` | Safe shutdown before OTA |
 | OTA Post-Boot | `ota_postboot.h/.cpp` | Self-test + mark_valid() or rollback |
-| ThingSpeak | `thingspeak_client.h/.cpp` | HTTP GET T/HR/CO₂/VOC cada 20s |
 | Device Manager | `device_manager.h/.cpp` | Device ID desde MAC address |
 | Event Bus | `event_bus.h/.cpp` | In-memory pub/sub (FreeRTOS Queue), 10 event types |
 | Logger | `logger.h/.cpp` | Multi-sink (Serial, SPIFFS, MQTT), ring buffer 64 entries |
@@ -110,7 +108,7 @@ firmware/
 | taskWiFi | 0 | `configMAX_PRIORITIES-3` | 4096 | 1000 | Conexión WiFi failover |
 | taskPoller | 0 | `configMAX_PRIORITIES-4` | 8192 | 500 | HTTP polling backend |
 | taskOTA | 0 | `configMAX_PRIORITIES-4` | 4096 | 100 | OTA updates |
-| taskTelemetry | 0 | `configMAX_PRIORITIES-4` | 4096 | 5000 | ThingSpeak + stats + offline replay |
+| taskTelemetry | 0 | `configMAX_PRIORITIES-4` | 4096 | 5000 | stats + offline replay |
 | taskMonitor | 0 | `configMAX_PRIORITIES-5` | 4096 | 60000/300000 | Health: heap, task stacks, I2C, sensor checks |
 | taskButton | 1 | 2 | 3072 | Event-driven | SMFB: short/long/double press, LED feedback |
 
@@ -282,11 +280,6 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 #define BACKEND_PORT   3797
 #define API_KEY        "****"  // X-Device-Key
 
-// ThingSpeak
-#define TS_HOST        "api.thingspeak.com"
-#define TS_PORT        80
-#define TS_API_KEY     "****"
-
 // MQTT (ADR-028: preferir credenciales provisionadas en NVS)
 #define MQTT_USER     ""
 #define MQTT_PASS     ""
@@ -302,7 +295,6 @@ Generado automáticamente por `generate_config.py` desde `.env`. **Nunca se comm
 
 // Intervalos (ms)
 #define SENSOR_INTERVAL  8000
-#define TS_INTERVAL     20000
 #define POLL_INTERVAL     500
 
 #endif

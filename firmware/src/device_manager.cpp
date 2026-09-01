@@ -4,6 +4,8 @@
 
 static const char* PREFS_NS = "mush2";
 static const char* DEVICE_ID_KEY = "deviceId";
+static const char* MQTT_USER_KEY = "mqttUser";
+static const char* MQTT_PASS_KEY = "mqttPass";
 
 DeviceManager::DeviceManager() : firstBoot(false) {
 }
@@ -52,4 +54,30 @@ void DeviceManager::init() {
 
 const String& DeviceManager::getDeviceId() const {
   return deviceId;
+}
+
+// ADR-028: credenciales MQTT provisionadas se persisten en NVS para
+// sobrevivir reinicios y no depender de defaults compilados en config.h.
+bool DeviceManager::loadMqttCredentials(String& user, String& pass) {
+  Preferences prefs;
+  prefs.begin(PREFS_NS, true);
+  String u = prefs.getString(MQTT_USER_KEY, "");
+  String p = prefs.getString(MQTT_PASS_KEY, "");
+  prefs.end();
+
+  if (u.length() > 0 && p.length() > 0) {
+    user = u;
+    pass = p;
+    return true;
+  }
+  return false;
+}
+
+void DeviceManager::saveMqttCredentials(const String& user, const String& pass) {
+  Preferences prefs;
+  prefs.begin(PREFS_NS, false);
+  prefs.putString(MQTT_USER_KEY, user);
+  prefs.putString(MQTT_PASS_KEY, pass);
+  prefs.end();
+  Serial.printf("[DEVICE] Credenciales MQTT persistidas en NVS (user=%s)\n", user.c_str());
 }

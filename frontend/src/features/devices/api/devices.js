@@ -5,6 +5,13 @@ export async function getDevices() {
   return data.data ?? data
 }
 
+export async function getDashboardSummary() {
+  // D1/T9: una sola petición devuelve estado D2 + última telemetría por cámara,
+  // eliminando el N+1 de getLatestTelemetry() por dispositivo.
+  const { data } = await client.get('/dashboard/summary')
+  return data.data ?? data
+}
+
 export async function getDevice(id) {
   const { data } = await client.get(`/devices/${id}`)
   return data

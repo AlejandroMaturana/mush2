@@ -14,11 +14,6 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define WIFI_SSID_2 "{WIFI_SSID_2}"
 #define WIFI_PASSWORD_2 "{WIFI_PASSWORD_2}"
 
-// ThingSpeak
-#define TS_HOST "{TS_HOST}"
-#define TS_PORT {TS_PORT}
-#define TS_API_KEY "{TS_API_KEY}"
-
 // Backend HTTP
 #define BACKEND_HOST "{BACKEND_HOST}"
 #define BACKEND_PORT {BACKEND_PORT}
@@ -72,7 +67,6 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define DELAY_TELEMETRY 20000
 
 #define SENSOR_INTERVAL 10000
-#define TS_INTERVAL 20000
 
 #define TEMP_CRITICAL 32.0
 #define TEMP_RECOVERY 28.0
@@ -88,6 +82,11 @@ TEMPLATE = '''#ifndef CONFIG_H
 #define DEFAULT_HUM_MIN 78.0
 #define DEFAULT_HUM_MAX 85.0
 #define DEFAULT_CO2_MAX 1200
+
+// OTA (ISSUE-050/052): password placeholder; CA vacia => ejecutor OTA fail-closed
+// (rechaza la descarga). Para produccion definir OTA_CA_ROOT real.
+#define OTA_PASSWORD "CHANGE_ME_OTA_PASSWORD"
+#define OTA_CA_ROOT ""
 
 #endif
 '''
@@ -126,15 +125,11 @@ def main():
 
     validate(env.get('WIFI_SSID_1', ''), 'WIFI_SSID_1')
     validate(env.get('WIFI_PASSWORD_1', ''), 'WIFI_PASSWORD_1', min_len=8)
-    validate(env.get('TS_API_KEY', ''), 'TS_API_KEY')
     output = TEMPLATE.format(
         WIFI_SSID_1=env.get('WIFI_SSID_1', ''),
         WIFI_PASSWORD_1=env.get('WIFI_PASSWORD_1', ''),
         WIFI_SSID_2=env.get('WIFI_SSID_2', ''),
         WIFI_PASSWORD_2=env.get('WIFI_PASSWORD_2', ''),
-        TS_HOST=env.get('TS_HOST', 'api.thingspeak.com'),
-        TS_PORT=env.get('TS_PORT', '80'),
-        TS_API_KEY=env.get('TS_API_KEY', ''),
         BACKEND_HOST=env.get('BACKEND_HOST', 'localhost'),
         BACKEND_PORT=env.get('BACKEND_PORT', '3797'),
         POLL_INTERVAL=env.get('POLL_INTERVAL', '3000'),

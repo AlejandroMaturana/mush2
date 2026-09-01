@@ -122,7 +122,7 @@ password_file.example   # Template versionado en Git
 
 ## 5. Prerrequisitos
 
-- **Node.js 20+** (el repo usa pnpm como gestor de paquetes)
+- **Node.js 20+** (el repo usa pnpm como gestor de paquetes; runtime validado en CI y Docker: 22 LTS)
 - **pnpm 10.x** (`npm install -g pnpm` o via Corepack)
 - **Docker Desktop** con el motor Docker en ejecución
 - **Git**
@@ -186,7 +186,7 @@ pnpm --dir simulator run dev
 
 ### Orden de carga (backend)
 
-1. `.env` — base compartida (credenciales WiFi, ThingSpeak, DEVICE_ID)
+1. `.env` — base compartida (credenciales WiFi, DEVICE_ID)
 2. `.env.development` — valores específicos DEV (sobrescriben `.env`)
 
 Ambos en la **raíz del repositorio**. `NODE_ENV` se detecta de `process.env` y por defecto es `development`.
@@ -206,9 +206,10 @@ Fuente de verdad: `backend/src/config/env.js` y `.env.development.example`.
 | `DB_PASSWORD` | Contraseña DB | `''` | según `.env.development` | Sí |
 | `DATABASE_URL` | URL completa DB | `undefined` | `postgresql://...@localhost:5433/mush2_dev` | Alternativa |
 | `JWT_SECRET` | Secreto JWT | `'dev-secret-change-in-production'` | cualquiera distinto del default | Sí |
-| `MQTT_BROKER_URL` | URL del broker | `'mqtt://localhost:1883'` | `mqtt://localhost:1884` | Sí |
+| `MQTT_BROKER_URL` | URL del broker | `'mqtt://localhost:1883'` (dev) / `'mqtts://localhost:8883'` (prod, TLS) | `mqtt://localhost:1884` | Sí |
 | `MQTT_BROKER_USER` | Usuario MQTT bridge | `'backend_bridge'` | `backend_bridge` | Sí |
 | `MQTT_BROKER_PASS` | Contraseña bridge | `''` | según `.env.development` | Sí |
+| `MQTT_REJECT_UNAUTHORIZED` | Validar cert TLS del broker | `true` | `true` (dev no-TLS lo ignora) | No |
 | `MOSQUITTO_CONTAINER` | Container para restart | `'mush2-mosquitto'` | `mush2-dev-mosquitto` | Sugerida |
 | `MOSQUITTO_PASSWORD_FILE` | Ruta password_file | env-aware (dev/prod) | `docker/mosquitto/dev/password_file` | Sugerida |
 | `CORS_ORIGIN` | Origen CORS | `'http://localhost:5173'` | `http://localhost:5173` | Sí |

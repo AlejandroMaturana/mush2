@@ -74,6 +74,10 @@
 9. Post-reboot: dispositivo conecta Wi-Fi y se registra en backend
 ```
 
+## Nota: alcance de la provisión
+
+La provisión BLE gestiona **únicamente** las credenciales Wi-Fi. La polaridad de los actuadores SSR (`ssrActiveLow`) no se provisiona por BLE: su única fuente de verdad es el backend (`Device`, dominio Dispositivo, ADR-032-R01/R02) y se sincroniza con el firmware vía HTTP polling (`GET /api/v1/actuators`).
+
 ## Advertising
 
 | Campo       | Valor                  |

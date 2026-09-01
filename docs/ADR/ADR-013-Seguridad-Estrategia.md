@@ -82,7 +82,7 @@ Se adopta una **estrategia de seguridad por capas (defense in depth)** con las s
 | Decisión | Prioridad | Detalle |
 |----------|-----------|---------|
 | **HTTPS en backend** | ALTA | Configurar TLS en el servidor Express usando certificados autofirmados para desarrollo y Let's Encrypt (o similar) para producción. El firmware debe soportar HTTPS vía `WiFiClientSecure`. |
-| **ThingSpeak vía HTTPS** | ALTA | Cambiar `TS_PORT` de 80 a 443 y usar `WiFiClientSecure` en `thingspeak_client.cpp`. ThingSpeak ya soporta HTTPS en su API. |
+| **ThingSpeak vía HTTPS** | ALTA | Cambiar `TS_PORT` de 80 a 443 y usar `WiFiClientSecure` en `thingspeak_client.cpp`. ThingSpeak ya soporta HTTPS en su API. ✅ **IMPLEMENTADA 2026-08-09 (ISSUE-051)**: HTTPS obligatorio, CA root embebida (`thingspeak_ca_root.h`), clave en header `X-ApiKey`. |
 | **Eliminar MQTT público o asegurarlo** | INMEDIATA | La conexión a `test.mosquitto.org` sin TLS ni autenticación es un riesgo activo. Opción A (preferida): migrar el bridge MQTT a un broker privado con TLS y autenticación por certificado de cliente. Opción B (transición): deshabilitar el MQTT bridge hasta que haya un broker seguro. Ver ADR-008 y su contradicción con la implementación actual. |
 | **HTTPS en firmware ↔ backend** | MEDIA | El backend debe servir también en HTTPS. El firmware usa `WiFiClientSecure` con fingerprint o CA root para verificar el certificado del servidor. |
 | **HSTS en backend** | BAJA | Una vez HTTPS funcione, añadir header `Strict-Transport-Security`. |
@@ -216,7 +216,7 @@ Fase 2 (corto plazo): Autenticación y transporte — 2 semanas
 ├── Rate limiting específico por deviceId (eliminar skip general)
 ├── Refresh token en httpOnly cookie (backend + frontend)
 ├── Login rate limiting (5 intentos/minuto)
-├── ThingSpeak vía HTTPS (WiFiClientSecure)
+├── ThingSpeak vía HTTPS (WiFiClientSecure) — ✅ implementado 2026-08-09 (ISSUE-051)
 └── Input validation con Zod en rutas críticas (auth, actuators, admin)
 
 Fase 3 (medio plazo): Hardening backend — 3 semanas
@@ -231,7 +231,7 @@ Fase 4 (largo plazo): Hardening firmware — 1 mes
 ├── Credenciales WiFi/API keys en NVS (no en config.h)
 ├── Secure Boot v2 + flash encryption (modo development)
 ├── Firmware signing para OTA
-├── Soporte HTTPS en http_poller + thingspeak_client
+├── Soporte HTTPS en http_poller + thingspeak_client (thingspeak_client ✅ 2026-08-09)
 └── Device register-on-boostrap (POST /api/v1/devices/register)
 
 Fase 5 (futuro): Madurez — continuo

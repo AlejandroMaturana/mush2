@@ -3,9 +3,9 @@ import sequelize from '../config/database.js';
 
 class Subscription extends Model {
   static PLANS = {
-    FREE: { apiCallsPerMonth: 50000, dataRetentionDays: 30 },
-    BASIC: { apiCallsPerMonth: 10000, dataRetentionDays: 90 },
-    PREMIUM: { apiCallsPerMonth: 100000, dataRetentionDays: 365 },
+    FREE: { apiCallsPerMonth: 1000, dataRetentionDays: 7 },
+    BASIC: { apiCallsPerMonth: 5000, dataRetentionDays: 30 },
+    PREMIUM: { apiCallsPerMonth: 25000, dataRetentionDays: 365 },
   };
 
   static getPlanLimits(plan) {
@@ -45,10 +45,12 @@ Subscription.init({
   status: { type: DataTypes.ENUM('ACTIVE', 'CANCELED', 'PAST_DUE'), defaultValue: 'ACTIVE', allowNull: false },
   apiCallsPerMonth: { type: DataTypes.INTEGER, defaultValue: 1000, allowNull: false },
   apiCallsUsedThisMonth: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
-  dataRetentionDays: { type: DataTypes.INTEGER, defaultValue: 30, allowNull: false },
+  dataRetentionDays: { type: DataTypes.INTEGER, defaultValue: 7, allowNull: false },
   currentPeriodStart: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   currentPeriodEnd: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal("NOW() + INTERVAL '1 month'") },
   canceledAt: { type: DataTypes.DATE, allowNull: true },
+  pendingPlan: { type: DataTypes.ENUM('FREE', 'BASIC', 'PREMIUM'), allowNull: true },
+  requestedAt: { type: DataTypes.DATE, allowNull: true },
 }, {
   sequelize,
   modelName: 'Subscription',

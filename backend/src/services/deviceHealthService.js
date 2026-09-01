@@ -1,8 +1,16 @@
+import { Op } from 'sequelize';
 import { Device, DeviceHealth } from '../models/index.js';
 import { events } from './eventBus.js';
 import { createChildLogger } from '../config/pino.js';
+import { derivePrimaryStatus } from './cameraStatusSemantics.js';
 
 const log = createChildLogger('HEALTH');
+
+// ── Last observed status per device (ISSUE-007) ─────────────────────
+// Baseline para el watchdog: permite detectar transiciones comparando
+// contra el último estado emitido en vez de recomputar sobre los mismos
+// datos (que nunca cambiaban).
+const lastStatusByDevice = new Map();
 
 // ── Dimension values (DDD-008 / ADR-025) ───────────────────────────
 
@@ -112,6 +120,7 @@ function getStatusFromDevice(device, latestHealth = null) {
 function buildHealthPayload(device, composedStatus, latestHealth) {
   const secondsSinceLastSeen = getSecondsSinceLastSeen(device);
   const hb = device.heartbeatInterval || 10;
+  const derived = derivePrimaryStatus(composedStatus, { health: latestHealth });
 
   return {
     status: composedStatus,
@@ -124,6 +133,18 @@ function buildHealthPayload(device, composedStatus, latestHealth) {
     degradedThreshold: hb * (device.staleMultiplier || 3),
     offlineThreshold: hb * (device.offlineMultiplier || 6),
     maintenanceMode: device.maintenanceMode,
+    // ── D2: enriquecimiento semántico no destructivo (M0.2 §9) ──
+    primaryStatus: derived.primaryStatus,
+    primaryLabel: derived.primaryLabel,
+    primaryReason: derived.primaryReason,
+    secondaryStates: derived.secondaryStates,
+    lastTransmission: {
+      secondsSinceLastSeen,
+      heartbeatInterval: hb,
+      degradedThreshold: hb * (device.staleMultiplier || 3),
+      offlineThreshold: hb * (device.offlineMultiplier || 6),
+      lastTelemetryAt: device.lastTelemetryAt,
+    },
     diagnostics: latestHealth ? {
       i2c: latestHealth.i2cHealthy ? 'OK' : 'FAIL',
       sensorAht21: latestHealth.sensorAht21 ? 'OK' : 'FAIL',
@@ -158,7 +179,6 @@ function emitTransition(deviceId, prevStatus, newStatus, lastSeenAt) {
     lastSeenAt: lastSeenAt || null,
     timestamp: new Date().toISOString(),
   };
-
   const prevConn = prevStatus?.connectivity;
   const newConn = newStatus?.connectivity;
   const prevLife = prevStatus?.lifecycle;
@@ -193,6 +213,7 @@ function emitTransition(deviceId, prevStatus, newStatus, lastSeenAt) {
   }
 
   events.emit('device_status_changed', payload);
+  lastStatusByDevice.set(deviceId, newStatus);
 }
 
 // ── Fetch latest health metrics for a device ───────────────────────
@@ -203,6 +224,20 @@ async function getLatestHealth(deviceId) {
     order: [['timestamp', 'DESC']],
   });
   return record;
+}
+
+async function getLatestHealthByDeviceIds(deviceIds) {
+  if (!deviceIds || deviceIds.length === 0) return new Map();
+  const rows = await DeviceHealth.findAll({
+    where: { deviceId: { [Op.in]: deviceIds } },
+    order: [['timestamp', 'DESC']],
+    raw: true,
+  });
+  const byDevice = new Map();
+  for (const row of rows) {
+    if (!byDevice.has(row.deviceId)) byDevice.set(row.deviceId, row);
+  }
+  return byDevice;
 }
 
 // ── Core API — Communication Event Pipeline (ADR-026) ──────────────
@@ -228,6 +263,7 @@ async function recordIncoming(deviceId, eventType) {
   await device.update(updates);
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus, now);
   }
@@ -247,6 +283,7 @@ async function recordOutgoing(deviceId) {
   await device.update({ lastCommandAt: now });
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus, device.lastSeen);
   }
@@ -265,8 +302,15 @@ async function evaluateDevice(deviceOrId) {
   if (!device) return null;
 
   const latestHealth = await getLatestHealth(device.id);
-  const prevStatus = computeStatus(device, latestHealth);
   const newStatus = computeStatus(device, latestHealth);
+  const prevStatus = lastStatusByDevice.get(device.deviceId);
+
+  if (prevStatus === undefined) {
+    // Primera observación: se registra el estado como baseline sin emitir,
+    // para no inundar con transiciones al arrancar el servicio.
+    lastStatusByDevice.set(device.deviceId, newStatus);
+    return { device, previousStatus: newStatus, newStatus };
+  }
 
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus);
@@ -285,8 +329,13 @@ async function evaluateAllDevices() {
 
   for (const device of devices) {
     const latestHealth = await getLatestHealth(device.id);
-    const prevStatus = computeStatus(device, latestHealth);
     const newStatus = computeStatus(device, latestHealth);
+    const prevStatus = lastStatusByDevice.get(device.deviceId);
+
+    if (prevStatus === undefined) {
+      lastStatusByDevice.set(device.deviceId, newStatus);
+      continue;
+    }
 
     if (statusChanged(prevStatus, newStatus)) {
       emitTransition(device.deviceId, prevStatus, newStatus);
@@ -308,6 +357,7 @@ async function setMaintenanceMode(deviceId, enabled) {
   await device.update({ lifecycle: newLifecycle, maintenanceMode: enabled });
 
   const newStatus = computeStatus(device, latestHealth);
+  lastStatusByDevice.set(device.deviceId, newStatus);
   if (statusChanged(prevStatus, newStatus)) {
     emitTransition(device.deviceId, prevStatus, newStatus);
   }
@@ -343,4 +393,5 @@ export {
   buildHealthPayload,
   getStatusFromDevice,
   getLatestHealth,
+  getLatestHealthByDeviceIds,
 };

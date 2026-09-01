@@ -90,7 +90,7 @@
 | Health checks del dispositivo | DeviceHealth model | 🔴 |
 | Mantenimiento preventivo | DeviceMaintenance model | 🟡 |
 | Notificaciones de salud | notificationService | 🟡 |
-| Frontend monitoring page | MonitoringPage.jsx | 🟡 |
+| Frontend (estado/conectividad del dispositivo) | DeviceConnectivityPanel.jsx + DeviceAnalyticsPage.jsx | 🟡 |
 
 ---
 
@@ -98,7 +98,7 @@
 
 | Afecta | Componente | Severidad |
 |---|---|---|
-| Notificaciones de alarmas | emailProvider, webhookProvider, telegramService | 🟡 |
+| Notificaciones de alarmas | emailProvider, webhookProvider, telegramBotService | 🟡 |
 | Alertas críticas | Frontend AlarmContext | 🟡 |
 
 ---
@@ -129,7 +129,7 @@
 
 | Afecta | Componente | Severidad |
 |---|---|---|
-| Todos los servicios que emiten/consumen eventos | Backend (controlEngine, mqttBridge, webSocketServer, telegramService) | 🔴 |
+| Todos los servicios que emiten/consumen eventos | Backend (controlEngine, mqttBridge, webSocketServer, telegramBotService) | 🔴 |
 | SSE → Frontend | Frontend | 🟡 |
 
 ---
@@ -158,7 +158,7 @@
 | Afecta | Componente | Severidad |
 |---|---|---|
 | Startup de todos los servicios | Todo el backend | 🔴 |
-| HTTP server, WebSocket, MQTT, Control Engine, Telegram, ThingSpeak | Servicios | 🔴 |
+| HTTP server, WebSocket, MQTT, Control Engine, Telegram | Servicios | 🔴 |
 
 ---
 
@@ -295,7 +295,7 @@
 | Afecta | Componente | Severidad |
 |---|---|---|
 | Todos los módulos que usan defines | Todo el firmware | 🔴 |
-| WiFi, MQTT, ThingSpeak, GPIO pins | Configuración completa | 🔴 |
+| WiFi, MQTT, GPIO pins | Configuración completa | 🔴 |
 
 **Nota**: Este archivo se genera desde `.env` via `generate_config.py`. No editarlo directamente.
 

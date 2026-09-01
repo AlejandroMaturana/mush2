@@ -5,6 +5,7 @@ import LoadingState from '../../../shared/components/LoadingState.jsx'
 import EmptyState from '../../../shared/components/EmptyState.jsx'
 import EntityHeader from '../../../shared/components/EntityHeader.jsx'
 import Panel from '../../../shared/components/Panel.jsx'
+import { explainAlarm, FIVE_LEVEL } from '../alertTranslation.js'
 
 const SEVERITY = {
   CRITICAL: { label: 'Crítico', color: 'var(--error-red)', icon: 'error', bg: 'rgba(239, 68, 68, 0.1)' },
@@ -16,7 +17,18 @@ const SEVERITY = {
 function AlarmRow({ alarm, onAcknowledge, onResolve }) {
   const sev = SEVERITY[alarm.severity] || SEVERITY.LOW
   const isActive = !alarm.resolvedAt
+  // D3/T11 — N2 (backend) es la fuente de los 5 niveles; N1 queda como
+  // fallback para payloads/estados que aún no los incluyen.
+  const local = explainAlarm(alarm)
+  const explained = {
+    what: alarm.what || local.what,
+    meaning: alarm.meaning || local.meaning,
+    impact: alarm.impact || local.impact,
+    action: alarm.action || local.action,
+    verify: alarm.verify || local.verify,
+  }
   return (
+    <>
     <tr className="border-b border-outline-variant">
       <td className="p-3">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -27,7 +39,7 @@ function AlarmRow({ alarm, onAcknowledge, onResolve }) {
         </div>
       </td>
       <td className="p-3">
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{alarm.type}</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--on-surface)' }}>{explained.what}</span>
       </td>
       <td className="p-3">
         <span style={{ fontSize: '12px', color: 'var(--on-surface-variant)' }}>{alarm.message}</span>
@@ -74,6 +86,25 @@ function AlarmRow({ alarm, onAcknowledge, onResolve }) {
         )}
       </td>
     </tr>
+    <tr className="border-b border-outline-variant">
+      <td colSpan={6} className="p-3" style={{ paddingTop: 0 }}>
+        <details>
+          <summary style={{ cursor: 'pointer', fontSize: '11px', color: 'var(--accent-blue)', fontWeight: 600 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '12px', verticalAlign: 'middle' }}>expand_more</span>
+            {explained.meaning}
+          </summary>
+          <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+            {FIVE_LEVEL.map(level => (
+              <div key={level.key} style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
+                <span style={{ color: 'var(--outline)', fontWeight: 600, minWidth: '120px' }}>{level.label}:</span>
+                <span style={{ color: 'var(--on-surface-variant)' }}>{explained[level.key]}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      </td>
+    </tr>
+    </>
   )
 }
 

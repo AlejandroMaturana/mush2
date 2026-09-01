@@ -20,7 +20,7 @@
 | Parámetro | Valor | Notas |
 |---|---|---|
 | Protocolo | MQTT 3.1.1 | TCP/IP, no WebSocket |
-| Puerto | 1883 | Sin TLS (desarrollo), 8883 (producción) |
+| Puerto | 1883 (desarrollo), 8883 (producción, TLS) | Ver §2.3 Entorno de producción |
 | Keep Alive | 30 segundos | Configurable en firmware |
 | Clean Session | `true` | Firmware no necesita sesión persistente |
 | Tamaño máximo de payload | 2048 bytes | Suficiente para JSON de telemetría |
@@ -34,9 +34,25 @@
 | Username | `dev_{deviceId}` (e.g. `dev_mush2_A0F262E55CBC`) |
 | Password | Generada por backend (32 bytes, base64url) |
 | Provisión | `POST /api/v1/devices/register` → respuesta incluye `mqtt.user` y `mqtt.pass` |
-| Persistencia en firmware | NVS (`mush2_prov` namespace, keys `mqtt_user` / `mqtt_pass`) |
-| Fallback | Si no hay credenciales provisionadas, usa `MQTT_USER`/`MQTT_PASS` de `config.h` |
-| Broker auth | `mosquitto_passwd` password_file, reinicio automático del container |
+| Persistencia en firmware | NVS (namespace `mush2`, keys `mqttUser` / `mqttPass` vía `device_manager`) — fuera de RAM |
+| Fallback | **Solo primer arranque** (ISSUE-059): sin credenciales en NVS y primer boot → `MQTT_USER`/`MQTT_PASS` de `config.h`. Arranques posteriores sin NVS → sin identidad compartida (no usa defaults) |
+| Broker auth | `password_file` hasheado (hash `$7$` nativo Node, ISSUE-024), escritura por backend vía `MosquittoProvisioningService`, recarga del broker con SIGHUP (sin reinicio — I081/INF-022) |
+
+> **Nota de transición (PR-M / ISSUE-059):** el firmware registra por HTTP (`POST /devices/register`) **solo** cuando no tiene credenciales en NVS (primer aprovisionamiento); tras el registro las persiste en NVS y no vuelve a registrarse en cada boot. Las credenciales de la respuesta de registro se entregan en buffers transitorios y se limpian tras persistir — nunca quedan en RAM de `HTTPPoller`. El transporte MQTT en producción es `mqtts://` (ISSUE-015/PR-L, §2.3).
+
+### 2.3 Entorno de producción
+
+| Parámetro | Valor |
+|---|---|
+| Broker | Contenedor Mosquitto 2.x (DECISION-006) — plan de despliegue en `docs/operations/broker-deployment.md` (PR-G, ISSUE-065) |
+| Listener TLS | Puerto `8883` (MQTTS) para firmware y backend bridge; `cafile`/`certfile`/`keyfile` montados en `/mosquitto/certs` (ISSUE-075) |
+| Listener interno | Puerto `1883` solo dentro de la red del PaaS/Docker — ops/legacy; el backend bridge NO lo usa en producción (exige TLS, ISSUE-015/PR-L) |
+| Backend bridge env | `MQTT_BROKER_URL` (p.ej. `mqtts://mush2-mqtt.<host>:8883`), `MQTT_BROKER_USER` (`backend_bridge`), `MQTT_BROKER_PASS` (secret, nunca en el repo), `MQTT_REJECT_UNAUTHORIZED` (default `true`; solo `false` para certs self-signed en staging) |
+| TLS enforcement | `ConfigurationService.validate()` falla (fail-fast) si `MQTT_BROKER_URL` no es `mqtts://`/`tls://`/`ssl://` con `NODE_ENV=production` (ISSUE-015/PR-L); default de `env.js` en prod = `mqtts://localhost:8883` |
+| ACL | `docker/mosquitto/prod/acl.conf` — por `client_id` (`%c`) y por usuario bridge; incluye `alarm`, `ota/#`, `actuators` (contrato §6.2/§9.1) |
+| Persistencia | Volúmenes `/mosquitto/data` (mensajes retain, sesiones) y `/mosquitto/log` |
+
+> **Nota de versión (PR-L):** sin cambio de versión del contrato. El backend exige TLS (`mqtts://`) en producción desde ISSUE-015 (fail-fast en `ConfigurationService.validate`); topics, payloads y protocolo (MQTT 3.1.1) permanecen intactos. El broker TLS (I074/I075) y el despliegue siguen documentados en `docs/operations/broker-deployment.md`.
 
 ## 3. Calidad de Servicio (QoS)
 

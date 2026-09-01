@@ -2513,61 +2513,6 @@ html.light .chart-panel-footer { background: rgba(238, 240, 238, 0.5); }
 .dashboard-grid-gap-md { gap: var(--space-stack-md); }
 .dashboard-grid-gap-lg { gap: 24px; }
 
-/* --- StatusCard --- */
-.status-card {
-  background: var(--surface-container-low);
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-stack-sm);
-}
-
-.status-card-clickable {
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.status-card-clickable:hover {
-  border-color: var(--spore-green);
-}
-
-.status-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.status-card-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.status-card-subtitle {
-  font-size: 12px;
-  color: var(--on-surface-variant);
-}
-
-.status-card-metric {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.status-card-metric-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--on-surface);
-  font-family: var(--font-mono);
-}
-
-.status-card-metric-unit {
-  font-size: 12px;
-  color: var(--on-surface-variant);
-}
-
 /* --- EventFeed --- */
 .event-feed {
   display: flex;

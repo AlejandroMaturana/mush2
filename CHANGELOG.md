@@ -1,5 +1,325 @@
 # Changelog — Mush2
 
+## 2026-08-17
+
+### Ciclo 4 — Cerrado con Observación (23 ISSUEs, 7/8 criterios)
+
+**Release consolidado del Ciclo 4.** 23 ISSUEs transicionaron a DONE (+23, 78.2% avance global). CI 4/5 (PR-A no ejecutado — deuda heredada a C5). Exit Gates 0/11 (P1 ⛔ por DECISION-011). Banda F3 intacta y diferida a C5.
+
+- **PR-C "Release Train D11" (I062 / I067 / I069 / I077 / I078 / I082 / I093 / I096 / I098)** — Infraestructura de release: tags semánticos, deploy gated, healthchecks HTTP, version-manifest CI, docs operacionales. 9 ISSUEs de infra/docs.
+- **PR-D "Entitlement & EventBus Hardening" (I009 / I021)** — `Subscription.PLANS` corregido (FREE 1000/7d, BASIC 5000/30d, PREMIUM 25000/365d); `eventBus.js` safeEmit + maxListeners=50. Tests: `subscription-plans-monotonicity` (5), `eventBus` (+3).
+- **PR-E "Contracts Canon & Capability Matrix" (I022 / I089 / I090 / I100)** — `routes/index.js` chambersRouter importado + mount `/chambers`; `capability-matrix.md` cobertura real + paths frontend corregidos; `backend.md` endpoint `/subscriptions/mine/usage` unificado.
+- **PR-F "Firmware Watchdog & Concurrency" (I055 / I056 / I057)** — `tasks.cpp` TWDT en taskSensors (3/9 tasks cubiertas); `HealthMonitor` I2C mutex; poller handle + stackPoller metric; MQTT publishHealth JSON actualizado; `event_bus.h` HealthUpdatePayload extendido.
+- **PR-G "Documentation & ADR" (I088 / I091 / I092 / I102)** — `backend.md` regenerado (phantom files eliminados, routes/services añadidos); `frontend.md` legacy pages removido; README FreeRTOS 8→9; ADR-032 linked con `tech-debt.md`.
+- **I097 (DOC-013):** DONE por fusión con I063 (evidencia §9.8 PR-B del C2). Sin código nuevo.
+- **Fix:** `chambers.js` lazy-import `migrateChambers` → resuelve fallo Jest ESM transitive de 4 suites.
+
+### Notas de release
+
+- Backend **1.10.0** · Frontend **1.15.5** · Firmware **0.24.1** · Docs **0.2.5** · Root **1.8.22** (sin bump de versión — cambios de infra/docs, no de código funcional).
+- **Deuda heredada a C5:** CI workflow `ci.yml` (4/5, PR-A pendiente); DECISION-011 PENDING (Exit Gate P1 ⛔); I008 BACKLOG (upgrade sin billing); 3 suites Jest TS skipped; firmware validation sin evidencia local `pio run`.
+
+## 2026-08-15
+
+### Backend — v1.10.0 (MINOR)
+
+**Release consolidado del Ciclo 3 (PR-C a PR-G).** Bump MINOR por cambios de comportamiento en el flujo realtime (WebSocket autenticado con JWT), en la paginación (`limit` acotado), en el cifrado en reposo (`DATA_ENC_KEY` dedicada) y en el provisioning por dispositivo en contenedor. PR-B (v1.9.0, 2026-08-14) queda absorbido en este release y su entrada anterior (`v1.9.0 - ghghghg`) se corrige; los derivados (VERSION files, version-manifest.json, release.bat, platformio.ini) se sincronizan.
+
+- **PR-C "CI stability & deps" (transversal, deuda C2)** — fix de E2E `refresh-token-e2e` + `device-delete-cascade` (aislamiento de BD) y bump de dependencias: **22 vulns npm → 0** (`pnpm audit` limpio); sketch `S3_test-button` para el firmware build.
+- **PR-D "Device Health & Retention" (I007 / I010 / I028)** — watchdog cableado al scheduler con evento offline (I007), retención per-dispositivo en `dataRetentionService.js` (I010) y timers con `unref()`/guard in-flight (I028).
+- **PR-E "Realtime Auth & Contracts Canon" (I013 / I094 / I103)** — WebSocket `/ws` con handshake JWT y socket → tenant (I013); conteo ADR corregido 28→33 (I094); naming `webSocketServer` alineado a su función real (I103).
+- **PR-F "Perf & Validation" (I014 / I018 / I026)** — `limit` acotado + índices (migración `20260815000001-add-performance-indexes`); API keys con throttle/LRU; sensorHistory con ventana deslizante.
+- **PR-G "Encryption at rest & whitelists" (I020 / I011 / I025)** — `DATA_ENC_KEY` dedicada con IV en `encryption.js` (fallos logueados); token Telegram cifrado y enmascarado; whitelist de campos en recetas/especies.
+- **PR-B (absorbido) "MQTT provisioning container" (I081, avance I065)** — provisioning MQTT por dispositivo en la imagen de producción (Dockerfile + volumen compartido); `broker-deployment.md`.
+
+### Frontend — v1.15.5
+
+Sin cambios en el Ciclo 3.
+
+### Firmware (ESP32-S3) — v0.24.1
+
+**PR-H "FW Safety & Stability" (I053 / I054 / I058)** — `rebootCount` reseteado al llegar a ST_NORMAL (I053); SSR off en estados SAFE/OTA (I054); confirmación de OTA desacoplada de WiFi con rollback/wait/confirm (I058, `ota_postboot_policy.h`). Tests nativos: **99/99 PASSED** (`pio test -c platformio.test.ini -e native`).
+
+### Docs — v0.2.5
+
+- **PR-A release (2026-08-14, v1.8.20)** — OTA HTTPS + CA/host pinning + SHA-256 obligatorio (ADR-014), cierre cross-ciclo **I050 → DONE**; firmware **0.24.0**.
+- **PR-I "ADR Compliance" (I085 / I086 / I095)** — ADR-020 SUPERSEDED (DECISION-002), ADR-022 SUPERSEDED (DECISION-003) y fuente única de roadmap (DECISION-010).
+- **PR-J "ADR-021 & Runtime Coverage" (I087 / I107)** — ADR-021 alineado a `controlEngine.js` real; cobertura runtime: `controlEngine` (10), `mqttBridge` (14), `eventBus` (8) — **32/32 PASSED**.
+- **Cierre del Ciclo 3** — `docs/project/cycle-3-closure/` (informe, gate-check, trazabilidad); backlog §9.11; dashboard §10.3; plan §14.
+
+### Notas de release
+
+- Backend **1.9.0 → 1.10.0 (MINOR)** · Firmware **0.24.0 → 0.24.1 (PATCH)** · Docs **0.2.4 → 0.2.5 (PATCH)** · Frontend **1.15.5** · Root **1.8.21 → 1.8.22 (PATCH)**.
+- CI post-ciclo (run `31904228419`): firmware y frontend verdes; backend test (1 fallo authz, no reproducible localmente) y security gates (CodeQL `upload-sarif` sin permiso `security-events: write`) rojos — clasificación y deuda a C4 en `docs/project/cycle-3-closure/gate-check.md`.
+
+## 2026-08-13
+
+### Backend — v1.8.0 (MINOR)
+
+**Release consolidado del Ciclo 2 (PR-C a PR-H).** Bump MINOR por cambios de comportamiento en `DELETE /devices` (transaccional con cascada) y en el flujo de auth (registro alineado a contrato v1). PR-A (v1.7.10) y PR-B (v1.7.11) ya documentados el 2026-08-12 quedan absorbidos en este release; los derivados (VERSION files, version-manifest.json, release.bat, platformio.ini) se sincronizan aquí por primera vez desde 1.8.16/1.7.9.
+
+- **PR-C "Data Integrity & Contracts" (ISSUE-006 / BE-006 · ISSUE-012 / BE-012)** — **I006 DONE — DELETE /devices transaccional con cascada:** eliminación de dispositivo envuelta en transacción con borrado en cascada de dependencias (devices → provisioning_tokens, recipes, etc.); el contrato de la ruta pasa a responder 204 tras commit exitoso y 409 en caso de violación de integridad. **I012 DONE — filtro deviceId tipado:** el query param de la lista de dispositivos valida y tipa el filtro, rechazando entradas malformadas con 400. Tests: suite `device-delete-cascade` + contratos actualizados; TDD rojo→verde. Regresión completa: backend v1.7.11 → 1.8.0.
+- **PR-D "FE Auth Register/Refresh" (ISSUE-031 / FE-003 · ISSUE-033 / FE-005)** — **I031 DONE — registro alineado a contrato v1:** el flujo de registro del frontend (payload y manejo de respuesta) se alinea al contrato REST v1 (cuerpo `{...}`, validación de errores 4xx). **I033 DONE — refresh single-flight + logout controlado:** deduplicación de peticiones de refresh concurrentes y cierre de sesión controlado (revoca token, limpia estado). Tests: `auth.test.js` (2 casos) + `axiosInstance.test.js`; TDD rojo→verde. Regresión completa: vitest 458/458 → 460/460.
+- **PR-E "CI Gates & Secrets Scanning" (ISSUE-066 / F1 · ISSUE-076 / F1 · ISSUE-080 · ISSUE-109 / INF · ISSUE-110 / INF · cierre ISSUE-084 / INF-025)** — **I066/I076/I080/I109/I110 DONE:** clúster de CI gates: tests orquestados (backend jest + frontend vitest + firmware host) en job único, security job (osv-scanner + gitleaks + pnpm audit) y firmware sketches nativos; fix de `HW_REVISION` en la generación de config (I84 cierre del checklist de secrets). Test: `REG-019_ci-gates-scanning.test.ts`. **Nota de cierre:** el run CI post-ciclo queda **rojo** (3 suites backend, osv-scanner con 22 vulns npm y firmware build preexistente) — ver `docs/project/cycle-2-closure/gate-check.md`; se registra como deuda de Ciclo 3.
+- **PR-G "ThingSpeak deprecation" (DECISION-012 · ISSUE-051 / F2 → SUPERSEDED · ISSUE-023 / F2 → SUPERSEDED · avance ISSUE-050 / F2)** — **I051/I023 SUPERSEDED (DECISION-012 ACCEPTED):** el canal ThingSpeak queda deprecado; MQTT canónico como única vía de telemetría. **I050 avance (IN_PROGRESS):** migración de la configuración de ThingSpeak fuera del backend y remoción del sync server-side. Backend: eliminación de `thingSpeakSync.js`, `migrate-thingspeak-keys.js`, claves de ThingSpeak de `env.js`/`systemSettingsDefaults.js` y actualización de rutas/modelos/seed (19 archivos, −807 líneas netas en el ciclo). Tests: `thingspeak-source-of-truth` + contratos actualizados; regresión backend completa verde (jest 226 totales; ver gate-check para estado CI).
+- **PR-H "Firmware Native Tests" (ISSUE-105 / TST-001)** — **I105 DONE — suite nativa host sin ThingSpeak + gate cobertura ≥60%:** harness de pruebas nativo para el firmware (stubs FreeRTOS/esp_timer), gate de cobertura mínimo del 60 % en CI y remoción de la dependencia de ThingSpeak del build de test. Test: suites host en `firmware/test/`.
+- Contrato: `rest-api-contract.md` sin cambio de versión (comportamiento DELETE/filtro compatibles con v1); `mqtt-contract.md` v2 intacto (MQTT canónico ya versionado en PR-L). Backend pasa de **1.7.11 → 1.8.0 (MINOR)** por el cambio de comportamiento en DELETE/auth.
+
+### Frontend — v1.15.5
+
+- **PR-D "FE Auth Register/Refresh" (I031 / I033)** — registro alineado a contrato v1 + refresh single-flight + logout controlado (detalle en Backend v1.8.0).
+
+- **PR-F "FE Secure Tests" (ISSUE-040 / FE-012 · ISSUE-108 / TST-004)** — **I040/I108 DONE — cobertura de useSSE con mock determinista de EventSource:** se añade suite de tests para `useSSE` con un stub determinista de `EventSource` (eventos controlados, reconexión y cierre), elevando la cobertura de la capa SSE del frontend. TDD rojo→verde. Frontend **1.15.4 → 1.15.5 (PATCH)**.
+
+### Firmware (ESP32-S3) — v0.23.5
+
+- **PR-G "ThingSpeak deprecation" (DECISION-012)** — **remoción del cliente ThingSpeak del firmware:** se eliminan `thingspeak_client.cpp/h`, `thingspeak_ca_root.h`, los hooks en `main.ino`/`tasks.cpp` y las defines de `config.example.h`/`generate_config.py` (8 archivos); MQTT canónico como única vía de telemetría (DECISION-012 ACCEPTED).
+- **PR-H "Firmware Native Tests" (I105)** — suite nativa host sin ThingSpeak (stubs FreeRTOS/`esp_timer.h`) + gate de cobertura ≥60 %.
+- **PR-E (I084)** — fix de `HW_REVISION` en la generación de config (parte del clúster CI gates).
+- Firmware **0.23.4 → 0.23.5 (PATCH)**.
+
+### Docs — v0.2.4
+
+- Cierre del Ciclo 2: `phase-11-cycle-2-plan.md` §13→EJECUTADO + §14 cierre formal post-ejecución; `engineering-backlog.md` §9.10; `phase-8-executive-dashboard.md` re-computo post-Ciclo 2; `docs/project/cycle-2-closure/` (informe + gate check + trazabilidad). DECISION-012 ACCEPTED (registrada). Docs **0.2.3 → 0.2.4 (PATCH)**.
+
+## 2026-08-12
+
+### Backend — v1.7.11
+
+- **PR-B "Env Consistency" (ISSUE-064 / INF-005 · ISSUE-063 / INF-004 · ISSUE-073 / INF-014 · ISSUE-079 / INF-020 · ISSUE-083 / INF-024 · F11-1a REG-002)**
+- **I64 DONE — Node 22 en todos lados (runtime validado = prod):** `NODE_VERSION` de CI '24' → '22'; Dockerfile ya usaba `node:22-alpine` (hoy pinneado a digest); docs (README/architecture/backend/dev-environment) actualizadas a "Node.js 20+ (runtime validado: 22 LTS)".
+- **I63 DONE — PostgreSQL 16 única versión:** `ci.yml` postgres job `postgres:18` → `postgres:16-alpine@<digest>` (misma versión que compose y docs); `deployment.md` "PostgreSQL 18" → "PostgreSQL 16". CI valida contra el mismo runtime que prod.
+- **I73 DONE — lockfile estricto:** `ci.yml` instala backend/frontend con `pnpm install --frozen-lockfile`; `Dockerfile` elimina el fallback `|| pnpm install` (frozen-lockfile estricto en ambos stages). Verificado: `pnpm install --frozen-lockfile` exit 0 en root/backend/frontend (dockfile en sync).
+- **I79 DONE — imágenes base pinneadas a digest:** `node:22-alpine`, `postgres:16-alpine` y `eclipse-mosquitto:2` a `@sha256:<digest>` en Dockerfile, docker-compose.yml y docker-compose.dev.yml. `docker compose config` válido (exit 0 con envs de rigor).
+- **I83 DONE — toolchain firmware pinneada:** CI `python-version` '3.12' → '3.11' y `pip install platformio` → `pip install platformio==6.1.19` (versión validada en build local: esp32-s3-devkitc-1 + OTA SUCCESS).
+- **F11-1a — REG-002 no rompe CI:** el check de consistencia de `MQTT_BROKER_PASS` se ejecuta solo cuando `.env.development` (gitignored) existe localmente; en el runner de CI se salta limpiamente (fix del transversal CI 4/5 → 5/5; causa (a) resuelta en PR-B).
+- Tests: `REG-017_env-consistency.test.ts` (11 aserciones estáticas: Node 22, PG16 con digest, sin fallback de lockfile, digests pinneados, platformio/python fijos). **TDD rojo→verde** (11 fallos iniciales → 11/11). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 460/460.
+- Contrato: N/A — sin cambio de contrato API/MQTT/BLE (cambios de entorno/CI/Docker, no de protocolo).
+
+## 2026-08-12
+
+### Backend — v1.7.10
+
+- **PR-A "Broker MQTT TLS & ACL" (ISSUE-074 / INF-015 · ISSUE-075 / INF-016 · ISSUE-104 / DOC-020 · cierre ISSUE-015 / BE-015 · avance ISSUE-065 / INF-006)**
+- **I74 DONE — listener TLS 8883 activo:** `docker/mosquitto/prod/mosquitto.conf` descomenta el bloque `listener 8883` (cafile/certfile/keyfile → `/mosquitto/certs`, `require_certificate false`, `allow_anonymous false`, `password_file`/`acl_file` de prod). Backend bridge y firmware usan exclusivamente `mqtts://…:8883` (fail-fast desde PR-L, ISSUE-015).
+- **I75 DONE — compose sin 1883 público:** `docker-compose.yml` publica solo `8883:8883`; el puerto 1883 queda únicamente accesible en la red interna Docker (no se expone al host). Volumen de certs `/mosquitto/certs:ro` intacto.
+- **Cierre ISSUE-015 (BE-015):** verificación local con `mosquitto` 2.1.2: handshake TLS contra 8883 OK y conexión en claro al 8883 rechazada (`protocol error`) — evidencia de cierre del backlog.
+- **ACL alineada (I074):** `docker/mosquitto/prod/acl.conf` con `topic read mush2/+/alarm` (bridge) y `pattern write mush2/%c/alarm` (firmware), coherente con `mqtt-contract.md` §6.2/§9.1.
+- **I104 (DOC-020) — re-baseline §10:** `phase-8-executive-dashboard.md` §10.1 con deltas de PR-A (avance global 16 % → 19 %, I15 `DONE`, I65 avance); nota del re-computo definitivo al cierre del ciclo (Fase 8 §8).
+- **I65 avance (IN_PROGRESS):** `docs/operations/broker-deployment.md` §4.3 y §7 actualizados: config TLS activa y verificada; resta ISSUE-081 (provisioning) + DECISION-011 (plan free → pago/VPS) para el deploy en Ciclo 3.
+- Tests: `REG-016_broker-tls-acl.test.ts` (9 aserciones estáticas: listener 8883 activo, certs en `/mosquitto/certs`, sin 1883 público, compose `8883:8883` + volumen ro, ACL `alarm`). **TDD rojo→verde** (4 fallos iniciales → 9/9). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 458/458.
+- Contrato: `mqtt-contract.md` sin cambios (el entorno prod TLS ya estaba documentado en §2.3); sin cambio de versión del contrato.
+- Certs locales `docker/mosquitto/certs/*` y `docker/mosquitto/prod/password_file` generados solo para verificación (gitignored, nunca en el repo).
+
+## 2026-08-11
+
+### Firmware (ESP32-S3) — v0.23.4
+
+- **PR-M "Firmware Secrets to NVS" (ISSUE-059 / FW-010 · ISSUE-084 / INF-025 parcial)**
+- **I59 DONE — credenciales MQTT en NVS, fuera de RAM:** `HTTPPoller` ya no mantiene `_mqttUser/_mqttPass` en RAM; `registerDevice()` entrega las credenciales de la respuesta de registro en buffers transitorios del llamador (que `main.ino` persiste en NVS vía `device_manager` y luego limpia).
+- **Registro solo cuando falta credencial (no en cada boot):** `main.ino` carga credenciales de NVS primero; el registro HTTP (`POST /devices/register`) solo ocurre si no existen (primer aprovisionamiento). Se elimina el re-registro por HTTP claro en cada arranque.
+- **Fallback solo primer arranque:** nueva política pura `mqtt_credential_policy.h` (`resolveMqttCredentialMode`/`defaultFallbackAllowed`) + `MQTTClient::init(..., allowDefaultFallback)` — los defaults de `config.h` se usan únicamente en el primer arranque; arranques posteriores sin NVS conectan sin identidad compartida (ADR-028).
+- **I84 avance parcial (IN_PROGRESS):** migración NVS (compartida con I59) + `.gitignore` (ya ignoraba `**/config.h`, `**/secrets.h`, `.env*`, `password_file`, certs) + checklist documentado `docs/security/secrets-checklist.md`. **Scanning automático diferido a ISSUE-076 (F1, CI gates)** — no se inventa scanning en este ciclo.
+- Tests: `test_mqtt_credentials.cpp` (4 casos nativos: NVS gana, fallback solo primer boot, sin credenciales en boot posterior, fallback alcanzable exactamente una vez) + `test_main.cpp` (runner único Unity). **`pio test -c platformio.test.ini -e native` 6/6** (2 channel mapping + 4 I59) y **`pio run`** (flash 41.7 %, RAM 27.2 %).
+- Scan estático: `http_poller.h` sin `_mqttUser/_mqttPass`; `config.h` verificado como ignorado (`git check-ignore`).
+- Contrato: `mqtt-contract.md` §2.2 — persistencia en NVS (namespace `mush2`, keys `mqttUser`/`mqttPass`), fallback solo primer arranque y nota de transición (registro solo en primer aprovisionamiento; transporte MQTT prod `mqtts://`, I15/PR-L). Sin cambio de versión del contrato.
+
+## 2026-08-11
+
+### Backend — v1.7.9
+
+- **PR-L "MQTT Security: TLS + Identidad por Dispositivo" (ISSUE-015 / BE-015 · ISSUE-024 / BE-024)**
+- TLS obligatorio para el bridge en producción (I15, ADR-028): `ConfigurationService.validate()` lanza (fail-fast) si `MQTT_BROKER_URL` no es `mqtts://`/`tls://`/`ssl://` con `NODE_ENV=production`; default de `env.js` en prod = `mqtts://localhost:8883` (dev sin cambio: `mqtt://localhost:1883`). Nuevo `MQTT_REJECT_UNAUTHORIZED` (default `true`; solo `false` para certs self-signed en staging). `docker-compose.yml` actualizado a `mqtts://mosquitto:8883`.
+- Hash `$7$` nativo sin argv (I24): `mosquittoProvisioningService` reimplementa el formato `$7$` (PBKDF2-SHA512, mosquitto_passwd v2) en Node nativo — exporta `mosquittoPasswordHash(password)` y `verifyMosquittoHash(password, storedHash)` (comparación `timingSafeEqual`) — eliminando el subproceso `mosquitto_passwd`, el password en argv y el plaintext temporal en disco. `provisionDevice`/`revokeDevice` reescritos con read-modify-write serializado del `password_file` (upsert sin duplicar líneas); recarga SIGHUP (debounce 500 ms) intacta.
+- Tests: `REG-014_mqtt-tls-identity.test.ts` (13 aserciones: fail-fast TLS prod, default mqtts, `rejectUnauthorized`, ACL `%c`/`backend_bridge`, compose mqtts) + `REG-015_mqtt-provisioning-argv.test.ts` (10: golden vector real `$7$`, round-trip hash, provision/revoke sobre temp password_file). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 449/449 (426 baseline + 23 REG-014/015).
+- Contrato: `mqtt-contract.md` §2.3 — TLS enforcement del backend, listener 8883 para firmware+bridge, `MQTT_REJECT_UNAUTHORIZED`; sin cambio de versión del contrato (topics/payloads/protocolo intactos).
+
+## 2026-08-11
+
+### Backend — v1.7.8
+
+- **PR-K "Generic Error Responses" (ISSUE-027 / BE-027)**
+- Nuevo middleware global de error `backend/src/middlewares/errorHandler.js` montado al final de la pila en `app.js` (tras `router` y el static de producción): cualquier error propagado con `next(err)` responde `500 { error: 'SERVER_ERROR', message: 'Error interno del servidor' }` — sin `err.message` al cliente — y loguea el detalle (`err.message` + `stack`) solo en servidor con child logger `ERROR_HANDLER`.
+- Preserva `err.status` explícito (4xx/5xx controlado, p. ej. 409) y respeta `res.headersSent` (delega a `next(err)` si la respuesta ya empezó).
+- Residual re-baselineado (F10-3): `monitoring.js`/`admin.js` ya eran genéricos (PR-F #189); este PR solo añade la cobertura global. Regresión de monitoring/admin verificada.
+- Tests: `REG-013_error-handler.test.ts` (6 aserciones estáticas: middleware 4 args, body genérico, detalle solo en servidor, montaje al final de la pila, regresión monitoring/admin) + `error-handler-global.test.ts` (2 tests funcionales: `next(err)` → 500 genérico sin detalle; `err.status=409` → 409). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 426/426 (405 baseline + 7 REG-011 + 6 REG-012 + 6 REG-013 + 2 funcionales).
+- Contrato: N/A (sin cambio de wire API/MQTT/BLE); el shape `{ error: 'SERVER_ERROR', message: 'Error interno del servidor' }` ya es el documentado (PR-F).
+
+## 2026-08-11
+
+### Backend — v1.7.7
+
+- **PR-J "Rate Limit Coverage" (ISSUE-019 / BE-019)**
+- Eliminado el `skip` del rate limiter global para `GET /devices` y `GET /actuators` (`app.js:54-57`): el límite anónimo por IP (500/15min en prod, 2000/1min en dev) aplica ahora a **todos** los endpoints `/api/v1/*`, cerrando la enumeración/sondeo de dispositivos y actuadores sin throttling (I19).
+- La franquicia de usuarios autenticados se mantiene por plan vía `checkApiRateLimit` (`subscriptionRateLimit.js`); no se introdujo whitelist por `deviceId` ni límite anónimo elevado (decisión de diseño 2026-08-11). Impacto del polling anónimo del firmware (`GET /actuators`, 5s) sobre el límite global documentado como dependencia de **I59/PR-M** (migración a credenciales autenticadas).
+- Tests: `REG-012_rate-limit-coverage.test.ts` (6 aserciones estáticas: sin skip de `/devices` ni `/actuators`, limiter activo con `max`/`windowMs`, franquicia autenticada intacta, contrato documenta throttling). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 411/412 (405 baseline + 6 REG-012).
+- Contrato: `api-contract.md` §429 documenta que el límite global aplica a todos los endpoints incluidos `/devices` y `/actuators` (sin skip de polling anónimo) y la migración a identidad (I59/PR-M).
+
+### Backend — v1.7.6
+
+- **PR-I "Bootstrap Hardening II" (ISSUE-016 / BE-016 · ISSUE-072 / INF-013)**
+- Seed hardening (I16): bcrypt cost **10 → 12** en `seed.js` (constante exportada `SEED_BCRYPT_ROUNDS`) y en `create-admin.js` (CLI/secret), alineado con `auth.js`/`settings.js`. Guard `isSeedAllowed` (dev-only, I060) intacto; admin sigue creándose por CLI, nunca por default.
+- Fail-fast de configuración (I72): `ConfigurationService.validate(env)` ahora se ejecuta al inicio de `sync-db.js` y `seed.js`, antes de tocar la BD — aborta con error claro si la configuración es inválida (p. ej. `JWT_SECRET` default en producción) en lugar de modificar el esquema o sembrar datos.
+- Tests: `REG-011_bootstrap-config-failfast.test.ts` (7 aserciones estáticas: bcrypt cost en seed/create-admin, `validate(env)` en sync/seed, fallback de `JWT_SECRET` marcado como dev). Regresión completa verde: jest 195/232 (37 skipped, idéntico a baseline), vitest 412/412.
+- Contrato: N/A (sin cambio de wire API/MQTT/BLE).
+
+## 2026-08-11
+
+### Backend — v1.7.5
+
+- **PR-F "Monitoring Security" (ISSUE-003 / BE-003)**
+- `/api/v1/monitoring/*` ahora exige **autenticación (Bearer JWT) + rol ADMIN** (`authenticate, requireMinRole('ADMIN')` en `routes/index.js`). `GET /health` permanece **pública** (única ruta pública del subsistema de monitoreo). Sin sesión → `401 AUTH_REQUIRED`; token con rol inferior a ADMIN → `403`.
+- El `autoLogging.ignore` de `app.js` deja de excluir `/monitoring/logs` (endpoint ADMIN-only queda registrado en el access log HTTP); `GET /health` sigue excluido por healthchecks de infraestructura.
+- `monitoring.js` y `admin.js` usan child logger (`createChildLogger`); los catches de error responden `500 { error: 'SERVER_ERROR', message: 'Error interno del servidor' }` (mensaje genérico) y loguean `err.message` solo en servidor.
+- Tests: suite negativa `authorization-negative.test.js` +bloque ISSUE-003 (401/403/200 + casos DB-gated ADMIN→200, OPERATOR→403); `REG-010_monitoring-security.test.ts` (5 aserciones estáticas); `monitoring-error-paths.test.ts` (8 tests vitest de las rutas de error, con `vi.mock`). Regresión completa verde: jest 232/232, vitest 405/405.
+- Contrato: `api-contract.md` §19 y §22 documentan el control de acceso ADMIN y el error `500` genérico. Docs operacionales `monitoring.md` y `runbook.md` actualizadas (Bearer + rol ADMIN en curls y tablas).
+
+## 2026-08-10
+
+### Backend — v1.7.4
+
+- **PR-E "Provisioning Foundation" (ISSUE-001 / BE-001)**
+- `POST /api/v1/devices/register` exige **sesión autenticada o token de aprovisionamiento de un solo uso** (header `X-Provision-Token`). Sin sesión ni token → `401 { code: 'AUTH_REQUIRED' }`; token inválido/expirado/revocado/exhausto → `401` (`INVALID_TOKEN`/`TOKEN_EXPIRED`/`TOKEN_REVOKED`/`TOKEN_EXHAUSTED`); token vinculado a otro `deviceId` → `403 { code: 'TOKEN_DEVICE_MISMATCH' }`. El payload de respuesta (`mqtt.user`/`mqtt.pass`) no cambia (cambio compatible, ADR-028).
+- Nueva tabla `provisioning_tokens` (migración `20260809000002`): solo se persiste el hash SHA-256 del token (`tokenHash`), `maxUses`/`usesRemaining` con consumo atómico, `deviceId` opcional (binding), `expiresAt`, `revokedAt`.
+- Rate limit por IP anónima en `register` (`REGISTER_RATE_LIMIT_PER_MINUTE`, default 100/min, código `RATE_LIMIT_EXCEEDED`); cuota reintegrable (`refundProvisioningToken`) si el body no trae `deviceId` o el flujo falla 5xx.
+- Recarga del broker **idempotente sin `docker restart`**: SIGHUP al contenedor Mosquitto (`docker kill --signal HUP`) encolado con debounce 500 ms (`scheduleReload()`); reemplaza el `docker restart` de `mosquittoProvisioningService`.
+- CLI `npm run provision:token` (`backend/src/scripts/create-provisioning-token.js`) con guard de producción (`PROVISION_TOKEN_CREATE_SECRET` + `--secret`), patrón `create-admin.js`.
+- Tests: suite negativa `authorization-negative.test.js` (43 tests, 7 de integración DB-gated) + REG-009 (11 aserciones estáticas) verdes; verificación end-to-end contra Postgres (`mush2_test`).
+- Contrato: `api-contract.md` documenta whitelist §1, `POST /devices/register`, códigos de error y §23 Aprovisionamiento. Backlog ISSUE-001 con evidencia. `render.yaml` sin cambios (la migración se ejecuta vía `db:migrate` en deploy).
+
+## 2026-08-10
+
+### Backend — v1.7.3
+
+- infra(broker): plan de despliegue del broker MQTT (ISSUE-065/INF-006 · PR-G)
+- `docs/operations/broker-deployment.md`: plan de despliegue del broker Mosquitto 2.x (DECISION-006) — arquitectura, pasos, gestión de secretos, rollback, migración y verificación; ejecución diferida a ISSUE-075 (TLS) e ISSUE-081 (provisioning). Sin deploy en el ciclo.
+- `docker/mosquitto/prod/acl.conf` alineado con el contrato MQTT §2.3: añade `alarm`, `ota/#` y `actuators` para firmware y `alarm` para el bridge.
+- `docker/mosquitto/prod/mosquitto.conf`: bloque TLS listener 8883 documentado (comentado, listo para activar con certs reales).
+- `docs/contracts/mqtt-contract.md` §2.3: nuevo "Entorno de producción" (broker, TLS 8883, env vars backend, ACL, persistencia) sin cambio de versión del contrato.
+- ADR-023: anexo SUPERSESIÓN con la autoridad de despliegue (DECISION-006 · ISSUE-065 · PR-G).
+- `render.yaml` sin cambios: `MQTT_BROKER_URL/PASS` se fijan al ejecutar el plan (no inventar valores).
+- REG-008 (13 tests) verde: valida la presencia y coherencia de los artefactos del plan de despliegue.
+
+## 2026-08-10
+
+### Backend — v1.7.2
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
+### Frontend — v1.15.4
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
+### Firmware (ESP32-S3) — v0.23.3
+
+- **PR-C "Credentials & Session Foundation" (ISSUE-017/029/030 + ISSUE-050 parcial)**
+- **Backend (I17):** refresh tokens en hash SHA-256 (`refresh_tokens`) con `jti`, rotación y revocación durable en logout; cookie `refresh_token` httpOnly (`SameSite=Strict`, `Secure` en prod, `Path=/api/v1/auth`); `POST /auth/refresh` lee por cookie (body como fallback) y responde `{ code: 'REFRESH_EXPIRED' }` ante token inválido/rotado/revocado/expirado.
+- **Frontend (I29):** access token solo en memoria (`tokenStore.js`), nunca en `localStorage`; interceptor refresca por cookie en 401 con single-flight y redirige a `/` si falla; logout revoca y limpia sesión.
+- **Frontend (I30):** `RequireRole` + pantalla `/forbidden` (403); guards en rutas admin (`/operations/logs`, `/system/settings/system`); "Sistema" oculto salvo SUPER_ADMIN; gate defensivo en `SystemSettings.jsx`.
+- **Firmware (I50 parcial):** password OTA fuera del árbol (`ota_handler` lee de NVS con placeholder `OTA_PASSWORD`; `platformio.ini --auth` placeholder); credenciales MQTT provisionadas se persisten en NVS (`device_manager`) y se usan en boot (ADR-028). Cierre en ISSUE-059/052/076.
+
+## 2026-08-09
+
+### Firmware (ESP32-S3) — v0.23.2
+
+- 12d0f85: feat(thingspeak): transporte HTTPS con CA root embebida (ISSUE-051 / FW-002)
+- `thingspeak_client.cpp`: `WiFiClientSecure` con `TS_CA_ROOT` (DigiCert Global Root G2 + intermedio embebidos en `thingspeak_ca_root.h`), `https=true` sobre `TS_PORT` 443.
+- La API key ya no viaja en el query string: se envía en el header `X-ApiKey` (DECISION-007).
+- `config.example.h`: `TS_PORT` por defecto 443 (con guard `#ifndef` para compatibilidad con `config.h` local y placeholder de CI).
+- Docs actualizadas: ADR-004 (transporte HTTPS, no supersede), ADR-013 (mitigación implementada), firmware.md, architecture.md, deployment.md, engineering-backlog (ISSUE-051 IN_PROGRESS, avance parcial PR-D).
+
+## 2026-08-09
+
+### Backend — v1.7.1
+
+- d1723e1: feat(bootstrap): Production Bootstrap Hardening (ISSUE-060/061/068)
+- Migraciones versionadas (Sequelize CLI) como único mecanismo de esquema en producción (DECISION-004 · ISSUE-061).
+- Snapshot inicial versionado en `backend/src/db/migrations/20260808000001-create-initial-snapshot.cjs` (26 tablas + índices + FKs + enums).
+- Scripts: `db:migrate`, `db:migrate:undo`, `db:seed:catalog`, `admin:create`.
+- Dockerfile CMD: `cd backend && pnpm db:migrate && node src/server.js` (sin `sync-db.js` ni `seed.js`).
+- Guard de `NODE_ENV` para seed (DECISION-008 · ISSUE-060/068): `sync-db.js` y `seed.js` rechazan ejecución en producción; catálogo idempotente separado de fixtures.
+- CLI `create-admin.js` para bootstrap de usuario administrador.
+
+## 2026-08-08
+
+### Backend — v1.7.0
+
+- feat(authz): Fundación de autorización con denegación por defecto (deny-by-default). (ISSUE-002/004/005/106)
+- **deny-by-default**: el tenant guard rechaza con `401 { error: "Autenticación requerida" }` todo request anónimo fuera de la whitelist del firmware (`POST /devices/register`, `GET /actuators`); `/recipes`, `/species`, `/cycles`, `events` y `analytics` pasan de `optionalAuth` a `authenticate`.
+- **ownership**: `assertCycleAccess` en todas las rutas de ciclos y verificación de acceso al dispositivo en ack/resolve de alarmas (403 para no propietario); `events`/`analytics` filtran por propietario vía `canAccessDevice`/`getAccessibleDeviceIds`.
+- **roles**: POST/PUT/DELETE de especies exigen `requireMinRole('ADMIN')`.
+- **fix(actuators)**: eliminados `Device.findOrCreate`/`Actuator.findOrCreate` en `PATCH /actuators/:channel` y `PATCH /devices/:id/actuators/:channel` → 404 si no existe (sin auto-registro).
+- **tests**: suite negativa `authorization-negative.test.js` (35 tests: 10 casos anónimos → 401/403 + whitelist firmware preservada + 19 tests de propiedad/roles contra `mush2_test`) y contract tests horizontal/rest alineados al patrón `authenticate`.
+
+## 2026-08-06
+
+### Backend — Telegram Subsystem Refactor - v1.6.1
+
+- **refactor(telegram)**: Separación de responsabilidades del subsistema Telegram (ISSUE-048)
+  - `telegramService.js` se divide en `telegramConfigurationService.js` (configuración), `telegramBotService.js` (runtime/lifecycle/polling/handlers/envío) y `telegramErrors.js` (clasificación de errores)
+  - `telegramBotService` ya no lee `SystemSetting`: la configuración se resuelve en el caller y se inyecta por parámetro
+  - `classifyTelegramError` centraliza la clasificación (401/403/409/429/timeout/red/5xx/internos) y enriquece logs con `errorKind`/`errorCode`/`retryable`; sin retries ni cambios de semántica de envío
+  - Eliminado el servicio legacy: importadores actualizados (`routes/telegram.js`, `server.js`, `notifications/notificationService.js`) y tests migrados
+  - Comportamiento observable idéntico: sin endpoints nuevos, sin cambios de payload
+  - `+17` tests (config, clasificación de errores) manteniendo toda la suite existente
+- **docs(telegram)**: `ADR-033-telegram-subsystem-split.md` y `docs/architecture/telegram-subsystem-architecture.md`; actualizados `telegram-bot-lifecycle.md`, `api-contract.md`, `backend.md`, `capability-matrix.md`, `change-impact.md`
+
+### Backend — Telegram Bot Lifecycle - v1.6.0
+
+- **feat(telegram)**: Ciclo de vida explícito y observabilidad (ISSUE-047)
+  - Máquina de estados `disabled/starting/ready/degraded/stopped/failed` expuesta en `GET /telegram/bot-status`
+  - Serialización de `initBot`/`reconfigureBot`/`stopBot` (promise queue) + Generation Guard — elimina el origen del error 409 `terminated by other getUpdates request`
+  - `await stopPolling()` antes de liberar la instancia; invariante de una sola instancia con polling activo
+  - Polling y envío desacoplados: un `polling_error` degrada el estado (`running` permanece `true` y los envíos siguen operativos)
+  - Métricas: `messagesSent`, `messagesFailed`, `pollingErrors`, `lastDeliveryAt`, `uptimeSeconds`, `reconfigures`
+  - Configuración sin cambios: `SystemSetting` + fallback `TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME` (sin variables nuevas)
+  - Sin retry policy: se mantiene un intento por envío (decisión documentada)
+  - `+10` tests de ciclo de vida (init/reconfigure/stop, degradación, métricas)
+- **docs(telegram)**: Documenta `docs/architecture/telegram-bot-lifecycle.md` (Mermaid, tabla de transiciones, Runtime Context, Generation Guard)
+
+### Backend — Notificaciones & API - v1.5.2
+
+- **fix(notifications)**: Unifica severidad y política de distribución
+  - `notifyAlarm` usa `minAlertSeverity` real
+  - Extrae `buildDistributionPlan` a `distributionPolicy`
+  - `sendAlarm` queda como único punto de entrega Telegram
+  - +47 tests
+- **fix(api)**: Retira proxies de suscripción rotos de `/settings/subscription*`
+- **fix(thingspeak)**: Unifica fuente de verdad de claves cifradas
+  - Secretos solo en `IntegrationCredentials`
+  - Elimina leak de keys vía `toJSON`
+  - Backfill + tests de contrato
+
+### Frontend — Settings & Navigation - v1.15.2
+
+- **refactor(settings)**: Elimina secciones obsoletas (`Cultivation`, `ApiKeys`, `Subscription`, `SettingsHub`) y reestructura navegación
+  - SISTEMA pasa a módulo CONFIGURACIÓN (Usuario / Dispositivo / Sistema)
+  - Index de settings redirige a `/user`
+- **fix(settings)**: Estabiliza `DeviceSettings` y simplifica `SystemSettings`
+  - Usa `deviceId` string + persistencia en `localStorage`
+  - Elimina UI/API de ThingSpeak de DeviceSettings
+  - SystemSettings se limita a Seguridad y Telegram Bot
+
+### Firmware (ESP32-S3) — v0.23.1
+
+- **fix(firmware)**: Backend como autoridad de `ssrActiveLow`
+  - Primer poll fuerza sync (`_ssrFirstSync`)
+  - Elimina característica BLE `ssr_mode`
+  - Limpieza de caché en `reProvision`
+
+### Docs — v0.2.2
+
+- **docs(adr)**: Añade **ADR-032** — Gobernanza de Configuración
+  - Dominios propietarios, fuente única de verdad y reglas R01–R06
+
 ## 2026-08-03
 
 ### Backend — v1.5.1
